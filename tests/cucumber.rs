@@ -10,7 +10,7 @@ use algosdk::transaction::{SignedTransaction, Transaction};
 use algosdk::{
     mnemonic, Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
 };
-use cucumber::{cucumber, Steps, StepsBuilder};
+use cucumber::{Steps, StepsBuilder};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::time::Duration;
@@ -177,7 +177,7 @@ pub fn steps() -> Steps<World> {
         .then("I can get the block info", |world, _step| {
             let algod_client = world.algod_client.as_ref().unwrap();
             let status = world.status.as_ref().unwrap();
-            let _ = algod_client.block(Round(status.last_round.0 + 1)).unwrap();
+            let _ = algod_client.block(status.last_round + 1).unwrap();
         })
         .given_regex(r#"default transaction with parameters (\d+) "([^"]*)""#, |world: &mut World, strings, _step| {
             let amount = MicroAlgos(strings[1].parse().unwrap());
@@ -192,7 +192,7 @@ pub fn steps() -> Steps<World> {
                 Address::from_string(&world.accounts[0]).unwrap(),
                 params.fee,
                 params.last_round,
-                Round(params.last_round.0 + 1000),
+                params.last_round + 1000,
                 world.note.clone(),
                 &params.genesis_id,
                 params.genesis_hash,
@@ -218,7 +218,7 @@ pub fn steps() -> Steps<World> {
                 multisig.address(),
                 params.fee,
                 params.last_round,
-                Round(params.last_round.0 + 1000),
+                params.last_round + 1000,
                 world.note.clone(),
                 &params.genesis_id,
                 params.genesis_hash,
@@ -238,7 +238,7 @@ pub fn steps() -> Steps<World> {
             let public_key = world.public_key.expect("No public key");
             let kmd_client = world.kmd_client.as_ref().expect("No kmd client");
             let _ = kmd_client.import_multisig(wallet_handle, multisig.version, multisig.threshold, &multisig.public_keys).unwrap();
-            world.signed_transaction_bytes = kmd_client.sign_multisig_transaction(wallet_handle, wallet_password, transaction, Ed25519PublicKey(public_key.bytes), None).unwrap().multisig;
+            world.signed_transaction_bytes = kmd_client.sign_multisig_transaction(wallet_handle, wallet_password, transaction, Ed25519PublicKey(public_key.0), None).unwrap().multisig;
         })
         .when("I get versions with kmd", |world: &mut World, _step| {
             let kmd_client = world.kmd_client.as_ref().unwrap();
@@ -411,7 +411,7 @@ pub fn steps() -> Steps<World> {
             let public_key = world.public_key.unwrap().encode_string();
             let transaction_id = world.transaction_id.as_ref().unwrap();
             assert_eq!(algod_client.pending_transaction_information(transaction_id).unwrap().from, public_key);
-            let _ = algod_client.status_after_block(Round(world.last_round.unwrap().0 + 2));
+            let _ = algod_client.status_after_block(world.last_round.unwrap() + 2);
             assert_eq!(algod_client.transaction_information(&public_key, transaction_id).unwrap().from, public_key);
             assert_eq!(algod_client.transaction(transaction_id).unwrap().from, public_key);
         })
@@ -422,7 +422,7 @@ pub fn steps() -> Steps<World> {
             let algod_client = world.algod_client.as_ref().unwrap();
             let transaction_id = world.transaction_id.as_ref().unwrap();
             let public_key = world.public_key.unwrap().encode_string();
-            let _ = algod_client.status_after_block(Round(world.last_round.unwrap().0 + 2)).unwrap();
+            let _ = algod_client.status_after_block(world.last_round.unwrap() + 2).unwrap();
             assert_eq!(algod_client.transaction(transaction_id).unwrap().from, public_key);
         })
         .when("I import the multisig", |world: &mut World, _step| {

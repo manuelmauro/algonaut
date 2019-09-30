@@ -1,8 +1,13 @@
+//! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
 use serde::{Serialize, Serializer, Deserializer, Deserialize};
-use crate::{HashDigest, VotePK, VRFPK, Ed25519PublicKey, MasterDerivationKey};
+use crate::{HashDigest, VotePK, VRFPK, Ed25519PublicKey, MasterDerivationKey, Round, MicroAlgos};
 use serde::de::Visitor;
 use data_encoding::BASE64;
 use crate::crypto::{MultisigSignature, MultisigSubsig, Address, Signature};
+use std::error::Error;
+use std::fmt::{Display, Formatter, Debug};
+use static_assertions::_core::ops::Add;
+use crate::kmd::responses::ExportKeyResponse;
 
 impl Serialize for HashDigest {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
@@ -97,7 +102,7 @@ impl Serialize for Address {
         where
             S: Serializer,
     {
-        serializer.serialize_bytes(&self.bytes[..])
+        serializer.serialize_bytes(&self.0[..])
     }
 }
 
@@ -106,9 +111,7 @@ impl<'de> Deserialize<'de> for Address {
         where
             D: Deserializer<'de>,
     {
-        Ok(Address {
-            bytes: deserializer.deserialize_bytes(U8_32Visitor)?,
-        })
+        Ok(Address(deserializer.deserialize_bytes(U8_32Visitor)?))
     }
 }
 
@@ -213,3 +216,97 @@ pub fn serialize_bytes<S>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error
     where S: Serializer {
     serializer.serialize_str(&BASE64.encode(bytes))
 }
+
+impl Error for crate::Error {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            crate::Error::Reqwest(e) => Some(e),
+            crate::Error::Encode(e) => Some(e),
+            crate::Error::Json(e) => Some(e),
+            crate::Error::Api(_) => None,
+        }
+    }
+}
+
+impl Display for crate::Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            crate::Error::Reqwest(e) => Display::fmt(e, f),
+            crate::Error::Encode(e) => Display::fmt(e, f),
+            crate::Error::Json(e) => Display::fmt(e, f),
+            crate::Error::Api(e) => Display::fmt(e, f),
+        }
+    }
+}
+
+impl Display for MicroAlgos {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.0, f)
+    }
+}
+
+impl Display for Round {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.0, f)
+    }
+}
+
+impl Debug for ExportKeyResponse {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ExportKeyResponse")
+            .field("private_key", &self.private_key.to_vec())
+            .finish()
+    }
+}
+
+impl Debug for Signature {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Signature")
+            .field(&self.0.to_vec())
+            .finish()
+    }
+}
+
+impl Add for Round {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Round(self.0 + rhs.0)
+    }
+}
+
+impl Add<u64> for Round {
+    type Output = Self;
+
+    fn add(self, rhs: u64) -> Self::Output {
+        Round(self.0 + rhs)
+    }
+}
+
+impl Add for MicroAlgos {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        MicroAlgos(self.0 + rhs.0)
+    }
+}
+
+impl Add<u64> for MicroAlgos {
+    type Output = Self;
+
+    fn add(self, rhs: u64) -> Self::Output {
+        MicroAlgos(self.0 + rhs)
+    }
+}
+
+impl PartialEq for Signature {
+    fn eq(&self, other: &Self) -> bool {
+        for i in 0..64 {
+            if self.0[i] != other.0[i] {
+                return false;
+            }
+        }
+        true
+    }
+}
+impl Eq for Signature {}

@@ -16,6 +16,7 @@ pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
 pub use kmd::KmdClient;
 pub use algod::AlgodClient;
+pub use crypto::Address;
 /// MicroAlgos are the base unit of currency in Algorand
 #[derive(Copy, Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MicroAlgos(pub u64);

@@ -235,7 +235,7 @@ pub mod models {
     use crate::Round;
 
     /// The information about a node status
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct NodeStatus {
         /// the last round seen
         #[serde(rename = "lastRound")]
@@ -267,7 +267,7 @@ pub mod models {
     }
 
     /// TransactionID Description
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct TransactionID {
         /// The string encoding of the transaction hash
         #[serde(rename = "txId")]
@@ -275,7 +275,7 @@ pub mod models {
     }
 
     /// Account Description
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct Account {
         /// The round for which this information is relevant
         pub round: Round,
@@ -305,7 +305,7 @@ pub mod models {
     }
 
     /// Transaction contains all fields common to all transactions and serves as an envelope to all transactions type
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct Transaction {
         /// The transaction type
         #[serde(rename = "type")]
@@ -360,7 +360,7 @@ pub mod models {
     }
 
     /// PaymentTransactionType contains the additional fields for a payment Transaction
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct PaymentTransactionType {
         /// To is the receiver's address
         pub to: String,
@@ -388,14 +388,14 @@ pub mod models {
     }
 
     /// TransactionList contains a list of transactions
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct TransactionList {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         pub transactions: Vec<Transaction>,
     }
 
     /// TransactionFee contains the suggested fee
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct TransactionFee {
         /// Transaction fee in units of micro-Algos per byte.
         /// Fee may fall to zero but transactions must still have a fee of
@@ -404,7 +404,7 @@ pub mod models {
     }
 
     /// TransactionParams contains the parameters that help a client construct a new transaction.
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct TransactionParams {
         /// Transaction fee in units of micro-Algos per byte.
         /// Fee may fall to zero but transactions must still have a fee of
@@ -429,7 +429,7 @@ pub mod models {
     }
 
     /// Block contains a block information
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct Block {
         /// The current block hash
         pub hash: String,
@@ -486,7 +486,7 @@ pub mod models {
     }
 
     /// UpgradeState contains the information about a current state of an upgrade
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct UpgradeState {
         /// A string that represents the current protocol
         #[serde(rename = "currentProtocol")]
@@ -510,7 +510,7 @@ pub mod models {
     }
 
     /// UpgradeVote represents the vote of the block proposer with respect to protocol upgrades.
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct UpgradeVote {
         /// Indicates a proposed upgrade
         #[serde(rename = "upgradePropose")]
@@ -522,7 +522,7 @@ pub mod models {
     }
 
     /// Supply represents the current supply of MicroAlgos in the system
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct Supply {
         round: Round,
         #[serde(rename = "totalMoney")]
@@ -533,7 +533,7 @@ pub mod models {
 
     /// PendingTransactions represents a potentially truncated list of transactions currently in the
     /// node's transaction pool.
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct PendingTransactions {
         #[serde(rename = "truncatedTxns")]
         truncated_txns: TransactionList,
@@ -542,7 +542,7 @@ pub mod models {
     }
 
     /// Version contains the current algod version.
-    #[derive(Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize)]
     pub struct Version {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         pub versions: Vec<String>,

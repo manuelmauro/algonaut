@@ -2,7 +2,7 @@
 
 # Documentation
 
-General Algorand documentation is available at [https://developer.algorand.org/]
+General Algorand documentation is available at https://developer.algorand.org/
 
 # Quickstart
 

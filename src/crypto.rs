@@ -11,13 +11,11 @@ const HASH_LEN: usize = 32;
 
 /// Public key address
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct Address {
-    pub bytes: [u8; HASH_LEN],
-}
+pub struct Address(pub [u8; HASH_LEN]);
 
 impl Address {
     pub fn new(bytes: [u8; HASH_LEN]) -> Address {
-        Address { bytes }
+        Address(bytes)
     }
 
     /// Decode address from base64 string with checksum
@@ -42,15 +40,15 @@ impl Address {
 
     /// Encode address to base64 string with checksum
     pub fn encode_string(&self) -> String {
-        let hashed = ChecksumAlg::digest(&self.bytes);
+        let hashed = ChecksumAlg::digest(&self.0);
         let checksum = &hashed[(HASH_LEN - CHECKSUM_LEN)..];
-        let checksum_address = [&self.bytes, checksum].concat();
+        let checksum_address = [&self.0, checksum].concat();
         BASE32_NOPAD.encode(&checksum_address)
     }
 }
 
 /// Convenience struct for handling multisig public identities
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct MultisigAddress {
     /// the version of this multisig
     pub version: u8,
@@ -76,7 +74,7 @@ impl MultisigAddress {
                 threshold,
                 public_keys: addresses
                     .iter()
-                    .map(|address| Ed25519PublicKey(address.bytes))
+                    .map(|address| Ed25519PublicKey(address.0))
                     .collect(),
             })
         }
@@ -99,23 +97,6 @@ impl MultisigAddress {
 #[derive(Copy, Clone)]
 pub struct Signature(pub [u8; 64]);
 
-impl std::fmt::Debug for Signature {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.to_vec().fmt(f)
-    }
-}
-
-impl PartialEq for Signature {
-    fn eq(&self, other: &Self) -> bool {
-        for i in 0..64 {
-            if self.0[i] != other.0[i] {
-                return false;
-            }
-        }
-        true
-    }
-}
-impl Eq for Signature {}
 
 #[derive(Default, Debug, Eq, PartialEq, Clone, Deserialize)]
 pub struct MultisigSignature {

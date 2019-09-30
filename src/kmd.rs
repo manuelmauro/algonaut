@@ -595,14 +595,14 @@ pub mod responses {
     }
 
     /// VersionsResponse is the response to `GET /versions`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct VersionsResponse {
         #[serde(default)]
         pub versions: Vec<String>,
     }
 
     /// ListWalletsResponse is the response to `GET /v1/wallets`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ListWalletsResponse {
         #[serde(default)]
         pub wallets: Vec<APIV1Wallet>,
@@ -614,42 +614,42 @@ pub mod responses {
     }
 
     /// InitWalletHandleResponse is the response to `POST /v1/wallet/init`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct InitWalletHandleResponse {
         pub wallet_handle_token: String,
     }
 
     /// ReleaseWalletHandleResponse is the response to `POST /v1/wallet/release`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ReleaseWalletHandleResponse {}
 
     /// RenewWalletHandleResponse is the response to `POST /v1/wallet/renew`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct RenewWalletHandleResponse {
         pub wallet_handle: APIV1WalletHandle,
     }
 
     /// RenameWalletResponse is the response to `POST /v1/wallet/rename`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct RenameWalletResponse {
         pub wallet: APIV1Wallet,
     }
 
     /// GetWalletResponse is the response to `POST /v1/wallet/info`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct GetWalletResponse {
         pub wallet_handle: APIV1WalletHandle,
     }
 
     /// ExportMasterDerivationKeyResponse is the response to `POST /v1/master-key/export`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ExportMasterDerivationKeyResponse {
         #[serde(deserialize_with = "deserialize_mdk")]
         pub master_derivation_key: MasterDerivationKey,
     }
 
     /// ImportKeyResponse is the response to `POST /v1/key/import`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ImportKeyResponse {
         pub address: String,
     }
@@ -662,43 +662,43 @@ pub mod responses {
     }
 
     /// GenerateKeyResponse is the response to `POST /v1/key`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct GenerateKeyResponse {
         pub address: String,
     }
 
     /// DeleteKeyResponse is the response to `DELETE /v1/key`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct DeleteKeyResponse {}
 
     /// ListKeysResponse is the response to `POST /v1/key/list`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ListKeysResponse {
         pub addresses: Vec<String>,
     }
 
     /// SignTransactionResponse is the response to `POST /v1/transaction/sign`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct SignTransactionResponse {
         #[serde(deserialize_with = "deserialize_bytes")]
         pub signed_transaction: Vec<u8>,
     }
 
     /// ListMultisigResponse is the response to `POST /v1/multisig/list`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ListMultisigResponse {
         #[serde(default)]
         pub addresses: Vec<String>,
     }
 
     /// ImportMultisigResponse is the response to `POST /v1/multisig/import`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ImportMultisigResponse {
         pub address: String,
     }
 
     /// ExportMultisigResponse is the response to `POST /v1/multisig/export`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct ExportMultisigResponse {
         pub multisig_version: u8,
         pub threshold: u8,
@@ -707,11 +707,11 @@ pub mod responses {
     }
 
     /// DeleteMultisigResponse is the response to POST /v1/multisig/delete`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct DeleteMultisigResponse {}
 
     /// SignMultisigTransactionResponse is the response to `POST /v1/multisig/sign`
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     pub struct SignMultisigTransactionResponse {
         #[serde(deserialize_with = "deserialize_bytes")]
         pub multisig: Vec<u8>,
@@ -744,7 +744,7 @@ pub struct APIV1Wallet {
     pub supported_txs: Vec<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct APIV1WalletHandle {
     pub wallet: APIV1Wallet,
     pub expires_seconds: i64,

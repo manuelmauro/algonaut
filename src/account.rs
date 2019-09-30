@@ -88,7 +88,7 @@ impl Account {
         if from.address() != transaction.sender {
             return Err("Transaction sender does not match multisig identity".to_string());
         }
-        let my_public_key = Ed25519PublicKey(self.address.bytes);
+        let my_public_key = Ed25519PublicKey(self.address.0);
         if !from.public_keys.contains(&my_public_key) {
             return Err("Multisig identity does not contain this secret key".to_string());
         }
