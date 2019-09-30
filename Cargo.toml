@@ -1,0 +1,34 @@
+[package]
+name = "algosdk"
+version = "0.1.0"
+authors = ["mraof <mraof@mraof.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+indexmap = "1.2.0"
+lazy_static = "1.4.0"
+static_assertions = "0.3.4"
+sha2 = "0.8.0"
+rand = "0.7.2"
+ring = "0.16.9"
+data-encoding = "2.1.2"
+rmp = "0.8.8"
+rmp-serde = "0.14.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_bytes = "0.11"
+serde_json = "1.0.40"
+reqwest = "0.9.20"
+
+[[test]]
+name = "cucumber"
+harness = false # Allows Cucumber to print output instead of libtest
+
+[dev-dependencies]
+cucumber = { package = "cucumber_rust", git = "https://github.com/mraof/cucumber-rust" }
+dirs = "2.0"
+chrono = "0.4.9"
+
+[patch."https://github.com/bbqsrc/gherkin-rust"]
+gherkin_rust = {git = "https://github.com/mraof/gherkin-rust", branch = "patch-1"}
