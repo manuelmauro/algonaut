@@ -97,7 +97,6 @@ impl MultisigAddress {
 #[derive(Copy, Clone)]
 pub struct Signature(pub [u8; 64]);
 
-
 #[derive(Default, Debug, Eq, PartialEq, Clone, Deserialize)]
 pub struct MultisigSignature {
     #[serde(rename = "subsig")]

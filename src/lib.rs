@@ -1,22 +1,22 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-/// Support for turning 32 byte keys into human-readable mnemonics and back
-pub mod mnemonic;
 pub mod account;
-pub mod crypto;
-pub mod transaction;
-pub mod auction;
-/// Key management daemon
-pub mod kmd;
 /// Algorand protocol daemon
 pub mod algod;
+pub mod auction;
+pub mod crypto;
+/// Key management daemon
+pub mod kmd;
+/// Support for turning 32 byte keys into human-readable mnemonics and back
+pub mod mnemonic;
+pub mod transaction;
 pub(crate) mod util;
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
-pub use kmd::KmdClient;
 pub use algod::AlgodClient;
 pub use crypto::Address;
+pub use kmd::KmdClient;
 /// MicroAlgos are the base unit of currency in Algorand
 #[derive(Copy, Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MicroAlgos(pub u64);
@@ -54,4 +54,3 @@ pub enum Error {
     Json(serde_json::Error),
     Api(String),
 }
-

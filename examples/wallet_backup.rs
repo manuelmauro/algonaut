@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .find(|wallet| wallet.name == "testwallet")
     {
         Some(wallet) => wallet.id,
-        None => Err("Wallet not found")?,
+        None => return Err("Wallet not found".into()),
     };
 
     let init_response = kmd_client.init_wallet_handle(&wallet_id, "testpassword")?;

@@ -2,9 +2,9 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 
-use algosdk::{Address, HashDigest, MicroAlgos, mnemonic, Round};
 use algosdk::account::Account;
 use algosdk::transaction::Transaction;
+use algosdk::{mnemonic, Address, HashDigest, MicroAlgos, Round};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let account = Account::generate();
@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Backup phrase: {}", m);
     let fee = MicroAlgos(1000);
     let amount = MicroAlgos(20000);
-    let first_round = Round(642715);
+    let first_round = Round(642_715);
     let last_round = first_round + 1000;
 
     let transaction = Transaction::new_payment(
@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let filename = "./signed.tx";
     let mut f = File::create(filename)?;
-    let _ = f.write_all(&bytes)?;
+    f.write_all(&bytes)?;
 
     println!("Saved signed transaction to file: {}", filename);
 

@@ -107,7 +107,7 @@ impl Transaction {
             receiver,
             close_remainder_to,
         };
-        let transaction = Transaction {
+        Transaction {
             sender,
             fee,
             first_valid,
@@ -116,9 +116,9 @@ impl Transaction {
             genesis_id: genesis_id.to_string(),
             genesis_hash,
             txn_type: TransactionType::Payment(payment),
-        };
-        transaction
+        }
     }
+
     pub fn new_key_registration(
         sender: Address,
         fee_per_byte: MicroAlgos,
@@ -152,6 +152,39 @@ impl Transaction {
         };
         transaction.fee = MIN_TXN_FEE.max(fee_per_byte * transaction.estimate_size()?);
         Ok(transaction)
+    }
+
+    pub fn new_key_registration_with_fee(
+        sender: Address,
+        fee: MicroAlgos,
+        first_valid: Round,
+        last_valid: Round,
+        note: Vec<u8>,
+        genesis_id: &str,
+        genesis_hash: HashDigest,
+        vote_pk: VotePK,
+        selection_pk: VRFPK,
+        vote_first: Round,
+        vote_last: Round,
+        vote_key_dilution: u64,
+    ) -> Transaction {
+        let key_registration = KeyRegistration {
+            vote_pk,
+            selection_pk,
+            vote_first,
+            vote_last,
+            vote_key_dilution,
+        };
+        Transaction {
+            sender,
+            fee,
+            first_valid,
+            last_valid,
+            note,
+            genesis_id: genesis_id.to_string(),
+            genesis_hash,
+            txn_type: TransactionType::KeyRegistration(key_registration),
+        }
     }
 
     fn estimate_size(&self) -> Result<u64, Error> {

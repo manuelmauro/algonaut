@@ -1,10 +1,10 @@
 use serde::Deserialize;
 
-use crate::{Ed25519PublicKey, Error, MasterDerivationKey};
+use crate::crypto::MultisigSignature;
 use crate::kmd::requests::*;
 use crate::kmd::responses::*;
-use crate::crypto::MultisigSignature;
 use crate::transaction::Transaction;
+use crate::{Ed25519PublicKey, Error, MasterDerivationKey};
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 
@@ -303,10 +303,10 @@ pub mod requests {
     use serde::de::DeserializeOwned;
     use serde::Serialize;
 
-    use crate::{Ed25519PublicKey, MasterDerivationKey};
-    use crate::kmd::responses::*;
     use crate::crypto::MultisigSignature;
+    use crate::kmd::responses::*;
     use crate::util::serialize_bytes;
+    use crate::{Ed25519PublicKey, MasterDerivationKey};
 
     pub trait APIV1Request: Serialize {
         type Response: DeserializeOwned;

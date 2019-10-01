@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .find(|wallet| wallet.name == "testwallet")
     {
         Some(wallet) => wallet.id,
-        None => Err("Wallet not found")?,
+        None => return Err("Wallet not found".into()),
     };
 
     let init_response = kmd_client.init_wallet_handle(&wallet_id, "testpassword")?;
@@ -46,13 +46,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         &genesis_id,
         genesis_hash,
         to_address,
-        MicroAlgos(200000),
+        MicroAlgos(200_000),
         None,
     )?;
 
-    let sign_response = kmd_client.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;
+    let sign_response =
+        kmd_client.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;
 
-    println!("kmd made signed transaction with {} bytes", sign_response.signed_transaction.len());
+    println!(
+        "kmd made signed transaction with {} bytes",
+        sign_response.signed_transaction.len()
+    );
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens

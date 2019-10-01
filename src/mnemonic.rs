@@ -1,3 +1,4 @@
+use crate::Error;
 use sha2::Digest;
 use static_assertions::const_assert_eq;
 
@@ -16,9 +17,12 @@ const_assert_eq!(mnemonic_constants; MNEM_LEN_WORDS * BITS_PER_WORD - (CHECKSUM_
 /// Converts a 32-byte key into a 25 word mnemonic. The generated
 /// mnemonic includes a checksum. Each word in the mnemonic represents 11 bits
 /// of data, and the last 11 bits are reserved for the checksum.
-pub fn from_key(key: &[u8]) -> Result<String, String> {
+pub fn from_key(key: &[u8]) -> Result<String, Error> {
     if key.len() != KEY_LEN_BYTES {
-        return Err(format!("key length must be {} bytes", KEY_LEN_BYTES));
+        return Err(Error::Api(format!(
+            "key length must be {} bytes",
+            KEY_LEN_BYTES
+        )));
     }
     let check_word = checksum(key);
     let mut words: Vec<_> = to_u11_array(key).into_iter().map(get_word).collect();
@@ -30,26 +34,35 @@ pub fn from_key(key: &[u8]) -> Result<String, String> {
 /// key used to create it. It returns an error if the passed mnemonic has
 /// an incorrect checksum, if the number of words is unexpected, or if one
 /// of the passed words is not found in the words list.
-pub fn to_key(string: &str) -> Result<[u8; KEY_LEN_BYTES], String> {
+pub fn to_key(string: &str) -> Result<[u8; KEY_LEN_BYTES], Error> {
     let mut mnemonic: Vec<&str> = string.split(MNEMONIC_DELIM).collect();
     if mnemonic.len() != MNEM_LEN_WORDS {
-        return Err(format!("mnemonic {:?} needed {} words, had {}", mnemonic, MNEM_LEN_WORDS, mnemonic.len()));
+        return Err(Error::Api(format!(
+            "mnemonic {:?} needed {} words, had {}",
+            mnemonic,
+            MNEM_LEN_WORDS,
+            mnemonic.len()
+        )));
     }
     let check_word = mnemonic.pop().unwrap();
     let mut nums = Vec::with_capacity(mnemonic.len());
     for word in mnemonic {
-        let n = wordlist::WORDLIST
-            .get_full(word)
-            .ok_or("mnemonic contains word that is not in word list")?;
+        let n = wordlist::WORDLIST.get_full(word).ok_or_else(|| {
+            Error::Api("mnemonic contains word that is not in word list".to_string())
+        })?;
         nums.push(n.0 as u32);
     }
     let mut bytes = to_byte_array(&nums);
     if bytes.len() != KEY_LEN_BYTES + 1 {
-        return Err(format!("wrong key length {}, should be {}", bytes.len(), KEY_LEN_BYTES + 1));
+        return Err(Error::Api(format!(
+            "wrong key length {}, should be {}",
+            bytes.len(),
+            KEY_LEN_BYTES + 1
+        )));
     }
     let _ = bytes.pop();
     if check_word != checksum(&bytes) {
-        return Err("checksum failed to validate".to_string());
+        return Err(Error::Api("checksum failed to validate".to_string()));
     }
     let mut key = [0; KEY_LEN_BYTES];
     key.copy_from_slice(&bytes);
@@ -102,5 +115,7 @@ fn to_byte_array(nums: &[u32]) -> Vec<u8> {
 }
 
 fn get_word(i: u32) -> &'static str {
-    wordlist::WORDLIST.get_index(i as usize).unwrap()
+    wordlist::WORDLIST
+        .get_index(i as usize)
+        .expect("Word out of range")
 }

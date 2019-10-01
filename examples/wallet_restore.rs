@@ -1,8 +1,8 @@
 use std::error::Error;
 
-use algosdk::{KmdClient, MasterDerivationKey, mnemonic};
+use algosdk::{mnemonic, KmdClient, MasterDerivationKey};
 
-fn main() -> Result<(), Box<dyn Error>>{
+fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:8080";
     let kmd_token = "contents-of-kmd.token";
 
@@ -12,7 +12,8 @@ fn main() -> Result<(), Box<dyn Error>>{
     let key_bytes = mnemonic::to_key(backup_phrase)?;
     let mdk = MasterDerivationKey(key_bytes);
 
-    let create_wallet_response = kmd_client.create_wallet("testwallet", "testpassword", "sqlite", mdk)?;
+    let create_wallet_response =
+        kmd_client.create_wallet("testwallet", "testpassword", "sqlite", mdk)?;
     let wallet = create_wallet_response.wallet;
 
     println!("Created wallet {} with ID: {}", wallet.name, wallet.id);

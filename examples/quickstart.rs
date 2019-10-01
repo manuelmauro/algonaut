@@ -9,6 +9,12 @@ fn main() {
     let algod_client = AlgodClient::new(algod_address, algod_token);
     let kmd_client = KmdClient::new(kmd_address, kmd_token);
 
-    println!("Algod versions: {:?}", algod_client.versions().unwrap().versions);
-    println!("Kmd versions: {:?}", kmd_client.versions().unwrap().versions);
+    println!(
+        "Algod versions: {:?}",
+        algod_client.versions().unwrap().versions
+    );
+    println!(
+        "Kmd versions: {:?}",
+        kmd_client.versions().unwrap().versions
+    );
 }

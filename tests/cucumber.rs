@@ -1,19 +1,20 @@
-use data_encoding::BASE64;
-
-use algosdk::account::Account;
-use algosdk::auction::{Bid, SignedBid};
-use algosdk::algod::models::NodeStatus;
-use algosdk::AlgodClient;
-use algosdk::KmdClient;
-use algosdk::crypto::{Address, MultisigAddress};
-use algosdk::transaction::{SignedTransaction, Transaction};
-use algosdk::{
-    mnemonic, Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
-};
-use cucumber::{Steps, StepsBuilder};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::time::Duration;
+
+use cucumber::{Steps, StepsBuilder};
+use data_encoding::BASE64;
+
+use algosdk::{
+    Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, mnemonic, Round, VotePK, VRFPK,
+};
+use algosdk::account::Account;
+use algosdk::algod::models::NodeStatus;
+use algosdk::AlgodClient;
+use algosdk::auction::{Bid, SignedBid};
+use algosdk::crypto::{Address, MultisigAddress};
+use algosdk::KmdClient;
+use algosdk::transaction::{SignedTransaction, Transaction};
 
 #[derive(Default)]
 pub struct World {
@@ -668,7 +669,7 @@ pub fn steps() -> Steps<World> {
         })
         .when("I sign the bid", |world: &mut World, _step| {
             let account = world.account.as_ref().unwrap();
-            world.signed_bid = Some(account.sign_bid(world.bid.unwrap()));
+            world.signed_bid = Some(account.sign_bid(world.bid.unwrap()).unwrap());
             world.old_bid = world.signed_bid;
         })
         .when("I encode and decode the bid", |world: &mut World, _step| {
@@ -689,7 +690,7 @@ pub fn steps() -> Steps<World> {
             let path = std::env::current_dir().expect("Couldn't get current dir").parent().unwrap().join(format!("temp/raw{}.tx", world.num));
             let data = rmp_serde::to_vec_named(world.signed_transaction.as_ref().unwrap()).unwrap();
             let mut f = File::create(path).unwrap();
-            let _ = f.write_all(&data).unwrap();
+            f.write_all(&data).unwrap();
         })
         .then("the transaction should still be the same", |world: &mut World, _step| {
             let path = std::env::current_dir().expect("Couldn't get current dir");
@@ -722,7 +723,7 @@ pub fn steps() -> Steps<World> {
 
             let data = rmp_serde::to_vec_named(&signed_transaction).unwrap();
             let mut f = File::create(&path).unwrap();
-            let _ = f.write_all(&data).unwrap();
+            f.write_all(&data).unwrap();
 
             world.account = Some(account);
         })
@@ -739,17 +740,18 @@ cucumber! {
 */
 #[allow(unused_imports)]
 fn main() {
+    use cucumber::{CucumberBuilder, DefaultOutput, OutputVisitor, Scenario, Steps};
     use std::path::Path;
-    use cucumber::{CucumberBuilder, Scenario, Steps, DefaultOutput, OutputVisitor};
 
     let output = DefaultOutput::new();
     let instance = {
         let mut instance = CucumberBuilder::new(output);
 
         instance
-            .features(<[_]>::into_vec(Box::new([(Path::new("./features").to_path_buf())])))
-            .steps(Steps::combine((&[crate::steps]
-            ).iter().map(|f| f())));
+            .features(<[_]>::into_vec(Box::new([
+                (Path::new("./features").to_path_buf())
+            ])))
+            .steps(Steps::combine((&[crate::steps]).iter().map(|f| f())));
         instance
     };
 

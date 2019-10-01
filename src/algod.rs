@@ -1,9 +1,11 @@
 use reqwest::header::HeaderMap;
 
-use crate::algod::models::{Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee, TransactionID, TransactionList, TransactionParams, Version};
-use crate::{Round, Error};
+use crate::algod::models::{
+    Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee,
+    TransactionID, TransactionList, TransactionParams, Version,
+};
 use crate::transaction::SignedTransaction;
-
+use crate::{Error, Round};
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 
@@ -11,7 +13,7 @@ const AUTH_HEADER: &str = "X-Algo-API-Token";
 pub struct AlgodClient {
     url: String,
     token: String,
-    headers: HeaderMap
+    headers: HeaderMap,
 }
 
 impl AlgodClient {
@@ -64,7 +66,10 @@ impl AlgodClient {
     /// Waits for a block to appear after the specified round and returns the node status at the time
     pub fn status_after_block(&self, round: Round) -> Result<NodeStatus, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/status/wait-for-block-after/{}", self.url, round.0))
+            .get(&format!(
+                "{}/v1/status/wait-for-block-after/{}",
+                self.url, round.0
+            ))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -124,9 +129,15 @@ impl AlgodClient {
     }
 
     /// Get a specified pending transaction
-    pub fn pending_transaction_information(&self, transaction_id: &str) -> Result<Transaction, Error> {
+    pub fn pending_transaction_information(
+        &self,
+        transaction_id: &str,
+    ) -> Result<Transaction, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/transactions/pending/{}", self.url, transaction_id))
+            .get(&format!(
+                "{}/v1/transactions/pending/{}",
+                self.url, transaction_id
+            ))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -136,7 +147,15 @@ impl AlgodClient {
     }
 
     /// Get a list of confirmed transactions, limited to filters if specified
-    pub fn transactions(&self, address: &str, first_round: Option<Round>, last_round: Option<Round>, from_date: Option<String>, to_date: Option<String>, limit: Option<u64>) -> Result<TransactionList, Error> {
+    pub fn transactions(
+        &self,
+        address: &str,
+        first_round: Option<Round>,
+        last_round: Option<Round>,
+        from_date: Option<String>,
+        to_date: Option<String>,
+        limit: Option<u64>,
+    ) -> Result<TransactionList, Error> {
         let mut query = Vec::new();
         if let Some(first_round) = first_round {
             query.push(("firstRound", first_round.0.to_string()))
@@ -165,8 +184,11 @@ impl AlgodClient {
     }
 
     /// Broadcasts a transaction to the network
-    pub fn send_transaction(&self, signed_transaction: &SignedTransaction) -> Result<TransactionID, Error> {
-        let bytes = rmp_serde::to_vec_named(signed_transaction).unwrap();
+    pub fn send_transaction(
+        &self,
+        signed_transaction: &SignedTransaction,
+    ) -> Result<TransactionID, Error> {
+        let bytes = rmp_serde::to_vec_named(signed_transaction)?;
         self.raw_transaction(&bytes)
     }
 
@@ -196,9 +218,16 @@ impl AlgodClient {
     }
 
     /// Gets a specific confirmed transaction
-    pub fn transaction_information(&self, address: &str, transaction_id: &str) -> Result<Transaction, Error> {
+    pub fn transaction_information(
+        &self,
+        address: &str,
+        transaction_id: &str,
+    ) -> Result<Transaction, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/account/{}/transaction/{}", self.url, address, transaction_id))
+            .get(&format!(
+                "{}/v1/account/{}/transaction/{}",
+                self.url, address, transaction_id
+            ))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -337,7 +366,12 @@ pub mod models {
         pub last_round: Round,
 
         /// Note is a free form data
-        #[serde(rename = "noteb64", default, skip_serializing_if = "Vec::is_empty", deserialize_with = "deserialize_bytes")]
+        #[serde(
+            rename = "noteb64",
+            default,
+            skip_serializing_if = "Vec::is_empty",
+            deserialize_with = "deserialize_bytes"
+        )]
         pub note: Vec<u8>,
 
         /// The block number this transaction appeared in
@@ -348,7 +382,11 @@ pub mod models {
         /// pool (if non-empty).  A non-empty pool_error does not guarantee that the
         /// transaction will never be committed; other nodes may not have evicted the
         /// transaction and may attempt to commit it in the future.
-        #[serde(rename = "poolerror", default, skip_serializing_if = "String::is_empty")]
+        #[serde(
+            rename = "poolerror",
+            default,
+            skip_serializing_if = "String::is_empty"
+        )]
         pub pool_error: String,
 
         #[serde(default, skip_serializing_if = "Option::is_none")]
