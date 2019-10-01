@@ -7,7 +7,7 @@ use ring::signature::KeyPair;
 use crate::crypto::{Address, Signature, MultisigAddress, MultisigSubsig, MultisigSignature};
 use crate::transaction::{SignedTransaction, Transaction};
 use sha2::Digest;
-use crate::Ed25519PublicKey;
+use crate::{Ed25519PublicKey, Error};
 use std::borrow::Borrow;
 use crate::auction::{Bid, SignedBid};
 
@@ -70,8 +70,8 @@ impl Account {
         }
     }
 
-    pub fn sign_transaction(&self, transaction: &Transaction) -> Result<SignedTransaction, String> {
-        let encoded_tx = rmp_serde::to_vec_named(transaction).map_err(|err| err.to_string())?;
+    pub fn sign_transaction(&self, transaction: &Transaction) -> Result<SignedTransaction, Error> {
+        let encoded_tx = rmp_serde::to_vec_named(transaction)?;
         let mut prefix_encoded_tx = b"TX".to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
         let signature = self.sign(&prefix_encoded_tx);
@@ -84,13 +84,13 @@ impl Account {
         })
     }
 
-    pub fn sign_multisig_transaction(&self, from: MultisigAddress, transaction: &Transaction) -> Result<SignedTransaction, String> {
+    pub fn sign_multisig_transaction(&self, from: MultisigAddress, transaction: &Transaction) -> Result<SignedTransaction, Error> {
         if from.address() != transaction.sender {
-            return Err("Transaction sender does not match multisig identity".to_string());
+            return Err(Error::Api("Transaction sender does not match multisig identity".to_string()));
         }
         let my_public_key = Ed25519PublicKey(self.address.0);
         if !from.public_keys.contains(&my_public_key) {
-            return Err("Multisig identity does not contain this secret key".to_string());
+            return Err(Error::Api("Multisig identity does not contain this secret key".to_string()));
         }
         let signed_transaction = self.sign_transaction(transaction)?;
         let subsigs: Vec<MultisigSubsig> = from.public_keys.iter().map(|key| {
@@ -120,14 +120,14 @@ impl Account {
         })
     }
 
-    pub fn append_multisig_transaction(&self, from: MultisigAddress, transaction: &SignedTransaction) -> Result<SignedTransaction, String> {
+    pub fn append_multisig_transaction(&self, from: MultisigAddress, transaction: &SignedTransaction) -> Result<SignedTransaction, Error> {
         let from_transaction = self.sign_multisig_transaction(from, &transaction.transaction)?;
         Self::merge_multisig_transactions(&[&from_transaction, transaction])
     }
 
-    pub fn merge_multisig_transactions<T: Borrow<SignedTransaction>>(transactions: &[T]) -> Result<SignedTransaction, String> {
+    pub fn merge_multisig_transactions<T: Borrow<SignedTransaction>>(transactions: &[T]) -> Result<SignedTransaction, Error> {
         if transactions.len() < 2 {
-            return Err("Can't merge only one transaction".to_string());
+            return Err(Error::Api("Can't merge only one transaction".to_string()));
         }
         let mut merged = transactions[0].borrow().clone();
         for transaction in transactions {
@@ -136,12 +136,12 @@ impl Account {
             assert_eq!(merged_msig.subsigs.len(), msig.subsigs.len());
             for (merged_subsig, subsig) in merged_msig.subsigs.iter_mut().zip(&msig.subsigs) {
                 if subsig.key != merged_subsig.key {
-                    return Err("transaction msig public keys do not match".to_string())
+                    return Err(Error::Api("transaction msig public keys do not match".to_string()))
                 }
                 if merged_subsig.sig.is_none() {
                     merged_subsig.sig = subsig.sig
                 } else if merged_subsig.sig != subsig.sig && subsig.sig.is_some() {
-                    return Err("transaction msig has mismatched signatures".to_string());
+                    return Err(Error::Api("transaction msig has mismatched signatures".to_string()));
                 }
             }
         }

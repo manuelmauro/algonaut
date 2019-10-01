@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize, Serializer};
 
 use crate::account::Account;
 use crate::crypto::{Address, MultisigSignature, Signature};
-use crate::{HashDigest, MicroAlgos, Round, VotePK, VRFPK};
+use crate::{Error, HashDigest, MicroAlgos, Round, VotePK, VRFPK};
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
 
@@ -71,7 +71,7 @@ impl Transaction {
         receiver: Address,
         amount: MicroAlgos,
         close_remainder_to: Option<Address>,
-    ) -> Result<Transaction, String> {
+    ) -> Result<Transaction, Error> {
         let payment = Payment {
             amount,
             receiver,
@@ -87,8 +87,7 @@ impl Transaction {
             genesis_hash,
             txn_type: TransactionType::Payment(payment),
         };
-        transaction.fee =
-            MIN_TXN_FEE.max(MicroAlgos(fee_per_byte.0 * transaction.estimate_size()?));
+        transaction.fee = MIN_TXN_FEE.max(fee_per_byte * transaction.estimate_size()?);
         Ok(transaction)
     }
     pub fn new_payment_flat_fee(
@@ -102,7 +101,7 @@ impl Transaction {
         receiver: Address,
         amount: MicroAlgos,
         close_remainder_to: Option<Address>,
-    ) -> Result<Transaction, String> {
+    ) -> Transaction {
         let payment = Payment {
             amount,
             receiver,
@@ -118,7 +117,7 @@ impl Transaction {
             genesis_hash,
             txn_type: TransactionType::Payment(payment),
         };
-        Ok(transaction)
+        transaction
     }
     pub fn new_key_registration(
         sender: Address,
@@ -133,7 +132,7 @@ impl Transaction {
         vote_first: Round,
         vote_last: Round,
         vote_key_dilution: u64,
-    ) -> Result<Transaction, String> {
+    ) -> Result<Transaction, Error> {
         let key_registration = KeyRegistration {
             vote_pk,
             selection_pk,
@@ -151,16 +150,13 @@ impl Transaction {
             genesis_hash,
             txn_type: TransactionType::KeyRegistration(key_registration),
         };
-        transaction.fee =
-            MIN_TXN_FEE.max(MicroAlgos(fee_per_byte.0 * transaction.estimate_size()?));
+        transaction.fee = MIN_TXN_FEE.max(fee_per_byte * transaction.estimate_size()?);
         Ok(transaction)
     }
 
-    fn estimate_size(&self) -> Result<u64, String> {
+    fn estimate_size(&self) -> Result<u64, Error> {
         let account = Account::generate();
-        let len = rmp_serde::to_vec_named(&account.sign_transaction(self)?)
-            .map_err(|err| err.to_string())?
-            .len() as u64;
+        let len = rmp_serde::to_vec_named(&account.sign_transaction(self)?)?.len() as u64;
         Ok(len)
     }
 }
@@ -179,8 +175,8 @@ pub struct SignedTransaction {
 
 impl Serialize for Transaction {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         use serde::ser::SerializeStruct;
         let type_len = match &self.txn_type {

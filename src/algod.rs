@@ -2,6 +2,7 @@ use reqwest::header::HeaderMap;
 
 use crate::algod::models::{Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee, TransactionID, TransactionList, TransactionParams, Version};
 use crate::{Round, Error};
+use crate::transaction::SignedTransaction;
 
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
@@ -161,6 +162,12 @@ impl AlgodClient {
             .error_for_status()?
             .json()?;
         Ok(response)
+    }
+
+    /// Broadcasts a transaction to the network
+    pub fn send_transaction(&self, signed_transaction: &SignedTransaction) -> Result<TransactionID, Error> {
+        let bytes = rmp_serde::to_vec_named(signed_transaction).unwrap();
+        self.raw_transaction(&bytes)
     }
 
     /// Broadcasts a raw transaction to the network

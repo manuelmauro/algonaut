@@ -6,8 +6,9 @@ use data_encoding::BASE64;
 use crate::crypto::{MultisigSignature, MultisigSubsig, Address, Signature};
 use std::error::Error;
 use std::fmt::{Display, Formatter, Debug};
-use static_assertions::_core::ops::Add;
+use static_assertions::_core::ops::{Add, Sub};
 use crate::kmd::responses::ExportKeyResponse;
+use std::ops::Mul;
 
 impl Serialize for HashDigest {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
@@ -134,6 +135,7 @@ impl<'de> Deserialize<'de> for Signature {
 }
 
 struct SignatureVisitor;
+
 impl<'de> Visitor<'de> for SignatureVisitor {
     type Value = [u8; 64];
 
@@ -299,6 +301,57 @@ impl Add<u64> for MicroAlgos {
     }
 }
 
+impl Sub for Round {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Round(self.0 - rhs.0)
+    }
+}
+
+impl Sub<u64> for Round {
+    type Output = Self;
+
+    fn sub(self, rhs: u64) -> Self::Output {
+        Round(self.0 - rhs)
+    }
+}
+
+impl Sub for MicroAlgos {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        MicroAlgos(self.0 - rhs.0)
+    }
+}
+
+impl Sub<u64> for MicroAlgos {
+    type Output = Self;
+
+    fn sub(self, rhs: u64) -> Self::Output {
+        MicroAlgos(self.0 - rhs)
+    }
+}
+
+// Intentionally not implementing Mul<Rhs=Self>
+// If you're multiplying a Round by a Round or MicroAlgos by MicroAlgos, something has gone wrong in your math
+// That would give you MicroAlgos squared or Rounds squared and those don't exist
+impl Mul<u64> for Round {
+    type Output = Self;
+
+    fn mul(self, rhs: u64) -> Self::Output {
+        Round(self.0 * rhs)
+    }
+}
+
+impl Mul<u64> for MicroAlgos {
+    type Output = Self;
+
+    fn mul(self, rhs: u64) -> Self::Output {
+        MicroAlgos(self.0 * rhs)
+    }
+}
+
 impl PartialEq for Signature {
     fn eq(&self, other: &Self) -> bool {
         for i in 0..64 {
@@ -309,4 +362,5 @@ impl PartialEq for Signature {
         true
     }
 }
+
 impl Eq for Signature {}

@@ -397,14 +397,12 @@ pub fn steps() -> Steps<World> {
         .when("I send the transaction", |world: &mut World, _step| {
             let algod_client = world.algod_client.as_ref().unwrap();
             let signed_transaction = world.signed_transaction.as_ref().unwrap();
-            let bytes = rmp_serde::to_vec_named(signed_transaction).unwrap();
-            world.transaction_id = Some(algod_client.raw_transaction(&bytes).unwrap().tx_id);
+            world.transaction_id = Some(algod_client.send_transaction(signed_transaction).unwrap().tx_id);
         })
         .when("I send the multisig transaction", |world: &mut World, _step| {
             let algod_client = world.algod_client.as_ref().unwrap();
             let signed_transaction = world.signed_transaction.as_ref().unwrap();
-            let bytes = rmp_serde::to_vec_named(signed_transaction).unwrap();
-            world.err = algod_client.raw_transaction(&bytes).is_err();
+            world.err = algod_client.send_transaction(signed_transaction).is_err();
         })
         .then("the transaction should go through", |world: &mut World, _step| {
             let algod_client = world.algod_client.as_ref().unwrap();
@@ -565,7 +563,7 @@ pub fn steps() -> Steps<World> {
                 world.receiver.expect("No receiver"),
                 world.amount.expect("No amount"),
                 world.close,
-            ).unwrap());
+            ));
         })
         .when("I create the multisig payment transaction", |world: &mut World, _step| {
             world.transaction = Some(Transaction::new_payment(
