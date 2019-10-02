@@ -5,16 +5,18 @@ use std::time::Duration;
 use cucumber::{Steps, StepsBuilder};
 use data_encoding::BASE64;
 
-use algosdk::{
-    Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, mnemonic, Round, VotePK, VRFPK,
-};
 use algosdk::account::Account;
 use algosdk::algod::models::NodeStatus;
-use algosdk::AlgodClient;
 use algosdk::auction::{Bid, SignedBid};
 use algosdk::crypto::{Address, MultisigAddress};
+use algosdk::transaction::{
+    BaseTransaction, KeyRegistration, Payment, SignedTransaction, Transaction,
+};
+use algosdk::AlgodClient;
 use algosdk::KmdClient;
-use algosdk::transaction::{SignedTransaction, Transaction};
+use algosdk::{
+    mnemonic, Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
+};
 
 #[derive(Default)]
 pub struct World {
@@ -189,17 +191,23 @@ pub fn steps() -> Steps<World> {
             };
             let algod_client = world.algod_client.as_ref().unwrap();
             let params = algod_client.transaction_params().unwrap();
-            world.transaction = Some(Transaction::new_payment(
-                Address::from_string(&world.accounts[0]).unwrap(),
-                params.fee,
-                params.last_round,
-                params.last_round + 1000,
-                world.note.clone(),
-                &params.genesis_id,
-                params.genesis_hash,
-                Address::from_string(&world.accounts[1]).unwrap(),
+            let base = BaseTransaction {
+                sender: Address::from_string(&world.accounts[0]).unwrap(),
+                first_valid: params.last_round,
+                last_valid: params.last_round + 1000,
+                note: world.note.clone(),
+                genesis_id: params.genesis_id,
+                genesis_hash: params.genesis_hash,
+            };
+            let payment = Payment {
                 amount,
-                None,
+                receiver: Address::from_string(&world.accounts[1]).unwrap(),
+                close_remainder_to: None,
+            };
+            world.transaction = Some(Transaction::new_payment(
+                base,
+                params.fee,
+                payment
             ).unwrap());
             world.last_round = Some(params.last_round);
             world.public_key = Some(Address::from_string(&world.accounts[0]).unwrap());
@@ -215,17 +223,23 @@ pub fn steps() -> Steps<World> {
             let params = algod_client.transaction_params().unwrap();
             let addresses: Vec<Address> = world.accounts.iter().map(|account| Address::from_string(account).unwrap()).collect();
             let multisig = MultisigAddress::new(1, 1, &addresses).unwrap();
-            world.transaction = Some(Transaction::new_payment(
-                multisig.address(),
-                params.fee,
-                params.last_round,
-                params.last_round + 1000,
-                world.note.clone(),
-                &params.genesis_id,
-                params.genesis_hash,
-                Address::from_string(&world.accounts[1]).unwrap(),
+            let base = BaseTransaction {
+                sender: multisig.address(),
+                first_valid: params.last_round,
+                last_valid: params.last_round + 1000,
+                note: world.note.clone(),
+                genesis_id: params.genesis_id,
+                genesis_hash: params.genesis_hash,
+            };
+            let payment = Payment {
                 amount,
-                None,
+                receiver: Address::from_string(&world.accounts[1]).unwrap(),
+                close_remainder_to: None,
+            };
+            world.transaction = Some(Transaction::new_payment(
+                base,
+                params.fee,
+                payment
             ).unwrap());
             world.last_round = Some(params.last_round);
             world.public_key = Some(Address::from_string(&world.accounts[0]).unwrap());
@@ -539,61 +553,85 @@ pub fn steps() -> Steps<World> {
             }
         })
         .when("I create the payment transaction", |world: &mut World, _step| {
+            let base = BaseTransaction {
+                sender: world.public_key.expect("No public key"),
+                first_valid: world.first_valid.expect("No first valid"),
+                last_valid: world.last_valid.expect("No last valid"),
+                note: world.note.clone(),
+                genesis_id: world.genesis_id.clone(),
+                genesis_hash: world.genesis_hash.expect("No genesis hash"),
+            };
+            let payment = Payment {
+                amount: world.amount.expect("No amount"),
+                receiver: world.receiver.expect("No receiver"),
+                close_remainder_to: world.close,
+            };
             world.transaction = Some(Transaction::new_payment(
-                world.public_key.expect("No public key"),
+                base,
                 world.fee.expect("No fee"),
-                world.first_valid.expect("No first valid"),
-                world.last_valid.expect("No last valid"),
-                world.note.clone(),
-                &world.genesis_id,
-                world.genesis_hash.expect("No genesis hash"),
-                world.receiver.expect("No receiver"),
-                world.amount.expect("No amount"),
-                world.close,
+                payment
             ).unwrap());
         })
         .when("I create the flat fee payment transaction", |world: &mut World, _step| {
+            let base = BaseTransaction {
+                sender: world.public_key.expect("No public key"),
+                first_valid: world.first_valid.expect("No first valid"),
+                last_valid: world.last_valid.expect("No last valid"),
+                note: world.note.clone(),
+                genesis_id: world.genesis_id.clone(),
+                genesis_hash: world.genesis_hash.expect("No genesis hash"),
+            };
+            let payment = Payment {
+                amount: world.amount.expect("No amount"),
+                receiver: world.receiver.expect("No receiver"),
+                close_remainder_to: world.close,
+            };
             world.transaction = Some(Transaction::new_payment_flat_fee(
-                world.public_key.expect("No public key"),
+                base,
                 world.fee.expect("No fee"),
-                world.first_valid.expect("No first valid"),
-                world.last_valid.expect("No last valid"),
-                world.note.clone(),
-                &world.genesis_id,
-                world.genesis_hash.expect("No genesis hash"),
-                world.receiver.expect("No receiver"),
-                world.amount.expect("No amount"),
-                world.close,
+                payment
             ));
         })
         .when("I create the multisig payment transaction", |world: &mut World, _step| {
+            let base = BaseTransaction {
+                sender: world.multisig.as_ref().expect("No multisig address").address(),
+                first_valid: world.first_valid.expect("No first valid"),
+                last_valid: world.last_valid.expect("No last valid"),
+                note: world.note.clone(),
+                genesis_id: world.genesis_id.clone(),
+                genesis_hash: world.genesis_hash.expect("No genesis hash"),
+            };
+            let payment = Payment {
+                amount: world.amount.expect("No amount"),
+                receiver: world.receiver.expect("No receiver"),
+                close_remainder_to: world.close,
+            };
             world.transaction = Some(Transaction::new_payment(
-                world.multisig.as_ref().expect("No multisig address").address(),
+                base,
                 world.fee.expect("No fee"),
-                world.first_valid.expect("No first valid"),
-                world.last_valid.expect("No last valid"),
-                world.note.clone(),
-                &world.genesis_id,
-                world.genesis_hash.expect("No genesis hash"),
-                world.receiver.expect("No receiver"),
-                world.amount.expect("No amount"),
-                world.close,
+                payment
             ).unwrap());
         })
         .when("I create the key registration transaction", |world: &mut World, _step| {
+            let base = BaseTransaction {
+                sender: world.public_key.expect("No public key"),
+                first_valid: world.first_valid.expect("No first valid"),
+                last_valid: world.last_valid.expect("No last valid"),
+                note: world.note.clone(),
+                genesis_id: world.genesis_id.clone(),
+                genesis_hash: world.genesis_hash.expect("No genesis hash"),
+            };
+            let key_registration = KeyRegistration {
+                vote_pk: world.vote_pk.expect("No vote public key"),
+                selection_pk: world.vrf_pk.expect("No VRFPK"),
+                vote_first: world.vote_first.expect("No vote first"),
+                vote_last: world.vote_last.expect("No vote last"),
+                vote_key_dilution: world.vote_key_dilution.expect("No vote key dilution"),
+            };
             world.transaction = Some(Transaction::new_key_registration(
-                world.public_key.expect("No public key"),
+                base,
                 world.fee.expect("No fee"),
-                world.first_valid.expect("No first valid"),
-                world.last_valid.expect("No last valid"),
-                world.note.clone(),
-                &world.genesis_id,
-                world.genesis_hash.expect("No genesis hash"),
-                world.vote_pk.expect("No vote public key"),
-                world.vrf_pk.expect("No VRFPK"),
-                world.vote_first.expect("No vote first"),
-                world.vote_last.expect("No vote last"),
-                world.vote_key_dilution.expect("No vote key dilution"),
+                key_registration
             ).unwrap());
         })
         .when("I sign the transaction with the private key", |world: &mut World, _step| {

@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Write;
 
 use algosdk::account::Account;
-use algosdk::transaction::Transaction;
+use algosdk::transaction::{BaseTransaction, Payment, Transaction};
 use algosdk::{mnemonic, Address, HashDigest, MicroAlgos, Round};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -16,18 +16,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     let first_round = Round(642_715);
     let last_round = first_round + 1000;
 
-    let transaction = Transaction::new_payment(
-        account.address(),
-        fee,
-        first_round,
-        last_round,
-        Vec::new(),
-        "",
-        HashDigest([0; 32]),
-        Address::from_string("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4")?,
+    let base = BaseTransaction {
+        sender: account.address(),
+        first_valid: first_round,
+        last_valid: last_round,
+        note: Vec::new(),
+        genesis_id: "".to_string(),
+        genesis_hash: HashDigest([0; 32]),
+    };
+    let payment = Payment {
         amount,
-        None,
-    )?;
+        receiver: Address::from_string(
+            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
+        )?,
+        close_remainder_to: None,
+    };
+
+    let transaction = Transaction::new_payment(base, fee, payment)?;
 
     println!("Made unsigned transaction: {:?}", transaction);
 

@@ -6,6 +6,17 @@ use crate::{Error, HashDigest, MicroAlgos, Round, VotePK, VRFPK};
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
 
+/// Fields always used when creating a transaction, used as an argument in creating a Transaction
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct BaseTransaction {
+    pub sender: Address,
+    pub first_valid: Round,
+    pub last_valid: Round,
+    pub note: Vec<u8>,
+    pub genesis_id: String,
+    pub genesis_hash: HashDigest,
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
 pub struct Transaction {
     #[serde(rename = "snd")]
@@ -38,151 +49,96 @@ pub enum TransactionType {
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
 pub struct Payment {
     #[serde(rename = "amt", default)]
-    amount: MicroAlgos,
+    pub amount: MicroAlgos,
     #[serde(rename = "rcv")]
-    receiver: Address,
+    pub receiver: Address,
     #[serde(rename = "close")]
-    close_remainder_to: Option<Address>,
+    pub close_remainder_to: Option<Address>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
 pub struct KeyRegistration {
     #[serde(rename = "votekey")]
-    vote_pk: VotePK,
+    pub vote_pk: VotePK,
     #[serde(rename = "selkey")]
-    selection_pk: VRFPK,
+    pub selection_pk: VRFPK,
     #[serde(rename = "votefst")]
-    vote_first: Round,
+    pub vote_first: Round,
     #[serde(rename = "votelst")]
-    vote_last: Round,
+    pub vote_last: Round,
     #[serde(rename = "votekd")]
-    vote_key_dilution: u64,
+    pub vote_key_dilution: u64,
 }
 
 impl Transaction {
     pub fn new_payment(
-        sender: Address,
+        base: BaseTransaction,
         fee_per_byte: MicroAlgos,
-        first_valid: Round,
-        last_valid: Round,
-        note: Vec<u8>,
-        genesis_id: &str,
-        genesis_hash: HashDigest,
-        receiver: Address,
-        amount: MicroAlgos,
-        close_remainder_to: Option<Address>,
+        payment: Payment,
     ) -> Result<Transaction, Error> {
-        let payment = Payment {
-            amount,
-            receiver,
-            close_remainder_to,
-        };
         let mut transaction = Transaction {
-            sender,
+            sender: base.sender,
             fee: MicroAlgos(0),
-            first_valid,
-            last_valid,
-            note,
-            genesis_id: genesis_id.to_string(),
-            genesis_hash,
+            first_valid: base.first_valid,
+            last_valid: base.last_valid,
+            note: base.note,
+            genesis_id: base.genesis_id,
+            genesis_hash: base.genesis_hash,
             txn_type: TransactionType::Payment(payment),
         };
         transaction.fee = MIN_TXN_FEE.max(fee_per_byte * transaction.estimate_size()?);
         Ok(transaction)
     }
+
     pub fn new_payment_flat_fee(
-        sender: Address,
+        base: BaseTransaction,
         fee: MicroAlgos,
-        first_valid: Round,
-        last_valid: Round,
-        note: Vec<u8>,
-        genesis_id: &str,
-        genesis_hash: HashDigest,
-        receiver: Address,
-        amount: MicroAlgos,
-        close_remainder_to: Option<Address>,
+        payment: Payment,
     ) -> Transaction {
-        let payment = Payment {
-            amount,
-            receiver,
-            close_remainder_to,
-        };
         Transaction {
-            sender,
+            sender: base.sender,
             fee,
-            first_valid,
-            last_valid,
-            note,
-            genesis_id: genesis_id.to_string(),
-            genesis_hash,
+            first_valid: base.first_valid,
+            last_valid: base.last_valid,
+            note: base.note,
+            genesis_id: base.genesis_id,
+            genesis_hash: base.genesis_hash,
             txn_type: TransactionType::Payment(payment),
         }
     }
 
     pub fn new_key_registration(
-        sender: Address,
+        base: BaseTransaction,
         fee_per_byte: MicroAlgos,
-        first_valid: Round,
-        last_valid: Round,
-        note: Vec<u8>,
-        genesis_id: &str,
-        genesis_hash: HashDigest,
-        vote_pk: VotePK,
-        selection_pk: VRFPK,
-        vote_first: Round,
-        vote_last: Round,
-        vote_key_dilution: u64,
+        key_registration: KeyRegistration,
     ) -> Result<Transaction, Error> {
-        let key_registration = KeyRegistration {
-            vote_pk,
-            selection_pk,
-            vote_first,
-            vote_last,
-            vote_key_dilution,
-        };
         let mut transaction = Transaction {
-            sender,
+            sender: base.sender,
             fee: MicroAlgos(0),
-            first_valid,
-            last_valid,
-            note,
-            genesis_id: genesis_id.to_string(),
-            genesis_hash,
+            first_valid: base.first_valid,
+            last_valid: base.last_valid,
+            note: base.note,
+            genesis_id: base.genesis_id,
+            genesis_hash: base.genesis_hash,
             txn_type: TransactionType::KeyRegistration(key_registration),
         };
         transaction.fee = MIN_TXN_FEE.max(fee_per_byte * transaction.estimate_size()?);
         Ok(transaction)
     }
 
-    pub fn new_key_registration_with_fee(
-        sender: Address,
+    pub fn new_key_registration_flat_fee(
+        base: BaseTransaction,
         fee: MicroAlgos,
-        first_valid: Round,
-        last_valid: Round,
-        note: Vec<u8>,
-        genesis_id: &str,
-        genesis_hash: HashDigest,
-        vote_pk: VotePK,
-        selection_pk: VRFPK,
-        vote_first: Round,
-        vote_last: Round,
-        vote_key_dilution: u64,
+        key_registration: KeyRegistration,
     ) -> Transaction {
-        let key_registration = KeyRegistration {
-            vote_pk,
-            selection_pk,
-            vote_first,
-            vote_last,
-            vote_key_dilution,
-        };
         Transaction {
-            sender,
+            sender: base.sender,
             fee,
-            first_valid,
-            last_valid,
-            note,
-            genesis_id: genesis_id.to_string(),
-            genesis_hash,
+            first_valid: base.first_valid,
+            last_valid: base.last_valid,
+            note: base.note,
+            genesis_id: base.genesis_id,
+            genesis_hash: base.genesis_hash,
             txn_type: TransactionType::KeyRegistration(key_registration),
         }
     }
