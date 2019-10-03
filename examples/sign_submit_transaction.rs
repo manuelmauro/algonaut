@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use algosdk::transaction::{BaseTransaction, Payment, Transaction};
+use algosdk::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
 use algosdk::{Address, AlgodClient, KmdClient, MicroAlgos};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         close_remainder_to: None,
     };
 
-    let transaction = Transaction::new_payment(base, MicroAlgos(1000), payment)?;
+    let transaction = Transaction::new(base, MicroAlgos(1000), TransactionType::Payment(payment))?;
 
     let sign_response =
         kmd_client.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;

@@ -95,6 +95,7 @@ fn to_u11_array(bytes: &[u8]) -> Vec<u32> {
     out
 }
 
+// takes an array of 11 byte numbers and converts them to 8 bit numbers
 fn to_byte_array(nums: &[u32]) -> Vec<u8> {
     let mut buf = 0;
     let mut bit_count = 0;
@@ -114,6 +115,7 @@ fn to_byte_array(nums: &[u32]) -> Vec<u8> {
     out
 }
 
+// Gets the word corresponding to the 11 bit number from the word list
 fn get_word(i: u32) -> &'static str {
     wordlist::WORDLIST
         .get_index(i as usize)

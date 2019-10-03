@@ -14,7 +14,7 @@ use std::borrow::Borrow;
 type ChecksumAlg = sha2::Sha512Trunc256;
 
 pub struct Account {
-    pub seed: [u8; 32],
+    seed: [u8; 32],
     address: Address,
     key_pair: KeyPairType,
 }
@@ -44,12 +44,19 @@ impl Account {
         }
     }
 
+    /// Get the public key address of the account
     pub fn address(&self) -> Address {
         self.address
     }
 
+    /// Get the human readable mnemonic of the 32 byte seed
     pub fn mnemonic(&self) -> String {
         crate::mnemonic::from_key(&self.seed).unwrap()
+    }
+
+    /// Get the 32 byte seed
+    pub fn seed(&self) -> [u8; 32] {
+        self.seed
     }
 
     fn sign(&self, bytes: &[u8]) -> Signature {
@@ -59,6 +66,8 @@ impl Account {
         stripped_signature.copy_from_slice(&signature.as_ref()[..64]);
         Signature(stripped_signature)
     }
+
+    /// Sign a bid with the account's private key
     pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, Error> {
         let encoded_bid = rmp_serde::to_vec_named(&bid)?;
         let mut prefix_encoded_bid = b"aB".to_vec();
@@ -70,6 +79,7 @@ impl Account {
         })
     }
 
+    /// Sign a transaction with the account's private key
     pub fn sign_transaction(&self, transaction: &Transaction) -> Result<SignedTransaction, Error> {
         let encoded_tx = rmp_serde::to_vec_named(transaction)?;
         let mut prefix_encoded_tx = b"TX".to_vec();
@@ -84,6 +94,7 @@ impl Account {
         })
     }
 
+    /// Sign the transaction and populate the multisig field of the signed transaction with the given multisig address
     pub fn sign_multisig_transaction(
         &self,
         from: MultisigAddress,
@@ -118,7 +129,6 @@ impl Account {
                 }
             })
             .collect();
-        println!("{}", subsigs.len());
         let multisig = MultisigSignature {
             version: from.version,
             threshold: from.threshold,
@@ -132,6 +142,7 @@ impl Account {
         })
     }
 
+    /// Appends the multisig signature from the given multisig address to the transaction
     pub fn append_multisig_transaction(
         &self,
         from: MultisigAddress,
@@ -141,6 +152,7 @@ impl Account {
         Self::merge_multisig_transactions(&[&from_transaction, transaction])
     }
 
+    /// Returns a signed transaction with the multisig signatures of the passed signed transactions merged
     pub fn merge_multisig_transactions<T: Borrow<SignedTransaction>>(
         transactions: &[T],
     ) -> Result<SignedTransaction, Error> {
@@ -151,11 +163,16 @@ impl Account {
         for transaction in transactions {
             let merged_msig = merged.multisig.as_mut().unwrap();
             let msig = transaction.borrow().multisig.as_ref().unwrap();
+            if merged_msig.subsigs.len() != msig.subsigs.len() {
+                return Err(Error::Api(
+                    "Multisig signatures to merge must have the same number of subsignatures".to_string()
+                ));
+            }
             assert_eq!(merged_msig.subsigs.len(), msig.subsigs.len());
             for (merged_subsig, subsig) in merged_msig.subsigs.iter_mut().zip(&msig.subsigs) {
                 if subsig.key != merged_subsig.key {
                     return Err(Error::Api(
-                        "transaction msig public keys do not match".to_string(),
+                        "Transaction msig public keys do not match".to_string(),
                     ));
                 }
                 if merged_subsig.sig.is_none() {

@@ -10,7 +10,7 @@ use algosdk::algod::models::NodeStatus;
 use algosdk::auction::{Bid, SignedBid};
 use algosdk::crypto::{Address, MultisigAddress};
 use algosdk::transaction::{
-    BaseTransaction, KeyRegistration, Payment, SignedTransaction, Transaction,
+    BaseTransaction, KeyRegistration, Payment, SignedTransaction, Transaction, TransactionType,
 };
 use algosdk::AlgodClient;
 use algosdk::KmdClient;
@@ -204,10 +204,10 @@ pub fn steps() -> Steps<World> {
                 receiver: Address::from_string(&world.accounts[1]).unwrap(),
                 close_remainder_to: None,
             };
-            world.transaction = Some(Transaction::new_payment(
+            world.transaction = Some(Transaction::new(
                 base,
                 params.fee,
-                payment
+                TransactionType::Payment(payment),
             ).unwrap());
             world.last_round = Some(params.last_round);
             world.public_key = Some(Address::from_string(&world.accounts[0]).unwrap());
@@ -236,10 +236,10 @@ pub fn steps() -> Steps<World> {
                 receiver: Address::from_string(&world.accounts[1]).unwrap(),
                 close_remainder_to: None,
             };
-            world.transaction = Some(Transaction::new_payment(
+            world.transaction = Some(Transaction::new(
                 base,
                 params.fee,
-                payment
+                TransactionType::Payment(payment),
             ).unwrap());
             world.last_round = Some(params.last_round);
             world.public_key = Some(Address::from_string(&world.accounts[0]).unwrap());
@@ -365,14 +365,14 @@ pub fn steps() -> Steps<World> {
         .when("I import the key", |world: &mut World, _step| {
             let kmd_client = world.kmd_client.as_ref().unwrap();
             let wallet_handle = world.wallet_handle.as_ref().unwrap();
-            let private_key = world.account.as_ref().unwrap().seed;
+            let private_key = world.account.as_ref().unwrap().seed();
             let _ = kmd_client.import_key(wallet_handle, private_key).unwrap();
         })
         .then("the private key should be equal to the exported private key", |world: &mut World, _step| {
             let wallet_handle = world.wallet_handle.as_ref().unwrap();
             let wallet_password = world.wallet_password.as_ref().unwrap();
             let address = world.public_key.unwrap().encode_string();
-            let private_key = world.account.as_ref().unwrap().seed;
+            let private_key = world.account.as_ref().unwrap().seed();
             let kmd_client = world.kmd_client.as_ref().unwrap();
             let exported = kmd_client.export_key(wallet_handle, wallet_password, &address).unwrap().private_key;
             assert_eq!(&exported[..32], &private_key);
@@ -497,7 +497,7 @@ pub fn steps() -> Steps<World> {
             world.account = Some(account)
         })
         .when("I convert the private key back to a mnemonic", |world: &mut World, _step| {
-            world.new_mnemonic = Some(mnemonic::from_key(&world.account.as_ref().unwrap().seed).unwrap());
+            world.new_mnemonic = Some(mnemonic::from_key(&world.account.as_ref().unwrap().seed()).unwrap());
         })
         .then_regex(r#"^the mnemonic should still be the same as "([^"]*)""#, |world: &mut World, strings, _step| {
             assert_eq!(world.new_mnemonic.as_ref().unwrap(), &strings[1])
@@ -566,10 +566,10 @@ pub fn steps() -> Steps<World> {
                 receiver: world.receiver.expect("No receiver"),
                 close_remainder_to: world.close,
             };
-            world.transaction = Some(Transaction::new_payment(
+            world.transaction = Some(Transaction::new(
                 base,
                 world.fee.expect("No fee"),
-                payment
+                TransactionType::Payment(payment),
             ).unwrap());
         })
         .when("I create the flat fee payment transaction", |world: &mut World, _step| {
@@ -586,10 +586,10 @@ pub fn steps() -> Steps<World> {
                 receiver: world.receiver.expect("No receiver"),
                 close_remainder_to: world.close,
             };
-            world.transaction = Some(Transaction::new_payment_flat_fee(
+            world.transaction = Some(Transaction::new_flat_fee(
                 base,
                 world.fee.expect("No fee"),
-                payment
+                TransactionType::Payment(payment),
             ));
         })
         .when("I create the multisig payment transaction", |world: &mut World, _step| {
@@ -606,10 +606,10 @@ pub fn steps() -> Steps<World> {
                 receiver: world.receiver.expect("No receiver"),
                 close_remainder_to: world.close,
             };
-            world.transaction = Some(Transaction::new_payment(
+            world.transaction = Some(Transaction::new(
                 base,
                 world.fee.expect("No fee"),
-                payment
+                TransactionType::Payment(payment),
             ).unwrap());
         })
         .when("I create the key registration transaction", |world: &mut World, _step| {
@@ -628,10 +628,10 @@ pub fn steps() -> Steps<World> {
                 vote_last: world.vote_last.expect("No vote last"),
                 vote_key_dilution: world.vote_key_dilution.expect("No vote key dilution"),
             };
-            world.transaction = Some(Transaction::new_key_registration(
+            world.transaction = Some(Transaction::new(
                 base,
                 world.fee.expect("No fee"),
-                key_registration
+                TransactionType::KeyRegistration(key_registration),
             ).unwrap());
         })
         .when("I sign the transaction with the private key", |world: &mut World, _step| {

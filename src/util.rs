@@ -9,6 +9,79 @@ use static_assertions::_core::ops::{Add, Sub};
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::Mul;
+use crate::transaction::{TransactionType, Transaction};
+
+impl Serialize for Transaction {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+        where
+            S: Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let type_len = match &self.txn_type {
+            TransactionType::Payment(payment) => {
+                1 + if payment.close_remainder_to.is_some() {
+                    1
+                } else {
+                    0
+                } + if payment.amount.0 != 0 { 1 } else { 0 }
+            }
+            TransactionType::KeyRegistration(_) => 5,
+        };
+        let len = 6
+            + type_len
+            + if self.note.is_empty() { 0 } else { 1 }
+            + if self.genesis_id.is_empty() { 0 } else { 1 };
+        let mut state = serializer.serialize_struct("Transaction", len)?;
+        if let TransactionType::Payment(payment) = &self.txn_type {
+            if payment.amount.0 != 0 {
+                state.serialize_field("amt", &payment.amount)?;
+            }
+        }
+        if let TransactionType::Payment(payment) = &self.txn_type {
+            if payment.close_remainder_to.is_some() {
+                state.serialize_field("close", &payment.close_remainder_to)?;
+            }
+        }
+        state.serialize_field("fee", &self.fee)?;
+        state.serialize_field("fv", &self.first_valid)?;
+        if !self.genesis_id.is_empty() {
+            state.serialize_field("gen", &self.genesis_id)?;
+        }
+        state.serialize_field("gh", &self.genesis_hash)?;
+        state.serialize_field("lv", &self.last_valid)?;
+        if !self.note.is_empty() {
+            state.serialize_field("note", &serde_bytes::ByteBuf::from(self.note.clone()))?;
+        }
+        if let TransactionType::Payment(payment) = &self.txn_type {
+            state.serialize_field("rcv", &payment.receiver)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("selkey", &key_registration.selection_pk)?;
+        }
+        state.serialize_field("snd", &self.sender)?;
+        match &self.txn_type {
+            TransactionType::Payment(_payment) => {
+                state.serialize_field("type", "pay")?;
+            }
+            TransactionType::KeyRegistration(_key_registration) => {
+                state.serialize_field("type", "keyreg")?;
+            }
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votefst", &key_registration.vote_first)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votekd", &key_registration.vote_key_dilution)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votekey", &key_registration.vote_pk)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votelst", &key_registration.vote_last)?;
+        }
+        state.end()
+    }
+}
 
 impl Serialize for HashDigest {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
@@ -256,6 +329,24 @@ impl Error for crate::Error {
             crate::Error::Json(e) => Some(e),
             crate::Error::Api(_) => None,
         }
+    }
+}
+
+impl From<rmp_serde::encode::Error> for crate::Error {
+    fn from(err: rmp_serde::encode::Error) -> Self {
+        crate::Error::Encode(err)
+    }
+}
+
+impl From<reqwest::Error> for crate::Error {
+    fn from(err: reqwest::Error) -> Self {
+        crate::Error::Reqwest(err)
+    }
+}
+
+impl From<serde_json::Error> for crate::Error {
+    fn from(err: serde_json::Error) -> Self {
+        crate::Error::Json(err)
     }
 }
 

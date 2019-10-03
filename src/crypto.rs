@@ -80,6 +80,7 @@ impl MultisigAddress {
         }
     }
 
+    /// Generates a checksum from the contained public keys usable as an address
     pub fn address(&self) -> Address {
         let mut buf = b"MultisigAddr".to_vec();
         buf.push(self.version);
@@ -94,6 +95,7 @@ impl MultisigAddress {
     }
 }
 
+/// An Ed25519 Signature
 #[derive(Copy, Clone)]
 pub struct Signature(pub [u8; 64]);
 

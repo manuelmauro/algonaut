@@ -3,13 +3,13 @@ use std::fs::File;
 use std::io::Write;
 
 use algosdk::account::Account;
-use algosdk::transaction::{BaseTransaction, Payment, Transaction};
+use algosdk::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
 use algosdk::{mnemonic, Address, HashDigest, MicroAlgos, Round};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let account = Account::generate();
 
-    let m = mnemonic::from_key(&account.seed)?;
+    let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
     let fee = MicroAlgos(1000);
     let amount = MicroAlgos(20000);
@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         close_remainder_to: None,
     };
 
-    let transaction = Transaction::new_payment(base, fee, payment)?;
+    let transaction = Transaction::new(base, fee, TransactionType::Payment(payment))?;
 
     println!("Made unsigned transaction: {:?}", transaction);
 

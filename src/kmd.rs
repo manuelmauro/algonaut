@@ -749,21 +749,3 @@ pub struct APIV1WalletHandle {
     pub wallet: APIV1Wallet,
     pub expires_seconds: i64,
 }
-
-impl From<rmp_serde::encode::Error> for Error {
-    fn from(err: rmp_serde::encode::Error) -> Self {
-        Error::Encode(err)
-    }
-}
-
-impl From<reqwest::Error> for Error {
-    fn from(err: reqwest::Error) -> Self {
-        Error::Reqwest(err)
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Self {
-        Error::Json(err)
-    }
-}
