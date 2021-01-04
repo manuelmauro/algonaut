@@ -596,3 +596,19 @@ pub mod models {
         pub genesis_hash: HashDigest,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_client() {
+        let algod_address = "http://localhost:4001";
+        let algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+        let algod_client = AlgodClient::new(algod_address, algod_token);
+
+        assert_eq!(algod_client.url, algod_address);
+        assert_eq!(algod_client.token, algod_token);
+    }
+}
