@@ -2,9 +2,9 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 
-use algosdk::account::Account;
-use algosdk::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algosdk::{mnemonic, Address, HashDigest, MicroAlgos, Round};
+use algorust::account::Account;
+use algorust::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algorust::{mnemonic, Address, HashDigest, MicroAlgos, Round};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let account = Account::generate();
@@ -24,6 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         genesis_id: "".to_string(),
         genesis_hash: HashDigest([0; 32]),
     };
+
     let payment = Payment {
         amount,
         receiver: Address::from_string(

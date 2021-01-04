@@ -1,13 +1,13 @@
 use std::error::Error;
 
-use algosdk::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algosdk::{Address, AlgodClient, KmdClient, MicroAlgos};
+use algorust::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algorust::{Address, AlgodClient, KmdClient, MicroAlgos};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let kmd_address = "http://localhost:7833";
-    let kmd_token = "contents-of-kmd.token";
-    let algod_address = "http://localhost:8080";
-    let algod_token = "contents-of-algod.token";
+    let kmd_address = "http://localhost:4002";
+    let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    let algod_address = "http://localhost:4001";
+    let algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     let kmd_client = KmdClient::new(kmd_address, kmd_token);
     let algod_client = AlgodClient::new(algod_address, algod_token);
@@ -47,12 +47,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let payment = Payment {
-        amount: MicroAlgos(200_000),
+        amount: MicroAlgos(10_000),
         receiver: to_address,
         close_remainder_to: None,
     };
 
-    let transaction = Transaction::new(base, MicroAlgos(1000), TransactionType::Payment(payment))?;
+    let transaction = Transaction::new(base, MicroAlgos(1), TransactionType::Payment(payment))?;
 
     let sign_response =
         kmd_client.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;

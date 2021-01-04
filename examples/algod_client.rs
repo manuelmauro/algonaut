@@ -1,10 +1,10 @@
 use std::error::Error;
 
-use algosdk::AlgodClient;
+use algorust::AlgodClient;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let algod_address = "http://localhost:8080";
-    let algod_token = "contents-of-algod.token";
+    let algod_address = "http://localhost:4001";
+    let algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     let algod_client = AlgodClient::new(algod_address, algod_token);
 

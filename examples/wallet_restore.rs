@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use algosdk::{mnemonic, KmdClient, MasterDerivationKey};
+use algorust::{mnemonic, KmdClient, MasterDerivationKey};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:8080";
