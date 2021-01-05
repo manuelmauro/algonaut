@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::error::Error;
 use sha2::Digest;
 use static_assertions::const_assert_eq;
 

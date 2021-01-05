@@ -9,14 +9,14 @@ pub mod crypto;
 pub mod kmd;
 /// Support for turning 32 byte keys into human-readable mnemonics and back
 pub mod mnemonic;
+pub mod error;
 pub mod transaction;
 pub(crate) mod util;
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
-pub use algod::AlgodClient;
 pub use crypto::Address;
-pub use kmd::KmdClient;
+pub use algod::Algod;
 /// MicroAlgos are the base unit of currency in Algorand
 #[derive(Copy, Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MicroAlgos(pub u64);
@@ -45,12 +45,4 @@ impl MicroAlgos {
     pub fn from_algos(algos: f64) -> MicroAlgos {
         MicroAlgos((algos * MICRO_ALGO_CONVERSION_FACTOR) as u64)
     }
-}
-
-#[derive(Debug)]
-pub enum Error {
-    Reqwest(reqwest::Error),
-    Encode(rmp_serde::encode::Error),
-    Json(serde_json::Error),
-    Api(String),
 }

@@ -6,8 +6,10 @@ use ring::signature::KeyPair;
 
 use crate::auction::{Bid, SignedBid};
 use crate::crypto::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
+use crate::error::Error;
 use crate::transaction::{SignedTransaction, Transaction};
-use crate::{Ed25519PublicKey, Error};
+use crate::Ed25519PublicKey;
+
 use sha2::Digest;
 use std::borrow::Borrow;
 
@@ -165,7 +167,8 @@ impl Account {
             let msig = transaction.borrow().multisig.as_ref().unwrap();
             if merged_msig.subsigs.len() != msig.subsigs.len() {
                 return Err(Error::Api(
-                    "Multisig signatures to merge must have the same number of subsignatures".to_string()
+                    "Multisig signatures to merge must have the same number of subsignatures"
+                        .to_string(),
                 ));
             }
             assert_eq!(merged_msig.subsigs.len(), msig.subsigs.len());

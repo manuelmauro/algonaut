@@ -1,23 +1,24 @@
 use serde::Deserialize;
 
 use crate::crypto::MultisigSignature;
+use crate::error::Error;
 use crate::kmd::requests::*;
 use crate::kmd::responses::*;
 use crate::transaction::Transaction;
-use crate::{Ed25519PublicKey, Error, MasterDerivationKey};
+use crate::{Ed25519PublicKey, MasterDerivationKey};
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 
 /// Client for interacting with the key management daemon
-pub struct KmdClient {
+pub struct Client {
     address: String,
     token: String,
     http_client: reqwest::Client,
 }
 
-impl KmdClient {
-    pub fn new(address: &str, token: &str) -> KmdClient {
-        KmdClient {
+impl Client {
+    pub fn new(address: &str, token: &str) -> Client {
+        Client {
             address: address.to_string(),
             token: token.to_string(),
             http_client: reqwest::Client::new(),
@@ -54,8 +55,8 @@ impl KmdClient {
     /// Unlock the wallet and return a wallet token that can be used for subsequent operations
     ///
     /// These tokens expire periodically and must be renewed.
-    /// You can see how much time remains until expiration with [get_wallet](KmdClient::get_wallet) and renew it with [renew_wallet_handle](KmdClient::renew_wallet_handle).
-    /// When you're done, you can invalidate the token with [release_wallet_handle](KmdClient::release_wallet_handle)
+    /// You can see how much time remains until expiration with [get_wallet](Client::get_wallet) and renew it with [renew_wallet_handle](Client::renew_wallet_handle).
+    /// When you're done, you can invalidate the token with [release_wallet_handle](Client::release_wallet_handle)
     pub fn init_wallet_handle(
         &self,
         wallet_id: &str,

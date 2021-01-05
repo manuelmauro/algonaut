@@ -1,11 +1,13 @@
-use algorust::algod::AlgodClient;
+use algorust::Algod;
 
 #[test]
-fn test_client_status() {
-    let algod_address = "http://localhost:4001";
-    let algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+fn test_proper_client_builder() -> Result<(), Box<dyn std::error::Error>> {
+    let algod = Algod::new()
+        .bind("http://localhost:4001")?
+        .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
+        .client();
 
-    let algod_client = AlgodClient::new(algod_address, algod_token);
+    assert!(algod.ok().is_some());
 
-    assert!(algod_client.status().is_ok());
+    Ok(())
 }

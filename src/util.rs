@@ -1,20 +1,19 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
 use crate::crypto::{Address, MultisigSignature, MultisigSubsig, Signature};
 use crate::kmd::responses::ExportKeyResponse;
+use crate::transaction::{Transaction, TransactionType};
 use crate::{Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK};
 use data_encoding::BASE64;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use static_assertions::_core::ops::{Add, Sub};
-use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::Mul;
-use crate::transaction::{TransactionType, Transaction};
 
 impl Serialize for Transaction {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         use serde::ser::SerializeStruct;
         let type_len = match &self.txn_type {
@@ -319,46 +318,6 @@ where
     S: Serializer,
 {
     serializer.serialize_str(&BASE64.encode(bytes))
-}
-
-impl Error for crate::Error {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            crate::Error::Reqwest(e) => Some(e),
-            crate::Error::Encode(e) => Some(e),
-            crate::Error::Json(e) => Some(e),
-            crate::Error::Api(_) => None,
-        }
-    }
-}
-
-impl From<rmp_serde::encode::Error> for crate::Error {
-    fn from(err: rmp_serde::encode::Error) -> Self {
-        crate::Error::Encode(err)
-    }
-}
-
-impl From<reqwest::Error> for crate::Error {
-    fn from(err: reqwest::Error) -> Self {
-        crate::Error::Reqwest(err)
-    }
-}
-
-impl From<serde_json::Error> for crate::Error {
-    fn from(err: serde_json::Error) -> Self {
-        crate::Error::Json(err)
-    }
-}
-
-impl Display for crate::Error {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            crate::Error::Reqwest(e) => Display::fmt(e, f),
-            crate::Error::Encode(e) => Display::fmt(e, f),
-            crate::Error::Json(e) => Display::fmt(e, f),
-            crate::Error::Api(e) => Display::fmt(e, f),
-        }
-    }
 }
 
 impl Display for MicroAlgos {

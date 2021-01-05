@@ -1,38 +1,104 @@
-use reqwest::header::HeaderMap;
-
 use crate::algod::models::{
     Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee,
     TransactionID, TransactionList, TransactionParams, Version,
 };
+use crate::error::Error;
 use crate::transaction::SignedTransaction;
-use crate::{Error, Round};
+use crate::Round;
+use derive_more::Display;
+use reqwest::header::HeaderMap;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 
-/// Client for interacting with the Algorand protocol daemon
-pub struct AlgodClient {
+/// Url
+#[derive(Display)]
+#[display(fmt = "{}", url)]
+pub struct Url {
+    url: url::Url,
+}
+
+impl Url {
+    pub fn parse(url: &str) -> Result<Self, Error> {
+        Ok(Url {
+            url: url::Url::parse(url).map_err(|_err| Error::Url)?,
+        })
+    }
+}
+
+/// Token
+#[derive(Display)]
+#[display(fmt = "{}", token)]
+pub struct ApiToken {
+    token: String,
+}
+
+impl ApiToken {
+    pub fn parse(token: &str) -> Result<Self, Error> {
+        Ok(ApiToken {
+            token: token.to_string(),
+        })
+    }
+}
+
+/// Algod
+pub struct Algod {
+    url: Option<Url>,
+    token: Option<ApiToken>,
+    headers: HeaderMap,
+}
+
+impl Algod {
+    /// Start the creation of a client.
+    pub fn new() -> Self {
+        Algod {
+            url: None,
+            token: None,
+            headers: HeaderMap::new(),
+        }
+    }
+
+    /// Bind to a URL.
+    pub fn bind(mut self, url: &str) -> Result<Self, Error> {
+        self.url = Some(Url::parse(url)?);
+        Ok(self)
+    }
+
+    /// Use a token to authenticate.
+    pub fn auth(mut self, token: &str) -> Result<Self, Error> {
+        self.token = Some(ApiToken::parse(token)?);
+        Ok(self)
+    }
+
+    /// Build a client for Algorand protocol daemon.
+    pub fn client(self) -> Result<Client, Error> {
+        if let None = self.url {
+            return Err(Error::Url);
+        }
+
+        if let None = self.token {
+            return Err(Error::Url);
+        }
+
+        Ok(Client {
+            url: self.url.unwrap().to_string(),
+            token: self.token.unwrap().to_string(),
+            headers: self.headers,
+        })
+    }
+}
+
+/// Client for interacting with the Algorand protocol daemon.
+pub struct Client {
     url: String,
     token: String,
     headers: HeaderMap,
 }
 
-impl AlgodClient {
-    pub fn new(address: &str, token: &str) -> AlgodClient {
-        AlgodClient::new_with_headers(address, token, HeaderMap::new())
-    }
-
-    pub fn new_with_headers(address: &str, token: &str, headers: HeaderMap) -> AlgodClient {
-        AlgodClient {
-            url: address.to_string(),
-            token: token.to_string(),
-            headers,
-        }
-    }
-
+impl Client {
     /// Returns Ok if healthy
     pub fn health(&self) -> Result<(), Error> {
         let _ = reqwest::Client::new()
-            .get(&format!("{}/health", self.url))
+            .get(&format!("{}health", self.url))
             .headers(self.headers.clone())
             .send()?
             .error_for_status()?;
@@ -42,7 +108,7 @@ impl AlgodClient {
     /// Retrieves the current version
     pub fn versions(&self) -> Result<Version, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/versions", self.url))
+            .get(&format!("{}versions", self.url))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
@@ -54,7 +120,7 @@ impl AlgodClient {
     /// Gets the current node status
     pub fn status(&self) -> Result<NodeStatus, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/status", self.url))
+            .get(&format!("{}v1/status", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -67,7 +133,7 @@ impl AlgodClient {
     pub fn status_after_block(&self, round: Round) -> Result<NodeStatus, Error> {
         let response = reqwest::Client::new()
             .get(&format!(
-                "{}/v1/status/wait-for-block-after/{}",
+                "{}v1/status/wait-for-block-after/{}",
                 self.url, round.0
             ))
             .header(AUTH_HEADER, &self.token)
@@ -81,7 +147,7 @@ impl AlgodClient {
     /// Get the block for the given round
     pub fn block(&self, round: Round) -> Result<Block, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/block/{}", self.url, round.0))
+            .get(&format!("{}v1/block/{}", self.url, round.0))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -93,7 +159,7 @@ impl AlgodClient {
     /// Gets the current supply reported by the ledger
     pub fn ledger_supply(&self) -> Result<Supply, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/ledger/supply", self.url))
+            .get(&format!("{}v1/ledger/supply", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -104,7 +170,7 @@ impl AlgodClient {
 
     pub fn account_information(&self, address: &str) -> Result<Account, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/account/{}", self.url, address))
+            .get(&format!("{}v1/account/{}", self.url, address))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -118,7 +184,7 @@ impl AlgodClient {
     /// Sorted by priority in decreasing order and truncated at the specified limit, or returns all if specified limit is 0
     pub fn pending_transactions(&self, limit: u64) -> Result<PendingTransactions, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/transactions/pending", self.url))
+            .get(&format!("{}v1/transactions/pending", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&[("max", limit.to_string())])
@@ -135,7 +201,7 @@ impl AlgodClient {
     ) -> Result<Transaction, Error> {
         let response = reqwest::Client::new()
             .get(&format!(
-                "{}/v1/transactions/pending/{}",
+                "{}v1/transactions/pending/{}",
                 self.url, transaction_id
             ))
             .header(AUTH_HEADER, &self.token)
@@ -173,7 +239,7 @@ impl AlgodClient {
             query.push(("max", limit.to_string()))
         }
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/account/{}/transactions", self.url, address))
+            .get(&format!("{}v1/account/{}/transactions", self.url, address))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&query)
@@ -195,7 +261,7 @@ impl AlgodClient {
     /// Broadcasts a raw transaction to the network
     pub fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionID, Error> {
         let response = reqwest::Client::new()
-            .post(&format!("{}/v1/transactions", self.url))
+            .post(&format!("{}v1/transactions", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .body(raw.to_vec())
@@ -208,7 +274,7 @@ impl AlgodClient {
     /// Gets the information of a single transaction
     pub fn transaction(&self, transaction_id: &str) -> Result<Transaction, Error> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/transaction/{}", self.url, transaction_id))
+            .get(&format!("{}v1/transaction/{}", self.url, transaction_id))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -602,13 +668,40 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_new_client() {
-        let algod_address = "http://localhost:4001";
-        let algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    #[should_panic(expected = "called `Result::unwrap()` on an `Err` value: Url")]
+    fn test_bad_url() {
+        Url::parse("bad_url").unwrap();
+    }
 
-        let algod_client = AlgodClient::new(algod_address, algod_token);
+    #[test]
+    fn test_proper_client_builder() -> Result<(), Box<dyn std::error::Error>> {
+        let algod = Algod::new()
+            .bind("http://localhost:4001")?
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
+            .client();
 
-        assert_eq!(algod_client.url, algod_address);
-        assert_eq!(algod_client.token, algod_token);
+        assert!(algod.ok().is_some());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_client_builder_with_no_token() -> Result<(), Box<dyn std::error::Error>> {
+        let algod = Algod::new().bind("http://localhost:4001")?.client();
+
+        assert!(algod.err().is_some());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_client_builder_with_no_url() -> Result<(), Box<dyn std::error::Error>> {
+        let algod = Algod::new()
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
+            .client();
+
+        assert!(algod.err().is_some());
+
+        Ok(())
     }
 }

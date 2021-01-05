@@ -1,20 +1,23 @@
-use algorust::{AlgodClient, KmdClient};
+use algorust::Algod;
+use algorust::kmd;
+use std::error::Error;
 
-fn main() {
-    let algod_address = "http://localhost:4001";
-    let algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+// ideally these should be env variables
+const ALGOD_URL: &str = "http://localhost:4001";
+const ALGOD_TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:4002";
     let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    let algod_client = AlgodClient::new(algod_address, algod_token);
-    let kmd_client = KmdClient::new(kmd_address, kmd_token);
+    let algod = Algod::new().bind(ALGOD_URL)?.auth(ALGOD_TOKEN)?.client()?;
+    let kmd_client = kmd::Client::new(kmd_address, kmd_token);
 
-    println!(
-        "Algod versions: {:?}",
-        algod_client.versions().unwrap().versions
-    );
+    println!("Algod versions: {:?}", algod.versions().unwrap().versions);
     println!(
         "Kmd versions: {:?}",
         kmd_client.versions().unwrap().versions
     );
+
+    Ok(())
 }

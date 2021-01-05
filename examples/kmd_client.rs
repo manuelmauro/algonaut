@@ -1,12 +1,12 @@
 use std::error::Error;
 
-use algorust::{KmdClient, MasterDerivationKey};
+use algorust::{kmd, MasterDerivationKey};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:4002";
     let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    let kmd_client = KmdClient::new(kmd_address, kmd_token);
+    let kmd_client = kmd::Client::new(kmd_address, kmd_token);
 
     let create_wallet_response = kmd_client.create_wallet(
         "testwallet",

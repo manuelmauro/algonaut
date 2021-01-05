@@ -1,12 +1,12 @@
 use std::error::Error;
 
-use algorust::{mnemonic, KmdClient};
+use algorust::{kmd, mnemonic};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:4002";
     let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    let kmd_client = KmdClient::new(kmd_address, kmd_token);
+    let kmd_client = kmd::Client::new(kmd_address, kmd_token);
 
     let list_response = kmd_client.list_wallets()?;
 

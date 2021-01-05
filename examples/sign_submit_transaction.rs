@@ -1,16 +1,17 @@
+use algorust::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algorust::{Algod, kmd, Address, MicroAlgos};
 use std::error::Error;
 
-use algorust::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorust::{Address, AlgodClient, KmdClient, MicroAlgos};
+// ideally these should be env variables
+const ALGOD_URL: &str = "http://localhost:4001";
+const ALGOD_TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:4002";
     let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    let algod_address = "http://localhost:4001";
-    let algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    let kmd_client = KmdClient::new(kmd_address, kmd_token);
-    let algod_client = AlgodClient::new(algod_address, algod_token);
+    let kmd_client = kmd::Client::new(kmd_address, kmd_token);
+    let algod = Algod::new().bind(ALGOD_URL)?.auth(ALGOD_TOKEN)?.client()?;
 
     let list_response = kmd_client.list_wallets()?;
 
@@ -32,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let gen_response = kmd_client.generate_key(&wallet_handle_token)?;
     let to_address = Address::from_string(&gen_response.address)?;
 
-    let transaction_params = algod_client.transaction_params()?;
+    let transaction_params = algod.transaction_params()?;
 
     let genesis_id = transaction_params.genesis_id;
     let genesis_hash = transaction_params.genesis_hash;
@@ -64,7 +65,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod_client.raw_transaction(&sign_response.signed_transaction)?;
+    let send_response = algod.raw_transaction(&sign_response.signed_transaction)?;
 
     println!("Transaction ID: {}", send_response.tx_id);
 
