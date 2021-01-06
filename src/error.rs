@@ -1,10 +1,38 @@
-use derive_more::Display;
+use derive_more::{Display, Error};
 use std::fmt::Debug;
+
+#[derive(Debug, Display, Error)]
+pub enum TokenParsingError {
+    #[display(fmt = "Token too short or too long.")]
+    WrongLength,
+}
+
+#[derive(Debug, Display, Error)]
+pub enum AlgodBuildError {
+    #[display(fmt = "Url parsing error.")]
+    BadUrl,
+    #[display(fmt = "Token parsing error.")]
+    BadToken,
+    #[display(fmt = "Bind the client to URL before calling client().")]
+    UnitializedUrl,
+    #[display(fmt = "Authenticate with a token before calling client().")]
+    UnitializedToken,
+}
+
+impl From<url::ParseError> for AlgodBuildError {
+    fn from(_err: url::ParseError) -> Self {
+        AlgodBuildError::BadUrl
+    }
+}
+
+impl From<TokenParsingError> for AlgodBuildError {
+    fn from(_err: TokenParsingError) -> Self {
+        AlgodBuildError::BadToken
+    }
+}
 
 #[derive(Debug, Display)]
 pub enum Error {
-    #[display(fmt = "Parsing error.")]
-    Url,
     #[display(fmt = "{}", _0)]
     Reqwest(reqwest::Error),
     #[display(fmt = "{}", _0)]
@@ -19,7 +47,6 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Error::Reqwest(e) => Some(e),
-            Error::Url => None,
             Error::Encode(e) => Some(e),
             Error::Json(e) => Some(e),
             Error::Api(_) => None,
@@ -44,16 +71,3 @@ impl From<serde_json::Error> for Error {
         Error::Json(err)
     }
 }
-//
-// impl Display for Error {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             Error::Reqwest(e) => Display::fmt(e, f),
-//             Error::Url => Display::fmt(e, f),
-//             Error::Encode(e) => Display::fmt(e, f),
-//             Error::Json(e) => Display::fmt(e, f),
-//             Error::Api(e) => Display::fmt(e, f),
-//         }
-//     }
-// }
-//

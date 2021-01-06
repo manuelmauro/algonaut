@@ -1,45 +1,16 @@
-use crate::error::Error;
+use crate::error::{AlgodBuildError, Error};
 use crate::models::{
     Account, Block, NodeStatus, PendingTransactions, Round, Supply, Transaction, TransactionFee,
     TransactionID, TransactionList, TransactionParams, Version,
 };
 use crate::transaction::SignedTransaction;
-use derive_more::Display;
+use crate::util::ApiToken;
 use reqwest::header::HeaderMap;
+use url::Url;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 
-/// Url
-#[derive(Display)]
-#[display(fmt = "{}", url)]
-pub struct Url {
-    url: url::Url,
-}
-
-impl Url {
-    pub fn parse(url: &str) -> Result<Self, Error> {
-        Ok(Url {
-            url: url::Url::parse(url).map_err(|_err| Error::Url)?,
-        })
-    }
-}
-
-/// Token
-#[derive(Display)]
-#[display(fmt = "{}", token)]
-pub struct ApiToken {
-    token: String,
-}
-
-impl ApiToken {
-    pub fn parse(token: &str) -> Result<Self, Error> {
-        Ok(ApiToken {
-            token: token.to_string(),
-        })
-    }
-}
-
-/// Algod
+/// Algod is the entry point to the creation of a cliend of the Algorand protocol daemon.
 /// ```
 /// use algorust::algod::Algod;
 ///
@@ -69,32 +40,29 @@ impl Algod {
     }
 
     /// Bind to a URL.
-    pub fn bind(mut self, url: &str) -> Result<Self, Error> {
+    pub fn bind(mut self, url: &str) -> Result<Self, AlgodBuildError> {
         self.url = Some(Url::parse(url)?);
         Ok(self)
     }
 
     /// Use a token to authenticate.
-    pub fn auth(mut self, token: &str) -> Result<Self, Error> {
+    pub fn auth(mut self, token: &str) -> Result<Self, AlgodBuildError> {
         self.token = Some(ApiToken::parse(token)?);
         Ok(self)
     }
 
     /// Build a client for Algorand protocol daemon.
-    pub fn client(self) -> Result<Client, Error> {
-        if let None = self.url {
-            return Err(Error::Url);
+    pub fn client(self) -> Result<Client, AlgodBuildError> {
+        match (self.url, self.token) {
+            (Some(url), Some(token)) => Ok(Client {
+                url: url.into_string(),
+                token: token.to_string(),
+                headers: self.headers,
+            }),
+            (None, Some(_)) => Err(AlgodBuildError::UnitializedUrl),
+            (Some(_), None) => Err(AlgodBuildError::UnitializedToken),
+            (None, None) => Err(AlgodBuildError::UnitializedUrl),
         }
-
-        if let None = self.token {
-            return Err(Error::Url);
-        }
-
-        Ok(Client {
-            url: self.url.unwrap().to_string(),
-            token: self.token.unwrap().to_string(),
-            headers: self.headers,
-        })
     }
 }
 
@@ -343,13 +311,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[should_panic(expected = "called `Result::unwrap()` on an `Err` value: Url")]
-    fn test_bad_url() {
-        Url::parse("bad_url").unwrap();
-    }
-
-    #[test]
-    fn test_proper_client_builder() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_valid_client_builder() -> Result<(), Box<dyn std::error::Error>> {
         let algod = Algod::new()
             .bind("http://localhost:4001")?
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
@@ -361,19 +323,34 @@ mod tests {
     }
 
     #[test]
-    fn test_client_builder_with_no_token() -> Result<(), Box<dyn std::error::Error>> {
-        let algod = Algod::new().bind("http://localhost:4001")?.client();
-
-        assert!(algod.err().is_some());
-
-        Ok(())
+    #[should_panic(expected = "UnitializedToken")]
+    fn test_client_builder_with_no_token() {
+        let _ = Algod::new()
+            .bind("http://localhost:4001")
+            .unwrap()
+            .client()
+            .unwrap();
     }
 
     #[test]
-    fn test_client_builder_with_no_url() -> Result<(), Box<dyn std::error::Error>> {
-        let algod = Algod::new()
-            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
-            .client();
+    #[should_panic(expected = "BadUrl")]
+    fn test_client_builder_with_a_bad_url() {
+        let _ = Algod::new().bind("bad-url").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "UnitializedUrl")]
+    fn test_client_builder_with_no_url() {
+        let _ = Algod::new()
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .unwrap()
+            .client()
+            .unwrap();
+    }
+
+    #[test]
+    fn test_client_builder_with_a_token_too_short() -> Result<(), Box<dyn std::error::Error>> {
+        let algod = Algod::new().auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         assert!(algod.err().is_some());
 

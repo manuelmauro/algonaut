@@ -10,9 +10,9 @@ pub mod kmd;
 pub mod mnemonic;
 pub mod models;
 pub mod transaction;
+
 pub(crate) mod util;
 
 pub use algod::Algod;
 pub use crypto::Address;
-
 pub use models::{HashDigest, MasterDerivationKey, MicroAlgos, Round};

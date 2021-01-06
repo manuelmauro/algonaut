@@ -1,11 +1,13 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
 use crate::crypto::{Address, MultisigSignature, MultisigSubsig, Signature};
+use crate::error::TokenParsingError;
 use crate::kmd::responses::ExportKeyResponse;
 use crate::models::{
     Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
 };
 use crate::transaction::{Transaction, TransactionType};
 use data_encoding::BASE64;
+use derive_more::Display;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use static_assertions::_core::ops::{Add, Sub};
@@ -443,3 +445,25 @@ impl PartialEq for Signature {
 }
 
 impl Eq for Signature {}
+
+/// An API token.
+#[derive(Display)]
+#[display(fmt = "{}", token)]
+pub struct ApiToken {
+    token: String,
+}
+
+const TOKEN_LENGTH: usize = 64;
+
+impl ApiToken {
+    /// Parses a string slice representing an API token.
+    pub fn parse(token: &str) -> Result<Self, TokenParsingError> {
+        if token.len() != TOKEN_LENGTH {
+            return Err(TokenParsingError::WrongLength);
+        }
+
+        Ok(ApiToken {
+            token: token.to_string(),
+        })
+    }
+}
