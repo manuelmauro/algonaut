@@ -4,8 +4,8 @@ use crate::crypto::MultisigSignature;
 use crate::error::Error;
 use crate::kmd::requests::*;
 use crate::kmd::responses::*;
+use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 use crate::transaction::Transaction;
-use crate::{Ed25519PublicKey, MasterDerivationKey};
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 
@@ -307,7 +307,7 @@ pub mod requests {
     use crate::crypto::MultisigSignature;
     use crate::kmd::responses::*;
     use crate::util::serialize_bytes;
-    use crate::{Ed25519PublicKey, MasterDerivationKey};
+    use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 
     pub trait APIV1Request: Serialize {
         type Response: DeserializeOwned;
@@ -585,7 +585,7 @@ pub mod responses {
 
     use crate::util::{deserialize_bytes, deserialize_bytes64, deserialize_mdk};
 
-    use crate::{Ed25519PublicKey, MasterDerivationKey};
+    use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 
     use crate::kmd::{APIV1Wallet, APIV1WalletHandle};
 

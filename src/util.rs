@@ -1,8 +1,10 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
 use crate::crypto::{Address, MultisigSignature, MultisigSubsig, Signature};
 use crate::kmd::responses::ExportKeyResponse;
+use crate::models::{
+    Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
+};
 use crate::transaction::{Transaction, TransactionType};
-use crate::{Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK};
 use data_encoding::BASE64;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

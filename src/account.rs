@@ -8,7 +8,7 @@ use crate::auction::{Bid, SignedBid};
 use crate::crypto::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
 use crate::error::Error;
 use crate::transaction::{SignedTransaction, Transaction};
-use crate::Ed25519PublicKey;
+use crate::models::Ed25519PublicKey;
 
 use sha2::Digest;
 use std::borrow::Borrow;
