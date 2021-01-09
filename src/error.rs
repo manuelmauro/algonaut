@@ -1,73 +1,64 @@
-use derive_more::{Display, Error};
+extern crate derive_more;
+use derive_more::{Display, Error, From};
+use std::error;
 use std::fmt::Debug;
 
-#[derive(Debug, Display, Error)]
+pub type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
+
+#[derive(Clone, Debug, Display, Error, From)]
 pub enum TokenParsingError {
+    /// Token has an invalid length.
     #[display(fmt = "Token too short or too long.")]
-    WrongLength,
+    InvalidLength,
 }
 
-#[derive(Debug, Display, Error)]
+#[derive(Clone, Debug, Display, Error, From)]
 pub enum AlgodBuildError {
+    /// URL parse error.
     #[display(fmt = "Url parsing error.")]
-    BadUrl,
+    BadUrl(url::ParseError),
+    /// Token parse error.
     #[display(fmt = "Token parsing error.")]
-    BadToken,
+    BadToken(TokenParsingError),
+    /// Missing the base URL of the REST API server.
     #[display(fmt = "Bind the client to URL before calling client().")]
     UnitializedUrl,
+    /// Missing the authentication token for the REST API server.
     #[display(fmt = "Authenticate with a token before calling client().")]
     UnitializedToken,
 }
 
-impl From<url::ParseError> for AlgodBuildError {
-    fn from(_err: url::ParseError) -> Self {
-        AlgodBuildError::BadUrl
-    }
-}
+#[derive(Debug, Display, Error, From)]
+pub struct ReqwestError(reqwest::Error);
 
-impl From<TokenParsingError> for AlgodBuildError {
-    fn from(_err: TokenParsingError) -> Self {
-        AlgodBuildError::BadToken
-    }
-}
+#[derive(Debug, Display, Error, From)]
+pub struct EncodeError(rmp_serde::encode::Error);
 
-#[derive(Debug, Display)]
-pub enum Error {
-    #[display(fmt = "{}", _0)]
-    Reqwest(reqwest::Error),
-    #[display(fmt = "{}", _0)]
-    Encode(rmp_serde::encode::Error),
-    #[display(fmt = "{}", _0)]
-    Json(serde_json::Error),
-    #[display(fmt = "{}", _0)]
-    Api(String),
-}
+#[derive(Debug, Display, Error, From)]
+pub struct JsonError(serde_json::Error);
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Error::Reqwest(e) => Some(e),
-            Error::Encode(e) => Some(e),
-            Error::Json(e) => Some(e),
-            Error::Api(_) => None,
-        }
-    }
-}
-
-impl From<rmp_serde::encode::Error> for Error {
-    fn from(err: rmp_serde::encode::Error) -> Self {
-        Error::Encode(err)
-    }
-}
-
-impl From<reqwest::Error> for Error {
-    fn from(err: reqwest::Error) -> Self {
-        Error::Reqwest(err)
-    }
-}
-
-impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Self {
-        Error::Json(err)
-    }
+#[derive(Debug, Display, Error, From)]
+pub enum ApiError {
+    #[display(fmt = "Key length is invalid.")]
+    InvalidKeyLength,
+    #[display(fmt = "Mnemonic length is invalid.")]
+    InvalidMnemonicLength,
+    #[display(fmt = "Mnemonic contains invalid words.")]
+    InvalidWordsInMnemonic,
+    #[display(fmt = "Invalid checksum.")]
+    InvalidChecksum,
+    #[display(fmt = "Transaction sender does not match multisig identity.")]
+    InvalidSenderInMultisig,
+    #[display(fmt = "Multisig identity does not contain this secret key.")]
+    InvalidSecretKeyInMultisig,
+    #[display(fmt = "Can't merge only one transaction.")]
+    InsufficientTransactions,
+    #[display(fmt = "Multisig signatures to merge must have the same number of subsignatures.")]
+    InvalidNumberOfSubsignatures,
+    #[display(fmt = "Transaction msig public keys do not match.")]
+    InvalidPublicKeyInMultisig,
+    #[display(fmt = "Transaction msig has mismatched signatures.")]
+    MismatchingSignatures,
+    #[display(fmt = "Response error: {}", response)]
+    ResponseError { response: String },
 }

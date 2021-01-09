@@ -459,7 +459,7 @@ impl ApiToken {
     /// Parses a string slice representing an API token.
     pub fn parse(token: &str) -> Result<Self, TokenParsingError> {
         if token.len() != TOKEN_LENGTH {
-            return Err(TokenParsingError::WrongLength);
+            return Err(TokenParsingError::InvalidLength);
         }
 
         Ok(ApiToken {

@@ -1,4 +1,4 @@
-use crate::error::{AlgodBuildError, Error};
+use crate::error::{AlgodBuildError, Result};
 use crate::models::{
     Account, Block, NodeStatus, PendingTransactions, Round, Supply, Transaction, TransactionFee,
     TransactionID, TransactionList, TransactionParams, Version,
@@ -40,28 +40,28 @@ impl Algod {
     }
 
     /// Bind to a URL.
-    pub fn bind(mut self, url: &str) -> Result<Self, AlgodBuildError> {
+    pub fn bind(mut self, url: &str) -> Result<Self> {
         self.url = Some(Url::parse(url)?);
         Ok(self)
     }
 
     /// Use a token to authenticate.
-    pub fn auth(mut self, token: &str) -> Result<Self, AlgodBuildError> {
+    pub fn auth(mut self, token: &str) -> Result<Self> {
         self.token = Some(ApiToken::parse(token)?);
         Ok(self)
     }
 
     /// Build a client for Algorand protocol daemon.
-    pub fn client(self) -> Result<Client, AlgodBuildError> {
+    pub fn client(self) -> Result<Client> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(Client {
                 url: url.into_string(),
                 token: token.to_string(),
                 headers: self.headers,
             }),
-            (None, Some(_)) => Err(AlgodBuildError::UnitializedUrl),
-            (Some(_), None) => Err(AlgodBuildError::UnitializedToken),
-            (None, None) => Err(AlgodBuildError::UnitializedUrl),
+            (None, Some(_)) => Err(AlgodBuildError::UnitializedUrl.into()),
+            (Some(_), None) => Err(AlgodBuildError::UnitializedToken.into()),
+            (None, None) => Err(AlgodBuildError::UnitializedUrl.into()),
         }
     }
 }
@@ -75,7 +75,7 @@ pub struct Client {
 
 impl Client {
     /// Returns Ok if healthy
-    pub fn health(&self) -> Result<(), Error> {
+    pub fn health(&self) -> Result<()> {
         let _ = reqwest::Client::new()
             .get(&format!("{}health", self.url))
             .headers(self.headers.clone())
@@ -85,7 +85,7 @@ impl Client {
     }
 
     /// Retrieves the current version
-    pub fn versions(&self) -> Result<Version, Error> {
+    pub fn versions(&self) -> Result<Version> {
         let response = reqwest::Client::new()
             .get(&format!("{}versions", self.url))
             .headers(self.headers.clone())
@@ -97,7 +97,7 @@ impl Client {
     }
 
     /// Gets the current node status
-    pub fn status(&self) -> Result<NodeStatus, Error> {
+    pub fn status(&self) -> Result<NodeStatus> {
         let response = reqwest::Client::new()
             .get(&format!("{}v1/status", self.url))
             .header(AUTH_HEADER, &self.token)
@@ -109,7 +109,7 @@ impl Client {
     }
 
     /// Waits for a block to appear after the specified round and returns the node status at the time
-    pub fn status_after_block(&self, round: Round) -> Result<NodeStatus, Error> {
+    pub fn status_after_block(&self, round: Round) -> Result<NodeStatus> {
         let response = reqwest::Client::new()
             .get(&format!(
                 "{}v1/status/wait-for-block-after/{}",
@@ -124,7 +124,7 @@ impl Client {
     }
 
     /// Get the block for the given round
-    pub fn block(&self, round: Round) -> Result<Block, Error> {
+    pub fn block(&self, round: Round) -> Result<Block> {
         let response = reqwest::Client::new()
             .get(&format!("{}v1/block/{}", self.url, round.0))
             .header(AUTH_HEADER, &self.token)
@@ -136,7 +136,7 @@ impl Client {
     }
 
     /// Gets the current supply reported by the ledger
-    pub fn ledger_supply(&self) -> Result<Supply, Error> {
+    pub fn ledger_supply(&self) -> Result<Supply> {
         let response = reqwest::Client::new()
             .get(&format!("{}v1/ledger/supply", self.url))
             .header(AUTH_HEADER, &self.token)
@@ -147,7 +147,7 @@ impl Client {
         Ok(response)
     }
 
-    pub fn account_information(&self, address: &str) -> Result<Account, Error> {
+    pub fn account_information(&self, address: &str) -> Result<Account> {
         let response = reqwest::Client::new()
             .get(&format!("{}v1/account/{}", self.url, address))
             .header(AUTH_HEADER, &self.token)
@@ -161,7 +161,7 @@ impl Client {
     /// Gets a list of unconfirmed transactions currently in the transaction pool
     ///
     /// Sorted by priority in decreasing order and truncated at the specified limit, or returns all if specified limit is 0
-    pub fn pending_transactions(&self, limit: u64) -> Result<PendingTransactions, Error> {
+    pub fn pending_transactions(&self, limit: u64) -> Result<PendingTransactions> {
         let response = reqwest::Client::new()
             .get(&format!("{}v1/transactions/pending", self.url))
             .header(AUTH_HEADER, &self.token)
@@ -174,10 +174,7 @@ impl Client {
     }
 
     /// Get a specified pending transaction
-    pub fn pending_transaction_information(
-        &self,
-        transaction_id: &str,
-    ) -> Result<Transaction, Error> {
+    pub fn pending_transaction_information(&self, transaction_id: &str) -> Result<Transaction> {
         let response = reqwest::Client::new()
             .get(&format!(
                 "{}v1/transactions/pending/{}",
@@ -200,7 +197,7 @@ impl Client {
         from_date: Option<String>,
         to_date: Option<String>,
         limit: Option<u64>,
-    ) -> Result<TransactionList, Error> {
+    ) -> Result<TransactionList> {
         let mut query = Vec::new();
         if let Some(first_round) = first_round {
             query.push(("firstRound", first_round.0.to_string()))
@@ -232,13 +229,13 @@ impl Client {
     pub fn send_transaction(
         &self,
         signed_transaction: &SignedTransaction,
-    ) -> Result<TransactionID, Error> {
+    ) -> Result<TransactionID> {
         let bytes = rmp_serde::to_vec_named(signed_transaction)?;
         self.raw_transaction(&bytes)
     }
 
     /// Broadcasts a raw transaction to the network
-    pub fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionID, Error> {
+    pub fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionID> {
         let response = reqwest::Client::new()
             .post(&format!("{}v1/transactions", self.url))
             .header(AUTH_HEADER, &self.token)
@@ -251,7 +248,7 @@ impl Client {
     }
 
     /// Gets the information of a single transaction
-    pub fn transaction(&self, transaction_id: &str) -> Result<Transaction, Error> {
+    pub fn transaction(&self, transaction_id: &str) -> Result<Transaction> {
         let response = reqwest::Client::new()
             .get(&format!("{}v1/transaction/{}", self.url, transaction_id))
             .header(AUTH_HEADER, &self.token)
@@ -267,7 +264,7 @@ impl Client {
         &self,
         address: &str,
         transaction_id: &str,
-    ) -> Result<Transaction, Error> {
+    ) -> Result<Transaction> {
         let response = reqwest::Client::new()
             .get(&format!(
                 "{}/v1/account/{}/transaction/{}",
@@ -282,7 +279,7 @@ impl Client {
     }
 
     /// Gets suggested fee in units of micro-Algos per byte
-    pub fn suggested_fee(&self) -> Result<TransactionFee, Error> {
+    pub fn suggested_fee(&self) -> Result<TransactionFee> {
         let response = reqwest::Client::new()
             .get(&format!("{}/v1/transactions/fee", self.url))
             .header(AUTH_HEADER, &self.token)
@@ -294,7 +291,7 @@ impl Client {
     }
 
     /// Gets parameters for constructing a new transaction
-    pub fn transaction_params(&self) -> Result<TransactionParams, Error> {
+    pub fn transaction_params(&self) -> Result<TransactionParams> {
         let response = reqwest::Client::new()
             .get(&format!("{}/v1/transactions/params", self.url))
             .header(AUTH_HEADER, &self.token)
@@ -311,7 +308,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_valid_client_builder() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_valid_client_builder() -> Result<()> {
         let algod = Algod::new()
             .bind("http://localhost:4001")?
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
@@ -333,7 +330,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "BadUrl")]
+    #[should_panic(expected = "RelativeUrlWithoutBase")]
     fn test_client_builder_with_a_bad_url() {
         let _ = Algod::new().bind("bad-url").unwrap();
     }
@@ -349,7 +346,7 @@ mod tests {
     }
 
     #[test]
-    fn test_client_builder_with_a_token_too_short() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_client_builder_with_a_token_too_short() -> Result<()> {
         let algod = Algod::new().auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         assert!(algod.err().is_some());

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::account::Account;
 use crate::crypto::{Address, MultisigSignature, Signature};
-use crate::error::Error;
+use crate::error::Result;
 use crate::models::{HashDigest, MicroAlgos, Round, VotePK, VRFPK};
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
@@ -83,7 +83,7 @@ impl Transaction {
         base: BaseTransaction,
         fee_per_byte: MicroAlgos,
         txn_type: TransactionType,
-    ) -> Result<Transaction, Error> {
+    ) -> Result<Transaction> {
         let mut transaction = Transaction {
             sender: base.sender,
             fee: MicroAlgos(0),
@@ -117,7 +117,7 @@ impl Transaction {
     }
 
     // Estimates the size of the encoded transaction, used in calculating the fee
-    fn estimate_size(&self) -> Result<u64, Error> {
+    fn estimate_size(&self) -> Result<u64> {
         let account = Account::generate();
         let len = rmp_serde::to_vec_named(&account.sign_transaction(self)?)?.len() as u64;
         Ok(len)

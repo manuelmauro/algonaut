@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use crate::crypto::MultisigSignature;
-use crate::error::Error;
+use crate::error::{ApiError, Result};
 use crate::kmd::requests::*;
 use crate::kmd::responses::*;
 use crate::models::{Ed25519PublicKey, MasterDerivationKey};
@@ -26,12 +26,12 @@ impl Client {
     }
 
     /// Retrieves the current version
-    pub fn versions(&self) -> Result<VersionsResponse, Error> {
+    pub fn versions(&self) -> Result<VersionsResponse> {
         self.do_v1_request(VersionsRequest)
     }
 
     /// List all of the wallets that kmd is aware of
-    pub fn list_wallets(&self) -> Result<ListWalletsResponse, Error> {
+    pub fn list_wallets(&self) -> Result<ListWalletsResponse> {
         self.do_v1_request(ListWalletsRequest)
     }
 
@@ -42,7 +42,7 @@ impl Client {
         wallet_password: &str,
         wallet_driver_name: &str,
         master_derivation_key: MasterDerivationKey,
-    ) -> Result<CreateWalletResponse, Error> {
+    ) -> Result<CreateWalletResponse> {
         let req = CreateWalletRequest {
             master_derivation_key,
             wallet_driver_name: wallet_driver_name.to_string(),
@@ -61,7 +61,7 @@ impl Client {
         &self,
         wallet_id: &str,
         wallet_password: &str,
-    ) -> Result<InitWalletHandleResponse, Error> {
+    ) -> Result<InitWalletHandleResponse> {
         let req = InitWalletHandleRequest {
             wallet_id: wallet_id.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -73,7 +73,7 @@ impl Client {
     pub fn release_wallet_handle(
         &self,
         wallet_handle: &str,
-    ) -> Result<ReleaseWalletHandleResponse, Error> {
+    ) -> Result<ReleaseWalletHandleResponse> {
         let req = ReleaseWalletHandleRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -81,10 +81,7 @@ impl Client {
     }
 
     /// Renew a wallet handle token
-    pub fn renew_wallet_handle(
-        &self,
-        wallet_handle: &str,
-    ) -> Result<RenewWalletHandleResponse, Error> {
+    pub fn renew_wallet_handle(&self, wallet_handle: &str) -> Result<RenewWalletHandleResponse> {
         let req = RenewWalletHandleRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -97,7 +94,7 @@ impl Client {
         wallet_id: &str,
         wallet_password: &str,
         new_name: &str,
-    ) -> Result<RenameWalletResponse, Error> {
+    ) -> Result<RenameWalletResponse> {
         let req = RenameWalletRequest {
             wallet_id: wallet_id.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -107,7 +104,7 @@ impl Client {
     }
 
     /// Get wallet info
-    pub fn get_wallet(&self, wallet_handle: &str) -> Result<GetWalletResponse, Error> {
+    pub fn get_wallet(&self, wallet_handle: &str) -> Result<GetWalletResponse> {
         let req = GetWalletRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -119,7 +116,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-    ) -> Result<ExportMasterDerivationKeyResponse, Error> {
+    ) -> Result<ExportMasterDerivationKeyResponse> {
         let req = ExportMasterDerivationKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -132,7 +129,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         private_key: [u8; 32],
-    ) -> Result<ImportKeyResponse, Error> {
+    ) -> Result<ImportKeyResponse> {
         let req = ImportKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             private_key,
@@ -148,7 +145,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<ExportKeyResponse, Error> {
+    ) -> Result<ExportKeyResponse> {
         let req = ExportKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             address: address.to_string(),
@@ -158,7 +155,7 @@ impl Client {
     }
 
     /// Generates a key and adds it to the wallet, returning the public key
-    pub fn generate_key(&self, wallet_handle: &str) -> Result<GenerateKeyResponse, Error> {
+    pub fn generate_key(&self, wallet_handle: &str) -> Result<GenerateKeyResponse> {
         let req = GenerateKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             display_mnemonic: false,
@@ -172,7 +169,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteKeyResponse, Error> {
+    ) -> Result<DeleteKeyResponse> {
         let req = DeleteKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -182,7 +179,7 @@ impl Client {
     }
 
     /// List all of the public keys in the wallet
-    pub fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, Error> {
+    pub fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse> {
         let req = ListKeysRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -195,7 +192,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         transaction: &Transaction,
-    ) -> Result<SignTransactionResponse, Error> {
+    ) -> Result<SignTransactionResponse> {
         let transaction_bytes = rmp_serde::to_vec_named(transaction)?;
         let req = SignTransactionRequest {
             wallet_handle_token: wallet_handle.to_string(),
@@ -206,7 +203,7 @@ impl Client {
     }
 
     /// Lists all of the multisig accounts whose preimages this wallet stores
-    pub fn list_multisig(&self, wallet_handle: &str) -> Result<ListMultisigResponse, Error> {
+    pub fn list_multisig(&self, wallet_handle: &str) -> Result<ListMultisigResponse> {
         let req = ListMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -220,7 +217,7 @@ impl Client {
         version: u8,
         threshold: u8,
         pks: &[Ed25519PublicKey],
-    ) -> Result<ImportMultisigResponse, Error> {
+    ) -> Result<ImportMultisigResponse> {
         let req = ImportMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
             multisig_version: version,
@@ -235,7 +232,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         address: &str,
-    ) -> Result<ExportMultisigResponse, Error> {
+    ) -> Result<ExportMultisigResponse> {
         let req = ExportMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
             address: address.to_string(),
@@ -249,7 +246,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteMultisigResponse, Error> {
+    ) -> Result<DeleteMultisigResponse> {
         let req = DeleteMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -266,7 +263,7 @@ impl Client {
         transaction: &Transaction,
         public_key: Ed25519PublicKey,
         partial_multisig: Option<MultisigSignature>,
-    ) -> Result<SignMultisigTransactionResponse, Error> {
+    ) -> Result<SignMultisigTransactionResponse> {
         let transaction_bytes = rmp_serde::to_vec_named(transaction)?;
         let req = SignMultisigTransactionRequest {
             wallet_handle_token: wallet_handle.to_string(),
@@ -278,7 +275,7 @@ impl Client {
         self.do_v1_request(req)
     }
 
-    fn do_v1_request<R>(&self, req: R) -> Result<R::Response, Error>
+    fn do_v1_request<R>(&self, req: R) -> Result<R::Response>
     where
         R: APIV1Request,
     {
@@ -292,7 +289,10 @@ impl Client {
             .text()?;
         if let Ok(envelope) = serde_json::from_str::<APIV1ResponseEnvelope>(&response) {
             if envelope.error {
-                return Err(Error::Api(envelope.message));
+                return Err(ApiError::ResponseError {
+                    response: envelope.message,
+                }
+                .into());
             }
         }
         Ok(serde_json::from_str(&response)?)
@@ -306,8 +306,8 @@ pub mod requests {
 
     use crate::crypto::MultisigSignature;
     use crate::kmd::responses::*;
-    use crate::util::serialize_bytes;
     use crate::models::{Ed25519PublicKey, MasterDerivationKey};
+    use crate::util::serialize_bytes;
 
     pub trait APIV1Request: Serialize {
         type Response: DeserializeOwned;
