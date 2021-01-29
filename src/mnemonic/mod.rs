@@ -1,4 +1,5 @@
-use crate::error::{ApiError, Result};
+use crate::error::ApiError;
+use anyhow::Result;
 use sha2::Digest;
 use static_assertions::const_assert_eq;
 

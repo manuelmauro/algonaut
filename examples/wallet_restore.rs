@@ -3,8 +3,8 @@ use std::error::Error;
 use algorand_rs::{kmd, mnemonic, MasterDerivationKey};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let kmd_address = "http://localhost:8080";
-    let kmd_token = "contents-of-kmd.token";
+    let kmd_address = "http://localhost:4002";
+    let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     let kmd_client = kmd::Client::new(kmd_address, kmd_token);
 

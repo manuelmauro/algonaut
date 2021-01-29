@@ -1,10 +1,6 @@
 extern crate derive_more;
 use derive_more::{Display, Error, From};
-use std::error;
 use std::fmt::Debug;
-
-pub type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
-
 #[derive(Clone, Debug, Display, Error, From)]
 pub enum TokenParsingError {
     /// Token has an invalid length.

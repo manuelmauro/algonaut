@@ -1,11 +1,11 @@
-use serde::Deserialize;
-
 use crate::crypto::MultisigSignature;
-use crate::error::{ApiError, Result};
+use crate::error::ApiError;
 use crate::kmd::requests::*;
 use crate::kmd::responses::*;
 use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 use crate::transaction::Transaction;
+use anyhow::Result;
+use serde::Deserialize;
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 

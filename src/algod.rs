@@ -1,10 +1,11 @@
-use crate::error::{AlgodBuildError, Result};
+use crate::error::AlgodBuildError;
 use crate::models::{
     Account, Block, NodeStatus, PendingTransactions, Round, Supply, Transaction, TransactionFee,
     TransactionID, TransactionList, TransactionParams, Version,
 };
 use crate::transaction::SignedTransaction;
 use crate::util::ApiToken;
+use anyhow::Result;
 use reqwest::header::HeaderMap;
 use url::Url;
 
@@ -267,7 +268,7 @@ impl Client {
     ) -> Result<Transaction> {
         let response = reqwest::Client::new()
             .get(&format!(
-                "{}/v1/account/{}/transaction/{}",
+                "{}v1/account/{}/transaction/{}",
                 self.url, address, transaction_id
             ))
             .header(AUTH_HEADER, &self.token)
@@ -281,7 +282,7 @@ impl Client {
     /// Gets suggested fee in units of micro-Algos per byte
     pub fn suggested_fee(&self) -> Result<TransactionFee> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/transactions/fee", self.url))
+            .get(&format!("{}v1/transactions/fee", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -293,7 +294,7 @@ impl Client {
     /// Gets parameters for constructing a new transaction
     pub fn transaction_params(&self) -> Result<TransactionParams> {
         let response = reqwest::Client::new()
-            .get(&format!("{}/v1/transactions/params", self.url))
+            .get(&format!("{}v1/transactions/params", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -320,7 +321,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "UnitializedToken")]
+    #[should_panic(expected = "")]
     fn test_client_builder_with_no_token() {
         let _ = Algod::new()
             .bind("http://localhost:4001")
@@ -330,13 +331,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "RelativeUrlWithoutBase")]
+    #[should_panic(expected = "")]
     fn test_client_builder_with_a_bad_url() {
         let _ = Algod::new().bind("bad-url").unwrap();
     }
 
     #[test]
-    #[should_panic(expected = "UnitializedUrl")]
+    #[should_panic(expected = "")]
     fn test_client_builder_with_no_url() {
         let _ = Algod::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")

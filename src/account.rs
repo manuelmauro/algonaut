@@ -1,14 +1,14 @@
+use crate::auction::{Bid, SignedBid};
+use crate::crypto::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
+use crate::error::ApiError;
+use crate::models::Ed25519PublicKey;
+use crate::transaction::{SignedTransaction, Transaction};
+use anyhow::Result;
 use data_encoding::BASE32_NOPAD;
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::Ed25519KeyPair as KeyPairType;
 use ring::signature::KeyPair;
-
-use crate::auction::{Bid, SignedBid};
-use crate::crypto::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
-use crate::error::{ApiError, Result};
-use crate::models::Ed25519PublicKey;
-use crate::transaction::{SignedTransaction, Transaction};
 
 use sha2::Digest;
 use std::borrow::Borrow;
