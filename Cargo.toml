@@ -1,10 +1,12 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+description = "A Rusty sdk for the Algorand blockchain."
 edition = "2018"
+keywords = ["Algorand", "sdk"]
+license = "MIT"
 name = "algorust"
+repository = "https://github.com/manuelmauro/algorust"
 version = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 data-encoding = "2.3.1"
