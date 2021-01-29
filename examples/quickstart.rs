@@ -1,5 +1,5 @@
-use algorust::Algod;
-use algorust::kmd;
+use algorand_rs::Algod;
+use algorand_rs::kmd;
 use std::error::Error;
 
 // ideally these should be env variables

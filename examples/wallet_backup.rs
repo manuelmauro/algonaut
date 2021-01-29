@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use algorust::{kmd, mnemonic};
+use algorand_rs::{kmd, mnemonic};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:4002";

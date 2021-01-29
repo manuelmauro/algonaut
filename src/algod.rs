@@ -12,7 +12,7 @@ const AUTH_HEADER: &str = "X-Algo-API-Token";
 
 /// Algod is the entry point to the creation of a cliend of the Algorand protocol daemon.
 /// ```
-/// use algorust::algod::Algod;
+/// use algorand_rs::algod::Algod;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let algod = Algod::new()

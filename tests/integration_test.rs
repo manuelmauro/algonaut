@@ -1,4 +1,4 @@
-use algorust::Algod;
+use algorand_rs::Algod;
 
 #[test]
 fn test_proper_client_builder() -> Result<(), Box<dyn std::error::Error>> {

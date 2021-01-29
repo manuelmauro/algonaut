@@ -2,7 +2,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 
-use algorust::Algod;
+use algorand_rs::Algod;
 
 // ideally these should be env variables
 const ALGOD_URL: &str = "http://localhost:4001";

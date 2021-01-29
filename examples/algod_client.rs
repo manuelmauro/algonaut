@@ -1,4 +1,4 @@
-use algorust::Algod;
+use algorand_rs::Algod;
 use std::error::Error;
 
 // ideally these should be env variables

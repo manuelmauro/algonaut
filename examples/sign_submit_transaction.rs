@@ -1,5 +1,5 @@
-use algorust::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorust::{Algod, kmd, Address, MicroAlgos};
+use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algorand_rs::{Algod, kmd, Address, MicroAlgos};
 use std::error::Error;
 
 // ideally these should be env variables
