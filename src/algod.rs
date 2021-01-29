@@ -17,20 +17,20 @@ const AUTH_HEADER: &str = "X-Algo-API-Token";
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let algod = Algod::new()
-///         .bind("http://localhost:4001")?
-///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
+///         .bind("http://localhost:4001")
+///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 ///         .client()?;
 ///
 ///     Ok(())
 /// }
 /// ```
-pub struct Algod {
-    url: Option<Url>,
-    token: Option<ApiToken>,
+pub struct Algod<'a> {
+    url: Option<&'a str>,
+    token: Option<&'a str>,
     headers: HeaderMap,
 }
 
-impl Algod {
+impl<'a> Algod<'a> {
     /// Start the creation of a client.
     pub fn new() -> Self {
         Algod {
@@ -41,23 +41,23 @@ impl Algod {
     }
 
     /// Bind to a URL.
-    pub fn bind(mut self, url: &str) -> Result<Self> {
-        self.url = Some(Url::parse(url)?);
-        Ok(self)
+    pub fn bind(mut self, url: &'a str) -> Self {
+        self.url = Some(url);
+        self
     }
 
     /// Use a token to authenticate.
-    pub fn auth(mut self, token: &str) -> Result<Self> {
-        self.token = Some(ApiToken::parse(token)?);
-        Ok(self)
+    pub fn auth(mut self, token: &'a str) -> Self {
+        self.token = Some(token);
+        self
     }
 
     /// Build a client for Algorand protocol daemon.
     pub fn client(self) -> Result<Client> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(Client {
-                url: url.into_string(),
-                token: token.to_string(),
+                url: Url::parse(url)?.into_string(),
+                token: ApiToken::parse(token)?.to_string(),
                 headers: self.headers,
             }),
             (None, Some(_)) => Err(AlgodBuildError::UnitializedUrl.into()),
@@ -311,8 +311,8 @@ mod tests {
     #[test]
     fn test_valid_client_builder() -> Result<()> {
         let algod = Algod::new()
-            .bind("http://localhost:4001")?
-            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
+            .bind("http://example.com")
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .client();
 
         assert!(algod.ok().is_some());
@@ -323,17 +323,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "")]
     fn test_client_builder_with_no_token() {
-        let _ = Algod::new()
-            .bind("http://localhost:4001")
-            .unwrap()
-            .client()
-            .unwrap();
-    }
-
-    #[test]
-    #[should_panic(expected = "")]
-    fn test_client_builder_with_a_bad_url() {
-        let _ = Algod::new().bind("bad-url").unwrap();
+        let _ = Algod::new().bind("http://example.com").client().unwrap();
     }
 
     #[test]
@@ -341,17 +331,7 @@ mod tests {
     fn test_client_builder_with_no_url() {
         let _ = Algod::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .unwrap()
             .client()
             .unwrap();
-    }
-
-    #[test]
-    fn test_client_builder_with_a_token_too_short() -> Result<()> {
-        let algod = Algod::new().auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-
-        assert!(algod.err().is_some());
-
-        Ok(())
     }
 }

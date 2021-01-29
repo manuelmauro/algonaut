@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     let kmd_client = kmd::Client::new(kmd_address, kmd_token);
-    let algod = Algod::new().bind(ALGOD_URL)?.auth(ALGOD_TOKEN)?.client()?;
+    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client()?;
 
     let list_response = kmd_client.list_wallets()?;
 

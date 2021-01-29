@@ -3,8 +3,8 @@ use algorand_rs::Algod;
 #[test]
 fn test_proper_client_builder() -> Result<(), Box<dyn std::error::Error>> {
     let algod = Algod::new()
-        .bind("http://localhost:4001")?
-        .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?
+        .bind("http://localhost:4001")
+        .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         .client();
 
     assert!(algod.ok().is_some());

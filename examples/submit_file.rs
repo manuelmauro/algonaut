@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut raw_transaction = Vec::new();
     let _ = f.read_to_end(&mut raw_transaction)?;
 
-    let algod = Algod::new().bind(ALGOD_URL)?.auth(ALGOD_TOKEN)?.client()?;
+    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client()?;
 
     let send_response = algod.raw_transaction(&raw_transaction)?;
     println!("Transaction ID: {}", send_response.tx_id);
