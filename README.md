@@ -2,14 +2,6 @@
 
 This crate is a work in progress and it aims at becoming a rusty algorand sdk.
 
-The main objectives are:
-
-- [ ] Clear error messages
-- [ ] Async requests
-- [ ] Thorough test suite
-- [ ] Proper documentation
-- [ ] Examples guiding API development
-
 ```rust
 use algorand_rs::kmd;
 use algorand_rs::Algod;
@@ -27,6 +19,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 ```
+
+## Guiding Principles
+
+- [ ] Clear error messages
+- [ ] Async requests
+- [ ] Thorough test suite
+- [ ] Proper documentation
+- [ ] Examples guiding API development
 
 ## Acknowledgements
 
