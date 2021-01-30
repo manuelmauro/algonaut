@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 ```
 
-## Guiding Principles
+## Objectives
 
 - [ ] Clear error messages
 - [ ] Async requests
