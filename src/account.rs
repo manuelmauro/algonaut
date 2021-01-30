@@ -1,9 +1,8 @@
 use crate::auction::{Bid, SignedBid};
 use crate::crypto::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
-use crate::error::ApiError;
+use crate::error::{AlgorandError, ApiError};
 use crate::models::Ed25519PublicKey;
 use crate::transaction::{SignedTransaction, Transaction};
-use anyhow::Result;
 use data_encoding::BASE32_NOPAD;
 use rand::rngs::OsRng;
 use rand::Rng;
@@ -28,7 +27,7 @@ impl Account {
     }
 
     /// Create account from human readable mnemonic of a 32 byte seed
-    pub fn from_mnemonic(mnemonic: &str) -> Result<Account> {
+    pub fn from_mnemonic(mnemonic: &str) -> Result<Account, AlgorandError> {
         let seed = crate::mnemonic::to_key(mnemonic)?;
         Ok(Self::from_seed(seed))
     }
@@ -70,7 +69,7 @@ impl Account {
     }
 
     /// Sign a bid with the account's private key
-    pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid> {
+    pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, AlgorandError> {
         let encoded_bid = rmp_serde::to_vec_named(&bid)?;
         let mut prefix_encoded_bid = b"aB".to_vec();
         prefix_encoded_bid.extend_from_slice(&encoded_bid);
@@ -82,7 +81,10 @@ impl Account {
     }
 
     /// Sign a transaction with the account's private key
-    pub fn sign_transaction(&self, transaction: &Transaction) -> Result<SignedTransaction> {
+    pub fn sign_transaction(
+        &self,
+        transaction: &Transaction,
+    ) -> Result<SignedTransaction, AlgorandError> {
         let encoded_tx = rmp_serde::to_vec_named(transaction)?;
         let mut prefix_encoded_tx = b"TX".to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
@@ -101,7 +103,7 @@ impl Account {
         &self,
         from: MultisigAddress,
         transaction: &Transaction,
-    ) -> Result<SignedTransaction> {
+    ) -> Result<SignedTransaction, AlgorandError> {
         if from.address() != transaction.sender {
             return Err(ApiError::InvalidSenderInMultisig.into());
         }
@@ -145,7 +147,7 @@ impl Account {
         &self,
         from: MultisigAddress,
         transaction: &SignedTransaction,
-    ) -> Result<SignedTransaction> {
+    ) -> Result<SignedTransaction, AlgorandError> {
         let from_transaction = self.sign_multisig_transaction(from, &transaction.transaction)?;
         Self::merge_multisig_transactions(&[&from_transaction, transaction])
     }
@@ -153,7 +155,7 @@ impl Account {
     /// Returns a signed transaction with the multisig signatures of the passed signed transactions merged
     pub fn merge_multisig_transactions<T: Borrow<SignedTransaction>>(
         transactions: &[T],
-    ) -> Result<SignedTransaction> {
+    ) -> Result<SignedTransaction, AlgorandError> {
         if transactions.len() < 2 {
             return Err(ApiError::InsufficientTransactions.into());
         }

@@ -9,7 +9,7 @@ repository = "https://github.com/manuelmauro/algorand-rs"
 version = "0.1.0"
 
 [dependencies]
-anyhow = "1.0.38"
+thiserror = "1.0.23"
 data-encoding = "2.3.1"
 derive_more = "0.99.11"
 indexmap = "1.6.1"

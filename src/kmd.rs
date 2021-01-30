@@ -1,10 +1,9 @@
 use crate::crypto::MultisigSignature;
-use crate::error::ApiError;
+use crate::error::{AlgorandError, ApiError};
 use crate::kmd::requests::*;
 use crate::kmd::responses::*;
 use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 use crate::transaction::Transaction;
-use anyhow::Result;
 use serde::Deserialize;
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
@@ -26,12 +25,12 @@ impl Client {
     }
 
     /// Retrieves the current version
-    pub fn versions(&self) -> Result<VersionsResponse> {
+    pub fn versions(&self) -> Result<VersionsResponse, AlgorandError> {
         self.do_v1_request(VersionsRequest)
     }
 
     /// List all of the wallets that kmd is aware of
-    pub fn list_wallets(&self) -> Result<ListWalletsResponse> {
+    pub fn list_wallets(&self) -> Result<ListWalletsResponse, AlgorandError> {
         self.do_v1_request(ListWalletsRequest)
     }
 
@@ -42,7 +41,7 @@ impl Client {
         wallet_password: &str,
         wallet_driver_name: &str,
         master_derivation_key: MasterDerivationKey,
-    ) -> Result<CreateWalletResponse> {
+    ) -> Result<CreateWalletResponse, AlgorandError> {
         let req = CreateWalletRequest {
             master_derivation_key,
             wallet_driver_name: wallet_driver_name.to_string(),
@@ -61,7 +60,7 @@ impl Client {
         &self,
         wallet_id: &str,
         wallet_password: &str,
-    ) -> Result<InitWalletHandleResponse> {
+    ) -> Result<InitWalletHandleResponse, AlgorandError> {
         let req = InitWalletHandleRequest {
             wallet_id: wallet_id.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -73,7 +72,7 @@ impl Client {
     pub fn release_wallet_handle(
         &self,
         wallet_handle: &str,
-    ) -> Result<ReleaseWalletHandleResponse> {
+    ) -> Result<ReleaseWalletHandleResponse, AlgorandError> {
         let req = ReleaseWalletHandleRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -81,7 +80,10 @@ impl Client {
     }
 
     /// Renew a wallet handle token
-    pub fn renew_wallet_handle(&self, wallet_handle: &str) -> Result<RenewWalletHandleResponse> {
+    pub fn renew_wallet_handle(
+        &self,
+        wallet_handle: &str,
+    ) -> Result<RenewWalletHandleResponse, AlgorandError> {
         let req = RenewWalletHandleRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -94,7 +96,7 @@ impl Client {
         wallet_id: &str,
         wallet_password: &str,
         new_name: &str,
-    ) -> Result<RenameWalletResponse> {
+    ) -> Result<RenameWalletResponse, AlgorandError> {
         let req = RenameWalletRequest {
             wallet_id: wallet_id.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -104,7 +106,7 @@ impl Client {
     }
 
     /// Get wallet info
-    pub fn get_wallet(&self, wallet_handle: &str) -> Result<GetWalletResponse> {
+    pub fn get_wallet(&self, wallet_handle: &str) -> Result<GetWalletResponse, AlgorandError> {
         let req = GetWalletRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -116,7 +118,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-    ) -> Result<ExportMasterDerivationKeyResponse> {
+    ) -> Result<ExportMasterDerivationKeyResponse, AlgorandError> {
         let req = ExportMasterDerivationKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -129,7 +131,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         private_key: [u8; 32],
-    ) -> Result<ImportKeyResponse> {
+    ) -> Result<ImportKeyResponse, AlgorandError> {
         let req = ImportKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             private_key,
@@ -145,7 +147,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<ExportKeyResponse> {
+    ) -> Result<ExportKeyResponse, AlgorandError> {
         let req = ExportKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             address: address.to_string(),
@@ -155,7 +157,7 @@ impl Client {
     }
 
     /// Generates a key and adds it to the wallet, returning the public key
-    pub fn generate_key(&self, wallet_handle: &str) -> Result<GenerateKeyResponse> {
+    pub fn generate_key(&self, wallet_handle: &str) -> Result<GenerateKeyResponse, AlgorandError> {
         let req = GenerateKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             display_mnemonic: false,
@@ -169,7 +171,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteKeyResponse> {
+    ) -> Result<DeleteKeyResponse, AlgorandError> {
         let req = DeleteKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -179,7 +181,7 @@ impl Client {
     }
 
     /// List all of the public keys in the wallet
-    pub fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse> {
+    pub fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, AlgorandError> {
         let req = ListKeysRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -192,7 +194,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         transaction: &Transaction,
-    ) -> Result<SignTransactionResponse> {
+    ) -> Result<SignTransactionResponse, AlgorandError> {
         let transaction_bytes = rmp_serde::to_vec_named(transaction)?;
         let req = SignTransactionRequest {
             wallet_handle_token: wallet_handle.to_string(),
@@ -203,7 +205,10 @@ impl Client {
     }
 
     /// Lists all of the multisig accounts whose preimages this wallet stores
-    pub fn list_multisig(&self, wallet_handle: &str) -> Result<ListMultisigResponse> {
+    pub fn list_multisig(
+        &self,
+        wallet_handle: &str,
+    ) -> Result<ListMultisigResponse, AlgorandError> {
         let req = ListMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -217,7 +222,7 @@ impl Client {
         version: u8,
         threshold: u8,
         pks: &[Ed25519PublicKey],
-    ) -> Result<ImportMultisigResponse> {
+    ) -> Result<ImportMultisigResponse, AlgorandError> {
         let req = ImportMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
             multisig_version: version,
@@ -232,7 +237,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         address: &str,
-    ) -> Result<ExportMultisigResponse> {
+    ) -> Result<ExportMultisigResponse, AlgorandError> {
         let req = ExportMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
             address: address.to_string(),
@@ -246,7 +251,7 @@ impl Client {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteMultisigResponse> {
+    ) -> Result<DeleteMultisigResponse, AlgorandError> {
         let req = DeleteMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
             wallet_password: wallet_password.to_string(),
@@ -263,7 +268,7 @@ impl Client {
         transaction: &Transaction,
         public_key: Ed25519PublicKey,
         partial_multisig: Option<MultisigSignature>,
-    ) -> Result<SignMultisigTransactionResponse> {
+    ) -> Result<SignMultisigTransactionResponse, AlgorandError> {
         let transaction_bytes = rmp_serde::to_vec_named(transaction)?;
         let req = SignMultisigTransactionRequest {
             wallet_handle_token: wallet_handle.to_string(),
@@ -275,7 +280,7 @@ impl Client {
         self.do_v1_request(req)
     }
 
-    fn do_v1_request<R>(&self, req: R) -> Result<R::Response>
+    fn do_v1_request<R>(&self, req: R) -> Result<R::Response, AlgorandError>
     where
         R: APIV1Request,
     {

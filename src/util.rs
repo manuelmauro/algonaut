@@ -1,6 +1,6 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
 use crate::crypto::{Address, MultisigSignature, MultisigSubsig, Signature};
-use crate::error::TokenParsingError;
+use crate::error::{AlgorandError, BuilderError};
 use crate::kmd::responses::ExportKeyResponse;
 use crate::models::{
     Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
@@ -457,9 +457,9 @@ const TOKEN_LENGTH: usize = 64;
 
 impl ApiToken {
     /// Parses a string slice representing an API token.
-    pub fn parse(token: &str) -> Result<Self, TokenParsingError> {
+    pub fn parse(token: &str) -> Result<Self, AlgorandError> {
         if token.len() != TOKEN_LENGTH {
-            return Err(TokenParsingError::InvalidLength);
+            return Err(BuilderError::BadToken.into());
         }
 
         Ok(ApiToken {

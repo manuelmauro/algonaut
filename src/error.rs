@@ -1,21 +1,38 @@
 extern crate derive_more;
-use derive_more::{Display, Error, From};
+use derive_more::{Display, From};
 use std::fmt::Debug;
-#[derive(Clone, Debug, Display, Error, From)]
-pub enum TokenParsingError {
-    /// Token has an invalid length.
-    #[display(fmt = "Token too short or too long.")]
-    InvalidLength,
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum AlgorandError {
+    /// A builder error.
+    #[error("builder error {0}")]
+    BuilderError(#[from] BuilderError),
+    /// An api error.
+    #[error("api error {0}")]
+    ApiError(#[from] ApiError),
+    /// A url parsing error
+    #[error("parse error {0}")]
+    BadUrl(#[from] url::ParseError),
+    /// Http error
+    #[error("http error {0}")]
+    HttpError(#[from] reqwest::Error),
+    /// Serialization error
+    #[error("serde encode error {0}")]
+    RmpSerdeError(#[from] rmp_serde::encode::Error),
+    /// Serialization error
+    #[error("serde encode error {0}")]
+    SerdeJsonError(#[from] serde_json::Error),
 }
 
 #[derive(Clone, Debug, Display, Error, From)]
-pub enum AlgodBuildError {
+pub enum BuilderError {
     /// URL parse error.
     #[display(fmt = "Url parsing error.")]
     BadUrl(url::ParseError),
     /// Token parse error.
     #[display(fmt = "Token parsing error.")]
-    BadToken(TokenParsingError),
+    BadToken,
     /// Missing the base URL of the REST API server.
     #[display(fmt = "Bind the client to URL before calling client().")]
     UnitializedUrl,
@@ -23,15 +40,6 @@ pub enum AlgodBuildError {
     #[display(fmt = "Authenticate with a token before calling client().")]
     UnitializedToken,
 }
-
-#[derive(Debug, Display, Error, From)]
-pub struct ReqwestError(reqwest::Error);
-
-#[derive(Debug, Display, Error, From)]
-pub struct EncodeError(rmp_serde::encode::Error);
-
-#[derive(Debug, Display, Error, From)]
-pub struct JsonError(serde_json::Error);
 
 #[derive(Debug, Display, Error, From)]
 pub enum ApiError {

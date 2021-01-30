@@ -1,5 +1,4 @@
-use crate::error::ApiError;
-use anyhow::Result;
+use crate::error::{AlgorandError, ApiError};
 use sha2::Digest;
 use static_assertions::const_assert_eq;
 
@@ -18,7 +17,7 @@ const_assert_eq!(mnemonic_constants; MNEM_LEN_WORDS * BITS_PER_WORD - (CHECKSUM_
 /// Converts a 32-byte key into a 25 word mnemonic. The generated
 /// mnemonic includes a checksum. Each word in the mnemonic represents 11 bits
 /// of data, and the last 11 bits are reserved for the checksum.
-pub fn from_key(key: &[u8]) -> Result<String> {
+pub fn from_key(key: &[u8]) -> Result<String, AlgorandError> {
     if key.len() != KEY_LEN_BYTES {
         return Err(ApiError::InvalidKeyLength.into());
     }
@@ -32,7 +31,7 @@ pub fn from_key(key: &[u8]) -> Result<String> {
 /// key used to create it. It returns an error if the passed mnemonic has
 /// an incorrect checksum, if the number of words is unexpected, or if one
 /// of the passed words is not found in the words list.
-pub fn to_key(string: &str) -> Result<[u8; KEY_LEN_BYTES]> {
+pub fn to_key(string: &str) -> Result<[u8; KEY_LEN_BYTES], AlgorandError> {
     let mut mnemonic: Vec<&str> = string.split(MNEMONIC_DELIM).collect();
     if mnemonic.len() != MNEM_LEN_WORDS {
         return Err(ApiError::InvalidMnemonicLength.into());
