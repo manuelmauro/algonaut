@@ -4,6 +4,7 @@ use reqwest::header::HeaderMap;
 use url::Url;
 
 mod v1;
+mod v2;
 
 /// Algod is the entry point to the creation of a cliend of the Algorand protocol daemon.
 /// ```
@@ -13,7 +14,7 @@ mod v1;
 ///     let algod = Algod::new()
 ///         .bind("http://localhost:4001")
 ///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-///         .client()?;
+///         .client_v1()?;
 ///
 ///     Ok(())
 /// }
@@ -46,10 +47,24 @@ impl<'a> Algod<'a> {
         self
     }
 
-    /// Build a client for Algorand protocol daemon.
-    pub fn client(self) -> Result<v1::Client, AlgorandError> {
+    /// Build a v1 client for Algorand protocol daemon.
+    pub fn client_v1(self) -> Result<v1::Client, AlgorandError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Client {
+                url: Url::parse(url)?.into_string(),
+                token: ApiToken::parse(token)?.to_string(),
+                headers: self.headers,
+            }),
+            (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
+            (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
+            (None, None) => Err(BuilderError::UnitializedUrl.into()),
+        }
+    }
+
+    /// Build a v2 client for Algorand protocol daemon.
+    pub fn client_v2(self) -> Result<v2::Client, AlgorandError> {
+        match (self.url, self.token) {
+            (Some(url), Some(token)) => Ok(v2::Client {
                 url: Url::parse(url)?.into_string(),
                 token: ApiToken::parse(token)?.to_string(),
                 headers: self.headers,
@@ -70,7 +85,7 @@ mod tests {
         let algod = Algod::new()
             .bind("http://example.com")
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .client();
+            .client_v1();
 
         assert!(algod.ok().is_some());
 
@@ -80,7 +95,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "")]
     fn test_client_builder_with_no_token() {
-        let _ = Algod::new().bind("http://example.com").client().unwrap();
+        let _ = Algod::new().bind("http://example.com").client_v1().unwrap();
     }
 
     #[test]
@@ -88,7 +103,7 @@ mod tests {
     fn test_client_builder_with_no_url() {
         let _ = Algod::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .client()
+            .client_v1()
             .unwrap();
     }
 }

@@ -1,6 +1,14 @@
 # algorand-rs
+
 This crate is a work in progress and it aims at becoming a rusty algorand sdk.
-It is based on the great work of [@mraof](https://github.com/mraof/rust-algorand-sdk).
+
+The main objectives are:
+
+- [ ] Clear error messages
+- [ ] Async requests
+- [ ] Thorough test suite
+- [ ] Proper documentation
+- [ ] Examples guiding API development
 
 ```rust
 use algorand_rs::kmd;
@@ -13,9 +21,18 @@ const ALGOD_TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client()?;
-    
+
     println!("Algod versions: {:?}", algod.versions()?.versions);
 
     Ok(())
 }
 ```
+
+## Acknowledgements
+
+This crate is based on the great work of [@mraof](https://github.com/mraof/rust-algorand-sdk) and partly on [@KBryan](https://github.com/KBryan/algorand_rust_sdk)'s fork.
+
+## License
+
+Licensed under MIT license.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, shall be licensed as above, without any additional terms or conditions.

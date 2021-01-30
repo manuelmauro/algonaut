@@ -1,5 +1,5 @@
 use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorand_rs::{Algod, kmd, Address, MicroAlgos};
+use algorand_rs::{kmd, Address, Algod, MicroAlgos};
 use std::error::Error;
 
 // ideally these should be env variables
@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     let kmd_client = kmd::Client::new(kmd_address, kmd_token);
-    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client()?;
+    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client_v1()?;
 
     let list_response = kmd_client.list_wallets()?;
 
