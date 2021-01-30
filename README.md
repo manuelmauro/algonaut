@@ -12,7 +12,7 @@ const ALGOD_URL: &str = "http://localhost:4001";
 const ALGOD_TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client()?;
+    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client_v1()?;
 
     println!("Algod versions: {:?}", algod.versions()?.versions);
 
