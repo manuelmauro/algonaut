@@ -4,6 +4,7 @@ use crate::util::deserialize_bytes;
 use crate::util::deserialize_hash;
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
+
 /// MicroAlgos are the base unit of currency in Algorand
 #[derive(Copy, Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MicroAlgos(pub u64);

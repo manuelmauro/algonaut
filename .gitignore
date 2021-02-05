@@ -5,3 +5,4 @@ Cargo.lock
 *.iml
 /algorand-sdk-testing/
 /test.sh
+signed.tx

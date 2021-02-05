@@ -1,17 +1,21 @@
 use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorand_rs::{Kmd, Address, Algod, MicroAlgos};
+use algorand_rs::{Address, Algod, Kmd, MicroAlgos};
+use dotenv::dotenv;
+use std::env;
 use std::error::Error;
 
-// ideally these should be env variables
-const ALGOD_URL: &str = "http://localhost:4001";
-const ALGOD_TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-
 fn main() -> Result<(), Box<dyn Error>> {
-    let kmd_address = "http://localhost:4002";
-    let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    // load variables in .env
+    dotenv().ok();
 
-    let kmd = Kmd::new().bind(kmd_address).auth(kmd_token).client_v1()?;
-    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client_v1()?;
+    let algod = Algod::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .client_v1()?;
+    let kmd = Kmd::new()
+        .bind(env::var("KMD_URL")?.as_ref())
+        .auth(env::var("KMD_TOKEN")?.as_ref())
+        .client_v1()?;
 
     let list_response = kmd.list_wallets()?;
 

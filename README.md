@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         .client_v1()?;
 
-    println!("Algod versions: {:?}", algod.versions()?.versions);
+    println!("Algod versions: {:?}", algod.versions()?);
 
     Ok(())
 }
