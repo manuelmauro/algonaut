@@ -1,7 +1,7 @@
 use crate::crypto::MultisigSignature;
 use crate::error::{AlgorandError, ApiError};
-use crate::kmd::requests::*;
-use crate::kmd::responses::*;
+use crate::kmd::v1::requests::*;
+use crate::kmd::v1::responses::*;
 use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 use crate::transaction::Transaction;
 use serde::Deserialize;
@@ -10,13 +10,13 @@ const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 
 /// Client for interacting with the key management daemon
 pub struct Client {
-    address: String,
-    token: String,
-    http_client: reqwest::Client,
+    pub(super) address: String,
+    pub(super) token: String,
+    pub(super) http_client: reqwest::Client,
 }
 
 impl Client {
-    pub fn new(address: &str, token: &str) -> Client {
+    pub(super) fn new(address: &str, token: &str) -> Client {
         Client {
             address: address.to_string(),
             token: token.to_string(),
@@ -310,7 +310,7 @@ pub mod requests {
     use serde::Serialize;
 
     use crate::crypto::MultisigSignature;
-    use crate::kmd::responses::*;
+    use crate::kmd::v1::responses::*;
     use crate::models::{Ed25519PublicKey, MasterDerivationKey};
     use crate::util::serialize_bytes;
 
@@ -592,7 +592,7 @@ pub mod responses {
 
     use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 
-    use crate::kmd::{APIV1Wallet, APIV1WalletHandle};
+    use crate::kmd::v1::{APIV1Wallet, APIV1WalletHandle};
 
     #[derive(Debug, Deserialize)]
     pub struct APIV1ResponseEnvelope {

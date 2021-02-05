@@ -1,5 +1,5 @@
-use algorand_rs::kmd;
 use algorand_rs::Algod;
+use algorand_rs::Kmd;
 use std::error::Error;
 
 // ideally these should be env variables
@@ -10,10 +10,10 @@ const KMD_TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client_v1()?;
-    let kmd = kmd::Client::new(KMD_URL, KMD_TOKEN);
+    let kmd = Kmd::new().bind(KMD_URL).auth(KMD_TOKEN).client_v1()?;
 
-    println!("Algod versions: {:?}", algod.versions()?.versions);
-    println!("Kmd versions: {:?}", kmd.versions()?.versions);
+    println!("Algod versions: {:#?}", algod.versions()?);
+    println!("Kmd versions: {:#?}", kmd.versions()?);
 
     Ok(())
 }

@@ -1,7 +1,7 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
 use crate::crypto::{Address, MultisigSignature, MultisigSubsig, Signature};
 use crate::error::{AlgorandError, BuilderError};
-use crate::kmd::responses::ExportKeyResponse;
+use crate::kmd::v1::responses::ExportKeyResponse;
 use crate::models::{
     Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
 };

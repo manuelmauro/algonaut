@@ -1,18 +1,19 @@
 # algorand-rs
+[![](https://meritbadge.herokuapp.com/algorand-rs)](https://crates.io/crates/algorand-rs)
+[![Docs](https://docs.rs/paypal-rs/badge.svg)](https://docs.rs/algorand-rs)
 
-This crate is a work in progress and it aims at becoming a rusty algorand sdk.
+This crate is a WORK IN PROGRESS!
+
+**algorand-rs** aims at becoming a rusty algorand sdk.
 
 ```rust
-use algorand_rs::kmd;
-use algorand_rs::Algod;
-use std::error::Error;
+use algorand_rs::algod::Algod;
 
-// ideally these should be env variables
-const ALGOD_URL: &str = "http://localhost:4001";
-const ALGOD_TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client_v1()?;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let algod = Algod::new()
+        .bind("http://localhost:4001")
+        .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        .client_v1()?;
 
     println!("Algod versions: {:?}", algod.versions()?.versions);
 
@@ -22,15 +23,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 ## Objectives
 
-- [ ] Clear error messages
-- [ ] Async requests
-- [ ] Thorough test suite
-- [ ] Proper documentation
 - [ ] Examples guiding API development
+- [ ] Async requests
+- [ ] Clear error messages
+- [ ] Thorough test suite
+- [ ] Comprehensive documentation
 
 ## Acknowledgements
 
-This crate is based on the great work of [@mraof](https://github.com/mraof/rust-algorand-sdk) and partly on [@KBryan](https://github.com/KBryan/algorand_rust_sdk)'s fork.
+This crate is based on the work of [@mraof](https://github.com/mraof/rust-algorand-sdk) and partly on [@KBryan](https://github.com/KBryan/algorand_rust_sdk)'s fork.
 
 ## License
 

@@ -1,5 +1,5 @@
 use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorand_rs::{kmd, Address, Algod, MicroAlgos};
+use algorand_rs::{Kmd, Address, Algod, MicroAlgos};
 use std::error::Error;
 
 // ideally these should be env variables
@@ -10,10 +10,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let kmd_address = "http://localhost:4002";
     let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    let kmd_client = kmd::Client::new(kmd_address, kmd_token);
+    let kmd = Kmd::new().bind(kmd_address).auth(kmd_token).client_v1()?;
     let algod = Algod::new().bind(ALGOD_URL).auth(ALGOD_TOKEN).client_v1()?;
 
-    let list_response = kmd_client.list_wallets()?;
+    let list_response = kmd.list_wallets()?;
 
     let wallet_id = match list_response
         .wallets
@@ -24,13 +24,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => return Err("Wallet not found".into()),
     };
 
-    let init_response = kmd_client.init_wallet_handle(&wallet_id, "testpassword")?;
+    let init_response = kmd.init_wallet_handle(&wallet_id, "testpassword")?;
     let wallet_handle_token = init_response.wallet_handle_token;
 
-    let gen_response = kmd_client.generate_key(&wallet_handle_token)?;
+    let gen_response = kmd.generate_key(&wallet_handle_token)?;
     let from_address = Address::from_string(&gen_response.address)?;
 
-    let gen_response = kmd_client.generate_key(&wallet_handle_token)?;
+    let gen_response = kmd.generate_key(&wallet_handle_token)?;
     let to_address = Address::from_string(&gen_response.address)?;
 
     let transaction_params = algod.transaction_params()?;
@@ -55,8 +55,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let transaction = Transaction::new(base, MicroAlgos(1), TransactionType::Payment(payment))?;
 
-    let sign_response =
-        kmd_client.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;
+    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;
 
     println!(
         "kmd made signed transaction with {} bytes",

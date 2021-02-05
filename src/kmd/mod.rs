@@ -1,17 +1,15 @@
 use crate::error::{AlgorandError, BuilderError};
 use crate::util::ApiToken;
-use reqwest::header::HeaderMap;
 use url::Url;
 
-mod v1;
-mod v2;
+pub mod v1;
 
-/// Algod is the entry point to the creation of a client for the Algorand protocol daemon.
+/// Kmd is the entry point to the creation of a client for the Algorand key management daemon.
 /// ```
-/// use algorand_rs::Algod;
+/// use algorand_rs::Kmd;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let algod = Algod::new()
+///     let algod = Kmd::new()
 ///         .bind("http://localhost:4001")
 ///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 ///         .client_v1()?;
@@ -21,19 +19,17 @@ mod v2;
 ///     Ok(())
 /// }
 /// ```
-pub struct Algod<'a> {
+pub struct Kmd<'a> {
     url: Option<&'a str>,
     token: Option<&'a str>,
-    headers: HeaderMap,
 }
 
-impl<'a> Algod<'a> {
+impl<'a> Kmd<'a> {
     /// Start the creation of a client.
     pub fn new() -> Self {
-        Algod {
+        Kmd {
             url: None,
-            token: None,
-            headers: HeaderMap::new(),
+            token: None
         }
     }
 
@@ -52,25 +48,10 @@ impl<'a> Algod<'a> {
     /// Build a v1 client for Algorand protocol daemon.
     pub fn client_v1(self) -> Result<v1::Client, AlgorandError> {
         match (self.url, self.token) {
-            (Some(url), Some(token)) => Ok(v1::Client {
-                url: Url::parse(url)?.into_string(),
-                token: ApiToken::parse(token)?.to_string(),
-                headers: self.headers,
-            }),
-            (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
-            (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
-            (None, None) => Err(BuilderError::UnitializedUrl.into()),
-        }
-    }
-
-    /// Build a v2 client for Algorand protocol daemon.
-    pub fn client_v2(self) -> Result<v2::Client, AlgorandError> {
-        match (self.url, self.token) {
-            (Some(url), Some(token)) => Ok(v2::Client {
-                url: Url::parse(url)?.into_string(),
-                token: ApiToken::parse(token)?.to_string(),
-                headers: self.headers,
-            }),
+            (Some(url), Some(token)) => Ok(v1::Client::new(
+                Url::parse(url)?.as_str(),
+                ApiToken::parse(token)?.to_string().as_ref()
+            )),
             (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
             (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
             (None, None) => Err(BuilderError::UnitializedUrl.into()),
@@ -84,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_valid_client_builder() -> Result<(), AlgorandError> {
-        let algod = Algod::new()
+        let algod = Kmd::new()
             .bind("http://example.com")
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .client_v1();
@@ -97,13 +78,13 @@ mod tests {
     #[test]
     #[should_panic(expected = "")]
     fn test_client_builder_with_no_token() {
-        let _ = Algod::new().bind("http://example.com").client_v1().unwrap();
+        let _ = Kmd::new().bind("http://example.com").client_v1().unwrap();
     }
 
     #[test]
     #[should_panic(expected = "")]
     fn test_client_builder_with_no_url() {
-        let _ = Algod::new()
+        let _ = Kmd::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .client_v1()
             .unwrap();
