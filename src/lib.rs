@@ -37,6 +37,10 @@ pub mod crypto;
 pub mod error;
 /// Key management daemon
 pub mod kmd;
+
+/// Algorand's indexer
+pub mod indexer;
+
 /// Support for turning 32 byte keys into human-readable mnemonics and back
 pub mod mnemonic;
 pub mod models;
@@ -47,5 +51,6 @@ pub(crate) mod util;
 // Re-exports
 pub use algod::Algod;
 pub use kmd::Kmd;
+pub use indexer::Indexer;
 pub use crypto::Address;
 pub use models::{HashDigest, MasterDerivationKey, MicroAlgos, Round};

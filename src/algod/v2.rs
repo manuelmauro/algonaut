@@ -21,7 +21,6 @@ impl Client {
         Client::new_with_headers(address, token, HeaderMap::new())
     }
 
-    //noinspection ALL
     pub fn new_with_headers(address: &str, token: &str, headers: HeaderMap) -> Client {
         Client {
             url: address.to_string(),
