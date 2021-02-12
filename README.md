@@ -24,6 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Objectives
 
 - [ ] Examples guiding API development
+- [ ] Builder pattern and sensible defaults
 - [ ] Async requests
 - [ ] Clear error messages
 - [ ] Thorough test suite

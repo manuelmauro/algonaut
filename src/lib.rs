@@ -23,6 +23,7 @@
 //! 
 //! - [ ] Examples guiding API development
 //! - [ ] Async requests
+//! - [ ] Builder pattern and sensible defaults
 //! - [ ] Clear error messages
 //! - [ ] Thorough test suite
 //! - [ ] Comprehensive documentation
