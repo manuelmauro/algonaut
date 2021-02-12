@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .client_v2()?;
     let kmd = Kmd::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())

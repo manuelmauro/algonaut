@@ -1,0 +1,342 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'algorand-rs'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "algorand-rs",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'algod_client'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=algod_client",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "algod_client",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'algod_client'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=algod_client",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "algod_client",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'sign_submit_transaction'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=sign_submit_transaction",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "sign_submit_transaction",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'sign_submit_transaction'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=sign_submit_transaction",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "sign_submit_transaction",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'submit_file'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=submit_file",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "submit_file",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'submit_file'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=submit_file",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "submit_file",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'kmd_client'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=kmd_client",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "kmd_client",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'kmd_client'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=kmd_client",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "kmd_client",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'quickstart'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=quickstart",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "quickstart",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'quickstart'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=quickstart",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "quickstart",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'wallet_restore'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=wallet_restore",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "wallet_restore",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'wallet_restore'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=wallet_restore",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "wallet_restore",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'sign_offline'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=sign_offline",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "sign_offline",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'sign_offline'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=sign_offline",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "sign_offline",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'wallet_backup'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=wallet_backup",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "wallet_backup",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'wallet_backup'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=wallet_backup",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "wallet_backup",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'integration_test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=integration_test",
+                    "--package=algorand-rs"
+                ],
+                "filter": {
+                    "name": "integration_test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

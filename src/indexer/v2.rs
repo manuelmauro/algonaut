@@ -5,23 +5,14 @@ use reqwest::header::HeaderMap;
 pub struct Client {
     pub(super) url: String,
     pub(super) headers: HeaderMap,
+    pub(super) http_client: reqwest::Client,
 }
 
 impl Client {
-    pub fn new(address: &str) -> Client {
-        Client::new_with_headers(address, HeaderMap::new())
-    }
-
-    pub fn new_with_headers(address: &str, headers: HeaderMap) -> Client {
-        Client {
-            url: address.to_string(),
-            headers,
-        }
-    }
-
     /// Returns Ok if healthy
     pub fn health(&self) -> Result<(), AlgorandError> {
-        let _ = reqwest::Client::new()
+        let _ = self
+            .http_client
             .get(&format!("{}health", self.url))
             .headers(self.headers.clone())
             .send()?

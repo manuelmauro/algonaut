@@ -56,6 +56,7 @@ impl<'a> Algod<'a> {
                 url: Url::parse(url)?.into_string(),
                 token: ApiToken::parse(token)?.to_string(),
                 headers: self.headers,
+                http_client: reqwest::Client::new(),
             }),
             (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
             (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
@@ -68,8 +69,9 @@ impl<'a> Algod<'a> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v2::Client {
                 url: Url::parse(url)?.into_string(),
-                token: ApiToken::parse(token)?.to_string(),
+                token: token.to_string(),
                 headers: self.headers,
+                http_client: reqwest::Client::new(),
             }),
             (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
             (Some(_), None) => Err(BuilderError::UnitializedToken.into()),

@@ -31,6 +31,7 @@ impl<'a> Indexer<'a> {
             Some(url) => Ok(v2::Client {
                 url: Url::parse(url)?.into_string(),
                 headers: self.headers,
+                http_client: reqwest::Client::new(),
             }),
             None => Err(BuilderError::UnitializedUrl.into()),
         }
@@ -48,15 +49,6 @@ mod tests {
         assert!(indexer.ok().is_some());
 
         Ok(())
-    }
-
-    #[test]
-    #[should_panic(expected = "")]
-    fn test_client_builder_with_no_token() {
-        let _ = Indexer::new()
-            .bind("http://example.com")
-            .client_v2()
-            .unwrap();
     }
 
     #[test]
