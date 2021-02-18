@@ -1,6 +1,6 @@
 use crate::error::AlgorandError;
 use crate::models::{
-    Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee,
+    Account, Block, NodeStatus, PendingTransactions, Supply, Transaction,
     TransactionID, TransactionList, TransactionParams, Version,
 };
 use crate::transaction::SignedTransaction;
@@ -75,7 +75,7 @@ impl Client {
     pub fn block(&self, round: Round) -> Result<Block, AlgorandError> {
         let response = self
             .http_client
-            .get(&format!("{}v2/block/{}", self.url, round.0))
+            .get(&format!("{}v2/blocks/{}", self.url, round.0))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -100,7 +100,7 @@ impl Client {
     pub fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
         let response = self
             .http_client
-            .get(&format!("{}v2/account/{}", self.url, address))
+            .get(&format!("{}v2/accounts/{}", self.url, address))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
@@ -172,7 +172,7 @@ impl Client {
         }
         let response = self
             .http_client
-            .get(&format!("{}v2/account/{}/transactions", self.url, address))
+            .get(&format!("{}v2/accounts/{}/transactions/pending/", self.url, address))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&query)
@@ -199,52 +199,6 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .body(raw.to_vec())
-            .send()?
-            .error_for_status()?
-            .json()?;
-        Ok(response)
-    }
-
-    /// Gets the information of a single transaction
-    pub fn transaction(&self, transaction_id: &str) -> Result<Transaction, AlgorandError> {
-        let response = self
-            .http_client
-            .get(&format!("{}v2/transaction/{}", self.url, transaction_id))
-            .header(AUTH_HEADER, &self.token)
-            .headers(self.headers.clone())
-            .send()?
-            .error_for_status()?
-            .json()?;
-        Ok(response)
-    }
-
-    /// Gets a specific confirmed transaction
-    pub fn transaction_information(
-        &self,
-        address: &str,
-        transaction_id: &str,
-    ) -> Result<Transaction, AlgorandError> {
-        let response = self
-            .http_client
-            .get(&format!(
-                "{}v2/account/{}/transaction/{}",
-                self.url, address, transaction_id
-            ))
-            .header(AUTH_HEADER, &self.token)
-            .headers(self.headers.clone())
-            .send()?
-            .error_for_status()?
-            .json()?;
-        Ok(response)
-    }
-
-    /// Gets suggested fee in units of micro-Algos per byte
-    pub fn suggested_fee(&self) -> Result<TransactionFee, AlgorandError> {
-        let response = self
-            .http_client
-            .get(&format!("{}v2/transactions/fee", self.url))
-            .header(AUTH_HEADER, &self.token)
-            .headers(self.headers.clone())
             .send()?
             .error_for_status()?
             .json()?;
