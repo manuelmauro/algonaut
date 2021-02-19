@@ -8,7 +8,6 @@ use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::Ed25519KeyPair as KeyPairType;
 use ring::signature::KeyPair;
-
 use sha2::Digest;
 use std::borrow::Borrow;
 

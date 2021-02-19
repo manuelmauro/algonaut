@@ -1,7 +1,6 @@
-use serde::{Deserialize, Serialize};
-
 use crate::util::deserialize_bytes;
 use crate::util::deserialize_hash;
+use serde::{Deserialize, Serialize};
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 

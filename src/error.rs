@@ -25,7 +25,7 @@ pub enum AlgorandError {
     SerdeJsonError(#[from] serde_json::Error),
 }
 
-#[derive(Clone, Debug, Display, Error, From)]
+#[derive(Debug, Display, Error, From)]
 pub enum BuilderError {
     /// URL parse error.
     #[display(fmt = "Url parsing error.")]

@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use crate::crypto::{Address, Signature};
+use serde::{Deserialize, Serialize};
 
 /// A bid by a user as part of an auction.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]

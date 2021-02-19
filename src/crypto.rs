@@ -1,8 +1,7 @@
+use crate::models::Ed25519PublicKey;
 use data_encoding::BASE32_NOPAD;
 use serde::Deserialize;
 use sha2::Digest;
-
-use crate::models::Ed25519PublicKey;
 
 type ChecksumAlg = sha2::Sha512Trunc256;
 
