@@ -6,7 +6,7 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algorand-rs"
 repository = "https://github.com/manuelmauro/algorand-rs"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 data-encoding = "2.3.1"
