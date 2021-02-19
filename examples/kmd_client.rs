@@ -1,12 +1,16 @@
+use algorand_rs::{Kmd, MasterDerivationKey};
+use dotenv::dotenv;
+use std::env;
 use std::error::Error;
 
-use algorand_rs::{Kmd, MasterDerivationKey};
-
 fn main() -> Result<(), Box<dyn Error>> {
-    let kmd_address = "http://localhost:4002";
-    let kmd_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    // load variables in .env
+    dotenv().ok();
 
-    let kmd = Kmd::new().bind(kmd_address).auth(kmd_token).client_v1()?;
+    let kmd = Kmd::new()
+        .bind(env::var("KMD_URL")?.as_ref())
+        .auth(env::var("KMD_TOKEN")?.as_ref())
+        .client_v1()?;
 
     let create_wallet_response = kmd.create_wallet(
         "testwallet",

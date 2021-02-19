@@ -1,10 +1,9 @@
-use std::error::Error;
-use std::fs::File;
-use std::io::Write;
-
 use algorand_rs::account::Account;
 use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
 use algorand_rs::{mnemonic, Address, HashDigest, MicroAlgos, Round};
+use std::error::Error;
+use std::fs::File;
+use std::io::Write;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let account = Account::generate();
