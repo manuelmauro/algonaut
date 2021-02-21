@@ -49,12 +49,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_valid_client_builder() -> Result<(), AlgorandError> {
+    fn test_valid_client_builder() {
         let indexer = Indexer::new().bind("http://example.com").client_v2();
 
         assert!(indexer.ok().is_some());
-
-        Ok(())
     }
 
     #[test]

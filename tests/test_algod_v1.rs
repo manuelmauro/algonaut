@@ -25,7 +25,7 @@ fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    assert_eq!(algod.health()?, ());
+    assert!(algod.health().is_ok());
 
     Ok(())
 }

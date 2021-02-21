@@ -91,15 +91,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_valid_client_builder() -> Result<(), AlgorandError> {
+    fn test_valid_client_builder() {
         let algod = Algod::new()
             .bind("http://example.com")
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .client_v1();
 
         assert!(algod.ok().is_some());
-
-        Ok(())
     }
 
     #[test]
