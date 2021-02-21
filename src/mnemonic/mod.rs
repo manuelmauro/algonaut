@@ -40,7 +40,8 @@ pub fn to_key(string: &str) -> Result<[u8; KEY_LEN_BYTES], AlgorandError> {
     let mut nums = Vec::with_capacity(mnemonic.len());
     for word in mnemonic {
         let n = wordlist::WORDLIST
-            .get_full(word).ok_or(ApiError::InvalidWordsInMnemonic)?;
+            .get_full(word)
+            .ok_or(ApiError::InvalidWordsInMnemonic)?;
         nums.push(n.0 as u32);
     }
     let mut bytes = to_byte_array(&nums);
