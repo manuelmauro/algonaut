@@ -30,11 +30,7 @@ pub struct Algod<'a> {
 impl<'a> Algod<'a> {
     /// Start the creation of a client.
     pub fn new() -> Self {
-        Algod {
-            url: None,
-            token: None,
-            headers: HeaderMap::new(),
-        }
+        Self::default()
     }
 
     /// Bind to a URL.
@@ -76,6 +72,16 @@ impl<'a> Algod<'a> {
             (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
             (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
             (None, None) => Err(BuilderError::UnitializedUrl.into()),
+        }
+    }
+}
+
+impl<'a> Default for Algod<'a> {
+    fn default() -> Self {
+        Algod {
+            url: None,
+            token: None,
+            headers: HeaderMap::new(),
         }
     }
 }

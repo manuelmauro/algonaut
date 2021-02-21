@@ -1,26 +1,26 @@
 //! # algorand-rs
-//! 
+//!
 //! This crate is a WORK IN PROGRESS!
-//! 
+//!
 //! **algorand-rs** aims at becoming a rusty algorand sdk.
-//! 
+//!
 //! ```rust
 //! use algorand_rs::algod::Algod;
-//! 
+//!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let algod = Algod::new()
 //!         .bind("http://localhost:4001")
 //!         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 //!         .client_v1()?;
-//! 
+//!
 //!     println!("Algod versions: {:?}", algod.versions()?.versions);
-//! 
+//!
 //!     Ok(())
 //! }
 //! ```
-//! 
+//!
 //! ## Objectives
-//! 
+//!
 //! - [ ] Examples guiding API development
 //! - [ ] Async requests
 //! - [ ] Builder pattern and sensible defaults
@@ -51,7 +51,7 @@ pub(crate) mod util;
 
 // Re-exports
 pub use algod::Algod;
-pub use kmd::Kmd;
-pub use indexer::Indexer;
 pub use crypto::Address;
+pub use indexer::Indexer;
+pub use kmd::Kmd;
 pub use models::{HashDigest, MasterDerivationKey, MicroAlgos, Round};

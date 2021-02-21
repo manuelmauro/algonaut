@@ -27,10 +27,7 @@ pub struct Kmd<'a> {
 impl<'a> Kmd<'a> {
     /// Start the creation of a client.
     pub fn new() -> Self {
-        Kmd {
-            url: None,
-            token: None
-        }
+        Self::default()
     }
 
     /// Bind to a URL.
@@ -50,11 +47,20 @@ impl<'a> Kmd<'a> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Client::new(
                 Url::parse(url)?.as_str(),
-                ApiToken::parse(token)?.to_string().as_ref()
+                ApiToken::parse(token)?.to_string().as_ref(),
             )),
             (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
             (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
             (None, None) => Err(BuilderError::UnitializedUrl.into()),
+        }
+    }
+}
+
+impl<'a> Default for Kmd<'a> {
+    fn default() -> Self {
+        Kmd {
+            url: None,
+            token: None,
         }
     }
 }

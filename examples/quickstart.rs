@@ -1,4 +1,4 @@
-use algorand_rs::{Algod, Kmd, Indexer};
+use algorand_rs::{Algod, Indexer, Kmd};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

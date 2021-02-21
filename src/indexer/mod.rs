@@ -13,10 +13,7 @@ pub struct Indexer<'a> {
 impl<'a> Indexer<'a> {
     /// Start the creation of a client.
     pub fn new() -> Self {
-        Indexer {
-            url: None,
-            headers: HeaderMap::new(),
-        }
+        Self::default()
     }
 
     /// Bind to a URL.
@@ -34,6 +31,15 @@ impl<'a> Indexer<'a> {
                 http_client: reqwest::Client::new(),
             }),
             None => Err(BuilderError::UnitializedUrl.into()),
+        }
+    }
+}
+
+impl<'a> Default for Indexer<'a> {
+    fn default() -> Self {
+        Indexer {
+            url: None,
+            headers: HeaderMap::new(),
         }
     }
 }
