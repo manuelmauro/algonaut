@@ -1,4 +1,4 @@
-use super::{ChecksumAlg, HASH_LEN, BASE32_NOPAD, CHECKSUM_LEN};
+use super::{ChecksumAlg, BASE32_NOPAD, CHECKSUM_LEN, HASH_LEN};
 use sha2::Digest;
 
 /// Public key address
@@ -43,7 +43,6 @@ impl Address {
 mod tests {
     use super::*;
 
-
     /// Trying to decode a valid base32 address should succeed.
     #[test]
     fn decode() {
@@ -60,6 +59,4 @@ mod tests {
 
         assert!(Address::from_string(invalid_csum).is_err());
     }
-
-
 }
