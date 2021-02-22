@@ -68,6 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This crate is based on the work of [@mraof](https://github.com/mraof/rust-algorand-sdk).
 
+### Contributors
+
+A great thanks goes to:
+
 ## License
 
 Licensed under MIT license.
