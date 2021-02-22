@@ -32,7 +32,7 @@ Before submitting your pull request to the repository, please make sure you have
 
 ## Writing Documentation
 
-Documentation improvements are always welcome! A solid project needs to have solid documentation to go with it. You can search for documentation-related issues on any of our GitLab trackers by filtering by the documentation label or submit an issue with your own suggestions for improvements.
+Documentation improvements are always welcome! A solid SDK needs to have solid documentation to go with it.
 
 ## Useful Resources
 
