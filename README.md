@@ -41,17 +41,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [Unreleased]
 
+#### Added
+
+- Add Github CI actions
+
 ### [0.1.1] - 2021-02-19
 
 #### Added
 
 - Add some sandbox integration tests
-- Use ```dotenv``` for address and token env variable pointing at the sandbox
+- Use `dotenv` for address and token env variable pointing at the sandbox
 - Add client builder for: algod, kmd, and indexer
-- Use ```thiserror``` crate for error management
+- Use `thiserror` crate for error management
 - Add algorand's indexer client (incomplete)
 - Add algod v2 client (incomplete)
-- Add ```reqwest``` http client to clients' structs
+- Add `reqwest` http client to clients' structs
 - Forked [rust-algorand-sdk](https://github.com/mraof/rust-algorand-sdk)
 
 #### Changed
@@ -64,6 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [unreleased]: https://github.com/manuelmauro/algorand-rs/compare/v0.1.1...HEAD
 [0.1.1]: https://github.com/manuelmauro/algorand-rs/releases/tag/v0.1.1
+
+
+## Contribute
+
+Do you want to help with the development? Please find out how by reading our [contributions guidelines](https://github.com/manuelmauro/algorand-rs/blob/main/CONTRIBUTING.md).
 
 ## Acknowledgements
 
