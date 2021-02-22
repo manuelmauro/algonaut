@@ -2,6 +2,7 @@
 
 [![Crate](https://meritbadge.herokuapp.com/algorand-rs)](https://crates.io/crates/algorand-rs)
 [![Docs](https://docs.rs/paypal-rs/badge.svg)](https://docs.rs/algorand-rs)
+[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algorand-rs/blob/main/LICENSE)
 
 This crate is a WORK IN PROGRESS!
 

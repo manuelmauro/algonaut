@@ -18,7 +18,7 @@ jobs:
           command: check
 
   unit:
-    name: Unit Test and Examples
+    name: Unit Tests and Examples
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -31,21 +31,6 @@ jobs:
         with:
           command: test
           args: --lib --examples
-
-  doc:
-    name: Test Doc
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --doc
 
   fmt:
     name: Rustfmt
