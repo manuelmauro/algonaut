@@ -46,7 +46,7 @@ fn test_create_wallet_endpoint() -> Result<(), Box<dyn Error>> {
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
         .client_v1()?;
-    
+
     let wallet = kmd.create_wallet(
         "testwallet",
         "testpassword",
@@ -68,12 +68,9 @@ fn test_init_wallet_handle_endpoint() -> Result<(), Box<dyn Error>> {
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
         .client_v1()?;
-    
-    let wallet = kmd.init_wallet_handle(
-        "testwallet",
-        "testpassword",
-    );
-    
+
+    let wallet = kmd.init_wallet_handle("testwallet", "testpassword");
+
     println!("{:#?}", wallet);
     assert!(wallet.is_ok());
 

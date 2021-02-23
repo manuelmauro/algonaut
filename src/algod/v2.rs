@@ -9,7 +9,7 @@ pub struct Client {
     pub(super) url: String,
     pub(super) token: String,
     pub(super) headers: HeaderMap,
-    pub(super) http_client: reqwest::Client,
+    pub(super) http_client: reqwest::blocking::Client,
 }
 
 impl Client {

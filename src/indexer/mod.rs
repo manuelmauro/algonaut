@@ -28,7 +28,7 @@ impl<'a> Indexer<'a> {
             Some(url) => Ok(v2::Client {
                 url: Url::parse(url)?.into_string(),
                 headers: self.headers,
-                http_client: reqwest::Client::new(),
+                http_client: reqwest::blocking::Client::new(),
             }),
             None => Err(BuilderError::UnitializedUrl.into()),
         }

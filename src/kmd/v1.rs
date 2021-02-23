@@ -12,7 +12,7 @@ const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 pub struct Client {
     pub(super) address: String,
     pub(super) token: String,
-    pub(super) http_client: reqwest::Client,
+    pub(super) http_client: reqwest::blocking::Client,
 }
 
 impl Client {
@@ -20,7 +20,7 @@ impl Client {
         Client {
             address: address.to_string(),
             token: token.to_string(),
-            http_client: reqwest::Client::new(),
+            http_client: reqwest::blocking::Client::new(),
         }
     }
 
