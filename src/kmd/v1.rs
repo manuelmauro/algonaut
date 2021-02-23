@@ -755,3 +755,22 @@ pub struct APIV1WalletHandle {
     pub wallet: APIV1Wallet,
     pub expires_seconds: i64,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_wallet_request_successful_serialization() {
+        let req = CreateWalletRequest {
+            master_derivation_key: MasterDerivationKey([0; 32]),
+            wallet_driver_name: "sqlite".into(),
+            wallet_name: "testwallet".into(),
+            wallet_password: "testpassword".into(),
+        };
+
+        let json = serde_json::to_string(&req);
+        assert!(json.is_ok());
+        println!("{:#?}", json.unwrap());
+    }
+}

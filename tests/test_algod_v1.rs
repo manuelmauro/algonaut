@@ -6,16 +6,6 @@ use std::env;
 use std::error::Error;
 
 #[test]
-fn test_proper_client_builder() {
-    let algod = Algod::new()
-        .bind("http://localhost:4001")
-        .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        .client_v1();
-
-    assert!(algod.ok().is_some());
-}
-
-#[test]
 fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
