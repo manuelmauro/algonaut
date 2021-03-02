@@ -3,6 +3,7 @@
 [![Crate](https://meritbadge.herokuapp.com/algorand-rs)](https://crates.io/crates/algorand-rs)
 [![Docs](https://docs.rs/paypal-rs/badge.svg)](https://docs.rs/algorand-rs)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algorand-rs/blob/main/LICENSE)
+![Continuous integration](https://github.com/manuelmauro/algorand-rs/actions/workflows/quickstart.yml/badge.svg)
 
 This crate is a WORK IN PROGRESS!
 
@@ -25,12 +26,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Objectives
 
-- [ ] Examples guiding API development
-- [ ] Builder pattern and sensible defaults
-- [ ] Async requests
-- [ ] Clear error messages
+- [ ] Example-driven API development
 - [ ] Thorough test suite
+- [ ] Clear error messages
+- [ ] Async requests
 - [ ] Comprehensive documentation
+- [ ] Builder pattern and sensible defaults
 
 ## Changelog
 
@@ -40,10 +41,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### [Unreleased]
-
 #### Added
 
 - Add Github CI actions
+- Add tests for `kmd` client
+
+#### Changed
+
+- Refactor `kmd` client
 
 ### [0.1.1] - 2021-02-19
 
@@ -61,6 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Changed
 
 - Change modules structure
+
+#### Removed
+
+- Remove APIV1Request trait
 
 #### Removed
 

@@ -1,5 +1,5 @@
 use crate::crypto::MultisigSignature;
-use crate::error::{AlgorandError, ApiError};
+use crate::error::AlgorandError;
 use crate::kmd::v1::requests::*;
 use crate::kmd::v1::responses::*;
 use crate::models::{Ed25519PublicKey, MasterDerivationKey};
@@ -26,12 +26,28 @@ impl Client {
 
     /// Retrieves the current version
     pub fn versions(&self) -> Result<VersionsResponse, AlgorandError> {
-        self.do_v1_request(VersionsRequest)
+        let response = self
+            .http_client
+            .get(&format!("{}versions", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// List all of the wallets that kmd is aware of
     pub fn list_wallets(&self) -> Result<ListWalletsResponse, AlgorandError> {
-        self.do_v1_request(ListWalletsRequest)
+        let response = self
+            .http_client
+            .get(&format!("{}v1/wallets", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Creates a wallet
@@ -48,7 +64,17 @@ impl Client {
             wallet_name: wallet_name.to_string(),
             wallet_password: wallet_password.to_string(),
         };
-        self.do_v1_request(req)
+
+        let response = self
+            .http_client
+            .post(&format!("{}v1/wallet", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Unlock the wallet and return a wallet token that can be used for subsequent operations
@@ -65,7 +91,16 @@ impl Client {
             wallet_id: wallet_id.to_string(),
             wallet_password: wallet_password.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/wallet/init", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Release a wallet handle token
@@ -76,7 +111,16 @@ impl Client {
         let req = ReleaseWalletHandleRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/wallet/release", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Renew a wallet handle token
@@ -87,7 +131,16 @@ impl Client {
         let req = RenewWalletHandleRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/wallet/renew", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Rename a wallet
@@ -102,15 +155,36 @@ impl Client {
             wallet_password: wallet_password.to_string(),
             wallet_name: new_name.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/wallet/rename", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Get wallet info
-    pub fn get_wallet(&self, wallet_handle: &str) -> Result<GetWalletResponse, AlgorandError> {
-        let req = GetWalletRequest {
+    pub fn get_wallet_info(
+        &self,
+        wallet_handle: &str,
+    ) -> Result<GetWalletInfoResponse, AlgorandError> {
+        let req = GetWalletInfoRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/wallet/info", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Export the master derivation key from a wallet
@@ -123,7 +197,16 @@ impl Client {
             wallet_handle_token: wallet_handle.to_string(),
             wallet_password: wallet_password.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/master-key/export", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Import an externally generated key into the wallet
@@ -136,7 +219,16 @@ impl Client {
             wallet_handle_token: wallet_handle.to_string(),
             private_key,
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/key/import", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Export the Ed25519 seed associated with the passed address
@@ -153,7 +245,16 @@ impl Client {
             address: address.to_string(),
             wallet_password: wallet_password.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/key/export", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Generates a key and adds it to the wallet, returning the public key
@@ -162,7 +263,16 @@ impl Client {
             wallet_handle_token: wallet_handle.to_string(),
             display_mnemonic: false,
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/key", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Deletes the key from the wallet
@@ -177,7 +287,16 @@ impl Client {
             wallet_password: wallet_password.to_string(),
             address: address.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .delete(&format!("{}v1/key", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// List all of the public keys in the wallet
@@ -185,7 +304,16 @@ impl Client {
         let req = ListKeysRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/key/list", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Sign a transaction
@@ -201,7 +329,16 @@ impl Client {
             transaction: transaction_bytes,
             wallet_password: wallet_password.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/transaction/sign", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Lists all of the multisig accounts whose preimages this wallet stores
@@ -212,7 +349,16 @@ impl Client {
         let req = ListMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/multisig/list", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Import a multisig account
@@ -229,7 +375,16 @@ impl Client {
             threshold,
             pks: pks.to_vec(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/multisig/import", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Export multisig address metadata
@@ -242,7 +397,16 @@ impl Client {
             wallet_handle_token: wallet_handle.to_string(),
             address: address.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .post(&format!("{}v1/multisig/export", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Delete a multisig from the wallet
@@ -257,7 +421,16 @@ impl Client {
             wallet_password: wallet_password.to_string(),
             address: address.to_string(),
         };
-        self.do_v1_request(req)
+        let response = self
+            .http_client
+            .delete(&format!("{}v1/multisig", self.address))
+            .header(KMD_TOKEN_HEADER, &self.token)
+            .header("Accept", "application/json")
+            .json(&req)
+            .send()?
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 
     /// Start a multisig signature or add a signature to a partially completed multisig signature
@@ -277,48 +450,24 @@ impl Client {
             partial_multisig,
             wallet_password: wallet_password.to_string(),
         };
-        self.do_v1_request(req)
-    }
-
-    fn do_v1_request<R>(&self, req: R) -> Result<R::Response, AlgorandError>
-    where
-        R: APIV1Request,
-    {
         let response = self
             .http_client
-            .request(R::METHOD, &format!("{}/{}", self.address, R::PATH))
+            .post(&format!("{}v1/multisig/sign", self.address))
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .text()?;
-        if let Ok(envelope) = serde_json::from_str::<APIV1ResponseEnvelope>(&response) {
-            if envelope.error {
-                return Err(ApiError::ResponseError {
-                    response: envelope.message,
-                }
-                .into());
-            }
-        }
-        Ok(serde_json::from_str(&response)?)
+            .error_for_status()?
+            .json()?;
+        Ok(response)
     }
 }
 
 pub mod requests {
-    use reqwest::Method;
-    use serde::de::DeserializeOwned;
-    use serde::Serialize;
-
     use crate::crypto::MultisigSignature;
-    use crate::kmd::v1::responses::*;
     use crate::models::{Ed25519PublicKey, MasterDerivationKey};
     use crate::util::serialize_bytes;
-
-    pub trait APIV1Request: Serialize {
-        type Response: DeserializeOwned;
-        const PATH: &'static str;
-        const METHOD: Method;
-    }
+    use serde::Serialize;
 
     /// VersionsRequest is the request for `GET /versions`
     #[derive(Serialize)]
@@ -365,7 +514,7 @@ pub mod requests {
 
     /// GetWalletRequest is the request for `POST /v1/wallet/info`
     #[derive(Serialize)]
-    pub struct GetWalletRequest {
+    pub struct GetWalletInfoRequest {
         pub wallet_handle_token: String,
     }
 
@@ -462,137 +611,14 @@ pub mod requests {
         pub partial_multisig: Option<MultisigSignature>,
         pub wallet_password: String,
     }
-
-    impl APIV1Request for VersionsRequest {
-        type Response = VersionsResponse;
-        const PATH: &'static str = "versions";
-        const METHOD: Method = Method::GET;
-    }
-
-    impl APIV1Request for ListWalletsRequest {
-        type Response = ListWalletsResponse;
-        const PATH: &'static str = "v1/wallets";
-        const METHOD: Method = Method::GET;
-    }
-
-    impl APIV1Request for CreateWalletRequest {
-        type Response = CreateWalletResponse;
-        const PATH: &'static str = "v1/wallet";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for InitWalletHandleRequest {
-        type Response = InitWalletHandleResponse;
-        const PATH: &'static str = "v1/wallet/init";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for ReleaseWalletHandleRequest {
-        type Response = ReleaseWalletHandleResponse;
-        const PATH: &'static str = "v1/wallet/release";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for RenewWalletHandleRequest {
-        type Response = RenewWalletHandleResponse;
-        const PATH: &'static str = "v1/wallet/renew";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for RenameWalletRequest {
-        type Response = RenameWalletResponse;
-        const PATH: &'static str = "v1/wallet/rename";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for GetWalletRequest {
-        type Response = GetWalletResponse;
-        const PATH: &'static str = "v1/wallet/info";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for ExportMasterDerivationKeyRequest {
-        type Response = ExportMasterDerivationKeyResponse;
-        const PATH: &'static str = "v1/master-key/export";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for ImportKeyRequest {
-        type Response = ImportKeyResponse;
-        const PATH: &'static str = "v1/key/import";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for ExportKeyRequest {
-        type Response = ExportKeyResponse;
-        const PATH: &'static str = "v1/key/export";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for GenerateKeyRequest {
-        type Response = GenerateKeyResponse;
-        const PATH: &'static str = "v1/key";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for DeleteKeyRequest {
-        type Response = DeleteKeyResponse;
-        const PATH: &'static str = "v1/key";
-        const METHOD: Method = Method::DELETE;
-    }
-
-    impl APIV1Request for ListKeysRequest {
-        type Response = ListKeysResponse;
-        const PATH: &'static str = "v1/key/list";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for SignTransactionRequest {
-        type Response = SignTransactionResponse;
-        const PATH: &'static str = "v1/transaction/sign";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for ListMultisigRequest {
-        type Response = ListMultisigResponse;
-        const PATH: &'static str = "v1/multisig/list";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for ImportMultisigRequest {
-        type Response = ImportMultisigResponse;
-        const PATH: &'static str = "v1/multisig/import";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for ExportMultisigRequest {
-        type Response = ExportMultisigResponse;
-        const PATH: &'static str = "v1/multisig/export";
-        const METHOD: Method = Method::POST;
-    }
-
-    impl APIV1Request for DeleteMultisigRequest {
-        type Response = DeleteMultisigResponse;
-        const PATH: &'static str = "v1/multisig";
-        const METHOD: Method = Method::DELETE;
-    }
-
-    impl APIV1Request for SignMultisigTransactionRequest {
-        type Response = SignMultisigTransactionResponse;
-        const PATH: &'static str = "v1/multisig/sign";
-        const METHOD: Method = Method::POST;
-    }
 }
 
 pub mod responses {
+    use crate::kmd::v1::{APIV1Wallet, APIV1WalletHandle};
+    use crate::models::{Ed25519PublicKey, MasterDerivationKey};
+    use crate::util::{deserialize_bytes, deserialize_bytes64, deserialize_mdk};
     use data_encoding::BASE64;
     use serde::{Deserialize, Deserializer};
-
-    use crate::util::{deserialize_bytes, deserialize_bytes64, deserialize_mdk};
-
-    use crate::models::{Ed25519PublicKey, MasterDerivationKey};
-
-    use crate::kmd::v1::{APIV1Wallet, APIV1WalletHandle};
 
     #[derive(Debug, Deserialize)]
     pub struct APIV1ResponseEnvelope {
@@ -643,7 +669,7 @@ pub mod responses {
 
     /// GetWalletResponse is the response to `POST /v1/wallet/info`
     #[derive(Debug, Deserialize)]
-    pub struct GetWalletResponse {
+    pub struct GetWalletInfoResponse {
         pub wallet_handle: APIV1WalletHandle,
     }
 
@@ -742,11 +768,11 @@ pub mod responses {
 
 #[derive(Debug, Deserialize)]
 pub struct APIV1Wallet {
-    pub id: String,
-    pub name: String,
     pub driver_name: String,
     pub driver_version: u32,
+    pub id: String,
     pub mnemonic_ux: bool,
+    pub name: String,
     pub supported_txs: Vec<String>,
 }
 
@@ -772,5 +798,28 @@ mod tests {
         let json = serde_json::to_string(&req);
         assert!(json.is_ok());
         println!("{:#?}", json.unwrap());
+    }
+
+    #[test]
+    fn test_apiv1_wallet_successful_deserialization() {
+        let wallet: Result<CreateWalletResponse, serde_json::Error> = serde_json::from_str(
+            r#"
+        {
+            "wallet": {
+              "driver_name": "sqlite",
+              "driver_version": 1,
+              "id": "07d6a46bbc3e64abe6062f8e08ba9c3b",
+              "mnemonic_ux": false,
+              "name": "name3",
+              "supported_txs": [
+                "pay",
+                "keyreg"
+              ]
+            }
+        }
+        "#,
+        );
+        println!("{:#?}", wallet);
+        assert!(wallet.is_ok());
     }
 }
