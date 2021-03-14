@@ -1,7 +1,7 @@
 use crate::account::Account;
 use crate::crypto::{Address, MultisigSignature, Signature};
 use crate::error::AlgorandError;
-use crate::models::{HashDigest, MicroAlgos, Round, VotePK, VRFPK};
+use crate::models::{HashDigest, MicroAlgos, Round, VotePK, Vrfpk};
 use serde::{Deserialize, Serialize};
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
@@ -67,7 +67,7 @@ pub struct KeyRegistration {
     #[serde(rename = "votekey")]
     pub vote_pk: VotePK,
     #[serde(rename = "selkey")]
-    pub selection_pk: VRFPK,
+    pub selection_pk: Vrfpk,
     #[serde(rename = "votefst")]
     pub vote_first: Round,
     #[serde(rename = "votelst")]

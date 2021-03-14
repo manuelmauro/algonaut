@@ -32,7 +32,7 @@ pub struct VotePK(pub [u8; 32]);
 
 /// VRF public key used in key registration transaction
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct VRFPK(pub [u8; 32]);
+pub struct Vrfpk(pub [u8; 32]);
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Ed25519PublicKey(pub [u8; 32]);

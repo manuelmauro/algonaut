@@ -3,7 +3,7 @@ use crate::crypto::{Address, MultisigSignature, MultisigSubsig, Signature};
 use crate::error::{AlgorandError, BuilderError};
 use crate::kmd::v1::responses::ExportKeyResponse;
 use crate::models::{
-    Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, VRFPK,
+    Ed25519PublicKey, HashDigest, MasterDerivationKey, MicroAlgos, Round, VotePK, Vrfpk,
 };
 use crate::transaction::{Transaction, TransactionType};
 use data_encoding::BASE64;
@@ -104,7 +104,7 @@ impl Serialize for VotePK {
     }
 }
 
-impl Serialize for VRFPK {
+impl Serialize for Vrfpk {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
         S: Serializer,
@@ -140,12 +140,12 @@ impl<'de> Deserialize<'de> for VotePK {
     }
 }
 
-impl<'de> Deserialize<'de> for VRFPK {
+impl<'de> Deserialize<'de> for Vrfpk {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        Ok(VRFPK(deserializer.deserialize_bytes(U8_32Visitor)?))
+        Ok(Vrfpk(deserializer.deserialize_bytes(U8_32Visitor)?))
     }
 }
 

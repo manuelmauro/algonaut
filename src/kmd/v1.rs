@@ -433,7 +433,9 @@ impl Client {
         Ok(response)
     }
 
-    /// Start a multisig signature or add a signature to a partially completed multisig signature
+    /// Sign a multisig transaction.
+    ///
+    /// Start a multisig signature or add a signature to a partially completed multisig signature.
     pub fn sign_multisig_transaction(
         &self,
         wallet_handle: &str,
