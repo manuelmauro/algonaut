@@ -706,6 +706,7 @@ pub mod responses {
     /// ListKeysResponse is the response to `POST /v1/key/list`
     #[derive(Debug, Deserialize)]
     pub struct ListKeysResponse {
+        #[serde(default)]
         pub addresses: Vec<String>,
     }
 
