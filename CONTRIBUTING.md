@@ -10,7 +10,6 @@
   - [Writing Documentation](#writing-documentation)
   - [Useful Resources](#useful-resources)
 
-
 ## Submitting Issues
 
 One way you can help `algorand-rs` is to report bugs or request features on our GitHub issue tracker.
