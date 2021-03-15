@@ -27,11 +27,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Objectives
 
 - [ ] Example-driven API development
-- [ ] Thorough test suite
 - [ ] Clear error messages
 - [ ] Async requests
-- [ ] Comprehensive documentation
 - [ ] Builder pattern and sensible defaults
+- [ ] Thorough test suite
+- [ ] Comprehensive documentation
 
 ## Changelog
 

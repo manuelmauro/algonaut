@@ -21,10 +21,10 @@
 //!
 //! ## Objectives
 //!
-//! - [ ] Examples guiding API development
+//! - [ ] Example-driven API development
+//! - [ ] Clear error messages
 //! - [ ] Async requests
 //! - [ ] Builder pattern and sensible defaults
-//! - [ ] Clear error messages
 //! - [ ] Thorough test suite
 //! - [ ] Comprehensive documentation
 
