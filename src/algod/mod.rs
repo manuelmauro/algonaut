@@ -3,8 +3,8 @@ use crate::token::ApiToken;
 use reqwest::header::HeaderMap;
 use url::Url;
 
-mod v1;
-mod v2;
+pub mod v1;
+pub mod v2;
 
 /// Algod is the entry point to the creation of a client for the Algorand protocol daemon.
 /// ```

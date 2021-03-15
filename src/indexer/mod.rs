@@ -2,7 +2,7 @@ use crate::error::{AlgorandError, BuilderError};
 use reqwest::header::HeaderMap;
 use url::Url;
 
-mod v2;
+pub mod v2;
 
 /// Indexer is the entry point to the creation of a client for the Algorand's indexer
 pub struct Indexer<'a> {

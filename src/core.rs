@@ -110,6 +110,7 @@ impl Sub<u64> for Round {
         Round(self.0 - rhs)
     }
 }
+
 // Intentionally not implementing Mul<Rhs=Self>
 // If you're multiplying a Round by a Round, something has gone wrong in your math
 // That would give you Rounds squared and those don't exist
