@@ -1,8 +1,8 @@
 use crate::account::Account;
 use crate::crypto::{Address, MultisigSignature, Signature};
 use crate::error::AlgorandError;
-use crate::models::{HashDigest, MicroAlgos, Round, VotePK, Vrfpk};
-use serde::{Deserialize, Serialize};
+use crate::models::{HashDigest, MicroAlgos, Round, VotePk, VrfPk};
+use serde::{Deserialize, Serialize, Serializer};
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
 
@@ -15,6 +15,16 @@ pub struct BaseTransaction {
     pub note: Vec<u8>,
     pub genesis_id: String,
     pub genesis_hash: HashDigest,
+}
+
+/// Enum containing the types of transactions and their specific fields
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
+#[serde(tag = "type")]
+pub enum TransactionType {
+    #[serde(rename = "pay")]
+    Payment(Payment),
+    #[serde(rename = "keyreg")]
+    KeyRegistration(KeyRegistration),
 }
 
 /// A transaction that can appear in a block
@@ -38,14 +48,76 @@ pub struct Transaction {
     pub txn_type: TransactionType,
 }
 
-/// Enum containing the types of transactions and their specific fields
-#[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
-#[serde(tag = "type")]
-pub enum TransactionType {
-    #[serde(rename = "pay")]
-    Payment(Payment),
-    #[serde(rename = "keyreg")]
-    KeyRegistration(KeyRegistration),
+impl Serialize for Transaction {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let type_len = match &self.txn_type {
+            TransactionType::Payment(payment) => {
+                1 + if payment.close_remainder_to.is_some() {
+                    1
+                } else {
+                    0
+                } + if payment.amount.0 != 0 { 1 } else { 0 }
+            }
+            TransactionType::KeyRegistration(_) => 5,
+        };
+        let len = 6
+            + type_len
+            + if self.note.is_empty() { 0 } else { 1 }
+            + if self.genesis_id.is_empty() { 0 } else { 1 };
+        let mut state = serializer.serialize_struct("Transaction", len)?;
+        if let TransactionType::Payment(payment) = &self.txn_type {
+            if payment.amount.0 != 0 {
+                state.serialize_field("amt", &payment.amount)?;
+            }
+        }
+        if let TransactionType::Payment(payment) = &self.txn_type {
+            if payment.close_remainder_to.is_some() {
+                state.serialize_field("close", &payment.close_remainder_to)?;
+            }
+        }
+        state.serialize_field("fee", &self.fee)?;
+        state.serialize_field("fv", &self.first_valid)?;
+        if !self.genesis_id.is_empty() {
+            state.serialize_field("gen", &self.genesis_id)?;
+        }
+        state.serialize_field("gh", &self.genesis_hash)?;
+        state.serialize_field("lv", &self.last_valid)?;
+        if !self.note.is_empty() {
+            state.serialize_field("note", &serde_bytes::ByteBuf::from(self.note.clone()))?;
+        }
+        if let TransactionType::Payment(payment) = &self.txn_type {
+            state.serialize_field("rcv", &payment.receiver)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("selkey", &key_registration.selection_pk)?;
+        }
+        state.serialize_field("snd", &self.sender)?;
+        match &self.txn_type {
+            TransactionType::Payment(_payment) => {
+                state.serialize_field("type", "pay")?;
+            }
+            TransactionType::KeyRegistration(_key_registration) => {
+                state.serialize_field("type", "keyreg")?;
+            }
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votefst", &key_registration.vote_first)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votekd", &key_registration.vote_key_dilution)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votekey", &key_registration.vote_pk)?;
+        }
+        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
+            state.serialize_field("votelst", &key_registration.vote_last)?;
+        }
+        state.end()
+    }
 }
 
 /// Fields for a payment transaction
@@ -65,9 +137,9 @@ pub struct Payment {
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
 pub struct KeyRegistration {
     #[serde(rename = "votekey")]
-    pub vote_pk: VotePK,
+    pub vote_pk: VotePk,
     #[serde(rename = "selkey")]
-    pub selection_pk: Vrfpk,
+    pub selection_pk: VrfPk,
     #[serde(rename = "votefst")]
     pub vote_first: Round,
     #[serde(rename = "votelst")]

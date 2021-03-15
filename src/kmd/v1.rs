@@ -5,6 +5,7 @@ use crate::kmd::v1::responses::*;
 use crate::models::{Ed25519PublicKey, MasterDerivationKey};
 use crate::transaction::Transaction;
 use serde::Deserialize;
+use std::fmt::Debug;
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 
@@ -621,6 +622,7 @@ pub mod responses {
     use crate::util::{deserialize_bytes, deserialize_bytes64, deserialize_mdk};
     use data_encoding::BASE64;
     use serde::{Deserialize, Deserializer};
+    use std::fmt::{Debug, Formatter};
 
     #[derive(Debug, Deserialize)]
     pub struct APIV1ResponseEnvelope {
@@ -693,6 +695,14 @@ pub mod responses {
     pub struct ExportKeyResponse {
         #[serde(deserialize_with = "deserialize_bytes64")]
         pub private_key: [u8; 64],
+    }
+
+    impl Debug for ExportKeyResponse {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("ExportKeyResponse")
+                .field("private_key", &self.private_key.to_vec())
+                .finish()
+        }
     }
 
     /// GenerateKeyResponse is the response to `POST /v1/key`

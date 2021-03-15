@@ -1,6 +1,10 @@
 use crate::util::deserialize_bytes;
 use crate::util::deserialize_hash;
-use serde::{Deserialize, Serialize};
+use crate::util::U8_32Visitor;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use static_assertions::_core::ops::{Add, Sub};
+use std::fmt::{Debug, Display, Formatter};
+use std::ops::Mul;
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
@@ -18,24 +22,195 @@ impl MicroAlgos {
     }
 }
 
+impl Display for MicroAlgos {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.0, f)
+    }
+}
+
+impl Add for MicroAlgos {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        MicroAlgos(self.0 + rhs.0)
+    }
+}
+
+impl Add<u64> for MicroAlgos {
+    type Output = Self;
+
+    fn add(self, rhs: u64) -> Self::Output {
+        MicroAlgos(self.0 + rhs)
+    }
+}
+
+impl Sub for MicroAlgos {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        MicroAlgos(self.0 - rhs.0)
+    }
+}
+
+impl Sub<u64> for MicroAlgos {
+    type Output = Self;
+
+    fn sub(self, rhs: u64) -> Self::Output {
+        MicroAlgos(self.0 - rhs)
+    }
+}
+
+// Intentionally not implementing Mul<Rhs=Self>
+// If you're multiplying a MicroAlgos by MicroAlgos, something has gone wrong in your math
+// That would give you MicroAlgos squared and those don't exist
+impl Mul<u64> for MicroAlgos {
+    type Output = Self;
+
+    fn mul(self, rhs: u64) -> Self::Output {
+        MicroAlgos(self.0 * rhs)
+    }
+}
+
 /// Round of the Algorand consensus protocol
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Round(pub u64);
+
+impl Display for Round {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.0, f)
+    }
+}
+
+impl Add for Round {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Round(self.0 + rhs.0)
+    }
+}
+
+impl Add<u64> for Round {
+    type Output = Self;
+
+    fn add(self, rhs: u64) -> Self::Output {
+        Round(self.0 + rhs)
+    }
+}
+
+impl Sub for Round {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Round(self.0 - rhs.0)
+    }
+}
+
+impl Sub<u64> for Round {
+    type Output = Self;
+
+    fn sub(self, rhs: u64) -> Self::Output {
+        Round(self.0 - rhs)
+    }
+}
+// Intentionally not implementing Mul<Rhs=Self>
+// If you're multiplying a Round by a Round, something has gone wrong in your math
+// That would give you Rounds squared and those don't exist
+impl Mul<u64> for Round {
+    type Output = Self;
+
+    fn mul(self, rhs: u64) -> Self::Output {
+        Round(self.0 * rhs)
+    }
+}
 
 /// A SHA512_256 hash
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct HashDigest(pub [u8; 32]);
 
+impl Serialize for HashDigest {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for HashDigest {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(HashDigest(deserializer.deserialize_bytes(U8_32Visitor)?))
+    }
+}
+
 /// Participation public key used in key registration transactions
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct VotePK(pub [u8; 32]);
+pub struct VotePk(pub [u8; 32]);
+
+impl Serialize for VotePk {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for VotePk {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(VotePk(deserializer.deserialize_bytes(U8_32Visitor)?))
+    }
+}
 
 /// VRF public key used in key registration transaction
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct Vrfpk(pub [u8; 32]);
+pub struct VrfPk(pub [u8; 32]);
+
+impl Serialize for VrfPk {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for VrfPk {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(VrfPk(deserializer.deserialize_bytes(U8_32Visitor)?))
+    }
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Ed25519PublicKey(pub [u8; 32]);
+
+impl Serialize for Ed25519PublicKey {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for Ed25519PublicKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Ed25519PublicKey(
+            deserializer.deserialize_bytes(U8_32Visitor)?,
+        ))
+    }
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MasterDerivationKey(pub [u8; 32]);

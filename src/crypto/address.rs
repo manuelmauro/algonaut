@@ -1,7 +1,8 @@
 use super::{ChecksumAlg, BASE32_NOPAD, CHECKSUM_LEN, HASH_LEN};
 use crate::models::Ed25519PublicKey;
+use crate::util::U8_32Visitor;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
-
 /// Public key address
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Address(pub [u8; HASH_LEN]);
@@ -37,6 +38,24 @@ impl Address {
         let checksum = &hashed[(HASH_LEN - CHECKSUM_LEN)..];
         let checksum_address = [&self.0, checksum].concat();
         BASE32_NOPAD.encode(&checksum_address)
+    }
+}
+
+impl Serialize for Address {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for Address {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Address(deserializer.deserialize_bytes(U8_32Visitor)?))
     }
 }
 
