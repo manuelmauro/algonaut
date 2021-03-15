@@ -1,4 +1,3 @@
-use crate::models::Ed25519PublicKey;
 use crate::serialization::SignatureVisitor;
 use crate::serialization::U8_32Visitor;
 use data_encoding::BASE32_NOPAD;
@@ -204,6 +203,54 @@ impl Serialize for MultisigSubsig {
         state.end()
     }
 }
+
+/// A SHA512_256 hash
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct HashDigest(pub [u8; 32]);
+
+impl Serialize for HashDigest {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for HashDigest {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(HashDigest(deserializer.deserialize_bytes(U8_32Visitor)?))
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct Ed25519PublicKey(pub [u8; 32]);
+
+impl Serialize for Ed25519PublicKey {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for Ed25519PublicKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Ed25519PublicKey(
+            deserializer.deserialize_bytes(U8_32Visitor)?,
+        ))
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct MasterDerivationKey(pub [u8; 32]);
 
 #[cfg(test)]
 mod tests {

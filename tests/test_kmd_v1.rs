@@ -1,4 +1,4 @@
-use algorand_rs::models::Ed25519PublicKey;
+use algorand_rs::crypto::Ed25519PublicKey;
 use algorand_rs::{Kmd, MasterDerivationKey};
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};

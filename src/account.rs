@@ -1,7 +1,7 @@
 use crate::auction::{Bid, SignedBid};
+use crate::crypto::Ed25519PublicKey;
 use crate::crypto::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
 use crate::error::{AlgorandError, ApiError};
-use crate::models::Ed25519PublicKey;
 use crate::transaction::{SignedTransaction, Transaction};
 use data_encoding::BASE32_NOPAD;
 use rand::rngs::OsRng;

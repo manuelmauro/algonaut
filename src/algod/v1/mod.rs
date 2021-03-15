@@ -1,10 +1,13 @@
+use crate::core::Round;
 use crate::error::AlgorandError;
-use crate::models::{
-    Account, Block, NodeStatus, PendingTransactions, Round, Supply, Transaction, TransactionFee,
+use crate::transaction::SignedTransaction;
+use models::{
+    Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee,
     TransactionID, TransactionList, TransactionParams, Version,
 };
-use crate::transaction::SignedTransaction;
 use reqwest::header::HeaderMap;
+
+pub mod models;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 

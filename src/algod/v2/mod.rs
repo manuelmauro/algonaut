@@ -1,6 +1,8 @@
 use crate::error::AlgorandError;
-use crate::models::Version;
+use models::Version;
 use reqwest::header::HeaderMap;
+
+pub mod models;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 

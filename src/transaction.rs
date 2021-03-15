@@ -1,7 +1,7 @@
 use crate::account::Account;
-use crate::crypto::{Address, MultisigSignature, Signature};
+use crate::core::{MicroAlgos, Round, VotePk, VrfPk};
+use crate::crypto::{Address, HashDigest, MultisigSignature, Signature};
 use crate::error::AlgorandError;
-use crate::models::{HashDigest, MicroAlgos, Round, VotePk, VrfPk};
 use serde::{Deserialize, Serialize, Serializer};
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
