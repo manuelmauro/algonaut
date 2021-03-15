@@ -20,6 +20,15 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
         .auth(env::var("KMD_TOKEN")?.as_ref())
         .client_v1()?;
 
+    let wallet = kmd.create_wallet(
+        "testwallet",
+        "testpassword",
+        "sqlite",
+        MasterDerivationKey([0; 32]),
+    );
+
+    println!("{:#?}", wallet);
+
     let list_response = kmd.list_wallets()?;
 
     let wallet_id = match list_response
@@ -110,6 +119,7 @@ fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         "sqlite",
         MasterDerivationKey([0; 32]),
     );
+
     println!("{:#?}", wallet);
     assert!(wallet.is_ok());
 
