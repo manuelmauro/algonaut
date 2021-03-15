@@ -1,6 +1,6 @@
-use crate::util::deserialize_bytes;
-use crate::util::deserialize_hash;
-use crate::util::U8_32Visitor;
+use crate::serialization::deserialize_bytes;
+use crate::serialization::deserialize_hash;
+use crate::serialization::U8_32Visitor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use static_assertions::_core::ops::{Add, Sub};
 use std::fmt::{Debug, Display, Formatter};

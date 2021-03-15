@@ -36,18 +36,17 @@ pub mod algod;
 pub mod auction;
 pub mod crypto;
 pub mod error;
-/// Key management daemon
-pub mod kmd;
-
 /// Algorand's indexer
 pub mod indexer;
-
+/// Key management daemon
+pub mod kmd;
 /// Support for turning 32 byte keys into human-readable mnemonics and back
 pub mod mnemonic;
 pub mod models;
+pub(crate) mod serialization;
+/// Api token management utils
+pub(crate) mod token;
 pub mod transaction;
-
-pub(crate) mod util;
 
 // Re-exports
 pub use algod::Algod;

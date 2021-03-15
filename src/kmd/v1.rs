@@ -469,7 +469,7 @@ impl Client {
 pub mod requests {
     use crate::crypto::MultisigSignature;
     use crate::models::{Ed25519PublicKey, MasterDerivationKey};
-    use crate::util::serialize_bytes;
+    use crate::serialization::serialize_bytes;
     use serde::Serialize;
 
     /// VersionsRequest is the request for `GET /versions`
@@ -619,7 +619,7 @@ pub mod requests {
 pub mod responses {
     use crate::kmd::v1::{APIV1Wallet, APIV1WalletHandle};
     use crate::models::{Ed25519PublicKey, MasterDerivationKey};
-    use crate::util::{deserialize_bytes, deserialize_bytes64, deserialize_mdk};
+    use crate::serialization::{deserialize_bytes, deserialize_bytes64, deserialize_mdk};
     use data_encoding::BASE64;
     use serde::{Deserialize, Deserializer};
     use std::fmt::{Debug, Formatter};

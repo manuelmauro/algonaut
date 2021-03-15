@@ -1,8 +1,6 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
-use crate::error::{AlgorandError, BuilderError};
 use crate::models::{HashDigest, MasterDerivationKey};
 use data_encoding::BASE64;
-use derive_more::Display;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serializer};
 
@@ -101,26 +99,4 @@ where
     S: Serializer,
 {
     serializer.serialize_str(&BASE64.encode(bytes))
-}
-
-/// An API token.
-#[derive(Display)]
-#[display(fmt = "{}", token)]
-pub struct ApiToken {
-    token: String,
-}
-
-const TOKEN_LENGTH: usize = 64;
-
-impl ApiToken {
-    /// Parses a string slice representing an API token.
-    pub fn parse(token: &str) -> Result<Self, AlgorandError> {
-        if token.len() != TOKEN_LENGTH {
-            return Err(BuilderError::BadToken.into());
-        }
-
-        Ok(ApiToken {
-            token: token.to_string(),
-        })
-    }
 }

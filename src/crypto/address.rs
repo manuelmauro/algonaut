@@ -1,6 +1,6 @@
 use super::{ChecksumAlg, BASE32_NOPAD, CHECKSUM_LEN, HASH_LEN};
 use crate::models::Ed25519PublicKey;
-use crate::util::U8_32Visitor;
+use crate::serialization::U8_32Visitor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 /// Public key address

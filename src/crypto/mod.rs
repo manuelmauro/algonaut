@@ -1,5 +1,5 @@
 use crate::models::Ed25519PublicKey;
-use crate::util::SignatureVisitor;
+use crate::serialization::SignatureVisitor;
 use data_encoding::BASE32_NOPAD;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Debug, Formatter};
