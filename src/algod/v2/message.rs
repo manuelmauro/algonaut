@@ -17,35 +17,35 @@ pub struct Account {
 
     /// [appl] applications local data stored in this account.
     #[serde(rename = "apps-local-state")]
-    pub apps_local_state: Vec<ApplicationLocalState>,
+    pub apps_local_state: Option<Vec<ApplicationLocalState>>,
 
     /// [tsch] stores the sum of all of the local schemas and global schemas in this account.
     /// Note: the raw account uses StateSchema for this type.
     #[serde(rename = "apps-total-schema")]
-    pub apps_total_schema: ApplicationStateSchema,
+    pub apps_total_schema: Option<ApplicationStateSchema>,
 
     /// [asset] assets held by this account.
     /// Note the raw object uses map[int] -> AssetHolding for this type.
-    pub assets: Vec<AssetHolding>,
+    pub assets: Option<Vec<AssetHolding>>,
 
     /// [spend] the address against which signing should be checked. If empty, the address of the
     /// current account is used. This field can be updated in any transaction by setting the
     /// RekeyTo field.
     #[serde(rename = "auth-addr")]
-    pub auth_addr: String,
+    pub auth_addr: Option<String>,
 
     /// [appp] parameters of applications created by this account including app global data.
     /// Note: the raw account uses map[int] -> AppParams for this type.
     #[serde(rename = "created-apps")]
-    pub created_apps: Vec<Application>,
+    pub created_apps: Option<Vec<Application>>,
 
     /// [apar] parameters of assets created by this account.
     /// Note: the raw account uses map[int] -> Asset for this type.
     #[serde(rename = "created-assets")]
-    pub created_assets: Vec<Asset>,
+    pub created_assets: Option<Vec<Asset>>,
 
     ///
-    pub participation: AccountParticipation,
+    pub participation: Option<AccountParticipation>,
 
     /// Amount of MicroAlgos of pending rewards in this account.
     #[serde(rename = "pending-rewards")]
@@ -54,7 +54,7 @@ pub struct Account {
     /// [ebase] used as part of the rewards computation. Only applicable to accounts which
     /// are participating.
     #[serde(rename = "reward-base")]
-    pub reward_base: u64,
+    pub reward_base: Option<u64>,
 
     /// [ern] total rewards of MicroAlgos the account has received, including pending rewards.
     pub rewards: u64,
@@ -67,7 +67,7 @@ pub struct Account {
     /// * msig
     /// * lsig
     #[serde(rename = "sig-type")]
-    pub sig_type: SignatureType,
+    pub sig_type: Option<SignatureType>,
 
     /// [onl] delegation status of the account's MicroAlgos
     /// * Offline - indicates that the associated account is delegated.
@@ -77,9 +77,13 @@ pub struct Account {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "sig-type")]
 pub enum SignatureType {
+    #[serde(rename = "sig")]
     Sig,
+    #[serde(rename = "msig")]
     MultiSig,
+    #[serde(rename = "lsig")]
     LSig,
 }
 
@@ -461,9 +465,130 @@ pub struct TealValue {
 /// Version contains the current algod version.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Version {
+    pub build: BuildVersion,
+
+    /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
+    #[serde(deserialize_with = "deserialize_hash")]
+    pub genesis_hash_b64: HashDigest,
+
+    pub genesis_id: String,
+
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub versions: Vec<String>,
-    pub genesis_id: String,
-    #[serde(rename = "genesis_hash_b64", deserialize_with = "deserialize_hash")]
-    pub genesis_hash: HashDigest,
+}
+
+/// Version contains the current algod version.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GenesisBlock {
+    pub addr: Option<String>,
+}
+
+/// A transactions.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Transaction {}
+
+/// A potentially truncated list of transactions currently in the node's transaction pool.
+/// You can compute whether or not the list is truncated if the number of elements in the
+/// top-transactions array is fewer than total-transactions.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PendingTransactions {
+    /// An array of signed transaction objects.
+    #[serde(rename = "top-transactions")]
+    pub top_transactions: Vec<Transaction>,
+
+    /// Total number of transactions in the pool.
+    #[serde(rename = "total-transactions")]
+    pub total_transactions: u64,
+}
+
+/// Information about the status of a node
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NodeStatus {
+    /// The current catchpoint that is being caught up to
+    pub catchpoint: Option<String>,
+
+    /// The number of blocks that have already been obtained by the node as part of the catchup
+    #[serde(rename = "catchpoint-acquired-blocks")]
+    pub catchpoint_acquired_blocks: Option<u64>,
+
+    /// The number of accounts from the current catchpoint that have been processed so far as
+    /// part of the catchup
+    #[serde(rename = "catchpoint-processed-accounts")]
+    pub catchpoint_processed_accounts: Option<u64>,
+
+    /// The total number of accounts included in the current catchpoint
+    #[serde(rename = "catchpoint-total-accounts")]
+    pub catchpoint_total_accounts: Option<u64>,
+
+    /// The total number of blocks that are required to complete the current catchpoint catchup
+    #[serde(rename = "catchpoint-total-blocks")]
+    pub catchpoint_total_blocks: Option<u64>,
+
+    /// The number of accounts from the current catchpoint that have been verified so far as part
+    /// of the catchup
+    #[serde(rename = "catchpoint-verified-accounts")]
+    pub catchpoint_verified_accounts: Option<u64>,
+
+    /// CatchupTime in nanoseconds
+    #[serde(rename = "catchup-time")]
+    pub catchup_time: u64,
+
+    /// The last catchpoint seen by the node
+    #[serde(rename = "last-catchpoint")]
+    pub last_catchpoint: Option<String>,
+
+    /// LastRound indicates the last round seen.
+    #[serde(rename = "last-round")]
+    pub last_round: u64,
+
+    /// LastVersion indicates the last consensus version supported.
+    #[serde(rename = "last-version")]
+    pub last_version: String,
+
+    /// NextVersion of consensus protocol to use.
+    #[serde(rename = "next-version")]
+    pub next_version: String,
+
+    /// NextVersionRound is the round at which the next consensus version will apply
+    #[serde(rename = "next-version-round")]
+    pub next_version_round: u64,
+
+    /// NextVersionSupported indicates whether the next consensus version is supported by this node
+    #[serde(rename = "next-version-supported")]
+    pub next_version_supported: bool,
+
+    /// StoppedAtUnsupportedRound indicates that the node does not support the new rounds and has
+    /// stopped making progress.
+    #[serde(rename = "stopped-at-unsupported-round")]
+    pub stopped_at_unsupported_round: bool,
+
+    /// TimeSinceLastRound in nanoseconds.
+    #[serde(rename = "time-since-last-round")]
+    pub time_since_last_round: u64,
+}
+
+/// Block
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Block {
+    /// Block header data.
+    pub block: BlockHeader,
+}
+
+/// BlockHeader
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BlockHeader {
+    pub earn: u64,
+    pub fees: String,
+    pub frac: u64,
+    pub gen: String,
+    pub gh: String,
+    pub prev: String,
+    pub proto: String,
+    pub rate: u64,
+    pub rnd: u64,
+    pub rwcalr: u64,
+    pub rwd: String,
+    pub seed: String,
+    pub ts: u64,
+    pub txn: String,
 }
