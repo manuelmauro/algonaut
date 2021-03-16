@@ -1,8 +1,9 @@
 use crate::error::AlgorandError;
-use models::Version;
+use message::Version;
 use reqwest::header::HeaderMap;
 
-pub mod models;
+/// API message structs for Algorand's daemon v2
+pub mod message;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 

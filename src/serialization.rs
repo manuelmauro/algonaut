@@ -1,4 +1,5 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
+use crate::crypto::Ed25519PublicKey;
 use crate::crypto::{HashDigest, MasterDerivationKey};
 use data_encoding::BASE64;
 use serde::de::Visitor;
@@ -99,4 +100,20 @@ where
     S: Serializer,
 {
     serializer.serialize_str(&BASE64.encode(bytes))
+}
+
+pub fn deserialize_public_keys<'de, D>(deserializer: D) -> Result<Vec<Ed25519PublicKey>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::de::Error;
+    <Vec<String>>::deserialize(deserializer)?
+        .iter()
+        .map(|string| {
+            let mut decoded = [0; 32];
+            let bytes = BASE64.decode(string.as_bytes()).map_err(D::Error::custom)?;
+            decoded.copy_from_slice(&bytes);
+            Ok(Ed25519PublicKey(decoded))
+        })
+        .collect()
 }

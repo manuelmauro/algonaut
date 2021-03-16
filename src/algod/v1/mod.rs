@@ -1,13 +1,14 @@
 use crate::core::Round;
 use crate::error::AlgorandError;
 use crate::transaction::SignedTransaction;
-use models::{
+use message::{
     Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee,
     TransactionID, TransactionList, TransactionParams, Version,
 };
 use reqwest::header::HeaderMap;
 
-pub mod models;
+/// API message structs for Algorand's daemon v1
+pub mod message;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 

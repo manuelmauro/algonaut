@@ -1,6 +1,9 @@
 use crate::error::AlgorandError;
 use reqwest::header::HeaderMap;
 
+/// API message structs for Algorand's indexer v2
+pub mod message;
+
 /// Client interacting with the Algorand's indexer
 pub struct Client {
     pub(super) url: String,

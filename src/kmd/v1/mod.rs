@@ -1,11 +1,12 @@
 use crate::crypto::{Ed25519PublicKey, MasterDerivationKey, MultisigSignature};
 use crate::error::AlgorandError;
 use crate::transaction::Transaction;
-use models::*;
+use message::*;
 use serde::Deserialize;
 use std::fmt::Debug;
 
-pub mod models;
+/// API message structs for Algorand's kmd v1
+pub mod message;
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 
@@ -81,7 +82,8 @@ impl Client {
     /// Unlock the wallet and return a wallet token that can be used for subsequent operations
     ///
     /// These tokens expire periodically and must be renewed.
-    /// You can see how much time remains until expiration with [get_wallet](Client::get_wallet) and renew it with [renew_wallet_handle](Client::renew_wallet_handle).
+    /// You can see how much time remains until expiration with [get_wallet_info](Client::get_wallet_info)
+    /// and renew it with [renew_wallet_handle](Client::renew_wallet_handle).
     /// When you're done, you can invalidate the token with [release_wallet_handle](Client::release_wallet_handle)
     pub fn init_wallet_handle(
         &self,
