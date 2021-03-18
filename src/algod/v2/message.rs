@@ -403,6 +403,19 @@ pub struct DryrunTxnResult {
     pub logic_sig_trace: Vec<DryrunState>,
 }
 
+/// DryrunResponse
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DryrunResponse {
+    pub error: String,
+
+    /// Protocol version is the protocol version Dryrun was operated under.
+    #[serde(rename = "protocol-version")]
+    pub protocol_version: String,
+
+    #[serde(rename = "logic-sig-trace")]
+    pub txns: Vec<DryrunTxnResult>,
+}
+
 /// An error response with optional data field.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ErrorResponse {
@@ -483,7 +496,7 @@ pub struct GenesisBlock {
     pub addr: Option<String>,
 }
 
-/// A transactions.
+/// A transaction.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Transaction {}
 
@@ -499,6 +512,57 @@ pub struct PendingTransactions {
     /// Total number of transactions in the pool.
     #[serde(rename = "total-transactions")]
     pub total_transactions: u64,
+}
+
+/// A specific pending transaction.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PendingTransaction {
+    /// The application index if the transaction was found and it created an application.
+    #[serde(rename = "application-index")]
+    pub application_index: Option<u64>,
+
+    /// The asset index if the transaction was found and it created an asset.
+    #[serde(rename = "asset-index")]
+    pub asset_index: Option<u64>,
+
+    /// Rewards in microalgos applied to the close remainder to account.
+    #[serde(rename = "close-rewards")]
+    pub close_rewards: Option<u64>,
+
+    /// Closing amount for the transaction.
+    #[serde(rename = "closing-amount")]
+    pub closing_amount: Option<u64>,
+
+    /// The round where this transaction was confirmed, if present.
+    #[serde(rename = "confirmed-round")]
+    pub confirmed_round: Option<u64>,
+
+    /// [gd] Global state key/value changes for the application being executed by this
+    /// transaction.
+    #[serde(rename = "global-state-delta")]
+    pub global_state_delta: Option<StateDelta>,
+
+    /// [ld] Local state key/value changes for the application being executed by this
+    /// transaction.
+    #[serde(rename = "local-state-delta")]
+    pub local_state_delta: Option<Vec<AccountStateDelta>>,
+
+    /// Indicates that the transaction was kicked out of this node's transaction pool
+    /// (and specifies why that happened). An empty string indicates the transaction
+    /// wasn't kicked out of this node's txpool due to an error.
+    #[serde(rename = "pool-error")]
+    pub pool_error: String,
+
+    /// Rewards in microalgos applied to the receiver account.
+    #[serde(rename = "receiver-rewards")]
+    pub receiver_rewards: Option<u64>,
+
+    /// Rewards in microalgos applied to the sender account.
+    #[serde(rename = "sender-rewards")]
+    pub sender_rewards: Option<u64>,
+
+    /// The raw signed transaction.
+    pub txn: Transaction,
 }
 
 /// Information about the status of a node
@@ -591,4 +655,77 @@ pub struct BlockHeader {
     pub seed: String,
     pub ts: u64,
     pub txn: String,
+}
+
+/// Catchup
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Catchup {
+    /// Catchup start response string.
+    #[serde(rename = "catchup-message")]
+    pub catchup_message: String,
+}
+
+/// Supply reported by the ledger.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Supply {
+    /// Current round
+    pub current_round: Round,
+
+    /// Online money.
+    #[serde(rename = "online-money")]
+    pub online_money: u64,
+
+    /// Total money.
+    #[serde(rename = "total-money")]
+    pub total_money: u64,
+}
+
+/// TEAL source code.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SourceTeal {
+    /// Source code.
+    pub source: String,
+}
+
+/// Compiled TEAL program.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompiledTeal {
+    /// base32 SHA512_256 of program bytes (Address style)
+    pub hash: String,
+
+    /// base64 encoded program bytes.
+    pub result: String,
+}
+
+/// TransactionParams contains the parameters that help a client construct a new transaction.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransactionParams {
+    // ConsensusVersion indicates the consensus protocol version
+    // as of LastRound.
+    #[serde(rename = "consensus-version")]
+    pub consensus_version: String,
+
+    /// Fee is the suggested transaction fee.
+    /// Fee is in units of micro-Algos per byte.
+    /// Fee may fall to zero but transactions must still have a fee of
+    /// at least MinTxnFee for the current network protocol.
+    pub fee: MicroAlgos,
+
+    /// GenesisHash is the hash of the genesis block.
+    // Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
+    #[serde(rename = "genesis-hash", deserialize_with = "deserialize_hash")]
+    pub genesis_hash: HashDigest,
+
+    /// GenesisID is an ID listed in the genesis block.
+    #[serde(rename = "genesis-id")]
+    pub genesis_id: String,
+
+    // LastRound indicates the last round seen
+    #[serde(rename = "last-round")]
+    pub last_round: Round,
+
+    /// The minimum transaction fee (not per byte) required for the
+    /// txn to validate for the current network protocol.
+    #[serde(rename = "min-fee")]
+    pub min_fee: MicroAlgos,
 }
