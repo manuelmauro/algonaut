@@ -233,8 +233,7 @@ impl Client {
     /// Special management endpoint to shutdown the node. Optionally provide a timeout parameter
     /// to indicate that the node should begin shutting down after a number of seconds.
     pub fn shutdown(&self, timeout: usize) -> Result<(), AlgorandError> {
-        let response = self
-            .http_client
+        self.http_client
             .post(&format!("{}v2/shutdown", self.url))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
@@ -243,7 +242,7 @@ impl Client {
             .error_for_status()?
             .json()?;
 
-        Ok(response)
+        Ok(())
     }
 
     /// Gets the current node status.
