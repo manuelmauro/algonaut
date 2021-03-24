@@ -417,8 +417,7 @@ pub struct AssetFreezeTransaction {
     pub frozen: bool,
 }
 
-/// Wraps a transaction in a signature. The encoding of this struct is suitable to be broadcast
-/// on the network
+///
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationCallTransaction {
     /// ID of the application being configured or empty if creating.

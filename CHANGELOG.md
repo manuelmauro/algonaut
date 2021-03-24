@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `algod` v2 API endpoints
+- Add structs for all transaction types
 - Add Github CI actions
 - Add tests for `kmd` client
 - Add more integration tests

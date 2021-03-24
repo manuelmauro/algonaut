@@ -15,32 +15,32 @@ pub struct Account {
     #[serde(rename = "amount-without-pending-rewards")]
     pub amount_without_pending_rewards: u64,
 
-    /// [appl] applications local data stored in this account.
+    /// `appl` applications local data stored in this account.
     #[serde(rename = "apps-local-state")]
     pub apps_local_state: Option<Vec<ApplicationLocalState>>,
 
-    /// [tsch] stores the sum of all of the local schemas and global schemas in this account.
+    /// `tsch` stores the sum of all of the local schemas and global schemas in this account.
     /// Note: the raw account uses StateSchema for this type.
     #[serde(rename = "apps-total-schema")]
     pub apps_total_schema: Option<ApplicationStateSchema>,
 
-    /// [asset] assets held by this account.
-    /// Note the raw object uses map[int] -> AssetHolding for this type.
+    /// `asset` assets held by this account.
+    /// Note the raw object uses map(int) -> AssetHolding for this type.
     pub assets: Option<Vec<AssetHolding>>,
 
-    /// [spend] the address against which signing should be checked. If empty, the address of the
+    /// `spend` the address against which signing should be checked. If empty, the address of the
     /// current account is used. This field can be updated in any transaction by setting the
     /// RekeyTo field.
     #[serde(rename = "auth-addr")]
     pub auth_addr: Option<String>,
 
-    /// [appp] parameters of applications created by this account including app global data.
-    /// Note: the raw account uses map[int] -> AppParams for this type.
+    /// `appp` parameters of applications created by this account including app global data.
+    /// Note: the raw account uses map(int) -> AppParams for this type.
     #[serde(rename = "created-apps")]
     pub created_apps: Option<Vec<Application>>,
 
-    /// [apar] parameters of assets created by this account.
-    /// Note: the raw account uses map[int] -> Asset for this type.
+    /// `apar` parameters of assets created by this account.
+    /// Note: the raw account uses map(int) -> Asset for this type.
     #[serde(rename = "created-assets")]
     pub created_assets: Option<Vec<Asset>>,
 
@@ -51,12 +51,12 @@ pub struct Account {
     #[serde(rename = "pending-rewards")]
     pub pending_rewards: u64,
 
-    /// [ebase] used as part of the rewards computation. Only applicable to accounts which
+    /// `ebase` used as part of the rewards computation. Only applicable to accounts which
     /// are participating.
     #[serde(rename = "reward-base")]
     pub reward_base: Option<u64>,
 
-    /// [ern] total rewards of MicroAlgos the account has received, including pending rewards.
+    /// `ern` total rewards of MicroAlgos the account has received, including pending rewards.
     pub rewards: u64,
 
     /// The round for which this information is relevant.
@@ -69,7 +69,7 @@ pub struct Account {
     #[serde(rename = "sig-type")]
     pub sig_type: Option<SignatureType>,
 
-    /// [onl] delegation status of the account's MicroAlgos
+    /// `onl` delegation status of the account's MicroAlgos
     /// * Offline - indicates that the associated account is delegated.
     /// * Online - indicates that the associated account used as part of the delegation pool.
     /// * NotParticipating - indicates that the associated account is neither a delegator nor a delegate.
@@ -90,7 +90,7 @@ pub enum SignatureType {
 /// AccountParticipation describes the parameters used by this account in consensus protocol.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccountParticipation {
-    /// [sel] Selection public key (if any) currently registered for this round.
+    /// `sel` Selection public key (if any) currently registered for this round.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     #[serde(
         rename = "selection-participation-key",
@@ -100,19 +100,19 @@ pub struct AccountParticipation {
     )]
     pub selection_participation_key: Vec<u8>,
 
-    /// [voteFst] First round for which this participation is valid.
+    /// `voteFst` First round for which this participation is valid.
     #[serde(rename = "vote-first-valid")]
     pub vote_first_valid: u64,
 
-    /// [voteKD] Number of subkeys in each batch of participation keys.
+    /// `voteKD` Number of subkeys in each batch of participation keys.
     #[serde(rename = "vote-key-dilution")]
     pub vote_key_dilution: u64,
 
-    /// [voteLst] Last round for which this participation is valid.
+    /// `voteLst` Last round for which this participation is valid.
     #[serde(rename = "vote-last-valid")]
     pub vote_last_valid: u64,
 
-    /// [vote] root participation public key (if any) currently registered for this round.
+    /// `vote` root participation public key (if any) currently registered for this round.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     #[serde(
         rename = "vote-participation-key",
@@ -136,10 +136,10 @@ pub struct AccountStateDelta {
 /// Application index and its parameters
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Application {
-    /// [appidx] application index.
+    /// `appidx` application index.
     pub id: u64,
 
-    /// [appparams] application parameters.
+    /// `appparams` application parameters.
     pub params: ApplicationParams,
 }
 
@@ -149,11 +149,11 @@ pub struct ApplicationLocalState {
     /// The application which this local state is for.
     pub id: u64,
 
-    /// [tkv] storage.
+    /// `tkv` storage.
     #[serde(rename = "key-value")]
     pub key_value: TealKeyValueStore,
 
-    /// [hsch] schema.
+    /// `hsch` schema.
     #[serde(rename = "key-value")]
     pub schema: ApplicationStateSchema,
 }
@@ -161,7 +161,7 @@ pub struct ApplicationLocalState {
 /// Stores the global information associated with an application.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApplicationParams {
-    /// [approv] approval program.
+    /// `approv` approval program.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     #[serde(
         rename = "approval-program",
@@ -171,7 +171,7 @@ pub struct ApplicationParams {
     )]
     pub approval_program: Vec<u8>,
 
-    /// [clearp] approval program.
+    /// `clearp` approval program.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     #[serde(
         rename = "clear-state-program",
@@ -185,15 +185,15 @@ pub struct ApplicationParams {
     /// global state for this application can be found.
     pub creator: String,
 
-    ///[\gs] global schema
+    /// `gs` global schema
     #[serde(rename = "global-state")]
     pub global_state: TealKeyValueStore,
 
-    /// [\lsch] global schema
+    /// `lsch` global schema
     #[serde(rename = "global-state-schema")]
     pub global_state_schema: ApplicationStateSchema,
 
-    /// [\lsch] local schema
+    /// `lsch` local schema
 
     #[serde(rename = "local-state-schema")]
     pub local_state_schema: ApplicationStateSchema,
@@ -202,11 +202,11 @@ pub struct ApplicationParams {
 /// Specifies maximums on the number of each type that may be stored.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApplicationStateSchema {
-    /// [nbs] num of byte slices.
+    /// `nbs` num of byte slices.
     #[serde(rename = "num-byte-slice")]
     pub num_byte_slice: u64,
 
-    /// [nui] num of uints.
+    /// `nui` num of uints.
     #[serde(rename = "num-uint")]
     pub num_uint: u64,
 }
@@ -225,7 +225,7 @@ pub struct Asset {
 /// Definition: data/basics/userBalance.go : AssetHolding
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetHolding {
-    /// [a] number of units held.
+    /// `a` number of units held.
     pub amount: u64,
 
     ///Asset ID of the holding.
@@ -236,17 +236,17 @@ pub struct AssetHolding {
     /// be found, and also the address where unwanted asset units can be sent in the worst case.
     pub creator: String,
 
-    /// [f] whether or not the holding is frozen.
+    /// `f` whether or not the holding is frozen.
     #[serde(rename = "is-frozen")]
     pub is_frozen: bool,
 }
 
 /// AssetParams specifies the parameters for an asset.
-/// [apar] when part of an AssetConfig transaction.
+/// `apar` when part of an AssetConfig transaction.
 /// Definition: data/transactions/asset.go : AssetParams
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetParams {
-    /// [c] Address of account used to clawback holdings of this asset. If empty, clawback is not
+    /// `c` Address of account used to clawback holdings of this asset. If empty, clawback is not
     /// permitted.
     pub clawback: String,
 
@@ -255,7 +255,7 @@ pub struct AssetParams {
     /// case.
     pub creator: String,
 
-    /// [dc] The number of digits to use after the decimal point when displaying this asset.
+    /// `dc` The number of digits to use after the decimal point when displaying this asset.
     /// If 0, the asset is not divisible. If 1, the base unit of the asset is in tenths.
     /// If 2, the base unit of the asset is in hundredths, and so on. This value must be
     /// between 0 and 19 (inclusive).
@@ -263,18 +263,18 @@ pub struct AssetParams {
     /// Maximum value : 19
     pub decimals: u64,
 
-    /// [df] Whether holdings of this asset are frozen by default.
+    /// `df` Whether holdings of this asset are frozen by default.
     #[serde(rename = "default-frozen")]
     pub default_frozen: bool,
 
-    /// [f] Address of account used to freeze holdings of this asset. If empty, freezing is not
+    /// `f` Address of account used to freeze holdings of this asset. If empty, freezing is not
     /// permitted.
     pub freeze: String,
 
-    /// [m] Address of account used to manage the keys of this asset and to destroy it.
+    /// `m` Address of account used to manage the keys of this asset and to destroy it.
     pub manager: String,
 
-    /// [am] A commitment to some unspecified asset metadata. The format of this metadata is up
+    /// `am` A commitment to some unspecified asset metadata. The format of this metadata is up
     /// to the application.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     #[serde(
@@ -285,20 +285,20 @@ pub struct AssetParams {
     )]
     pub metadata_hash: Vec<u8>,
 
-    /// [an] Name of this asset, as supplied by the creator.
+    /// `an` Name of this asset, as supplied by the creator.
     pub name: String,
 
-    /// [r] Address of account holding reserve (non-minted) units of this asset.
+    /// `r` Address of account holding reserve (non-minted) units of this asset.
     pub reserve: String,
 
-    /// [t] The total number of units of this asset.
+    /// `t` The total number of units of this asset.
     pub total: u64,
 
-    /// [un] Name of a unit of this asset, as supplied by the creator.
+    /// `un` Name of a unit of this asset, as supplied by the creator.
     #[serde(rename = "unit-name")]
     pub unit_name: String,
 
-    /// [au] URL where more information about the asset can be retrieved.
+    /// `au` URL where more information about the asset can be retrieved.
     pub url: String,
 }
 
@@ -426,13 +426,13 @@ pub struct ErrorResponse {
 /// Represents a TEAL value delta.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EvalDelta {
-    /// [at] delta action.
+    /// `at` delta action.
     pub action: u64,
 
-    /// [bs] bytes value.
+    /// `bs` bytes value.
     pub bytes: String,
 
-    /// [ui] uint value.
+    /// `ui` uint value.
     pub uint: u64,
 }
 
@@ -459,7 +459,7 @@ pub type TealKeyValueStore = Vec<TealKeyValue>;
 /// Represents a TEAL value.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TealValue {
-    /// [tb] bytes value.
+    /// `tb` bytes value.
     #[serde(
         default,
         skip_serializing_if = "Vec::is_empty",
@@ -467,11 +467,11 @@ pub struct TealValue {
     )]
     pub bytes: Vec<u8>,
 
-    /// [tt] value type.
+    /// `tt` value type.
     #[serde(rename = "type")]
     pub value_type: u64,
 
-    /// [ui] uint value.
+    /// `ui` uint value.
     pub uint: u64,
 }
 
@@ -537,12 +537,12 @@ pub struct PendingTransaction {
     #[serde(rename = "confirmed-round")]
     pub confirmed_round: Option<u64>,
 
-    /// [gd] Global state key/value changes for the application being executed by this
+    /// `gd` Global state key/value changes for the application being executed by this
     /// transaction.
     #[serde(rename = "global-state-delta")]
     pub global_state_delta: Option<StateDelta>,
 
-    /// [ld] Local state key/value changes for the application being executed by this
+    /// `ld` Local state key/value changes for the application being executed by this
     /// transaction.
     #[serde(rename = "local-state-delta")]
     pub local_state_delta: Option<Vec<AccountStateDelta>>,
