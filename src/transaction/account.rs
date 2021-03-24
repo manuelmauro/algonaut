@@ -1,8 +1,10 @@
-use crate::auction::{Bid, SignedBid};
-use crate::crypto::Ed25519PublicKey;
-use crate::crypto::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
+use super::auction::{Bid, SignedBid};
+use super::{SignedTransaction, Transaction};
+use crate::crypto::address::{
+    Address, Ed25519PublicKey, MultisigAddress, MultisigSignature, MultisigSubsig, Signature,
+};
+use crate::crypto::mnemonic;
 use crate::error::{AlgorandError, ApiError};
-use crate::transaction::{SignedTransaction, Transaction};
 use data_encoding::BASE32_NOPAD;
 use rand::rngs::OsRng;
 use rand::Rng;
@@ -27,7 +29,7 @@ impl Account {
 
     /// Create account from human readable mnemonic of a 32 byte seed
     pub fn from_mnemonic(mnemonic: &str) -> Result<Account, AlgorandError> {
-        let seed = crate::mnemonic::to_key(mnemonic)?;
+        let seed = mnemonic::to_key(mnemonic)?;
         Ok(Self::from_seed(seed))
     }
 
@@ -51,7 +53,7 @@ impl Account {
 
     /// Get the human readable mnemonic of the 32 byte seed
     pub fn mnemonic(&self) -> String {
-        crate::mnemonic::from_key(&self.seed).unwrap()
+        mnemonic::from_key(&self.seed).unwrap()
     }
 
     /// Get the 32 byte seed

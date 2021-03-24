@@ -1,10 +1,13 @@
-use crate::account::Account;
 use crate::core::{MicroAlgos, Round, VotePk, VrfPk};
-use crate::crypto::{Address, HashDigest, MultisigSignature, Signature};
+use crate::crypto::address::{Address, HashDigest, MultisigSignature, Signature};
 use crate::error::AlgorandError;
+use account::Account;
 use serde::{Deserialize, Serialize, Serializer};
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
+
+pub mod account;
+pub mod auction;
 
 /// Fields always used when creating a transaction, used as an argument in creating a Transaction
 #[derive(Debug, Clone, Eq, PartialEq)]

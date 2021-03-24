@@ -5,7 +5,7 @@
 //! **algorand-rs** aims at becoming a rusty algorand sdk.
 //!
 //! ```rust
-//! use algorand_rs::algod::Algod;
+//! use algorand_rs::Algod;
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let algod = Algod::new()
@@ -30,28 +30,15 @@
 
 // TODO #![deny(missing_docs)]
 
-pub mod account;
-/// Algorand protocol daemon
-pub mod algod;
-pub mod auction;
+pub mod client;
 pub mod core;
 pub mod crypto;
+pub(crate) mod encoding;
 pub mod error;
-/// Algorand's indexer
-pub mod indexer;
-/// Key management daemon
-pub mod kmd;
-/// Support for turning 32 byte keys into human-readable mnemonics and back
-pub mod mnemonic;
-pub(crate) mod serialization;
-/// Api token management utils
-pub(crate) mod token;
 pub mod transaction;
 
 // Re-exports
 pub use crate::core::{MicroAlgos, Round};
-pub use algod::Algod;
-pub use crypto::Address;
-pub use crypto::{HashDigest, MasterDerivationKey};
-pub use indexer::Indexer;
-pub use kmd::Kmd;
+pub use client::algod::Algod;
+pub use client::indexer::Indexer;
+pub use client::kmd::Kmd;

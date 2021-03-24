@@ -1,5 +1,5 @@
-use crate::serialization::SignatureVisitor;
-use crate::serialization::U8_32Visitor;
+use crate::encoding::SignatureVisitor;
+use crate::encoding::U8_32Visitor;
 use data_encoding::BASE32_NOPAD;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;

@@ -1,7 +1,7 @@
 use crate::core::{MicroAlgos, Round};
-use crate::crypto::HashDigest;
-use crate::serialization::deserialize_bytes;
-use crate::serialization::deserialize_hash;
+use crate::crypto::address::HashDigest;
+use crate::encoding::deserialize_bytes;
+use crate::encoding::deserialize_hash;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 /// The information about a node status

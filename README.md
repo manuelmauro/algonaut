@@ -10,7 +10,7 @@ This crate is a WORK IN PROGRESS!
 **algorand-rs** aims at becoming a rusty algorand sdk.
 
 ```rust
-use algorand_rs::algod::Algod;
+use algorand_rs::Algod;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let algod = Algod::new()

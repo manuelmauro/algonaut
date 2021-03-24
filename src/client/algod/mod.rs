@@ -1,5 +1,5 @@
+use super::token::ApiToken;
 use crate::error::{AlgorandError, BuilderError};
-use crate::token::ApiToken;
 use reqwest::header::HeaderMap;
 use url::Url;
 

@@ -1,6 +1,6 @@
 use crate::core::{MicroAlgos, Round};
-use crate::crypto::HashDigest;
-use crate::serialization::{deserialize_bytes, deserialize_hash};
+use crate::crypto::address::HashDigest;
+use crate::encoding::{deserialize_bytes, deserialize_hash};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

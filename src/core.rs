@@ -1,4 +1,4 @@
-use crate::serialization::U8_32Visitor;
+use crate::encoding::U8_32Visitor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use static_assertions::_core::ops::{Add, Sub};
 use std::fmt::{Debug, Display, Formatter};

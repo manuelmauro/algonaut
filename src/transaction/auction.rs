@@ -1,4 +1,4 @@
-use crate::crypto::{Address, Signature};
+use crate::crypto::address::{Address, Signature};
 use serde::{Deserialize, Serialize};
 
 /// A bid by a user as part of an auction.

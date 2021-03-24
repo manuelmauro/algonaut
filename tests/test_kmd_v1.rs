@@ -1,5 +1,5 @@
-use algorand_rs::crypto::Ed25519PublicKey;
-use algorand_rs::{Kmd, MasterDerivationKey};
+use algorand_rs::crypto::address::{Ed25519PublicKey, MasterDerivationKey};
+use algorand_rs::Kmd;
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};
 use std::env;

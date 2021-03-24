@@ -1,5 +1,6 @@
+use algorand_rs::crypto::address::Address;
 use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorand_rs::{Address, Algod, Kmd, MicroAlgos};
+use algorand_rs::{Algod, Kmd, MicroAlgos};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

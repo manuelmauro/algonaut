@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactor folder structure according to [Algorand's SDK common schema](https://github.com/algorand/algorand-sdk-testing#sdk-overview)
 - Refactor `kmd` client
 
 ## [0.1.1] - 2021-02-19

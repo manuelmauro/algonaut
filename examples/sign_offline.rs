@@ -1,6 +1,8 @@
-use algorand_rs::account::Account;
+use algorand_rs::crypto::address::{Address, HashDigest};
+use algorand_rs::crypto::mnemonic;
+use algorand_rs::transaction::account::Account;
 use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorand_rs::{mnemonic, Address, HashDigest, MicroAlgos, Round};
+use algorand_rs::{MicroAlgos, Round};
 use std::error::Error;
 use std::fs::File;
 use std::io::Write;

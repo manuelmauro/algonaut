@@ -1,9 +1,7 @@
-use crate::crypto::{Ed25519PublicKey, MasterDerivationKey, MultisigSignature};
+use crate::crypto::address::{Ed25519PublicKey, MasterDerivationKey, MultisigSignature};
 use crate::error::AlgorandError;
 use crate::transaction::Transaction;
 use message::*;
-use serde::Deserialize;
-use std::fmt::Debug;
 
 /// API message structs for Algorand's kmd v1
 pub mod message;
@@ -466,22 +464,6 @@ impl Client {
             .json()?;
         Ok(response)
     }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct APIV1Wallet {
-    pub driver_name: String,
-    pub driver_version: u32,
-    pub id: String,
-    pub mnemonic_ux: bool,
-    pub name: String,
-    pub supported_txs: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct APIV1WalletHandle {
-    pub wallet: APIV1Wallet,
-    pub expires_seconds: i64,
 }
 
 #[cfg(test)]

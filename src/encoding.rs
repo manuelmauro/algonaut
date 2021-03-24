@@ -1,6 +1,5 @@
 //! This file mostly just hides away various trait implementations that would clutter up and distract from the more important code elsewhere
-use crate::crypto::Ed25519PublicKey;
-use crate::crypto::{HashDigest, MasterDerivationKey};
+use crate::crypto::address::{Ed25519PublicKey, HashDigest, MasterDerivationKey};
 use data_encoding::BASE64;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serializer};

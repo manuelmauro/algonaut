@@ -1,5 +1,5 @@
+use super::token::ApiToken;
 use crate::error::{AlgorandError, BuilderError};
-use crate::token::ApiToken;
 use url::Url;
 
 pub mod v1;
