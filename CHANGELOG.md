@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `indexer` data structures
 - Add `algod` v2 API endpoints
 - Add structs for all transaction types
 - Add Github CI actions
@@ -40,10 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Remove APIV1Request trait
-
-### Removed
-
-- Remove cucumber test suite
+- Remove (temporarily) cucumber test suite
 
 [unreleased]: https://github.com/manuelmauro/algorand-rs/compare/v0.1.1...HEAD
 [0.1.1]: https://github.com/manuelmauro/algorand-rs/releases/tag/v0.1.1
