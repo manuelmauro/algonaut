@@ -36,9 +36,9 @@ pub struct NodeStatus {
     pub catchup_time: i64,
 }
 
-/// TransactionID Description
+/// TransactionId Description
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TransactionID {
+pub struct TransactionId {
     /// The string encoding of the transaction hash
     #[serde(rename = "txId")]
     pub tx_id: String,

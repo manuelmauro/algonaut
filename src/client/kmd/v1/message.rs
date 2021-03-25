@@ -18,7 +18,7 @@ pub struct VersionsResponse {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct APIV1Wallet {
+pub struct ApiV1Wallet {
     pub driver_name: String,
     pub driver_version: u32,
     pub id: String,
@@ -28,8 +28,8 @@ pub struct APIV1Wallet {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct APIV1WalletHandle {
-    pub wallet: APIV1Wallet,
+pub struct ApiV1WalletHandle {
+    pub wallet: ApiV1Wallet,
     pub expires_seconds: i64,
 }
 
@@ -41,7 +41,7 @@ pub struct ListWalletsRequest;
 #[derive(Debug, Deserialize)]
 pub struct ListWalletsResponse {
     #[serde(default)]
-    pub wallets: Vec<APIV1Wallet>,
+    pub wallets: Vec<ApiV1Wallet>,
 }
 
 #[derive(Serialize)]
@@ -54,7 +54,7 @@ pub struct CreateWalletRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateWalletResponse {
-    pub wallet: APIV1Wallet,
+    pub wallet: ApiV1Wallet,
 }
 
 /// InitWalletHandleRequest is the request for `POST /v1/wallet/init`
@@ -89,7 +89,7 @@ pub struct RenewWalletHandleRequest {
 /// RenewWalletHandleResponse is the response to `POST /v1/wallet/renew`
 #[derive(Debug, Deserialize)]
 pub struct RenewWalletHandleResponse {
-    pub wallet_handle: APIV1WalletHandle,
+    pub wallet_handle: ApiV1WalletHandle,
 }
 
 /// RenameWalletRequest is the request for `POST /v1/wallet/rename`
@@ -103,7 +103,7 @@ pub struct RenameWalletRequest {
 /// RenameWalletResponse is the response to `POST /v1/wallet/rename`
 #[derive(Debug, Deserialize)]
 pub struct RenameWalletResponse {
-    pub wallet: APIV1Wallet,
+    pub wallet: ApiV1Wallet,
 }
 
 /// GetWalletRequest is the request for `POST /v1/wallet/info`
@@ -115,7 +115,7 @@ pub struct GetWalletInfoRequest {
 /// GetWalletResponse is the response to `POST /v1/wallet/info`
 #[derive(Debug, Deserialize)]
 pub struct GetWalletInfoResponse {
-    pub wallet_handle: APIV1WalletHandle,
+    pub wallet_handle: ApiV1WalletHandle,
 }
 
 /// ExportMasterDerivationKeyRequest is the request for `POST /v1/master-key/export`

@@ -3,7 +3,7 @@ use crate::error::AlgorandError;
 use crate::transaction::SignedTransaction;
 use message::{
     Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee,
-    TransactionID, TransactionList, TransactionParams, Version,
+    TransactionId, TransactionList, TransactionParams, Version,
 };
 use reqwest::header::HeaderMap;
 
@@ -196,13 +196,13 @@ impl Client {
     pub fn send_transaction(
         &self,
         signed_transaction: &SignedTransaction,
-    ) -> Result<TransactionID, AlgorandError> {
+    ) -> Result<TransactionId, AlgorandError> {
         let bytes = rmp_serde::to_vec_named(signed_transaction)?;
         self.raw_transaction(&bytes)
     }
 
     /// Broadcasts a raw transaction to the network
-    pub fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionID, AlgorandError> {
+    pub fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionId, AlgorandError> {
         let response = self
             .http_client
             .post(&format!("{}v1/transactions", self.url))
