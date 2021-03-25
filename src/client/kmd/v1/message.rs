@@ -298,7 +298,7 @@ pub struct SignMultisigTransactionResponse {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct APIV1ResponseEnvelope {
+pub struct ApiV1ResponseEnvelope {
     pub error: bool,
     pub message: String,
 }
