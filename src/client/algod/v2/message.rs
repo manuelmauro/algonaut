@@ -20,6 +20,7 @@ pub struct Account {
     pub apps_local_state: Option<Vec<ApplicationLocalState>>,
 
     /// `tsch` stores the sum of all of the local schemas and global schemas in this account.
+    ///
     /// Note: the raw account uses StateSchema for this type.
     #[serde(rename = "apps-total-schema")]
     pub apps_total_schema: Option<ApplicationStateSchema>,
@@ -35,11 +36,13 @@ pub struct Account {
     pub auth_addr: Option<String>,
 
     /// `appp` parameters of applications created by this account including app global data.
+    ///
     /// Note: the raw account uses map(int) -> AppParams for this type.
     #[serde(rename = "created-apps")]
     pub created_apps: Option<Vec<Application>>,
 
     /// `apar` parameters of assets created by this account.
+    ///
     /// Note: the raw account uses map(int) -> Asset for this type.
     #[serde(rename = "created-assets")]
     pub created_assets: Option<Vec<Asset>>,
@@ -49,7 +52,7 @@ pub struct Account {
 
     /// Amount of MicroAlgos of pending rewards in this account.
     #[serde(rename = "pending-rewards")]
-    pub pending_rewards: u64,
+    pub pending_rewards: MicroAlgos,
 
     /// `ebase` used as part of the rewards computation. Only applicable to accounts which
     /// are participating.
@@ -57,7 +60,7 @@ pub struct Account {
     pub reward_base: Option<u64>,
 
     /// `ern` total rewards of MicroAlgos the account has received, including pending rewards.
-    pub rewards: u64,
+    pub rewards: MicroAlgos,
 
     /// The round for which this information is relevant.
     pub round: Round,
@@ -76,6 +79,7 @@ pub struct Account {
     pub status: String,
 }
 
+/// Signature types.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "sig-type")]
 pub enum SignatureType {
@@ -418,8 +422,8 @@ pub struct DryrunResponse {
 
 /// An error response with optional data field.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ErrorResponse {
-    pub data: String,
+pub struct ErrorResponse<T> {
+    pub data: T,
     pub message: String,
 }
 
