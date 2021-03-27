@@ -30,15 +30,10 @@
 
 // TODO #![deny(missing_docs)]
 
-pub mod client;
-pub mod core;
-pub mod crypto;
-pub(crate) mod encoding;
-pub mod error;
-pub mod transaction;
-
 // Re-exports
-pub use crate::core::{MicroAlgos, Round};
-pub use client::algod::Algod;
-pub use client::indexer::Indexer;
-pub use client::kmd::Kmd;
+pub use algonaut_client::algod::Algod;
+pub use algonaut_client::indexer::Indexer;
+pub use algonaut_client::kmd::Kmd;
+pub use algonaut_core as core;
+pub use algonaut_crypto as crypto;
+pub use algonaut_transaction as transaction;

@@ -1,6 +1,6 @@
-use algonaut::crypto::address::Address;
+use algonaut::core::{address::Address, MicroAlgos};
 use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algonaut::{Algod, Kmd, MicroAlgos};
+use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

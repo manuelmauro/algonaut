@@ -1,0 +1,18 @@
+[package]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+edition = "2018"
+name = "algonaut_crypto"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+algonaut_encoding = {path = "../algonaut_encoding", version = "0.1.0", default-features = false}
+data-encoding = "2.3.1"
+derive_more = "0.99.11"
+indexmap = "1.6.1"
+lazy_static = "1.4.0"
+serde = {version = "1.0", features = ["derive"]}
+sha2 = "0.8.0"
+static_assertions = "0.3.4"
+thiserror = "1.0.23"

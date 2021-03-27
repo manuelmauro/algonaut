@@ -1,4 +1,5 @@
-use algonaut::{crypto::address::MasterDerivationKey, Kmd};
+use algonaut::crypto::MasterDerivationKey;
+use algonaut::Kmd;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
