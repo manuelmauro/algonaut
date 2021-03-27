@@ -1,4 +1,4 @@
-use algorand_rs::{Algod, Round};
+use algonaut::{Algod, Round};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

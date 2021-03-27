@@ -1,9 +1,9 @@
 
-# Contributing to algorand-rs
+# Contributing to algonaut
 
-**Note:** Any interaction with the project is subject to our [Code of Conduct](https://github.com/manuelmauro/algorand-rs/blob/main/CODE_OF_CONDUCT.md).
+**Note:** Any interaction with the project is subject to our [Code of Conduct](https://github.com/manuelmauro/algonaut/blob/main/CODE_OF_CONDUCT.md).
 
-- [Contributing to algorand-rs](#contributing-to-algorand-rs)
+- [Contributing to algonaut](#contributing-to-algonaut)
   - [Submitting Issues](#submitting-issues)
   - [Pull Requests](#pull-requests)
     - [Submission Checklist](#submission-checklist)
@@ -12,7 +12,7 @@
 
 ## Submitting Issues
 
-One way you can help `algorand-rs` is to report bugs or request features on our GitHub issue tracker.
+One way you can help `algonaut` is to report bugs or request features on our GitHub issue tracker.
 
 ## Pull Requests
 

@@ -4,7 +4,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 
-use algorand_rs::Algod;
+use algonaut::Algod;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env

@@ -1,8 +1,8 @@
-use algorand_rs::crypto::address::{Address, MasterDerivationKey};
-use algorand_rs::crypto::mnemonic;
-use algorand_rs::transaction::account::Account;
-use algorand_rs::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
-use algorand_rs::{Algod, Kmd, MicroAlgos, Round};
+use algonaut::crypto::address::{Address, MasterDerivationKey};
+use algonaut::crypto::mnemonic;
+use algonaut::transaction::account::Account;
+use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algonaut::{Algod, Kmd, MicroAlgos, Round};
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};
 use std::env;

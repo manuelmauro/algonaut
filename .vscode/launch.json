@@ -7,16 +7,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'algorand-rs'",
+            "name": "Debug unit tests in library 'algonaut'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
-                    "name": "algorand-rs",
+                    "name": "algonaut",
                     "kind": "lib"
                 }
             },
@@ -31,7 +31,7 @@
                 "args": [
                     "build",
                     "--example=algod_client",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "algod_client",
@@ -50,7 +50,7 @@
                     "test",
                     "--no-run",
                     "--example=algod_client",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "algod_client",
@@ -68,7 +68,7 @@
                 "args": [
                     "build",
                     "--example=sign_submit_transaction",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "sign_submit_transaction",
@@ -87,7 +87,7 @@
                     "test",
                     "--no-run",
                     "--example=sign_submit_transaction",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "sign_submit_transaction",
@@ -105,7 +105,7 @@
                 "args": [
                     "build",
                     "--example=submit_file",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "submit_file",
@@ -124,7 +124,7 @@
                     "test",
                     "--no-run",
                     "--example=submit_file",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "submit_file",
@@ -142,7 +142,7 @@
                 "args": [
                     "build",
                     "--example=kmd_client",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "kmd_client",
@@ -161,7 +161,7 @@
                     "test",
                     "--no-run",
                     "--example=kmd_client",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "kmd_client",
@@ -179,7 +179,7 @@
                 "args": [
                     "build",
                     "--example=quickstart",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "quickstart",
@@ -198,7 +198,7 @@
                     "test",
                     "--no-run",
                     "--example=quickstart",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "quickstart",
@@ -216,7 +216,7 @@
                 "args": [
                     "build",
                     "--example=wallet_restore",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "wallet_restore",
@@ -235,7 +235,7 @@
                     "test",
                     "--no-run",
                     "--example=wallet_restore",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "wallet_restore",
@@ -253,7 +253,7 @@
                 "args": [
                     "build",
                     "--example=sign_offline",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "sign_offline",
@@ -272,7 +272,7 @@
                     "test",
                     "--no-run",
                     "--example=sign_offline",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "sign_offline",
@@ -290,7 +290,7 @@
                 "args": [
                     "build",
                     "--example=wallet_backup",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "wallet_backup",
@@ -309,7 +309,7 @@
                     "test",
                     "--no-run",
                     "--example=wallet_backup",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "wallet_backup",
@@ -328,7 +328,7 @@
                     "test",
                     "--no-run",
                     "--test=integration_test",
-                    "--package=algorand-rs"
+                    "--package=algonaut"
                 ],
                 "filter": {
                     "name": "integration_test",

@@ -4,9 +4,10 @@ description = "A Rusty sdk for the Algorand blockchain."
 edition = "2018"
 keywords = ["Algorand", "sdk"]
 license = "MIT"
-name = "algorand-rs"
-repository = "https://github.com/manuelmauro/algorand-rs"
+name = "algonaut"
+repository = "https://github.com/manuelmauro/algonaut"
 version = "0.1.1"
+
 
 [dependencies]
 data-encoding = "2.3.1"

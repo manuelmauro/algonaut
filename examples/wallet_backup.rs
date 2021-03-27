@@ -1,4 +1,4 @@
-use algorand_rs::{crypto::mnemonic, Kmd};
+use algonaut::{crypto::mnemonic, Kmd};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

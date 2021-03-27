@@ -1,16 +1,16 @@
-# algorand-rs
+# algonaut
 
-[![Crate](https://meritbadge.herokuapp.com/algorand-rs)](https://crates.io/crates/algorand-rs)
-[![Docs](https://docs.rs/paypal-rs/badge.svg)](https://docs.rs/algorand-rs)
-[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algorand-rs/blob/main/LICENSE)
-![Continuous integration](https://github.com/manuelmauro/algorand-rs/actions/workflows/quickstart.yml/badge.svg)
+[![Crate](https://meritbadge.herokuapp.com/algonaut)](https://crates.io/crates/algonaut)
+[![Docs](https://docs.rs/paypal-rs/badge.svg)](https://docs.rs/algonaut)
+[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algonaut/blob/main/LICENSE)
+![Continuous integration](https://github.com/manuelmauro/algonaut/actions/workflows/quickstart.yml/badge.svg)
 
 This crate is a WORK IN PROGRESS!
 
-**algorand-rs** aims at becoming a rusty algorand sdk.
+**algonaut** aims at becoming a rusty algorand sdk.
 
 ```rust
-use algorand_rs::Algod;
+use algonaut::Algod;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let algod = Algod::new()
@@ -39,7 +39,7 @@ Read the [changelog](./CHANGELOG.md) for more details.
 
 ## Contribute
 
-Do you want to help with the development? Please find out how by reading our [contributions guidelines](https://github.com/manuelmauro/algorand-rs/blob/main/CONTRIBUTING.md).
+Do you want to help with the development? Please find out how by reading our [contributions guidelines](https://github.com/manuelmauro/algonaut/blob/main/CONTRIBUTING.md).
 
 ## Acknowledgements
 
