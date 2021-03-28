@@ -67,7 +67,7 @@ pub struct Account {
     #[serde(rename = "amount-without-pending-rewards")]
     pub amount_without_pending_rewards: u64,
 
-    /// [appl] applications local data stored in this account.
+    /// `appl` applications local data stored in this account.
     ///
     /// Note the raw object uses map(int) -> AppLocalState for this type.
     #[serde(rename = "apps-local-state")]
@@ -760,11 +760,11 @@ pub struct Transaction {
     #[serde(rename = "genesis-id")]
     pub genesis_id: Option<String>,
 
-    /// [gd] Global state key/value changes for the application being executed by this transaction.
+    /// `gd` Global state key/value changes for the application being executed by this transaction.
     #[serde(rename = "global-state-delta")]
     pub global_state_delta: Option<StateDelta>,
 
-    /// [grp] Base64 encoded byte array of a sha512/256 digest. When present indicates that this
+    /// `grp` Base64 encoded byte array of a sha512/256 digest. When present indicates that this
     /// transaction is part of a transaction group and the value is the sha512/256 hash of the
     /// transactions in that group.
     ///
@@ -960,7 +960,7 @@ pub struct TransactionAssetTransfer {
     #[serde(rename = "close-amount")]
     pub close_amount: Option<u64>,
 
-    /// [aclose] Indicates that the asset should be removed from the account's Assets map,
+    /// `aclose` Indicates that the asset should be removed from the account's Assets map,
     /// and specifies where the remaining asset holdings should be transferred. It's always valid
     /// to transfer remaining asset holdings to the creator account.
     #[serde(rename = "close-to")]

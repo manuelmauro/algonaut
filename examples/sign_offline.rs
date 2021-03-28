@@ -1,5 +1,4 @@
-use algonaut::core::address::Address;
-use algonaut::core::{MicroAlgos, Round};
+use algonaut::core::{Address, MicroAlgos, Round};
 use algonaut::crypto::{mnemonic, HashDigest};
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};

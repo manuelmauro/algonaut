@@ -1,5 +1,5 @@
 use crate::error::AlgorandError;
-use algonaut_core::address::MultisigSignature;
+use algonaut_core::MultisigSignature;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_transaction::Transaction;
 use message::*;

@@ -1,6 +1,5 @@
 use algonaut_client::{Algod, Kmd};
-use algonaut_core::address::Address;
-use algonaut_core::{MicroAlgos, Round};
+use algonaut_core::{Address, MicroAlgos, Round};
 use algonaut_crypto::{mnemonic, MasterDerivationKey};
 use algonaut_transaction::account::Account;
 use algonaut_transaction::{BaseTransaction, Payment, Transaction, TransactionType};

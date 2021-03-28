@@ -1,9 +1,7 @@
 use super::auction::{Bid, SignedBid};
 use super::{SignedTransaction, Transaction};
 use crate::error::{AlgorandError, ApiError};
-use algonaut_core::address::{
-    Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature,
-};
+use algonaut_core::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
 use algonaut_crypto::mnemonic;
 use algonaut_crypto::Ed25519PublicKey;
 use data_encoding::BASE32_NOPAD;

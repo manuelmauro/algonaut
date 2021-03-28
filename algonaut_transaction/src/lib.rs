@@ -1,6 +1,6 @@
 use crate::error::AlgorandError;
 use account::Account;
-use algonaut_core::address::{Address, MultisigSignature, Signature};
+use algonaut_core::{Address, MultisigSignature, Signature};
 use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize, Serializer};

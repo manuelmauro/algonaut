@@ -1,4 +1,4 @@
-use algonaut_core::address::{Address, Signature};
+use algonaut_core::{Address, Signature};
 use serde::{Deserialize, Serialize};
 
 /// A bid by a user as part of an auction.

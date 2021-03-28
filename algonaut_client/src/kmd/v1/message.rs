@@ -1,4 +1,4 @@
-use algonaut_core::address::MultisigSignature;
+use algonaut_core::MultisigSignature;
 use algonaut_crypto::{
     deserialize_mdk, deserialize_public_keys, Ed25519PublicKey, MasterDerivationKey,
 };

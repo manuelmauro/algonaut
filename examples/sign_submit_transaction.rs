@@ -1,4 +1,4 @@
-use algonaut::core::{address::Address, MicroAlgos};
+use algonaut::core::{Address, MicroAlgos};
 use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
