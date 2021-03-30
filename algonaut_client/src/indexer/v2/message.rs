@@ -4,7 +4,7 @@ use algonaut_encoding::deserialize_bytes;
 use serde::{Deserialize, Serialize};
 
 ///
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct QueryAccount {
     /// Application ID.
     #[serde(rename = "application-id")]
@@ -40,8 +40,8 @@ pub struct QueryAccount {
 }
 
 ///
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ResponseAccount {
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AccountResponse {
     /// Accounts.
     pub accounts: Vec<Account>,
 
@@ -55,7 +55,466 @@ pub struct ResponseAccount {
     pub next_token: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+///
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryRound {
+    pub round: Round,
+}
+
+///
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AccountIdResponse {
+    /// Account.
+    pub account: Account,
+
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: u64,
+}
+
+/// Query account transactions.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryAccountTransaction {
+    /// Include results after the given time. Must be an RFC 3339 formatted string.
+    #[serde(rename = "after-time", skip_serializing_if = "Option::is_none")]
+    pub after_time: Option<String>,
+
+    /// Asset ID
+    #[serde(rename = "asset-id", skip_serializing_if = "Option::is_none")]
+    pub asset_id: Option<u64>,
+
+    /// Include results before the given time. Must be an RFC 3339 formatted string.
+    #[serde(rename = "before-time", skip_serializing_if = "Option::is_none")]
+    pub before_time: Option<String>,
+
+    /// Results should have an amount greater than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(
+        rename = "currency-greater-than",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub currency_greater_than: Option<u64>,
+
+    /// Results should have an amount less than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(rename = "currency-less-than", skip_serializing_if = "Option::is_none")]
+    pub currency_less_than: Option<u64>,
+
+    /// Maximum number of results to return.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+
+    /// Include results at or before the specified max-round.
+    #[serde(rename = "max-round", skip_serializing_if = "Option::is_none")]
+    pub max_round: Option<Round>,
+
+    /// Include results at or after the specified min-round.
+    #[serde(rename = "min-round", skip_serializing_if = "Option::is_none")]
+    pub min_round: Option<Round>,
+
+    /// The next page of results. Use the next token provided by the previous results.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next: Option<String>,
+
+    /// Specifies a prefix which must be contained in the note field.
+    #[serde(rename = "note-prefix", skip_serializing_if = "Option::is_none")]
+    pub note_prefix: Option<String>,
+
+    /// Include results which include the rekey-to field.
+    #[serde(rename = "rekey-to", skip_serializing_if = "Option::is_none")]
+    pub rekey_to: Option<bool>,
+
+    /// Include results for the specified round.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub round: Option<u64>,
+
+    /// SigType filters just results using the specified type of signature:
+    /// * sig - Standard
+    /// * msig - MultiSig
+    /// * lsig - LogicSig
+    #[serde(rename = "sig-type", skip_serializing_if = "Option::is_none")]
+    pub sig_type: Option<SignatureType>,
+
+    /// Filters results according to the type of transactions.
+    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    pub tx_type: Option<TransactionType>,
+
+    /// Lookup the specific transaction by ID.
+    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    pub txid: Option<String>,
+}
+
+/// Resonse to account transactions' endpoint.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AccountTransactionResponse {
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: u64,
+
+    /// Used for pagination, when making another request provide this token with the next parameter.
+    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    pub next_token: Option<String>,
+
+    /// Transaction list.
+    #[serde(rename = "transactions")]
+    pub transactions: Vec<Transaction>,
+}
+
+/// Query applications.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryApplications {
+    /// Application ID.
+    #[serde(rename = "application-id", skip_serializing_if = "Option::is_none")]
+    pub application_id: Option<u64>,
+
+    /// Maximum number of results to return.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+
+    /// The next page of results. Use the next token provided by the previous results.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next: Option<String>,
+}
+
+/// Response for applications/ endpoint.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ApplicationResponse {
+    #[serde(rename = "applications")]
+    pub applications: Vec<Application>,
+
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: i32,
+
+    /// Used for pagination, when making another request provide this token with the next parameter.
+    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    pub next_token: Option<String>,
+}
+
+/// Response for applications/id endpoint.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ApplicationInfoResponse {
+    #[serde(rename = "application", skip_serializing_if = "Option::is_none")]
+    pub application: Option<Box<Application>>,
+
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: i32,
+}
+
+/// Query assets.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryAssets {
+    /// Asset ID.
+    #[serde(rename = "asset-id", skip_serializing_if = "Option::is_none")]
+    pub asset_id: Option<u64>,
+
+    /// Filter just assets with the given creator address.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub creator: Option<String>,
+
+    /// Maximum number of results to return.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+
+    /// Filter just assets with the given name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// The next page of results. Use the next token provided by the previous results.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next: Option<String>,
+
+    /// Filter just assets with the given unit.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unit: Option<String>,
+}
+
+/// Assets response.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AssetResponse {
+    #[serde(rename = "assets")]
+    pub assets: Vec<Asset>,
+
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: i32,
+
+    /// Used for pagination, when making another request provide this token with the next parameter.
+    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    pub next_token: Option<String>,
+}
+
+/// Assets info response.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AssetsInfoResponse {
+    #[serde(rename = "asset")]
+    pub asset: Box<Asset>,
+
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: i32,
+}
+
+/// Query assets.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryBalances {
+    /// Results should have an amount greater than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(
+        rename = "currency-greater-than",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub currency_greater_than: Option<u64>,
+
+    /// Results should have an amount less than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(rename = "currency-less-than", skip_serializing_if = "Option::is_none")]
+    pub currency_less_than: Option<u64>,
+
+    /// Maximum number of results to return.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+
+    /// The next page of results. Use the next token provided by the previous results.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next: Option<String>,
+
+    /// Include results for the specified round.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub round: Option<u64>,
+}
+
+/// Balances response.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct BalancesResponse {
+    #[serde(rename = "balances")]
+    pub balances: Vec<MiniAssetHolding>,
+
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: i32,
+
+    /// Used for pagination, when making another request provide this token with the next parameter.
+    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    pub next_token: Option<String>,
+}
+
+/// Query assets transactions.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryAssetTransaction {
+    /// Only include transactions with this address in one of the transaction fields.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub address: Option<String>,
+
+    /// Combine with the address parameter to define what type of address to search for.
+    #[serde(rename = "address-role", skip_serializing_if = "Option::is_none")]
+    pub address_role: Option<Role>,
+
+    /// Include results after the given time. Must be an RFC 3339 formatted string.
+    #[serde(rename = "after-time", skip_serializing_if = "Option::is_none")]
+    pub after_time: Option<String>,
+
+    /// Include results before the given time. Must be an RFC 3339 formatted string.
+    #[serde(rename = "before-time", skip_serializing_if = "Option::is_none")]
+    pub before_time: Option<String>,
+
+    /// Results should have an amount greater than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(
+        rename = "currency-greater-than",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub currency_greater_than: Option<u64>,
+
+    /// Results should have an amount less than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(rename = "currency-less-than", skip_serializing_if = "Option::is_none")]
+    pub currency_less_than: Option<u64>,
+
+    /// Combine with address and address-role parameters to define what type of address to search
+    /// for. The close to fields are normally treated as a receiver, if you would like to exclude
+    /// them set this parameter to true.
+    #[serde(rename = "exclude-close-to", skip_serializing_if = "Option::is_none")]
+    pub exclude_close_to: Option<bool>,
+
+    /// Maximum number of results to return.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+
+    /// Include results at or before the specified max-round.
+    #[serde(rename = "max-round", skip_serializing_if = "Option::is_none")]
+    pub max_round: Option<Round>,
+
+    /// Include results at or after the specified min-round.
+    #[serde(rename = "min-round", skip_serializing_if = "Option::is_none")]
+    pub min_round: Option<Round>,
+
+    /// The next page of results. Use the next token provided by the previous results.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next: Option<String>,
+
+    /// Specifies a prefix which must be contained in the note field.
+    #[serde(rename = "note-prefix", skip_serializing_if = "Option::is_none")]
+    pub note_prefix: Option<String>,
+
+    /// Include results which include the rekey-to field.
+    #[serde(rename = "rekey-to", skip_serializing_if = "Option::is_none")]
+    pub rekey_to: Option<bool>,
+
+    /// Include results for the specified round.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub round: Option<u64>,
+
+    /// SigType filters just results using the specified type of signature:
+    /// * sig - Standard
+    /// * msig - MultiSig
+    /// * lsig - LogicSig
+    #[serde(rename = "sig-type", skip_serializing_if = "Option::is_none")]
+    pub sig_type: Option<SignatureType>,
+
+    /// Filters results according to the type of transactions.
+    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    pub tx_type: Option<TransactionType>,
+
+    /// Lookup the specific transaction by ID.
+    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    pub txid: Option<String>,
+}
+
+/// Resonse to asset transactions' endpoint.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AssetTransactionResponse {
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: u64,
+
+    /// Used for pagination, when making another request provide this token with the next parameter.
+    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    pub next_token: Option<String>,
+
+    /// Transaction list.
+    #[serde(rename = "transactions")]
+    pub transactions: Vec<Transaction>,
+}
+
+/// Query transactions.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryTransaction {
+    /// Only include transactions with this address in one of the transaction fields.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub address: Option<String>,
+
+    /// Combine with the address parameter to define what type of address to search for.
+    #[serde(rename = "address-role", skip_serializing_if = "Option::is_none")]
+    pub address_role: Option<Role>,
+
+    /// Include results after the given time. Must be an RFC 3339 formatted string.
+    #[serde(rename = "after-time", skip_serializing_if = "Option::is_none")]
+    pub after_time: Option<String>,
+
+    /// Application ID.
+    #[serde(rename = "application-id", skip_serializing_if = "Option::is_none")]
+    pub application_id: Option<u64>,
+
+    ///Asset ID of the holding.
+    #[serde(rename = "asset-id", skip_serializing_if = "Option::is_none")]
+    pub asset_id: Option<u64>,
+
+    /// Include results before the given time. Must be an RFC 3339 formatted string.
+    #[serde(rename = "before-time", skip_serializing_if = "Option::is_none")]
+    pub before_time: Option<String>,
+
+    /// Results should have an amount greater than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(
+        rename = "currency-greater-than",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub currency_greater_than: Option<u64>,
+
+    /// Results should have an amount less than this value. MicroAlgos are the default currency
+    /// unless an asset-id is provided, in which case the asset will be used.
+    #[serde(rename = "currency-less-than", skip_serializing_if = "Option::is_none")]
+    pub currency_less_than: Option<u64>,
+
+    /// Combine with address and address-role parameters to define what type of address to search
+    /// for. The close to fields are normally treated as a receiver, if you would like to exclude
+    /// them set this parameter to true.
+    #[serde(rename = "exclude-close-to", skip_serializing_if = "Option::is_none")]
+    pub exclude_close_to: Option<bool>,
+
+    /// Maximum number of results to return.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+
+    /// Include results at or before the specified max-round.
+    #[serde(rename = "max-round", skip_serializing_if = "Option::is_none")]
+    pub max_round: Option<Round>,
+
+    /// Include results at or after the specified min-round.
+    #[serde(rename = "min-round", skip_serializing_if = "Option::is_none")]
+    pub min_round: Option<Round>,
+
+    /// The next page of results. Use the next token provided by the previous results.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next: Option<String>,
+
+    /// Specifies a prefix which must be contained in the note field.
+    #[serde(rename = "note-prefix", skip_serializing_if = "Option::is_none")]
+    pub note_prefix: Option<String>,
+
+    /// Include results which include the rekey-to field.
+    #[serde(rename = "rekey-to", skip_serializing_if = "Option::is_none")]
+    pub rekey_to: Option<bool>,
+
+    /// Include results for the specified round.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub round: Option<u64>,
+
+    /// SigType filters just results using the specified type of signature:
+    /// * sig - Standard
+    /// * msig - MultiSig
+    /// * lsig - LogicSig
+    #[serde(rename = "sig-type", skip_serializing_if = "Option::is_none")]
+    pub sig_type: Option<SignatureType>,
+
+    /// Filters results according to the type of transactions.
+    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    pub tx_type: Option<TransactionType>,
+
+    /// Lookup the specific transaction by ID.
+    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    pub txid: Option<String>,
+}
+
+/// Response to transactions/ endpoint.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TransactionResponse {
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: i32,
+
+    /// Used for pagination, when making another request provide this token with the next parameter.
+    #[serde(rename = "next-token")]
+    pub next_token: Option<String>,
+
+    #[serde(rename = "transactions")]
+    pub transactions: Vec<Transaction>,
+}
+
+/// Response to transaction/id endpoint.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct TransactionInfoResponse {
+    /// Round at which the results were computed.
+    #[serde(rename = "current-round")]
+    pub current_round: i32,
+
+    #[serde(rename = "transaction")]
+    pub transaction: Transaction,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Account {
     /// The account public key.
     pub address: String,
@@ -145,7 +604,7 @@ pub struct Account {
 }
 
 /// Signature types.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "sig-type")]
 pub enum SignatureType {
     #[serde(rename = "sig")]
@@ -157,7 +616,7 @@ pub enum SignatureType {
 }
 
 /// AccountParticipation describes the parameters used by this account in consensus protocol.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountParticipation {
     /// `sel` Selection public key (if any) currently registered for this round.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
@@ -193,7 +652,7 @@ pub struct AccountParticipation {
 }
 
 /// Application state delta.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountStateDelta {
     /// Address
     pub address: String,
@@ -203,7 +662,7 @@ pub struct AccountStateDelta {
 }
 
 /// Application index and its parameters
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Application {
     /// Round when this application was created.
     #[serde(rename = "created-at-round")]
@@ -225,7 +684,7 @@ pub struct Application {
 }
 
 /// Stores local state associated with an application.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationLocalState {
     /// Round when account closed out of the application.
     #[serde(rename = "closed-out-at-round")]
@@ -251,7 +710,7 @@ pub struct ApplicationLocalState {
 }
 
 /// Stores the global information associated with an application.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationParams {
     /// `approv` approval program.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
@@ -291,7 +750,7 @@ pub struct ApplicationParams {
 }
 
 /// Specifies maximums on the number of each type that may be stored.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationStateSchema {
     /// `nbs` num of byte slices.
     #[serde(rename = "num-byte-slice")]
@@ -303,7 +762,7 @@ pub struct ApplicationStateSchema {
 }
 
 /// Specifies both the unique identifier and the parameters for an asset
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Asset {
     /// Round during which this asset was created.
     #[serde(rename = "created-at-round")]
@@ -325,7 +784,7 @@ pub struct Asset {
 
 /// Describes an asset held by an account.
 /// Definition: data/basics/userBalance.go : AssetHolding
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AssetHolding {
     /// `a` number of units held.
     pub amount: u64,
@@ -357,7 +816,7 @@ pub struct AssetHolding {
 /// AssetParams specifies the parameters for an asset.
 /// `apar` when part of an AssetConfig transaction.
 /// Definition: data/transactions/asset.go : AssetParams
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AssetParams {
     /// `c` Address of account used to clawback holdings of this asset. If empty, clawback is not
     /// permitted.
@@ -416,7 +875,7 @@ pub struct AssetParams {
 }
 
 /// Block information.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Block {
     /// `gh` hash to which this block belongs.
     ///
@@ -481,7 +940,7 @@ pub struct Block {
 }
 
 /// Fields relating to rewards.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlockRewards {
     /// `fees` accepts transaction fees, it can only spend to the incentive pool.
     #[serde(rename = "fee-sink")]
@@ -514,7 +973,7 @@ pub struct BlockRewards {
 }
 
 /// Fields relating to a protocol upgrade.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlockUpgradeState {
     /// `proto` The current protocol version.
     #[serde(rename = "current-protocol")]
@@ -539,7 +998,7 @@ pub struct BlockUpgradeState {
 }
 
 /// Fields relating to voting for a protocol upgrade.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlockUpgradeVote {
     /// `upgradeyes` Indicates a yes vote for the current proposal.
     #[serde(rename = "upgrade-approve")]
@@ -555,7 +1014,7 @@ pub struct BlockUpgradeVote {
 }
 
 /// An error response with optional data field.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ErrorResponse<T> {
     /// Error data.
     pub data: Option<T>,
@@ -565,7 +1024,7 @@ pub struct ErrorResponse<T> {
 }
 
 /// Represents a TEAL value delta.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EvalDelta {
     /// `at` delta action.
     pub action: u64,
@@ -578,7 +1037,7 @@ pub struct EvalDelta {
 }
 
 /// Key-value pairs for StateDelta.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EvalDeltaKeyValue {
     pub key: String,
 
@@ -586,7 +1045,7 @@ pub struct EvalDeltaKeyValue {
 }
 
 /// A health check response.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct HealthCheck<T> {
     pub data: Option<T>,
 
@@ -602,7 +1061,7 @@ pub struct HealthCheck<T> {
 }
 
 /// A simplified version of AssetHolding
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MiniAssetHolding {
     ///
     pub address: String,
@@ -635,7 +1094,7 @@ pub struct MiniAssetHolding {
 ///   * clear
 ///   * update
 ///   * delete
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "on-completion")]
 pub enum OnCompletion {
     #[serde(rename = "noop")]
@@ -658,7 +1117,7 @@ pub type StateDelta = Vec<EvalDeltaKeyValue>;
 /// Represents a `apls` local-state or `apgs` global-state schema. These schemas determine how
 /// much storage may be used in a local-state or global-state for an application. The more space
 /// used, the larger minimum balance must be maintained in the account holding the data.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct StateSchema {
     /// Maximum number of TEAL byte slices that may be stored in the key/value store.
     #[serde(rename = "num-byte-slice")]
@@ -670,7 +1129,7 @@ pub struct StateSchema {
 }
 
 /// Represents a key-value pair in an application store.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TealKeyValue {
     pub key: String,
     pub value: TealValue,
@@ -680,7 +1139,7 @@ pub struct TealKeyValue {
 pub type TealKeyValueStore = Vec<TealKeyValue>;
 
 /// Represents a TEAL value.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TealValue {
     /// `tb` bytes value.
     #[serde(
@@ -700,7 +1159,7 @@ pub struct TealValue {
 
 /// Contains all fields common to all transactions and serves as an envelope to all transactions
 /// type..
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Transaction {
     /// Application transaction.
     #[serde(rename = "application-transaction")]
@@ -844,7 +1303,7 @@ pub struct Transaction {
 }
 
 /// All the possible types of transactions.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "tx-type")]
 pub enum TransactionType {
     #[serde(rename = "pay")]
@@ -862,7 +1321,7 @@ pub enum TransactionType {
 }
 
 /// Fields for application transactions.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionApplication {
     /// `apat` List of accounts in addition to the sender that may be accessed from the application's
     /// approval-program and clear-state-program.
@@ -920,7 +1379,7 @@ pub struct TransactionApplication {
 ///
 /// A zero value for asset-id indicates asset creation. A zero value for the params indicates asset
 /// destruction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionAssetConfig {
     /// `xaid` ID of the asset being configured or empty if creating.
     #[serde(rename = "asset-id")]
@@ -931,7 +1390,7 @@ pub struct TransactionAssetConfig {
 }
 
 /// Fields for an asset freeze transaction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionAssetFreeze {
     /// `fadd` Address of the account whose asset is being frozen or thawed.
     pub address: String,
@@ -946,7 +1405,7 @@ pub struct TransactionAssetFreeze {
 }
 
 /// Fields for an asset transfer transaction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionAssetTransfer {
     /// `aamt` Amount of asset to transfer. A zero amount transferred to self allocates that asset
     /// in the account's Assets map.
@@ -975,7 +1434,7 @@ pub struct TransactionAssetTransfer {
 }
 
 /// Fields for a keyreg transaction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionKeyreg {
     /// `nonpart` Mark the account as participating or non-participating.
     #[serde(rename = "non-participation")]
@@ -1008,7 +1467,7 @@ pub struct TransactionKeyreg {
 }
 
 /// Fields for a payment transaction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionPayment {
     /// `amt` number of MicroAlgos intended to be transferred.
     pub amount: MicroAlgos,
@@ -1028,7 +1487,7 @@ pub struct TransactionPayment {
 }
 
 /// Validation signature associated with some data. Only one of the signatures should be provided.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionSignature {
     /// Logic signature.
     pub logicsig: Option<TransactionSignatureLogicsig>,
@@ -1043,7 +1502,7 @@ pub struct TransactionSignature {
 }
 
 /// `lsig` Programatic transaction signature.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionSignatureLogicsig {
     /// `arg` Logic arguments, base64 encoded.
     pub args: Option<Vec<String>>,
@@ -1065,7 +1524,7 @@ pub struct TransactionSignatureLogicsig {
 }
 
 /// `msig` structure holding multiple subsignatures.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionSignatureMultisig {
     /// `subsig` holds pairs of public key and signatures.
     pub subsignature: Option<Vec<TransactionSignatureMultisigSubsignature>>,
@@ -1078,7 +1537,7 @@ pub struct TransactionSignatureMultisig {
 }
 
 ///
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionSignatureMultisigSubsignature {
     /// `pk`
     ///
@@ -1090,4 +1549,16 @@ pub struct TransactionSignatureMultisigSubsignature {
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     pub signature: Option<String>,
+}
+
+/// Role types.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "address-role")]
+pub enum Role {
+    #[serde(rename = "sender")]
+    Sender,
+    #[serde(rename = "receiver")]
+    Receiver,
+    #[serde(rename = "freeze-target")]
+    FreezeTarget,
 }
