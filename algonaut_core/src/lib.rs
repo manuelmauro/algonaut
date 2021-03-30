@@ -235,8 +235,10 @@ impl<'de> Deserialize<'de> for Address {
 pub struct MultisigAddress {
     /// the version of this multisig
     pub version: u8,
+
     /// how many signatures are needed to fully sign as this address
     pub threshold: u8,
+    
     /// ordered list of public keys that could potentially sign a message
     pub public_keys: Vec<Ed25519PublicKey>,
 }
@@ -323,8 +325,10 @@ impl<'de> Deserialize<'de> for Signature {
 pub struct MultisigSignature {
     #[serde(rename = "subsig")]
     pub subsigs: Vec<MultisigSubsig>,
+
     #[serde(rename = "thr")]
     pub threshold: u8,
+
     #[serde(rename = "v")]
     pub version: u8,
 }
@@ -348,6 +352,7 @@ impl Serialize for MultisigSignature {
 pub struct MultisigSubsig {
     #[serde(rename = "pk")]
     pub key: Ed25519PublicKey,
+
     #[serde(rename = "s")]
     pub sig: Option<Signature>,
 }

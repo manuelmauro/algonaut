@@ -9,19 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `indexer` data structures
-- Add `algod` v2 API endpoints
+- Add `indexer` v2 API support
+- Add `algod` v2 API support
 - Add structs for all transaction types
 - Add Github CI actions
 - Add tests for `kmd` client
+- Add tests for `indexer` v2 client
+- Add tests for `algod` v2 client
 - Add more integration tests
 
 ### Changed
 
-- Refactor folder structure according to [Algorand's SDK common schema](https://github.com/algorand/algorand-sdk-testing#sdk-overview)
+- Rename project from `algorand-rs` to `algonaut`
+- Refactor project in multiple crates according to [Algorand's SDK common schema](https://github.com/algorand/algorand-sdk-testing#sdk-overview)
 - Refactor `kmd` client
 
-## [0.1.1] - 2021-02-19
+## [0.1.1] - 2021-02-19 (`algorand-rs`)
 
 ### Added
 
