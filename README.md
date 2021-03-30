@@ -36,9 +36,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Crates
 
-`algonaut` has a modular structure and it is composed of multiple crates.
+`algonaut` has a modular structure and is composed of multiple crates.
 
-- `algonaut_client` contains clients for `ælgod`, `kmd`, and `indexer` RPC APIs.
+- `algonaut_client` contains clients for `algod`, `kmd`, and `indexer` RPC APIs.
 - `algonaut_core` defines core structures for Algorand like: `Address`, `Round`, `MicroAlgos`, etc.
 - `algonaut_crypto` implements crypto utilities such as: `ed25519` and `mnemonics`.
 - `algonaut_encoding` implements encoding utility functions such as `serde` visitors.
