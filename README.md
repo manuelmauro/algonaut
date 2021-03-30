@@ -40,13 +40,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 - `algonaut_client` contains clients for `algod`, `kmd`, and `indexer` RPC APIs.
 - `algonaut_core` defines core structures for Algorand like: `Address`, `Round`, `MicroAlgos`, etc.
-- `algonaut_crypto` implements crypto utilities such as: `ed25519` and `mnemonics`.
+- `algonaut_crypto` contains crypto utilities such as: `ed25519` and `mnemonics`.
 - `algonaut_encoding` implements encoding utility functions such as `serde` visitors.
 - `algonaut_transaction` support developers in building all kinds of Algorand transactions.
 
 Planned:
 
-- `algonaut_teal` validators, templates, and dryrun helpers.
+- `algonaut_teal` will add validators, templates, and dryrun helpers.
 
 ## Changelog
 

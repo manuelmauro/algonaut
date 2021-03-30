@@ -238,7 +238,7 @@ pub struct MultisigAddress {
 
     /// how many signatures are needed to fully sign as this address
     pub threshold: u8,
-    
+
     /// ordered list of public keys that could potentially sign a message
     pub public_keys: Vec<Ed25519PublicKey>,
 }
