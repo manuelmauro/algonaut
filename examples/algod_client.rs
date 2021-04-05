@@ -1,3 +1,4 @@
+use algonaut::core::Round;
 use algonaut::Algod;
 use dotenv::dotenv;
 use std::env;
@@ -10,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .client_v2()?;
 
     // print algod status
     let node_status = algod.status()?;
@@ -23,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("algod latest version: {}", node_status.last_version);
 
     // fetch block information
-    let last_block = algod.block(node_status.last_round)?;
+    let last_block = algod.block(Round(node_status.last_round))?;
     println!("{:#?}", last_block);
 
     Ok(())

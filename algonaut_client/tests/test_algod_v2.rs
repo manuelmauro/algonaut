@@ -147,7 +147,7 @@ fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
         .client_v2()?;
 
     let last_round = algod.status()?.last_round;
-    let res = algod.block(last_round as usize);
+    let res = algod.block(Round(last_round));
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -277,7 +277,9 @@ fn test_status_after_round_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let res = algod.status_after_round(Round(53889));
+    let node_status = algod.status()?;
+
+    let res = algod.status_after_round(Round(node_status.last_round + 2));
 
     println!("{:#?}", res);
     assert!(res.is_ok());

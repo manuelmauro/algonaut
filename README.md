@@ -26,13 +26,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Objectives
 
-- [ ] Example-driven API development
-- [ ] Async requests
-- [ ] Builder pattern and sensible defaults
-- [x] Modularity
-- [ ] Clear error messages
-- [ ] Thorough test suite
-- [ ] Comprehensive documentation
+- Example-driven API development
+- Async requests
+- Builder pattern and sensible defaults
+- Modularity
+- Clear error messages
+- Thorough test suite
+- Comprehensive documentation
 
 ## Crates
 

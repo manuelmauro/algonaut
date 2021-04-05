@@ -207,6 +207,7 @@ impl Client {
             .http_client
             .post(&format!("{}v1/transactions", self.url))
             .header(AUTH_HEADER, &self.token)
+            .header("Content-Type", "application/x-binary")
             .headers(self.headers.clone())
             .body(raw.to_vec())
             .send()?

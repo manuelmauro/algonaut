@@ -81,7 +81,6 @@ pub struct Account {
 
 /// Signature types.
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "sig-type")]
 pub enum SignatureType {
     #[serde(rename = "sig")]
     Sig,

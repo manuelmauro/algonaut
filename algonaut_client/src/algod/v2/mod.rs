@@ -130,7 +130,7 @@ impl Client {
     }
 
     /// Get the block for the given round.
-    pub fn block(&self, round: usize) -> Result<Block, AlgorandError> {
+    pub fn block(&self, round: Round) -> Result<Block, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/blocks/{}", self.url, round))

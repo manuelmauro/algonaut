@@ -24,7 +24,6 @@ pub struct BaseTransaction {
 
 /// Enum containing the types of transactions and their specific fields
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
-#[serde(tag = "type")]
 pub enum TransactionType {
     #[serde(rename = "pay")]
     Payment(Payment),

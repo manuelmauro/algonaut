@@ -2,7 +2,7 @@ use algonaut_client::indexer::v2::message::{
     QueryAccount, QueryAccountTransaction, QueryApplications, QueryAssetTransaction, QueryAssets,
     QueryBalances, QueryTransaction, Role,
 };
-use algonaut_client::Indexer;
+use algonaut_client::{Algod, Indexer};
 use algonaut_core::Round;
 use dotenv::dotenv;
 use std::env;
@@ -63,7 +63,7 @@ fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
         .client_v2()?;
 
     let res = indexer.account_info(
-        "AJY36ONODGCVHZSJR4B7LZ4C6BFLBQIDIGHLNKD4WVTWTXT6XPV7RSIHNY",
+        "WADYBW6UZZOWJLKPUWJ5EYXTUOFA5KVYKGUPSBUWXXSXOMMCLI7OG6J7WE",
         None,
     );
 
@@ -271,11 +271,17 @@ fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
+    let algod = Algod::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .client_v2()?;
+
     let indexer = Indexer::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
         .client_v2()?;
 
-    let res = indexer.block(Round(70190));
+    let last_round = algod.status()?.last_round;
+    let res = indexer.block(Round(last_round - 1));
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -284,6 +290,7 @@ fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+#[ignore]
 fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();

@@ -605,7 +605,6 @@ pub struct Account {
 
 /// Signature types.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "sig-type")]
 pub enum SignatureType {
     #[serde(rename = "sig")]
     Sig,
@@ -1095,7 +1094,6 @@ pub struct MiniAssetHolding {
 ///   * update
 ///   * delete
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "on-completion")]
 pub enum OnCompletion {
     #[serde(rename = "noop")]
     Noop,
@@ -1304,7 +1302,6 @@ pub struct Transaction {
 
 /// All the possible types of transactions.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "tx-type")]
 pub enum TransactionType {
     #[serde(rename = "pay")]
     Payment,
@@ -1553,7 +1550,6 @@ pub struct TransactionSignatureMultisigSubsignature {
 
 /// Role types.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "address-role")]
 pub enum Role {
     #[serde(rename = "sender")]
     Sender,
