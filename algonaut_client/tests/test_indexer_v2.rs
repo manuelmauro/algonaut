@@ -63,10 +63,7 @@ fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
         .bind(env::var("INDEXER_URL")?.as_ref())
         .client_v2()?;
 
-    let res = indexer.account_info(
-        "",
-        None,
-    );
+    let res = indexer.account_info("", None);
 
     println!("{:#?}", res);
     assert!(res.is_ok());

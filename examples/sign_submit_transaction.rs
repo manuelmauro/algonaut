@@ -1,5 +1,5 @@
 use algonaut::core::{Address, MicroAlgos};
-use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algonaut::transaction::{Payment, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
 use std::env;
@@ -40,19 +40,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let to_address = Address::from_string(&gen_response.address)?;
     println!("to_address: {}", &gen_response.address);
 
-    let transaction_params = algod.transaction_params()?;
+    let params = algod.transaction_params()?;
 
-    let genesis_id = transaction_params.genesis_id;
-    let genesis_hash = transaction_params.genesis_hash;
-
-    let base = BaseTransaction {
-        sender: from_address,
-        first_valid: transaction_params.last_round,
-        last_valid: transaction_params.last_round + 1000,
-        note: Vec::new(),
-        genesis_id,
-        genesis_hash,
-    };
+    let genesis_id = params.genesis_id;
+    let genesis_hash = params.genesis_hash;
 
     let payment = Payment {
         amount: MicroAlgos(10_000),
@@ -60,9 +51,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         close_remainder_to: None,
     };
 
-    let transaction = Transaction::new(base, MicroAlgos(1), TransactionType::Payment(payment))?;
+    let t = Txn::new()
+        .sender(from_address)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 1000)
+        .genesis_id(genesis_id)
+        .genesis_hash(genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(payment)
+        .build();
 
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;
+    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &t)?;
 
     println!(
         "kmd made signed transaction with {} bytes",

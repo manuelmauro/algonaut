@@ -1,8 +1,7 @@
 use algonaut_client::{Algod, Kmd};
-use algonaut_core::{Address, MicroAlgos, Round};
-use algonaut_crypto::{mnemonic, MasterDerivationKey};
-use algonaut_transaction::account::Account;
-use algonaut_transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algonaut_core::{Address, MicroAlgos};
+use algonaut_crypto::MasterDerivationKey;
+use algonaut_transaction::{Payment, Txn};
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};
 use std::env;
@@ -51,19 +50,10 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
     let gen_response = kmd.generate_key(&wallet_handle_token)?;
     let to_address = Address::from_string(&gen_response.address)?;
 
-    let transaction_params = algod.transaction_params()?;
+    let params = algod.transaction_params()?;
 
-    let genesis_id = transaction_params.genesis_id;
-    let genesis_hash = transaction_params.genesis_hash;
-
-    let base = BaseTransaction {
-        sender: from_address,
-        first_valid: transaction_params.last_round,
-        last_valid: transaction_params.last_round + 1000,
-        note: Vec::new(),
-        genesis_id,
-        genesis_hash,
-    };
+    let genesis_id = params.genesis_id;
+    let genesis_hash = params.genesis_hash;
 
     let payment = Payment {
         amount: MicroAlgos(10_000),
@@ -71,9 +61,17 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
         close_remainder_to: None,
     };
 
-    let transaction = Transaction::new(base, MicroAlgos(1), TransactionType::Payment(payment))?;
+    let t = Txn::new()
+        .sender(from_address)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 1000)
+        .genesis_id(genesis_id)
+        .genesis_hash(genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(payment)
+        .build();
 
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &transaction);
+    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &t);
 
     println!("{:#?}", sign_response);
     assert!(sign_response.is_ok());
@@ -164,60 +162,6 @@ fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
     println!("{:?}", algod.pending_transactions(0));
     assert!(algod.pending_transactions(0).is_ok());
-
-    Ok(())
-}
-
-#[test]
-fn test_send_transaction_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
-    dotenv().ok();
-
-    let algod = Algod::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
-
-    let account = Account::generate();
-
-    let m = mnemonic::from_key(&account.seed())?;
-    println!("Backup phrase: {}", m);
-    let fee = MicroAlgos(1000);
-    let amount = MicroAlgos(20000);
-    let first_round = Round(642_715);
-    let last_round = first_round + 1000;
-
-    let transaction_params = algod.transaction_params();
-
-    println!("{:#?}", transaction_params);
-    assert!(transaction_params.is_ok());
-
-    let transaction_params = transaction_params.unwrap();
-
-    let genesis_id = transaction_params.genesis_id;
-    let genesis_hash = transaction_params.genesis_hash;
-
-    let base = BaseTransaction {
-        sender: account.address(),
-        first_valid: first_round,
-        last_valid: last_round,
-        note: Vec::new(),
-        genesis_id: genesis_id,
-        genesis_hash: genesis_hash,
-    };
-
-    let payment = Payment {
-        amount,
-        receiver: Address::from_string(
-            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
-        )?,
-        close_remainder_to: None,
-    };
-
-    let transaction = Transaction::new(base, fee, TransactionType::Payment(payment));
-
-    println!("{:#?}", transaction);
-    assert!(transaction.is_ok());
 
     Ok(())
 }

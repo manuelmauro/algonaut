@@ -1,5 +1,5 @@
 use algonaut::core::{Address, MicroAlgos};
-use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algonaut::transaction::{Payment, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
 use std::env;
@@ -29,8 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let init_response = kmd.init_wallet_handle(&wallet_id, "")?;
     let wallet_handle_token = init_response.wallet_handle_token;
 
-    let from_address =
-        Address::from_string(env::var("ACCOUNT")?.as_ref())?;
+    let from_address = Address::from_string(env::var("ACCOUNT")?.as_ref())?;
     println!("Sender: {:#?}", from_address);
 
     let to_address =
@@ -42,32 +41,28 @@ fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    let transaction_params = algod.transaction_params()?;
-    let genesis_id = transaction_params.genesis_id;
-    let genesis_hash = transaction_params.genesis_hash;
-
-    let base = BaseTransaction {
-        sender: from_address,
-        first_valid: transaction_params.last_round,
-        last_valid: transaction_params.last_round + 1000,
-        note: Vec::new(),
-        genesis_id,
-        genesis_hash,
-    };
-    println!("Base: {:#?}", base);
+    let params = algod.transaction_params()?;
+    let genesis_id = params.genesis_id;
+    let genesis_hash = params.genesis_hash;
 
     let payment = Payment {
-        amount: MicroAlgos(100_000),
+        amount: MicroAlgos(123_000),
         receiver: to_address,
         close_remainder_to: None,
     };
     println!("Payment: {:#?}", payment);
 
-    let transaction =
-        Transaction::new_flat_fee(base, MicroAlgos(10_000), TransactionType::Payment(payment));
-    println!("Transaction: {:#?}", transaction);
+    let t = Txn::new()
+        .sender(from_address)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 1000)
+        .genesis_id(genesis_id)
+        .genesis_hash(genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(payment)
+        .build();
 
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &transaction)?;
+    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t)?;
     println!("Signed: {:#?}", sign_response);
 
     // Broadcast the transaction to the network

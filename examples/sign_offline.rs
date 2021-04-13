@@ -1,7 +1,7 @@
 use algonaut::core::{Address, MicroAlgos};
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algonaut::transaction::{Payment, Txn};
 use algonaut::Algod;
 use dotenv::dotenv;
 use std::env;
@@ -28,23 +28,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
 
-    let fee = MicroAlgos(1000);
     let amount = MicroAlgos(0);
-    let first_round = node_status.last_round;
-    let last_round = node_status.last_round + 1000;
-
-    let transaction_params = algod.transaction_params()?;
-    let genesis_id = transaction_params.genesis_id;
-    let genesis_hash = transaction_params.genesis_hash;
-
-    let base = BaseTransaction {
-        sender: account.address(),
-        first_valid: first_round,
-        last_valid: last_round,
-        note: Vec::new(),
-        genesis_id,
-        genesis_hash,
-    };
+    let params = algod.transaction_params()?;
+    let genesis_id = params.genesis_id;
+    let genesis_hash = params.genesis_hash;
 
     let payment = Payment {
         amount,
@@ -54,12 +41,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         close_remainder_to: None,
     };
 
-    let transaction = Transaction::new(base, fee, TransactionType::Payment(payment))?;
+    let t = Txn::new()
+        .sender(account.address())
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 1000)
+        .genesis_id(genesis_id)
+        .genesis_hash(genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(payment)
+        .build();
 
-    println!("Made unsigned transaction: {:?}", transaction);
+    println!("Made unsigned transaction: {:?}", t);
 
     // Sign the transaction
-    let signed_transaction = account.sign_transaction(&transaction)?;
+    let signed_transaction = account.sign_transaction(&t)?;
     let bytes = rmp_serde::to_vec_named(&signed_transaction)?;
 
     let filename = "./signed.tx";
