@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let wallet_handle_token = init_response.wallet_handle_token;
 
     let from_address =
-        Address::from_string("2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY")?;
+        Address::from_string(env::var("ACCOUNT")?.as_ref())?;
     println!("Sender: {:#?}", from_address);
 
     let to_address =

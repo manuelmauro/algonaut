@@ -54,6 +54,7 @@ fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+#[ignore]
 fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
@@ -63,7 +64,7 @@ fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
         .client_v2()?;
 
     let res = indexer.account_info(
-        "WADYBW6UZZOWJLKPUWJ5EYXTUOFA5KVYKGUPSBUWXXSXOMMCLI7OG6J7WE",
+        "",
         None,
     );
 

@@ -6,3 +6,4 @@ Cargo.lock
 /algorand-sdk-testing/
 /test.sh
 signed.tx
+**/.env
