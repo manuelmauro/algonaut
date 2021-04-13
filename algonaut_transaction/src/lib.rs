@@ -4,5 +4,5 @@ pub mod builder;
 pub mod error;
 pub mod transaction;
 
-pub use builder::Txn;
+pub use builder::{Pay, Txn};
 pub use transaction::{Payment, SignedTransaction, Transaction, TransactionType};

@@ -102,3 +102,39 @@ impl Txn {
         }
     }
 }
+
+#[derive(Default)]
+pub struct Pay {
+    receiver: Option<Address>,
+    amount: MicroAlgos,
+    close_remainder_to: Option<Address>,
+}
+
+impl Pay {
+    pub fn new() -> Self {
+        Pay::default()
+    }
+
+    pub fn to(mut self, receiver: Address) -> Self {
+        self.receiver = Some(receiver);
+        self
+    }
+
+    pub fn amount(mut self, amount: MicroAlgos) -> Self {
+        self.amount = amount;
+        self
+    }
+
+    pub fn close_remainder_to(mut self, close_remainder_to: Address) -> Self {
+        self.close_remainder_to = Some(close_remainder_to);
+        self
+    }
+
+    pub fn build(self) -> Payment {
+        Payment {
+            receiver: self.receiver.unwrap(),
+            amount: self.amount,
+            close_remainder_to: self.close_remainder_to,
+        }
+    }
+}

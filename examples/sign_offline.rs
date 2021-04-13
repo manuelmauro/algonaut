@@ -1,7 +1,7 @@
 use algonaut::core::{Address, MicroAlgos};
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::{Payment, Txn};
+use algonaut::transaction::{Pay, Txn};
 use algonaut::Algod;
 use dotenv::dotenv;
 use std::env;
@@ -28,32 +28,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
 
-    let amount = MicroAlgos(0);
     let params = algod.transaction_params()?;
-    let genesis_id = params.genesis_id;
-    let genesis_hash = params.genesis_hash;
-
-    let payment = Payment {
-        amount,
-        receiver: Address::from_string(
-            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
-        )?,
-        close_remainder_to: None,
-    };
 
     let t = Txn::new()
         .sender(account.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)
-        .genesis_id(genesis_id)
-        .genesis_hash(genesis_hash)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
         .fee(MicroAlgos(10_000))
-        .payment(payment)
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(123_456))
+                .to(Address::from_string(
+                    "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
+                )?)
+                .build(),
+        )
         .build();
 
     println!("Made unsigned transaction: {:?}", t);
 
-    // Sign the transaction
+    // sign the transaction
     let signed_transaction = account.sign_transaction(&t)?;
     let bytes = rmp_serde::to_vec_named(&signed_transaction)?;
 

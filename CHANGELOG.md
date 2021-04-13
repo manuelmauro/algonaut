@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add transaction builder
+- Add builder for payment transactions
 - Add `indexer` v2 API support
 - Add `algod` v2 API support
 - Add structs for all transaction types

@@ -1,5 +1,5 @@
 use algonaut::core::{Address, MicroAlgos};
-use algonaut::transaction::{Payment, Txn};
+use algonaut::transaction::{Pay, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
 use std::env;
@@ -42,23 +42,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params()?;
 
-    let genesis_id = params.genesis_id;
-    let genesis_hash = params.genesis_hash;
-
-    let payment = Payment {
-        amount: MicroAlgos(10_000),
-        receiver: to_address,
-        close_remainder_to: None,
-    };
-
     let t = Txn::new()
         .sender(from_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)
-        .genesis_id(genesis_id)
-        .genesis_hash(genesis_hash)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
         .fee(MicroAlgos(10_000))
-        .payment(payment)
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(123_456))
+                .to(to_address)
+                .build(),
+        )
         .build();
 
     let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &t)?;
@@ -68,8 +64,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         sign_response.signed_transaction.len()
     );
 
-    // Broadcast the transaction to the network
-    // Note this transaction will get rejected because the accounts do not have any tokens
+    // broadcast the transaction to the network
+    // note: this transaction may get rejected because the accounts do not have any tokens
     let send_response = algod.raw_transaction(&sign_response.signed_transaction)?;
 
     println!("Transaction ID: {}", send_response.tx_id);
