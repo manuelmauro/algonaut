@@ -1,9 +1,8 @@
-use crate::{
-    transaction::{Transaction, TransactionType},
-    Payment,
+use crate::transaction::{
+    AssetConfigurationTransaction, AssetParams, KeyRegistration, Payment, Transaction,
+    TransactionType,
 };
-use algonaut_core::Address;
-use algonaut_core::{MicroAlgos, Round};
+use algonaut_core::{Address, MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 
 #[derive(Default)]
@@ -56,8 +55,18 @@ impl Txn {
         self
     }
 
-    pub fn payment(mut self, payment: Payment) -> Self {
-        self.txn_type = Some(TransactionType::Payment(payment));
+    pub fn payment(mut self, txn: Payment) -> Self {
+        self.txn_type = Some(TransactionType::Payment(txn));
+        self
+    }
+
+    pub fn key_registration(mut self, txn: KeyRegistration) -> Self {
+        self.txn_type = Some(TransactionType::KeyRegistration(txn));
+        self
+    }
+
+    pub fn asset_configuration(mut self, txn: AssetConfigurationTransaction) -> Self {
+        self.txn_type = Some(TransactionType::AssetConfigurationTransaction(txn));
         self
     }
 
@@ -135,6 +144,164 @@ impl Pay {
             receiver: self.receiver.unwrap(),
             amount: self.amount,
             close_remainder_to: self.close_remainder_to,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct RegisterKey {
+    vote_pk: Option<VotePk>,
+    selection_pk: Option<VrfPk>,
+    vote_first: Round,
+    vote_last: Round,
+    vote_key_dilution: u64,
+    nonparticipating: Option<bool>,
+}
+
+impl RegisterKey {
+    pub fn new() -> Self {
+        RegisterKey::default()
+    }
+
+    pub fn vote_pk(mut self, vote_pk: VotePk) -> Self {
+        self.vote_pk = Some(vote_pk);
+        self
+    }
+
+    pub fn selection_pk(mut self, selection_pk: VrfPk) -> Self {
+        self.selection_pk = Some(selection_pk);
+        self
+    }
+
+    pub fn vote_first(mut self, vote_first: Round) -> Self {
+        self.vote_first = vote_first;
+        self
+    }
+
+    pub fn vote_last(mut self, vote_last: Round) -> Self {
+        self.vote_last = vote_last;
+        self
+    }
+
+    pub fn vote_key_dilution(mut self, vote_key_dilution: u64) -> Self {
+        self.vote_key_dilution = vote_key_dilution;
+        self
+    }
+
+    pub fn nonparticipating(mut self, nonparticipating: Option<bool>) -> Self {
+        self.nonparticipating = nonparticipating;
+        self
+    }
+
+    pub fn build(self) -> KeyRegistration {
+        KeyRegistration {
+            vote_pk: self.vote_pk.unwrap(),
+            selection_pk: self.selection_pk.unwrap(),
+            vote_first: self.vote_first,
+            vote_last: self.vote_last,
+            vote_key_dilution: self.vote_key_dilution,
+            nonparticipating: self.nonparticipating,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ConfigureAsset {
+    config_asset: u64,
+    total: u64,
+    decimals: u32,
+    default_frozen: bool,
+    unit_name: Option<String>,
+    asset_name: Option<String>,
+    url: Option<String>,
+    meta_data_hash: Option<Vec<u8>>,
+    manager: Option<Address>,
+    reserve: Option<Address>,
+    freeze: Option<Address>,
+    clawback: Option<Address>,
+}
+
+impl ConfigureAsset {
+    pub fn new() -> Self {
+        ConfigureAsset::default()
+    }
+
+    pub fn config_asset(mut self, config_asset: u64) -> Self {
+        self.config_asset = config_asset;
+        self
+    }
+
+    pub fn total(mut self, total: u64) -> Self {
+        self.total = total;
+        self
+    }
+
+    pub fn decimals(mut self, decimals: u32) -> Self {
+        self.decimals = decimals;
+        self
+    }
+
+    pub fn default_frozen(mut self, default_frozen: bool) -> Self {
+        self.default_frozen = default_frozen;
+        self
+    }
+
+    pub fn unit_name(mut self, unit_name: String) -> Self {
+        self.unit_name = Some(unit_name);
+        self
+    }
+
+    pub fn asset_name(mut self, asset_name: String) -> Self {
+        self.asset_name = Some(asset_name);
+        self
+    }
+
+    pub fn url(mut self, url: String) -> Self {
+        self.url = Some(url);
+        self
+    }
+
+    pub fn meta_data_hash(mut self, meta_data_hash: Vec<u8>) -> Self {
+        self.meta_data_hash = Some(meta_data_hash);
+        self
+    }
+
+    pub fn manager(mut self, manager: Address) -> Self {
+        self.manager = Some(manager);
+        self
+    }
+
+    pub fn reserve(mut self, reserve: Address) -> Self {
+        self.reserve = Some(reserve);
+        self
+    }
+
+    pub fn freeze(mut self, freeze: Address) -> Self {
+        self.freeze = Some(freeze);
+        self
+    }
+
+    pub fn clawback(mut self, clawback: Address) -> Self {
+        self.clawback = Some(clawback);
+        self
+    }
+
+    pub fn build(self) -> AssetConfigurationTransaction {
+        AssetConfigurationTransaction {
+            config_asset: self.config_asset,
+            params: AssetParams {
+                total: self.total,
+                decimals: self.decimals,
+                default_frozen: self.default_frozen,
+                unit_name: self.unit_name,
+                asset_name: self.asset_name,
+                url: self.url,
+                meta_data_hash: self.meta_data_hash,
+                manager: self.manager,
+                reserve: self.reserve,
+                freeze: self.freeze,
+                clawback: self.clawback,
+            },
         }
     }
 }

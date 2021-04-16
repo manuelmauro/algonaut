@@ -18,10 +18,6 @@ pub enum TransactionType {
 
     #[serde(rename = "acfg")]
     AssetConfigurationTransaction(AssetConfigurationTransaction),
-
-    #[serde(rename = "axfer")]
-    AssetTransferTransaction(AssetTransferTransaction),
-    // TODO add remaining types
 }
 
 /// A transaction that can appear in a block
@@ -120,8 +116,7 @@ impl Serialize for Transaction {
                 } + if payment.amount.0 != 0 { 1 } else { 0 }
             }
             TransactionType::KeyRegistration(_) => 5,
-            TransactionType::AssetConfigurationTransaction(_) => 5, // TODO check size
-            TransactionType::AssetTransferTransaction(_) => 5,      // TODO check size
+            TransactionType::AssetConfigurationTransaction(_) => 2,
         };
         let len = 6
             + type_len
@@ -165,9 +160,6 @@ impl Serialize for Transaction {
             TransactionType::AssetConfigurationTransaction(_) => {
                 state.serialize_field("type", "acfg")?;
             }
-            TransactionType::AssetTransferTransaction(_) => {
-                state.serialize_field("type", "axfer")?;
-            }
         }
         if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
             state.serialize_field("votefst", &key_registration.vote_first)?;
@@ -180,6 +172,12 @@ impl Serialize for Transaction {
         }
         if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
             state.serialize_field("votelst", &key_registration.vote_last)?;
+        }
+        if let TransactionType::AssetConfigurationTransaction(asa_conf) = &self.txn_type {
+            state.serialize_field("caid", &asa_conf.config_asset)?;
+        }
+        if let TransactionType::AssetConfigurationTransaction(asa_conf) = &self.txn_type {
+            state.serialize_field("apar", &asa_conf.params)?;
         }
         state.end()
     }
@@ -250,7 +248,7 @@ pub struct AssetConfigurationTransaction {
 }
 
 /// This is used to create or configure an asset.
-#[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub struct AssetParams {
     /// The total number of base units of the asset to create. This number cannot be changed.
     #[serde(rename = "t")]
@@ -267,43 +265,43 @@ pub struct AssetParams {
     pub default_frozen: bool,
 
     /// The name of a unit of this asset. Supplied on creation. Example: USDT
-    #[serde(rename = "un")]
+    #[serde(rename = "un", skip_serializing_if = "Option::is_none")]
     pub unit_name: Option<String>,
 
     /// The name of the asset. Supplied on creation. Example: Tether
-    #[serde(rename = "an")]
+    #[serde(rename = "an", skip_serializing_if = "Option::is_none")]
     pub asset_name: Option<String>,
 
     /// Specifies a URL where more information about the asset can be retrieved. Max size is 32 bytes.
-    #[serde(rename = "au")]
+    #[serde(rename = "au", skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
 
     /// This field is intended to be a 32-byte hash of some metadata that is relevant to your asset
     /// and/or asset holders. The format of this metadata is up to the application. This field can only
     /// be specified upon creation. An example might be the hash of some certificate that acknowledges
     /// the digitized asset as the official representation of a particular real-world asset.
-    #[serde(rename = "am")]
+    #[serde(rename = "am", skip_serializing_if = "Option::is_none")]
     pub meta_data_hash: Option<Vec<u8>>,
 
     /// The address of the account that can manage the configuration of the asset and destroy it.
-    #[serde(rename = "m")]
+    #[serde(rename = "m", skip_serializing_if = "Option::is_none")]
     pub manager: Option<Address>,
 
     /// The address of the account that holds the reserve (non-minted) units of the asset. This address
     /// has no specific authority in the protocol itself. It is used in the case where you want to
     /// signal to holders of your asset that the non-minted units of the asset reside in an account
     /// that is different from the default creator account (the sender).
-    #[serde(rename = "r")]
+    #[serde(rename = "r", skip_serializing_if = "Option::is_none")]
     pub reserve: Option<Address>,
 
     /// The address of the account used to freeze holdings of this asset. If empty, freezing is not
     /// permitted.
-    #[serde(rename = "f")]
+    #[serde(rename = "f", skip_serializing_if = "Option::is_none")]
     pub freeze: Option<Address>,
 
     /// The address of the account that can clawback holdings of this asset. If empty, clawback is
     /// not permitted.
-    #[serde(rename = "c")]
+    #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
     pub clawback: Option<Address>,
 }
 
