@@ -1,13 +1,11 @@
-# algonaut
+# Rust `algonaut`
 
 [![Crate](https://meritbadge.herokuapp.com/algonaut)](https://crates.io/crates/algonaut)
 [![Docs](https://docs.rs/paypal-rs/badge.svg)](https://docs.rs/algonaut)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algonaut/blob/main/LICENSE)
 ![Continuous integration](https://github.com/manuelmauro/algonaut/actions/workflows/quickstart.yml/badge.svg)
 
-This crate is a WORK IN PROGRESS!
-
-**algonaut** aims at becoming a rusty algorand sdk.
+Rust **algonaut** aims at becoming a rusty algorand sdk. Please, be aware that this crate is a work in progress.
 
 ```rust
 use algonaut::core::{Address, MicroAlgos};
