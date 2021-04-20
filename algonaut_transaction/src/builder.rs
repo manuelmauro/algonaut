@@ -1,6 +1,7 @@
 use crate::transaction::{
-    AssetConfigurationTransaction, AssetParams, KeyRegistration, Payment, Transaction,
-    TransactionType,
+    ApplicationCallTransaction, AssetAcceptTransaction, AssetClawbackTransaction,
+    AssetConfigurationTransaction, AssetFreezeTransaction, AssetParams, AssetTransferTransaction,
+    KeyRegistration, Payment, StateSchema, Transaction, TransactionType,
 };
 use algonaut_core::{Address, MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
@@ -302,6 +303,270 @@ impl ConfigureAsset {
                 freeze: self.freeze,
                 clawback: self.clawback,
             },
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct TransferAsset {
+    xfer: u64,
+    amount: u64,
+    sender: Option<Address>,
+    receiver: Option<Address>,
+    close_to: Option<Address>,
+}
+
+impl TransferAsset {
+    pub fn new() -> Self {
+        TransferAsset::default()
+    }
+
+    pub fn xfer(mut self, xfer: u64) -> Self {
+        self.xfer = xfer;
+        self
+    }
+
+    pub fn amount(mut self, amount: u64) -> Self {
+        self.amount = amount;
+        self
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
+    }
+
+    pub fn receiver(mut self, receiver: Address) -> Self {
+        self.receiver = Some(receiver);
+        self
+    }
+
+    pub fn close_to(mut self, close_to: Address) -> Self {
+        self.close_to = Some(close_to);
+        self
+    }
+
+    pub fn build(self) -> AssetTransferTransaction {
+        AssetTransferTransaction {
+            xfer: self.xfer,
+            amount: self.amount,
+            sender: self.sender.unwrap(),
+            receiver: self.receiver.unwrap(),
+            close_to: self.close_to.unwrap(),
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct AcceptAsset {
+    xfer: u64,
+    sender: Option<Address>,
+    receiver: Option<Address>,
+}
+
+impl AcceptAsset {
+    pub fn new() -> Self {
+        AcceptAsset::default()
+    }
+
+    pub fn xfer(mut self, xfer: u64) -> Self {
+        self.xfer = xfer;
+        self
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
+    }
+
+    pub fn receiver(mut self, receiver: Address) -> Self {
+        self.receiver = Some(receiver);
+        self
+    }
+
+    pub fn build(self) -> AssetAcceptTransaction {
+        AssetAcceptTransaction {
+            xfer: self.xfer,
+            sender: self.sender.unwrap(),
+            receiver: self.receiver.unwrap(),
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ClawbackAsset {
+    sender: Option<Address>,
+    xfer: u64,
+    asset_amount: u64,
+    asset_sender: Option<Address>,
+    asset_receiver: Option<Address>,
+    asset_close_to: Option<Address>,
+}
+
+impl ClawbackAsset {
+    pub fn new() -> Self {
+        ClawbackAsset::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
+    }
+
+    pub fn xfer(mut self, xfer: u64) -> Self {
+        self.xfer = xfer;
+        self
+    }
+
+    pub fn asset_amount(mut self, asset_amount: u64) -> Self {
+        self.asset_amount = asset_amount;
+        self
+    }
+
+    pub fn asset_sender(mut self, asset_sender: Address) -> Self {
+        self.asset_sender = Some(asset_sender);
+        self
+    }
+
+    pub fn asset_receiver(mut self, asset_receiver: Address) -> Self {
+        self.asset_receiver = Some(asset_receiver);
+        self
+    }
+
+    pub fn asset_close_to(mut self, asset_close_to: Address) -> Self {
+        self.asset_close_to = Some(asset_close_to);
+        self
+    }
+
+    pub fn build(self) -> AssetClawbackTransaction {
+        AssetClawbackTransaction {
+            sender: self.sender.unwrap(),
+            xfer: self.xfer,
+            asset_amount: self.asset_amount,
+            asset_sender: self.asset_sender.unwrap(),
+            asset_receiver: self.asset_receiver.unwrap(),
+            asset_close_to: self.asset_close_to.unwrap(),
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct FreezeAsset {
+    freeze_account: Option<Address>,
+    asset_id: u64,
+    frozen: bool,
+}
+
+impl FreezeAsset {
+    pub fn new() -> Self {
+        FreezeAsset::default()
+    }
+
+    pub fn freeze_account(mut self, freeze_account: Address) -> Self {
+        self.freeze_account = Some(freeze_account);
+        self
+    }
+
+    pub fn asset_id(mut self, asset_id: u64) -> Self {
+        self.asset_id = asset_id;
+        self
+    }
+
+    pub fn frozen(mut self, frozen: bool) -> Self {
+        self.frozen = frozen;
+        self
+    }
+
+    pub fn build(self) -> AssetFreezeTransaction {
+        AssetFreezeTransaction {
+            freeze_account: self.freeze_account.unwrap(),
+            asset_id: self.asset_id,
+            frozen: self.frozen,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct CallApplication {
+    app_id: u64,
+    on_complete: u64,
+    accounts: Option<Vec<Address>>,
+    approval_program: Option<Address>,
+    app_arguments: Option<Vec<u8>>,
+    clear_state_program: Option<Address>,
+    foreign_apps: Option<Address>,
+    foreign_assets: Option<Address>,
+    global_state_schema: Option<StateSchema>,
+    local_state_schema: Option<StateSchema>,
+}
+
+impl CallApplication {
+    pub fn new() -> Self {
+        CallApplication::default()
+    }
+
+    pub fn app_id(mut self, app_id: u64) -> Self {
+        self.app_id = app_id;
+        self
+    }
+
+    pub fn on_complete(mut self, on_complete: u64) -> Self {
+        self.on_complete = on_complete;
+        self
+    }
+
+    pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
+        self.accounts = Some(accounts);
+        self
+    }
+
+    pub fn approval_program(mut self, approval_program: Address) -> Self {
+        self.approval_program = Some(approval_program);
+        self
+    }
+
+    pub fn app_arguments(mut self, app_arguments: Vec<u8>) -> Self {
+        self.app_arguments = Some(app_arguments);
+        self
+    }
+
+    pub fn clear_state_program(mut self, clear_state_program: Address) -> Self {
+        self.clear_state_program = Some(clear_state_program);
+        self
+    }
+
+    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+        self.foreign_apps = Some(foreign_apps);
+        self
+    }
+
+    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+        self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn global_state_schema(mut self, global_state_schema: StateSchema) -> Self {
+        self.global_state_schema = Some(global_state_schema);
+        self
+    }
+
+    pub fn local_state_schema(mut self, local_state_schema: StateSchema) -> Self {
+        self.local_state_schema = Some(local_state_schema);
+        self
+    }
+
+    pub fn build(self) -> ApplicationCallTransaction {
+        ApplicationCallTransaction {
+            app_id: self.app_id,
+            on_complete: self.on_complete,
+            accounts: self.accounts,
+            approval_program: self.approval_program,
+            app_arguments: self.app_arguments,
+            clear_state_program: self.clear_state_program,
+            foreign_apps: self.foreign_apps,
+            foreign_assets: self.foreign_assets,
+            global_state_schema: self.global_state_schema,
+            local_state_schema: self.local_state_schema,
         }
     }
 }
