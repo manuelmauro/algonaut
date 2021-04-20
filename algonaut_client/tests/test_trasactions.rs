@@ -1,5 +1,5 @@
 use algonaut_client::{Algod, Kmd};
-use algonaut_core::{Address, MicroAlgos, Round};
+use algonaut_core::{MicroAlgos, Round};
 use algonaut_crypto::{mnemonic, MasterDerivationKey};
 use algonaut_transaction::account::Account;
 use algonaut_transaction::{BaseTransaction, Payment, Transaction, TransactionType};
@@ -46,10 +46,10 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
     let wallet_handle_token = init_response.wallet_handle_token;
 
     let gen_response = kmd.generate_key(&wallet_handle_token)?;
-    let from_address = Address::from_string(&gen_response.address)?;
+    let from_address = gen_response.address.parse()?;
 
     let gen_response = kmd.generate_key(&wallet_handle_token)?;
-    let to_address = Address::from_string(&gen_response.address)?;
+    let to_address = gen_response.address.parse()?;
 
     let transaction_params = algod.transaction_params()?;
 
@@ -208,9 +208,7 @@ fn test_send_transaction_endpoint() -> Result<(), Box<dyn Error>> {
 
     let payment = Payment {
         amount,
-        receiver: Address::from_string(
-            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
-        )?,
+        receiver: "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?,
         close_remainder_to: None,
     };
 

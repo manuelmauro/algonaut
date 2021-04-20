@@ -1,4 +1,4 @@
-use algonaut::core::{Address, MicroAlgos};
+use algonaut::core::MicroAlgos;
 use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
@@ -29,12 +29,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let init_response = kmd.init_wallet_handle(&wallet_id, "")?;
     let wallet_handle_token = init_response.wallet_handle_token;
 
-    let from_address =
-        Address::from_string("2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY")?;
+    let from_address = "2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY".parse()?;
     println!("Sender: {:#?}", from_address);
 
-    let to_address =
-        Address::from_string("2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY")?;
+    let to_address = "2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY".parse()?;
     println!("Receiver: {:#?}", to_address);
 
     let algod = Algod::new()
