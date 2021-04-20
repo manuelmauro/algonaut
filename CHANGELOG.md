@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add transaction builder
+- Support all kind of Algorand transactions
+- Add transaction builders
 - Add example for the creation of a new ASA asset
 - Add builder for payment, key registration, and asset creation transactions
 - Add `indexer` v2 API support
