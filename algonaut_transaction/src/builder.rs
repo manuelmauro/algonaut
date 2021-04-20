@@ -6,6 +6,7 @@ use crate::transaction::{
 use algonaut_core::{Address, MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 
+/// A builder for [Transaction].
 #[derive(Default)]
 pub struct Txn {
     fee: MicroAlgos,
@@ -113,6 +114,7 @@ impl Txn {
     }
 }
 
+/// A builder for [Payment].
 #[derive(Default)]
 pub struct Pay {
     receiver: Option<Address>,
@@ -149,6 +151,7 @@ impl Pay {
     }
 }
 
+/// A builder for [KeyRegistration].
 #[derive(Default)]
 pub struct RegisterKey {
     vote_pk: Option<VotePk>,
@@ -206,6 +209,7 @@ impl RegisterKey {
     }
 }
 
+/// A builder for [AssetConfigurationTransaction].
 #[derive(Default)]
 pub struct ConfigureAsset {
     config_asset: u64,
@@ -307,6 +311,7 @@ impl ConfigureAsset {
     }
 }
 
+/// A builder for [AssetTransferTransaction].
 #[derive(Default)]
 pub struct TransferAsset {
     xfer: u64,
@@ -357,6 +362,7 @@ impl TransferAsset {
     }
 }
 
+/// A builder for [AssetAcceptTransaction].
 #[derive(Default)]
 pub struct AcceptAsset {
     xfer: u64,
@@ -393,6 +399,7 @@ impl AcceptAsset {
     }
 }
 
+/// A builder for [AssetClawbackTransaction].
 #[derive(Default)]
 pub struct ClawbackAsset {
     sender: Option<Address>,
@@ -450,6 +457,7 @@ impl ClawbackAsset {
     }
 }
 
+/// A builder for [AssetFreezeTransaction].
 #[derive(Default)]
 pub struct FreezeAsset {
     freeze_account: Option<Address>,
@@ -486,6 +494,7 @@ impl FreezeAsset {
     }
 }
 
+/// A builder for [ApplicationCallTransaction].
 #[derive(Default)]
 pub struct CallApplication {
     app_id: u64,

@@ -4,5 +4,8 @@ pub mod builder;
 pub mod error;
 pub mod transaction;
 
-pub use builder::{ConfigureAsset, Pay, Txn};
-pub use transaction::{Payment, SignedTransaction, Transaction, TransactionType};
+pub use builder::{
+    AcceptAsset, CallApplication, ClawbackAsset, ConfigureAsset, FreezeAsset, Pay, RegisterKey,
+    TransferAsset, Txn,
+};
+pub use transaction::{SignedTransaction, Transaction, TransactionType};

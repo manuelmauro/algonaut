@@ -1,7 +1,7 @@
 use algonaut_client::{Algod, Kmd};
 use algonaut_core::{Address, MicroAlgos};
 use algonaut_crypto::MasterDerivationKey;
-use algonaut_transaction::{Payment, Txn};
+use algonaut_transaction::{Pay, Txn};
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};
 use std::env;
@@ -52,23 +52,19 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params()?;
 
-    let genesis_id = params.genesis_id;
-    let genesis_hash = params.genesis_hash;
-
-    let payment = Payment {
-        amount: MicroAlgos(10_000),
-        receiver: to_address,
-        close_remainder_to: None,
-    };
-
     let t = Txn::new()
         .sender(from_address)
         .first_valid(params.last_round)
-        .last_valid(params.last_round + 1000)
-        .genesis_id(genesis_id)
-        .genesis_hash(genesis_hash)
+        .last_valid(params.last_round + 10)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
         .fee(MicroAlgos(10_000))
-        .payment(payment)
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(123_456))
+                .to(to_address)
+                .build(),
+        )
         .build();
 
     let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &t);
