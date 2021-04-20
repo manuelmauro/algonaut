@@ -12,12 +12,20 @@ const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
 pub enum TransactionType {
     #[serde(rename = "pay")]
     Payment(Payment),
-
     #[serde(rename = "keyreg")]
     KeyRegistration(KeyRegistration),
-
     #[serde(rename = "acfg")]
     AssetConfigurationTransaction(AssetConfigurationTransaction),
+    #[serde(rename = "axfer")]
+    AssetTransferTransaction(AssetTransferTransaction),
+    #[serde(rename = "axfer")]
+    AssetAcceptTransaction(AssetAcceptTransaction),
+    #[serde(rename = "axfer")]
+    AssetClawbackTransaction(AssetClawbackTransaction),
+    #[serde(rename = "afrz")]
+    AssetFreezeTransaction(AssetFreezeTransaction),
+    #[serde(rename = "appl")]
+    ApplicationCallTransaction(ApplicationCallTransaction),
 }
 
 /// A transaction that can appear in a block
@@ -107,6 +115,8 @@ impl Serialize for Transaction {
         S: Serializer,
     {
         use serde::ser::SerializeStruct;
+
+        // transaction the number of fields in the transaction
         let type_len = match &self.txn_type {
             TransactionType::Payment(payment) => {
                 1 + if payment.close_remainder_to.is_some() {
@@ -117,22 +127,20 @@ impl Serialize for Transaction {
             }
             TransactionType::KeyRegistration(_) => 5,
             TransactionType::AssetConfigurationTransaction(_) => 2,
+            TransactionType::AssetTransferTransaction(_) => 5,
+            TransactionType::AssetAcceptTransaction(_) => 3,
+            TransactionType::AssetClawbackTransaction(_) => 6,
+            TransactionType::AssetFreezeTransaction(_) => 3,
+            TransactionType::ApplicationCallTransaction(_) => 10,
         };
+
         let len = 6
             + type_len
             + if self.note.is_empty() { 0 } else { 1 }
             + if self.genesis_id.is_empty() { 0 } else { 1 };
+
+        // serialize fields common to all transactions
         let mut state = serializer.serialize_struct("Transaction", len)?;
-        if let TransactionType::Payment(payment) = &self.txn_type {
-            if payment.amount.0 != 0 {
-                state.serialize_field("amt", &payment.amount)?;
-            }
-        }
-        if let TransactionType::Payment(payment) = &self.txn_type {
-            if payment.close_remainder_to.is_some() {
-                state.serialize_field("close", &payment.close_remainder_to)?;
-            }
-        }
         state.serialize_field("fee", &self.fee)?;
         state.serialize_field("fv", &self.first_valid)?;
         if !self.genesis_id.is_empty() {
@@ -143,42 +151,85 @@ impl Serialize for Transaction {
         if !self.note.is_empty() {
             state.serialize_field("note", &serde_bytes::ByteBuf::from(self.note.clone()))?;
         }
-        if let TransactionType::Payment(payment) = &self.txn_type {
-            state.serialize_field("rcv", &payment.receiver)?;
-        }
-        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
-            state.serialize_field("selkey", &key_registration.selection_pk)?;
-        }
         state.serialize_field("snd", &self.sender)?;
+
+        // serialize different transaction types
         match &self.txn_type {
-            TransactionType::Payment(_) => {
+            TransactionType::Payment(p) => {
                 state.serialize_field("type", "pay")?;
+                // transaction's specific fields
+                if p.amount.0 != 0 {
+                    state.serialize_field("amt", &p.amount)?;
+                }
+                if p.close_remainder_to.is_some() {
+                    state.serialize_field("close", &p.close_remainder_to)?;
+                }
+                state.serialize_field("rcv", &p.receiver)?;
             }
-            TransactionType::KeyRegistration(_) => {
+            TransactionType::KeyRegistration(kr) => {
                 state.serialize_field("type", "keyreg")?;
+                // transaction's specific fields
+                state.serialize_field("selkey", &kr.selection_pk)?;
+                state.serialize_field("votefst", &kr.vote_first)?;
+                state.serialize_field("votekd", &kr.vote_key_dilution)?;
+                state.serialize_field("votekey", &kr.vote_pk)?;
+                state.serialize_field("votelst", &kr.vote_last)?;
             }
-            TransactionType::AssetConfigurationTransaction(_) => {
+            TransactionType::AssetConfigurationTransaction(asa_conf) => {
                 state.serialize_field("type", "acfg")?;
+                // transaction's specific fields
+                state.serialize_field("caid", &asa_conf.config_asset)?;
+                state.serialize_field("apar", &asa_conf.params)?;
+            }
+            TransactionType::AssetTransferTransaction(asa_transf) => {
+                state.serialize_field("type", "axfer")?;
+                // transaction's specific fields
+                state.serialize_field("xaid", &asa_transf.xfer)?;
+                state.serialize_field("aamt", &asa_transf.amount)?;
+                state.serialize_field("asnd", &asa_transf.sender)?;
+                state.serialize_field("arcv", &asa_transf.receiver)?;
+                state.serialize_field("aclose", &asa_transf.close_to)?;
+            }
+            TransactionType::AssetAcceptTransaction(asa_accept) => {
+                state.serialize_field("type", "axfer")?;
+                // transaction's specific fields
+                state.serialize_field("xaid", &asa_accept.xfer)?;
+                state.serialize_field("asnd", &asa_accept.sender)?;
+                state.serialize_field("arcv", &asa_accept.receiver)?;
+            }
+            TransactionType::AssetClawbackTransaction(asa_claw) => {
+                state.serialize_field("type", "axfer")?;
+                // transaction's specific fields
+                state.serialize_field("snd", &asa_claw.sender)?;
+                state.serialize_field("xaid", &asa_claw.xfer)?;
+                state.serialize_field("aamt", &asa_claw.asset_amount)?;
+                state.serialize_field("asnd", &asa_claw.asset_sender)?;
+                state.serialize_field("arcv", &asa_claw.asset_receiver)?;
+                state.serialize_field("aclose", &asa_claw.asset_close_to)?;
+            }
+            TransactionType::AssetFreezeTransaction(asa_frz) => {
+                state.serialize_field("type", "afrz")?;
+                // transaction's specific fields
+                state.serialize_field("fadd", &asa_frz.freeze_account)?;
+                state.serialize_field("faid", &asa_frz.asset_id)?;
+                state.serialize_field("afrz", &asa_frz.frozen)?;
+            }
+            TransactionType::ApplicationCallTransaction(app_call) => {
+                state.serialize_field("type", "appl")?;
+                // transaction's specific fields
+                state.serialize_field("apid", &app_call.app_id)?;
+                state.serialize_field("apan", &app_call.on_complete)?;
+                state.serialize_field("apat", &app_call.accounts)?;
+                state.serialize_field("apap", &app_call.approval_program)?;
+                state.serialize_field("apaa", &app_call.app_arguments)?;
+                state.serialize_field("apsu", &app_call.clear_state_program)?;
+                state.serialize_field("apfa", &app_call.foreign_apps)?;
+                state.serialize_field("apas", &app_call.foreign_assets)?;
+                state.serialize_field("apgs", &app_call.global_state_schema)?;
+                state.serialize_field("apls", &app_call.local_state_schema)?;
             }
         }
-        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
-            state.serialize_field("votefst", &key_registration.vote_first)?;
-        }
-        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
-            state.serialize_field("votekd", &key_registration.vote_key_dilution)?;
-        }
-        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
-            state.serialize_field("votekey", &key_registration.vote_pk)?;
-        }
-        if let TransactionType::KeyRegistration(key_registration) = &self.txn_type {
-            state.serialize_field("votelst", &key_registration.vote_last)?;
-        }
-        if let TransactionType::AssetConfigurationTransaction(asa_conf) = &self.txn_type {
-            state.serialize_field("caid", &asa_conf.config_asset)?;
-        }
-        if let TransactionType::AssetConfigurationTransaction(asa_conf) = &self.txn_type {
-            state.serialize_field("apar", &asa_conf.params)?;
-        }
+
         state.end()
     }
 }
