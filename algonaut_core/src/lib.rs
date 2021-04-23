@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::Mul;
+use std::{ops::Mul, str::FromStr};
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
@@ -182,9 +182,13 @@ impl Address {
     pub fn new(bytes: [u8; HASH_LEN]) -> Address {
         Address(bytes)
     }
+}
+
+impl FromStr for Address {
+    type Err = String;
 
     /// Decode address from base64 string with checksum
-    pub fn from_string(string: &str) -> Result<Address, String> {
+    fn from_str(string: &str) -> Result<Self, Self::Err> {
         let checksum_address = match BASE32_NOPAD.decode(string.as_bytes()) {
             Ok(decoded) => decoded,
             Err(err) => return Err(format!("Error decoding base32: {:?}", err)),
@@ -202,9 +206,11 @@ impl Address {
             Err("Input checksum did not validate".to_string())
         }
     }
+}
 
+impl ToString for Address {
     /// Encode address to base64 string with checksum
-    pub fn encode_string(&self) -> String {
+    fn to_string(&self) -> String {
         let hashed = ChecksumAlg::digest(&self.0);
         let checksum = &hashed[(HASH_LEN - CHECKSUM_LEN)..];
         let checksum_address = [&self.0, checksum].concat();
@@ -382,8 +388,10 @@ mod tests {
     fn decode() {
         let s = "737777777777777777777777777777777777777777777777777UFEJ2CI";
 
-        let addr = Address::from_string(s).expect("failed to decode address from string");
-        assert_eq!(s, addr.encode_string());
+        let addr = s
+            .parse::<Address>()
+            .expect("failed to decode address from string");
+        assert_eq!(s, addr.to_string());
     }
 
     /// Tryng to decode a base32 address with an invalid checksum must fail.
@@ -391,6 +399,6 @@ mod tests {
     fn decode_invalid_checksum() {
         let invalid_csum = "737777777777777777777777777777777777777777777777777UFEJ2CJ";
 
-        assert!(Address::from_string(invalid_csum).is_err());
+        assert!(invalid_csum.parse::<Address>().is_err());
     }
 }

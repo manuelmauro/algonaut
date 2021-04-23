@@ -1,4 +1,4 @@
-use algonaut::core::{Address, MicroAlgos};
+use algonaut::core::MicroAlgos;
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Txn};
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("node_status: {:?}", node_status);
 
     let account = Account::generate();
-    println!("Public Key: {:?}", account.address().encode_string());
+    println!("Public Key: {:?}", account.address().to_string());
 
     let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
@@ -40,9 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .payment(
             Pay::new()
                 .amount(MicroAlgos(123_456))
-                .to(Address::from_string(
-                    "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
-                )?)
+                .to("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?)
                 .build(),
         )
         .build();
