@@ -8,7 +8,7 @@
 Rust **algonaut** aims at becoming a rusty SDK for [Algorand](https://www.algorand.com/). Please, be aware that this crate is a work in progress.
 
 ```rust
-use algonaut::core::{Address, MicroAlgos};
+use algonaut::core::MicroAlgos;
 use algonaut::transaction::{Pay, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
@@ -40,12 +40,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Wallet Handle: {}", wallet_handle_token);
 
     // an account with some funds in our sandbox
-    let from_address = Address::from_string(env::var("ACCOUNT")?.as_ref())?;
-    println!("Sender: {:?}", from_address);
+    let from_address = env::var("ACCOUNT")?.parse()?;
+    println!("Sender: {:#?}", from_address);
 
-    let to_address =
-        Address::from_string("2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY")?;
-    println!("Receiver: {:?}", to_address);
+    let to_address = "2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY".parse()?;
+    println!("Receiver: {:#?}", to_address);
 
     // algod has a convenient method that retrieves basic information for a transaction
     let algod = Algod::new()

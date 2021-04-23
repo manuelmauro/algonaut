@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Implement `FromStr` for `Address` in place of `Address::from_str` method
 - Rename project from `algorand-rs` to `algonaut`
 - Refactor project in multiple crates according to [Algorand's SDK common schema](https://github.com/algorand/algorand-sdk-testing#sdk-overview)
 - Refactor `kmd` client
