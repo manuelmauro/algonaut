@@ -1,4 +1,4 @@
-use algonaut::core::{Address, MicroAlgos};
+use algonaut::core::MicroAlgos;
 use algonaut::transaction::{ConfigureAsset, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
@@ -30,12 +30,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Wallet Handle: {}", wallet_handle_token);
 
     // an account with some funds in our sandbox
-    let from_address = Address::from_string(env::var("ACCOUNT")?.as_ref())?;
-    println!("Sender: {:?}", from_address);
-
-    let to_address =
-        Address::from_string("2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY")?;
-    println!("Receiver: {:?}", to_address);
+    let creator = env::var("ACCOUNT")?.parse()?;
+    println!("Creator: {:?}", creator);
 
     // algod has a convenient method that retrieves basic information for a transaction
     let algod = Algod::new()
@@ -48,7 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // we are ready to build the transaction
     let t = Txn::new()
-        .sender(from_address)
+        .sender(creator)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)
         .genesis_id(params.genesis_id)
@@ -61,10 +57,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .default_frozen(false)
                 .unit_name("EIRI".to_owned())
                 .asset_name("Naki".to_owned())
-                .manager(from_address)
-                .reserve(from_address)
-                .freeze(from_address)
-                .clawback(from_address)
+                .manager(creator)
+                .reserve(creator)
+                .freeze(creator)
+                .clawback(creator)
                 .url("example.com".to_owned())
                 .meta_data_hash(Vec::new())
                 .decimals(2)

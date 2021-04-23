@@ -1,4 +1,4 @@
-use algonaut::core::{Address, MicroAlgos};
+use algonaut::core::MicroAlgos;
 use algonaut::transaction::{Pay, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
@@ -33,11 +33,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let wallet_handle_token = init_response.wallet_handle_token;
 
     let gen_response = kmd.generate_key(&wallet_handle_token)?;
-    let from_address = Address::from_string(&gen_response.address)?;
+    let from_address = gen_response.address.parse()?;
     println!("from_address: {}", &gen_response.address);
 
     let gen_response = kmd.generate_key(&wallet_handle_token)?;
-    let to_address = Address::from_string(&gen_response.address)?;
+    let to_address = gen_response.address.parse()?;
     println!("to_address: {}", &gen_response.address);
 
     let params = algod.transaction_params()?;
