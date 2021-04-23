@@ -352,7 +352,7 @@ fn test_broadcast_raw_transaction_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let res = algod.broadcast_raw_transaction("".into());
+    let res = algod.broadcast_raw_transaction(&[0; 32]);
 
     println!("{:#?}", res);
     assert!(res.is_ok());

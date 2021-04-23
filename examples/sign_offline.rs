@@ -1,7 +1,7 @@
 use algonaut::core::{Address, MicroAlgos};
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algonaut::transaction::{Pay, Txn};
 use algonaut::Algod;
 use dotenv::dotenv;
 use std::env;
@@ -28,38 +28,29 @@ fn main() -> Result<(), Box<dyn Error>> {
     let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
 
-    let fee = MicroAlgos(1000);
-    let amount = MicroAlgos(0);
-    let first_round = node_status.last_round;
-    let last_round = node_status.last_round + 1000;
+    let params = algod.transaction_params()?;
 
-    let transaction_params = algod.transaction_params()?;
-    let genesis_id = transaction_params.genesis_id;
-    let genesis_hash = transaction_params.genesis_hash;
+    let t = Txn::new()
+        .sender(account.address())
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 1000)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(123_456))
+                .to(Address::from_string(
+                    "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
+                )?)
+                .build(),
+        )
+        .build();
 
-    let base = BaseTransaction {
-        sender: account.address(),
-        first_valid: first_round,
-        last_valid: last_round,
-        note: Vec::new(),
-        genesis_id,
-        genesis_hash,
-    };
+    println!("Made unsigned transaction: {:?}", t);
 
-    let payment = Payment {
-        amount,
-        receiver: Address::from_string(
-            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
-        )?,
-        close_remainder_to: None,
-    };
-
-    let transaction = Transaction::new(base, fee, TransactionType::Payment(payment))?;
-
-    println!("Made unsigned transaction: {:?}", transaction);
-
-    // Sign the transaction
-    let signed_transaction = account.sign_transaction(&transaction)?;
+    // sign the transaction
+    let signed_transaction = account.sign_transaction(&t)?;
     let bytes = rmp_serde::to_vec_named(&signed_transaction)?;
 
     let filename = "./signed.tx";

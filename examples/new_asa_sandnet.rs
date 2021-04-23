@@ -1,5 +1,5 @@
 use algonaut::core::{Address, MicroAlgos};
-use algonaut::transaction::{Pay, Txn};
+use algonaut::transaction::{ConfigureAsset, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
 use std::env;
@@ -41,22 +41,33 @@ fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .client_v2()?;
 
     let params = algod.transaction_params()?;
+    println!("Last round: {}", params.last_round);
 
     // we are ready to build the transaction
     let t = Txn::new()
         .sender(from_address)
         .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
+        .last_valid(params.last_round + 1000)
         .genesis_id(params.genesis_id)
         .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(10_000))
-        .payment(
-            Pay::new()
-                .amount(MicroAlgos(123_456))
-                .to(to_address)
+        .fee(MicroAlgos(100_000))
+        .asset_configuration(
+            ConfigureAsset::new()
+                .config_asset(0)
+                .total(10)
+                .default_frozen(false)
+                .unit_name("EIRI".to_owned())
+                .asset_name("Naki".to_owned())
+                .manager(from_address)
+                .reserve(from_address)
+                .freeze(from_address)
+                .clawback(from_address)
+                .url("example.com".to_owned())
+                .meta_data_hash(Vec::new())
+                .decimals(2)
                 .build(),
         )
         .build();
@@ -65,7 +76,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t)?;
 
     // broadcast the transaction to the network
-    let send_response = algod.raw_transaction(&sign_response.signed_transaction)?;
+    let send_response = algod.broadcast_raw_transaction(&sign_response.signed_transaction)?;
 
     println!("Transaction ID: {}", send_response.tx_id);
 

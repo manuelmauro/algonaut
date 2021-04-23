@@ -317,14 +317,17 @@ impl Client {
     }
 
     /// Broadcasts a raw transaction to the network.
-    pub fn broadcast_raw_transaction(&self, rawtxn: String) -> Result<String, AlgorandError> {
+    pub fn broadcast_raw_transaction(
+        &self,
+        rawtxn: &[u8],
+    ) -> Result<TransactionResponse, AlgorandError> {
         let response = self
             .http_client
             .post(&format!("{}v2/transactions", self.url))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .header("Content-Type", "application/x-binary")
-            .body(rawtxn)
+            .body(rawtxn.to_vec())
             .send()?
             .error_for_status()?
             .json()?;

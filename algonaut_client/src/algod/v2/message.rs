@@ -732,3 +732,9 @@ pub struct TransactionParams {
     #[serde(rename = "min-fee")]
     pub min_fee: MicroAlgos,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransactionResponse {
+    #[serde(rename = "txId")]
+    pub tx_id: String,
+}

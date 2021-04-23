@@ -1,5 +1,5 @@
 use algonaut::core::{Address, MicroAlgos};
-use algonaut::transaction::{BaseTransaction, Payment, Transaction, TransactionType};
+use algonaut::transaction::{Pay, Txn};
 use algonaut::{Algod, Kmd};
 use dotenv::dotenv;
 use std::env;
@@ -40,37 +40,32 @@ fn main() -> Result<(), Box<dyn Error>> {
     let to_address = Address::from_string(&gen_response.address)?;
     println!("to_address: {}", &gen_response.address);
 
-    let transaction_params = algod.transaction_params()?;
+    let params = algod.transaction_params()?;
 
-    let genesis_id = transaction_params.genesis_id;
-    let genesis_hash = transaction_params.genesis_hash;
+    let t = Txn::new()
+        .sender(from_address)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 1000)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(123_456))
+                .to(to_address)
+                .build(),
+        )
+        .build();
 
-    let base = BaseTransaction {
-        sender: from_address,
-        first_valid: transaction_params.last_round,
-        last_valid: transaction_params.last_round + 1000,
-        note: Vec::new(),
-        genesis_id,
-        genesis_hash,
-    };
-
-    let payment = Payment {
-        amount: MicroAlgos(10_000),
-        receiver: to_address,
-        close_remainder_to: None,
-    };
-
-    let transaction = Transaction::new(base, MicroAlgos(1), TransactionType::Payment(payment))?;
-
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &transaction)?;
+    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &t)?;
 
     println!(
         "kmd made signed transaction with {} bytes",
         sign_response.signed_transaction.len()
     );
 
-    // Broadcast the transaction to the network
-    // Note this transaction will get rejected because the accounts do not have any tokens
+    // broadcast the transaction to the network
+    // note: this transaction may get rejected because the accounts do not have any tokens
     let send_response = algod.raw_transaction(&sign_response.signed_transaction)?;
 
     println!("Transaction ID: {}", send_response.tx_id);

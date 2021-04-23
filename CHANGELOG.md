@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Support all kind of Algorand transactions
+- Add transaction builders
+- Add example for the creation of a new ASA asset
+- Add builder for payment, key registration, and asset creation transactions
 - Add `indexer` v2 API support
 - Add `algod` v2 API support
 - Add structs for all transaction types
@@ -23,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename project from `algorand-rs` to `algonaut`
 - Refactor project in multiple crates according to [Algorand's SDK common schema](https://github.com/algorand/algorand-sdk-testing#sdk-overview)
 - Refactor `kmd` client
+
+### Removed
+
+- `BaseTransaction` and constructors from `Transaction`
 
 ## [0.1.1] - 2021-02-19 (`algorand-rs`)
 
