@@ -1,5 +1,6 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+description = "Encoding utilities for the Algorand blockchain."
 edition = "2018"
 keywords = ["Algorand", "sdk"]
 license = "MIT"
