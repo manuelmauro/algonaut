@@ -5,12 +5,12 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut_transaction"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.1.2"
+version = "0.2.0"
 
 [dependencies]
-algonaut_core = {path = "../algonaut_core", version = "0.1.2"}
-algonaut_crypto = {path = "../algonaut_crypto", version = "0.1.2"}
-algonaut_encoding = {path = "../algonaut_encoding", version = "0.1.2"}
+algonaut_core = {path = "../algonaut_core", version = "0.2.0"}
+algonaut_crypto = {path = "../algonaut_crypto", version = "0.2.0"}
+algonaut_encoding = {path = "../algonaut_encoding", version = "0.2.0"}
 data-encoding = "2.3.1"
 derive_more = "0.99.11"
 rand = "0.8.3"

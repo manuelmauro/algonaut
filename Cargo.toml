@@ -6,7 +6,7 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.1.2"
+version = "0.2.0"
 
 [workspace]
 members = [
@@ -18,11 +18,11 @@ members = [
 ]
 
 [dependencies]
-algonaut_client = {path = "algonaut_client", version = "0.1.2"}
-algonaut_core = {path = "algonaut_core", version = "0.1.2"}
-algonaut_crypto = {path = "algonaut_crypto", version = "0.1.2"}
-algonaut_encoding = {path = "algonaut_encoding", version = "0.1.2"}
-algonaut_transaction = {path = "algonaut_transaction", version = "0.1.2"}
+algonaut_client = {path = "algonaut_client", version = "0.2.0"}
+algonaut_core = {path = "algonaut_core", version = "0.2.0"}
+algonaut_crypto = {path = "algonaut_crypto", version = "0.2.0"}
+algonaut_encoding = {path = "algonaut_encoding", version = "0.2.0"}
+algonaut_transaction = {path = "algonaut_transaction", version = "0.2.0"}
 
 [dev-dependencies]
 chrono = "0.4.9"
