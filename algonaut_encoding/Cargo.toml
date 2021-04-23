@@ -1,10 +1,11 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
 edition = "2018"
+keywords = ["Algorand", "sdk"]
+license = "MIT"
 name = "algonaut_encoding"
-version = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.1.2"
 
 [dependencies]
 data-encoding = "2.3.1"

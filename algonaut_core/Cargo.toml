@@ -1,15 +1,16 @@
 [package]
-name = "algonaut_core"
-version = "0.1.0"
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords = ["Algorand", "sdk"]
+license = "MIT"
+name = "algonaut_core"
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.1.2"
 
 [dependencies]
-algonaut_encoding = { path = "../algonaut_encoding", version = "0.1.0", default-features = false }
-algonaut_crypto = { path = "../algonaut_crypto", version = "0.1.0", default-features = false }
-serde = {version = "1.0", features = ["derive"]}
-static_assertions = "0.3.4"
+algonaut_crypto = {path = "../algonaut_crypto", version = "0.1.2"}
+algonaut_encoding = {path = "../algonaut_encoding", version = "0.1.2"}
 data-encoding = "2.3.1"
+serde = {version = "1.0", features = ["derive"]}
 sha2 = "0.8.0"
+static_assertions = "0.3.4"
