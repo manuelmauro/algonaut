@@ -1,6 +1,7 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
 description = "Implementation of the Algorand blockchain transaction set."
+documentation = "https://docs.rs/algonaut_transaction"
 edition = "2018"
 keywords = ["Algorand", "sdk"]
 license = "MIT"

@@ -1,7 +1,7 @@
 # Rust `algonaut`
 
 [![Crate](https://meritbadge.herokuapp.com/algonaut)](https://crates.io/crates/algonaut)
-[![Docs](https://docs.rs/paypal-rs/badge.svg)](https://docs.rs/algonaut)
+[![Docs](https://docs.rs/algonaut/badge.svg)](https://docs.rs/algonaut)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algonaut/blob/main/LICENSE)
 ![Continuous integration](https://github.com/manuelmauro/algonaut/actions/workflows/quickstart.yml/badge.svg)
 
