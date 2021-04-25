@@ -1,16 +1,31 @@
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_encoding::{SignatureVisitor, U8_32Visitor};
 use data_encoding::BASE32_NOPAD;
+use derive_more::{Add, Display, Sub};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 use std::{ops::Mul, str::FromStr};
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
 /// MicroAlgos are the base unit of currency in Algorand
-#[derive(Copy, Clone, Default, Debug, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(
+    Copy,
+    Clone,
+    Default,
+    Debug,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    Display,
+    Add,
+    Sub,
+)]
 pub struct MicroAlgos(pub u64);
 
 impl MicroAlgos {
@@ -23,33 +38,11 @@ impl MicroAlgos {
     }
 }
 
-impl Display for MicroAlgos {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        Display::fmt(&self.0, f)
-    }
-}
-
-impl Add for MicroAlgos {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        MicroAlgos(self.0 + rhs.0)
-    }
-}
-
 impl Add<u64> for MicroAlgos {
     type Output = Self;
 
     fn add(self, rhs: u64) -> Self::Output {
         MicroAlgos(self.0 + rhs)
-    }
-}
-
-impl Sub for MicroAlgos {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        MicroAlgos(self.0 - rhs.0)
     }
 }
 
@@ -73,36 +66,14 @@ impl Mul<u64> for MicroAlgos {
 }
 
 /// Round of the Algorand consensus protocol
-#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Serialize, Deserialize, Display, Add, Sub)]
 pub struct Round(pub u64);
-
-impl Display for Round {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        Display::fmt(&self.0, f)
-    }
-}
-
-impl Add for Round {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Round(self.0 + rhs.0)
-    }
-}
 
 impl Add<u64> for Round {
     type Output = Self;
 
     fn add(self, rhs: u64) -> Self::Output {
         Round(self.0 + rhs)
-    }
-}
-
-impl Sub for Round {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Round(self.0 - rhs.0)
     }
 }
 
