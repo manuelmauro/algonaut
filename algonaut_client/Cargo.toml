@@ -14,7 +14,7 @@ algonaut_core = {path = "../algonaut_core", version = "0.2.0"}
 algonaut_crypto = {path = "../algonaut_crypto", version = "0.2.0"}
 algonaut_encoding = {path = "../algonaut_encoding", version = "0.2.0"}
 algonaut_transaction = {path = "../algonaut_transaction", version = "0.2.0"}
-derive_more = "0.99.11"
+derive_more = "0.99.13"
 reqwest = {version = "0.11", features = ["blocking", "json"]}
 rmp-serde = "0.14.0"
 serde = {version = "1.0", features = ["derive"]}
