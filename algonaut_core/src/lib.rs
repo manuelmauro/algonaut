@@ -258,7 +258,7 @@ impl MultisigAddress {
 }
 
 /// An Ed25519 Signature
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Signature(pub [u8; 64]);
 
 impl Debug for Signature {
@@ -266,19 +266,6 @@ impl Debug for Signature {
         f.debug_tuple("Signature").field(&self.0.to_vec()).finish()
     }
 }
-
-impl PartialEq for Signature {
-    fn eq(&self, other: &Self) -> bool {
-        for i in 0..64 {
-            if self.0[i] != other.0[i] {
-                return false;
-            }
-        }
-        true
-    }
-}
-
-impl Eq for Signature {}
 
 impl Serialize for Signature {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
