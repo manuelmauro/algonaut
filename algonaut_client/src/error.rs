@@ -6,22 +6,22 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum AlgorandError {
     /// A builder error.
-    #[error("builder error {0}")]
+    #[error("builder error: {0}")]
     BuilderError(#[from] BuilderError),
     /// An api error.
-    #[error("api error {0}")]
+    #[error("api error: {0}")]
     ApiError(#[from] ApiError),
     /// A url parsing error
-    #[error("parse error {0}")]
+    #[error("parse error: {0}")]
     BadUrl(#[from] url::ParseError),
     /// Http error
-    #[error("http error {0}")]
+    #[error("http error: {0}")]
     HttpError(#[from] HttpError),
     /// Serialization error
-    #[error("serde encode error {0}")]
+    #[error("serde encode error: {0}")]
     RmpSerdeError(#[from] rmp_serde::encode::Error),
     /// Serialization error
-    #[error("serde encode error {0}")]
+    #[error("serde encode error: {0}")]
     SerdeJsonError(#[from] serde_json::Error),
 }
 
