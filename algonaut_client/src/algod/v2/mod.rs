@@ -1,4 +1,5 @@
 use crate::error::AlgorandError;
+use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::Round;
 use message::*;
 use reqwest::header::HeaderMap;
@@ -24,7 +25,7 @@ impl Client {
             .get(&format!("{}genesis", self.url))
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -37,7 +38,7 @@ impl Client {
             .get(&format!("{}health", self.url))
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?;
+            .http_error_for_status()?;
 
         Ok(())
     }
@@ -50,7 +51,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .text()?;
 
         Ok(response)
@@ -66,7 +67,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -90,7 +91,7 @@ impl Client {
             .headers(self.headers.clone())
             .query(&[("max", max.to_string())])
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -106,7 +107,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -123,7 +124,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -137,7 +138,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -151,7 +152,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -165,7 +166,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -179,7 +180,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -224,7 +225,7 @@ impl Client {
             .headers(self.headers.clone())
             .query(&query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -239,7 +240,7 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .query(&[("timeout", timeout.to_string())])
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(())
@@ -253,7 +254,7 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -270,7 +271,7 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -290,7 +291,7 @@ impl Client {
             .header("Content-Type", "application/x-binary")
             .body(teal)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -310,7 +311,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -329,7 +330,7 @@ impl Client {
             .header("Content-Type", "application/x-binary")
             .body(rawtxn.to_vec())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -343,7 +344,7 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -361,7 +362,7 @@ impl Client {
             .headers(self.headers.clone())
             .query(&[("max", max.to_string())])
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -387,7 +388,7 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -401,7 +402,7 @@ impl Client {
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)

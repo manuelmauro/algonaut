@@ -1,4 +1,5 @@
 use crate::error::AlgorandError;
+use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::MultisigSignature;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_transaction::Transaction;
@@ -33,7 +34,7 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -46,7 +47,7 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -73,7 +74,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -100,7 +101,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -120,7 +121,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -140,7 +141,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -164,7 +165,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -184,7 +185,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -206,7 +207,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -228,7 +229,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -254,7 +255,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -272,7 +273,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -296,7 +297,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -313,7 +314,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -338,7 +339,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -358,7 +359,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -384,7 +385,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -406,7 +407,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -430,7 +431,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }
@@ -461,7 +462,7 @@ impl Client {
             .header("Accept", "application/json")
             .json(&req)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
         Ok(response)
     }

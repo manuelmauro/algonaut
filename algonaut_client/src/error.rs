@@ -16,13 +16,29 @@ pub enum AlgorandError {
     BadUrl(#[from] url::ParseError),
     /// Http error
     #[error("http error {0}")]
-    HttpError(#[from] reqwest::Error),
+    HttpError(#[from] HttpError),
     /// Serialization error
     #[error("serde encode error {0}")]
     RmpSerdeError(#[from] rmp_serde::encode::Error),
     /// Serialization error
     #[error("serde encode error {0}")]
     SerdeJsonError(#[from] serde_json::Error),
+}
+
+#[derive(Error, Debug, Display)]
+#[display(fmt = "{}, {}", message, reqwest_error)]
+pub struct HttpError {
+    pub message: String,
+    pub reqwest_error: reqwest::Error,
+}
+
+impl From<reqwest::Error> for AlgorandError {
+    fn from(error: reqwest::Error) -> Self {
+        AlgorandError::HttpError(HttpError {
+            reqwest_error: error,
+            message: "".to_owned(),
+        })
+    }
 }
 
 #[derive(Debug, Display, Error, From)]
