@@ -17,9 +17,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .client_v2()?;
 
-    let send_response = algod.raw_transaction(&raw_transaction)?;
+    let send_response = algod.broadcast_raw_transaction(&raw_transaction)?;
     println!("Transaction ID: {}", send_response.tx_id);
 
     Ok(())
