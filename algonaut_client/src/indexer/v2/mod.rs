@@ -1,5 +1,6 @@
 use self::message::*;
 use crate::error::AlgorandError;
+use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::Round;
 use reqwest::header::HeaderMap;
 
@@ -21,7 +22,7 @@ impl Client {
             .get(&format!("{}health", self.url))
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?;
+            .http_error_for_status()?;
         Ok(())
     }
 
@@ -34,7 +35,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -53,7 +54,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(&(round.map(|r| QueryRound { round: r })))
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -72,7 +73,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -90,7 +91,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -104,7 +105,7 @@ impl Client {
             .headers(self.headers.clone())
             .header("Content-Type", "application/json")
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -119,7 +120,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -133,7 +134,7 @@ impl Client {
             .headers(self.headers.clone())
             .header("Content-Type", "application/json")
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -152,7 +153,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -171,7 +172,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -184,7 +185,7 @@ impl Client {
             .get(&format!("{}v2/blocks/{}", self.url, round))
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -202,7 +203,7 @@ impl Client {
             .header("Content-Type", "application/json")
             .json(query)
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
@@ -215,7 +216,7 @@ impl Client {
             .get(&format!("{}v2/transactions/{}", self.url, id))
             .headers(self.headers.clone())
             .send()?
-            .error_for_status()?
+            .http_error_for_status()?
             .json()?;
 
         Ok(response)
