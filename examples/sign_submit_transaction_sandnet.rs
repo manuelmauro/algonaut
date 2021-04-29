@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .client_v2()?;
 
     let params = algod.transaction_params()?;
 
@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t)?;
 
     // broadcast the transaction to the network
-    let send_response = algod.raw_transaction(&sign_response.signed_transaction)?;
+    let send_response = algod.broadcast_raw_transaction(&sign_response.signed_transaction)?;
 
     println!("Transaction ID: {}", send_response.tx_id);
 
