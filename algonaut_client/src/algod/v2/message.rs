@@ -639,12 +639,15 @@ pub struct NodeStatus {
 pub struct Block {
     /// Block header data.
     pub block: BlockHeader,
+    /// Optional certificate object. This is only included when the format is set to message pack.
+    #[serde(rename = "cert", skip_serializing_if = "Option::is_none")]
+    pub cert: Option<serde_json::Value>,
 }
 
 /// BlockHeader
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BlockHeader {
-    pub earn: u64,
+    pub earn: Option<u64>,
     pub fees: String,
     pub frac: u64,
     pub gen: String,
