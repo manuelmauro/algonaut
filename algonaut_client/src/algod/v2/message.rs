@@ -644,7 +644,7 @@ pub struct Block {
 /// BlockHeader
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BlockHeader {
-    pub earn: u64,
+    pub earn: Option<u64>,
     pub fees: String,
     pub frac: u64,
     pub gen: String,
