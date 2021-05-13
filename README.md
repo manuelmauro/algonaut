@@ -1,4 +1,6 @@
-# Rust `algonaut`
+# [![Ferris Algonaut](assets/logo/rustacean-flat-algonaut.svg)](https://crates.io/crates/algonaut)
+
+## Rust `algonaut`
 
 [![Crate](https://meritbadge.herokuapp.com/algonaut)](https://crates.io/crates/algonaut)
 [![Docs](https://docs.rs/algonaut/badge.svg)](https://docs.rs/algonaut)
