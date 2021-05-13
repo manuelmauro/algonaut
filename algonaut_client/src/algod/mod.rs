@@ -49,7 +49,7 @@ impl<'a> Algod<'a> {
     pub fn client_v1(self) -> Result<v1::Client, AlgorandError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Client {
-                url: Url::parse(url)?.into_string(),
+                url: Url::parse(url)?.as_ref().into(),
                 token: ApiToken::parse(token)?.to_string(),
                 headers: self.headers,
                 http_client: reqwest::blocking::Client::new(),
@@ -64,7 +64,7 @@ impl<'a> Algod<'a> {
     pub fn client_v2(self) -> Result<v2::Client, AlgorandError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v2::Client {
-                url: Url::parse(url)?.into_string(),
+                url: Url::parse(url)?.as_ref().into(),
                 token: token.to_string(),
                 headers: self.headers,
                 http_client: reqwest::blocking::Client::new(),

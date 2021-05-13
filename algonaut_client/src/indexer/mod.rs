@@ -26,7 +26,7 @@ impl<'a> Indexer<'a> {
     pub fn client_v2(self) -> Result<v2::Client, AlgorandError> {
         match self.url {
             Some(url) => Ok(v2::Client {
-                url: Url::parse(url)?.into_string(),
+                url: Url::parse(url)?.as_ref().into(),
                 headers: self.headers,
                 http_client: reqwest::blocking::Client::new(),
             }),
