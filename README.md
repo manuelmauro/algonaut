@@ -1,11 +1,11 @@
 # [![Ferris Algonaut](assets/logo/rustacean-flat-algonaut.svg)](https://crates.io/crates/algonaut)
 
-## Rust `algonaut`
-
 [![Crate](https://meritbadge.herokuapp.com/algonaut)](https://crates.io/crates/algonaut)
 [![Docs](https://docs.rs/algonaut/badge.svg)](https://docs.rs/algonaut)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algonaut/blob/main/LICENSE)
 ![Continuous integration](https://github.com/manuelmauro/algonaut/actions/workflows/quickstart.yml/badge.svg)
+
+## Rust `algonaut`
 
 Rust **algonaut** aims at becoming a rusty SDK for [Algorand](https://www.algorand.com/). Please, be aware that this crate is a work in progress.
 
