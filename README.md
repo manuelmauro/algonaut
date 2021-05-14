@@ -124,3 +124,5 @@ This crate is based on the work of [@mraof](https://github.com/mraof/rust-algora
 
 Licensed under MIT license.
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, shall be licensed as above, without any additional terms or conditions.
+
+[Ferris Algonaut](assets/logo/rustacean-flat-algonaut.svg) is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
