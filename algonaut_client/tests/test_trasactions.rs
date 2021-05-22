@@ -1,7 +1,7 @@
 use algonaut_client::{Algod, Kmd};
 use algonaut_core::{Address, LogicSignature, MicroAlgos};
 use algonaut_crypto::MasterDerivationKey;
-use algonaut_transaction::{Pay, SignedTransaction, Txn};
+use algonaut_transaction::{account::Account, Pay, SignedTransaction, Txn};
 use data_encoding::BASE64;
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};
@@ -123,6 +123,76 @@ byte 0xFF
     };
 
     let from_address: Address = res.hash.parse()?;
+    let to_address: Address =
+        "ZOSNRNYXOHQIPFDHJWDBWKRZFRJUMCXQGKTHV7LWZZNIKEEU6AWEODSQ4U".parse()?;
+
+    let params = algod.transaction_params()?;
+
+    let t = Txn::new()
+        .sender(from_address)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 10)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(123_456))
+                .to(to_address)
+                .build(),
+        )
+        .build();
+
+    let signed_transaction = SignedTransaction {
+        sig: None,
+        multisig: None,
+        logicsig: Some(lsig),
+        transaction: t,
+        transaction_id: "".to_owned(),
+    };
+
+    let transaction_bytes = rmp_serde::to_vec_named(&signed_transaction)?;
+
+    // Broadcast the transaction to the network
+    // Note this transaction will get rejected because the accounts do not have any tokens
+    let send_response = algod.broadcast_raw_transaction(&transaction_bytes);
+    println!("response {:?}", send_response);
+    assert!(send_response.is_err());
+
+    Ok(())
+}
+
+#[test]
+fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error>> {
+    // load variables in .env
+    dotenv().ok();
+
+    let algod = Algod::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .client_v2()?;
+
+    let res = algod.compile_teal(
+        r#"
+#pragma version 3
+int 1
+"#
+        .into(),
+    )?;
+
+    let mnemonic = "fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero";
+    let account = Account::from_mnemonic(mnemonic)?;
+
+    let program_bytes = BASE64.decode(res.result.as_bytes())?;
+    let signature = account.sign_program(&program_bytes);
+    let lsig = LogicSignature {
+        logic: program_bytes,
+        sig: Some(signature),
+        msig: None,
+        args: vec![],
+    };
+
+    let from_address = account.address();
     let to_address: Address =
         "ZOSNRNYXOHQIPFDHJWDBWKRZFRJUMCXQGKTHV7LWZZNIKEEU6AWEODSQ4U".parse()?;
 

@@ -4,7 +4,7 @@ use crate::transaction::{SignedTransaction, Transaction};
 use algonaut_core::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
 use algonaut_crypto::mnemonic;
 use algonaut_crypto::Ed25519PublicKey;
-use data_encoding::BASE32_NOPAD;
+use data_encoding::{BASE32_NOPAD, BASE64};
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::Ed25519KeyPair as KeyPairType;
@@ -66,6 +66,10 @@ impl Account {
         let mut stripped_signature = [0; 64];
         stripped_signature.copy_from_slice(&signature.as_ref()[..64]);
         Signature(stripped_signature)
+    }
+
+    pub fn sign_program(&self, bytes: &[u8]) -> Signature {
+        self.sign(&["Program".as_bytes(), &bytes].concat())
     }
 
     /// Sign a bid with the account's private key
