@@ -93,6 +93,7 @@ impl Account {
         Ok(SignedTransaction {
             transaction: transaction.clone(),
             sig: Some(signature),
+            logicsig: None,
             multisig: None,
             transaction_id: id,
         })
@@ -137,6 +138,7 @@ impl Account {
         Ok(SignedTransaction {
             multisig: Some(multisig),
             sig: None,
+            logicsig: None,
             transaction: transaction.clone(),
             transaction_id: signed_transaction.transaction_id,
         })
