@@ -103,7 +103,13 @@ fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dyn Erro
     let res = algod.compile_teal(
         r#"
 #pragma version 3
-int 1
+arg 0
+byte 0x0100
+==
+arg 1
+byte 0xFF
+==
+&&
 "#
         .into(),
     )?;
@@ -113,7 +119,7 @@ int 1
         logic: program_bytes,
         sig: None,
         msig: None,
-        args: vec![],
+        args: vec![vec![1, 0], vec![255]],
     };
 
     let from_address: Address = res.hash.parse()?;
