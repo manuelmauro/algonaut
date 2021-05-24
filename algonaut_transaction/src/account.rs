@@ -1,10 +1,12 @@
 use crate::auction::{Bid, SignedBid};
 use crate::error::{AlgorandError, ApiError};
 use crate::transaction::{SignedTransaction, Transaction};
-use algonaut_core::{Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature};
+use algonaut_core::{
+    Address, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig, Signature,
+};
 use algonaut_crypto::mnemonic;
 use algonaut_crypto::Ed25519PublicKey;
-use data_encoding::{BASE32_NOPAD, BASE64};
+use data_encoding::BASE32_NOPAD;
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::Ed25519KeyPair as KeyPairType;
@@ -101,6 +103,79 @@ impl Account {
             multisig: None,
             transaction_id: id,
         })
+    }
+
+    pub fn sign_logic_msig(
+        &self,
+        lsig: LogicSignature,
+        ma: MultisigAddress,
+    ) -> Result<LogicSignature, AlgorandError> {
+        let mut lsig = lsig;
+        let my_public_key = Ed25519PublicKey(self.address.0);
+        if !ma.public_keys.contains(&my_public_key) {
+            return Err(ApiError::InvalidSecretKeyInMultisig.into());
+        }
+        let sig = self.sign_program(&lsig.logic);
+        let subsigs: Vec<MultisigSubsig> = ma
+            .public_keys
+            .iter()
+            .map(|key| {
+                if *key == my_public_key {
+                    MultisigSubsig {
+                        key: *key,
+                        sig: Some(sig),
+                    }
+                } else {
+                    MultisigSubsig {
+                        key: *key,
+                        sig: None,
+                    }
+                }
+            })
+            .collect();
+        let multisig = MultisigSignature {
+            version: ma.version,
+            threshold: ma.threshold,
+            subsigs,
+        };
+        lsig.msig = Some(multisig);
+        Ok(lsig)
+    }
+
+    pub fn append_to_logic_msig(
+        &self,
+        lsig: LogicSignature,
+    ) -> Result<LogicSignature, AlgorandError> {
+        let mut lsig = lsig;
+        let my_public_key = Ed25519PublicKey(self.address.0);
+        let msig = lsig
+            .msig
+            .ok_or_else(|| AlgorandError::from(ApiError::InvalidSecretKeyInMultisig))?;
+        let mut found_my_public_key = false;
+        let sig = self.sign_program(&lsig.logic);
+        let subsigs: Vec<MultisigSubsig> = msig
+            .subsigs
+            .iter()
+            .map(|subsig| {
+                if subsig.key == my_public_key {
+                    found_my_public_key = true;
+                    MultisigSubsig {
+                        key: subsig.key,
+                        sig: Some(sig),
+                    }
+                } else {
+                    MultisigSubsig {
+                        key: subsig.key,
+                        sig: subsig.sig,
+                    }
+                }
+            })
+            .collect();
+        if !found_my_public_key {
+            return Err(ApiError::InvalidSecretKeyInMultisig.into());
+        }
+        lsig.msig = Some(MultisigSignature { subsigs, ..msig });
+        Ok(lsig)
     }
 
     /// Sign the transaction and populate the multisig field of the signed transaction with the given multisig address
