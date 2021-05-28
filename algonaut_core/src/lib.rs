@@ -337,6 +337,38 @@ impl Serialize for MultisigSubsig {
     }
 }
 
+// LogicSig contains logic for validating a transaction.
+// LogicSig is signed by an account, allowing delegation of operations.
+// OR
+// LogicSig defines a contract account.
+#[derive(Default, Debug, Eq, PartialEq, Clone, Deserialize)]
+pub struct LogicSignature {
+    #[serde(rename = "l")]
+    pub logic: Vec<u8>,
+
+    pub sig: Option<Signature>,
+    pub msig: Option<MultisigSignature>,
+
+    #[serde(rename = "arg")]
+    pub args: Vec<Vec<u8>>,
+}
+
+impl Serialize for LogicSignature {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        // For some reason SerializeStruct ends up serializing as an array, so this explicitly serializes as a map
+        use serde::ser::SerializeMap;
+        let mut state = serializer.serialize_map(Some(4))?;
+        state.serialize_entry("l", &self.logic)?;
+        state.serialize_entry("arg", &self.args)?;
+        state.serialize_entry("sig", &self.sig)?;
+        state.serialize_entry("msig", &self.msig)?;
+        state.end()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

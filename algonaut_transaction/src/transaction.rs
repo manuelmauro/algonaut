@@ -1,6 +1,6 @@
 use crate::account::Account;
 use crate::error::AlgorandError;
-use algonaut_core::{Address, MultisigSignature, Signature};
+use algonaut_core::{Address, LogicSignature, MultisigSignature, Signature};
 use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize, Serializer};
@@ -525,6 +525,9 @@ pub struct SignedTransaction {
 
     #[serde(rename = "msig", skip_serializing_if = "Option::is_none")]
     pub multisig: Option<MultisigSignature>,
+
+    #[serde(rename = "lsig", skip_serializing_if = "Option::is_none")]
+    pub logicsig: Option<LogicSignature>,
 
     #[serde(rename = "txn")]
     pub transaction: Transaction,
