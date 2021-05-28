@@ -1,7 +1,7 @@
 use algonaut_client::{Algod, Kmd};
 use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut_crypto::MasterDerivationKey;
-use algonaut_transaction::{account::Account, Pay, SignedTransaction, Txn};
+use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, Txn};
 use data_encoding::BASE64;
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};
@@ -304,6 +304,64 @@ int 1
     let send_response = algod.broadcast_raw_transaction(&transaction_bytes);
     println!("response {:?}", send_response);
     assert!(send_response.is_err());
+
+    Ok(())
+}
+
+#[test]
+fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
+    // load variables in .env
+    dotenv().ok();
+
+    let algod = Algod::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .client_v2()?;
+
+    let kmd = Kmd::new()
+        .bind(env::var("KMD_URL")?.as_ref())
+        .auth(env::var("KMD_TOKEN")?.as_ref())
+        .client_v1()?;
+
+    // Replace with a funded address managed by KMD
+    let from_address = env::var("ACCOUNT")?.parse()?;
+
+    let list_response = kmd.list_wallets()?;
+    let wallet_id = match list_response
+        .wallets
+        .into_iter()
+        .find(|wallet| wallet.name == "unencrypted-default-wallet")
+    {
+        Some(wallet) => wallet.id,
+        None => return Err("Wallet not found".into()),
+    };
+    let init_response = kmd.init_wallet_handle(&wallet_id, "")?;
+    let wallet_handle_token = init_response.wallet_handle_token;
+
+    let params = algod.transaction_params()?;
+
+    let t = Txn::new()
+        .sender(from_address)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 10)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .asset_configuration(
+            ConfigureAsset::new()
+                .asset_name("Foo".to_owned())
+                .decimals(2)
+                .config_asset(0)
+                .total(1000000)
+                .unit_name("FOO".to_owned())
+                .build(),
+        )
+        .build();
+    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t)?;
+    let send_response = algod.broadcast_raw_transaction(&sign_response.signed_transaction);
+
+    println!("{:#?}", send_response);
+    assert!(send_response.is_ok());
 
     Ok(())
 }
