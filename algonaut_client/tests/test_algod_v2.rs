@@ -137,6 +137,7 @@ fn test_asset_information_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+#[ignore]
 fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();

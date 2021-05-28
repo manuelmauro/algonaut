@@ -265,6 +265,7 @@ fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+#[ignore]
 fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
@@ -279,7 +280,7 @@ fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
         .client_v2()?;
 
     let last_round = algod.status()?.last_round;
-    let res = indexer.block(Round(last_round - 1));
+    let res = indexer.block(Round(last_round));
 
     println!("{:#?}", res);
     assert!(res.is_ok());

@@ -13,7 +13,7 @@ version = "0.2.0"
 algonaut_crypto = {path = "../algonaut_crypto", version = "0.2.0"}
 algonaut_encoding = {path = "../algonaut_encoding", version = "0.2.0"}
 data-encoding = "2.3.1"
+derive_more = "0.99.13"
 serde = {version = "1.0", features = ["derive"]}
 sha2 = "0.8.0"
 static_assertions = "0.3.4"
-derive_more = "0.99.13"
