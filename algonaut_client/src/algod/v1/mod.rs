@@ -3,8 +3,8 @@ use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::Round;
 use algonaut_transaction::SignedTransaction;
 use message::{
-    Account, Block, NodeStatus, PendingTransactions, Supply, Transaction, TransactionFee,
-    TransactionId, TransactionList, TransactionParams, Version,
+    Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply, Transaction,
+    TransactionFee, TransactionId, TransactionList, TransactionParams, Version,
 };
 use reqwest::header::HeaderMap;
 
@@ -159,34 +159,14 @@ impl Client {
     pub fn transactions(
         &self,
         address: &str,
-        first_round: Option<Round>,
-        last_round: Option<Round>,
-        from_date: Option<String>,
-        to_date: Option<String>,
-        limit: Option<u64>,
+        query: &QueryAccountTransactions,
     ) -> Result<TransactionList, AlgorandError> {
-        let mut query = Vec::new();
-        if let Some(first_round) = first_round {
-            query.push(("firstRound", first_round.0.to_string()))
-        }
-        if let Some(last_round) = last_round {
-            query.push(("lastRound", last_round.0.to_string()))
-        }
-        if let Some(from_date) = from_date {
-            query.push(("fromDate", from_date))
-        }
-        if let Some(to_date) = to_date {
-            query.push(("toDate", to_date))
-        }
-        if let Some(limit) = limit {
-            query.push(("max", limit.to_string()))
-        }
         let response = self
             .http_client
             .get(&format!("{}v1/account/{}/transactions", self.url, address))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
-            .query(&query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;

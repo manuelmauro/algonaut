@@ -305,8 +305,10 @@ pub struct UpgradeVote {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Supply {
     round: Round,
+
     #[serde(rename = "totalMoney")]
     total_money: MicroAlgos,
+
     #[serde(rename = "onlineMoney")]
     online_money: MicroAlgos,
 }
@@ -317,8 +319,33 @@ pub struct Supply {
 pub struct PendingTransactions {
     #[serde(rename = "truncatedTxns")]
     truncated_txns: TransactionList,
+
     #[serde(rename = "totalTxns")]
     total_txns: u64,
+}
+
+///
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryAccountTransactions {
+    /// Do not fetch any transactions before this round.
+    #[serde(rename = "firstRound")]
+    pub first_round: Option<Round>,
+
+    /// Do not fetch any transactions before this date. (enabled only with indexer)
+    #[serde(rename = "fromDate")]
+    pub from_date: Option<String>,
+
+    /// Do not fetch any transactions after this round.
+    #[serde(rename = "lastRound")]
+    pub last_round: Option<Round>,
+
+    /// maximum transactions to show (default to 100)
+    #[serde(rename = "max")]
+    pub max: Option<u64>,
+
+    /// Do not fetch any transactions after this date. (enabled only with indexer)
+    #[serde(rename = "toDate")]
+    pub to_date: Option<String>,
 }
 
 /// Version contains the current algod version.

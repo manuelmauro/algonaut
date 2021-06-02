@@ -1,10 +1,10 @@
+use algonaut_client::algod::v1::message::QueryAccountTransactions;
 use algonaut_client::{Algod, Kmd};
 use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut_crypto::MasterDerivationKey;
 use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, Txn};
 use data_encoding::BASE64;
 use dotenv::dotenv;
-use rand::{distributions::Alphanumeric, Rng};
 use std::env;
 use std::error::Error;
 
@@ -376,46 +376,19 @@ fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    let kmd = Kmd::new()
-        .bind(env::var("KMD_URL")?.as_ref())
-        .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
-    let wallet_name: String = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(7)
-        .map(char::from)
-        .collect();
+    let address: String = env::var("ACCOUNT")?.parse()?;
 
-    let wallet = kmd.create_wallet(
-        wallet_name.as_ref(),
-        "testpassword",
-        "sqlite",
-        MasterDerivationKey([0; 32]),
-    );
+    let last_round = algod.status()?.last_round;
 
-    println!("{:#?}", wallet);
-    assert!(wallet.is_ok());
+    let query = QueryAccountTransactions {
+        first_round: Some(last_round),
+        from_date: None,
+        last_round: Some(last_round),
+        max: None,
+        to_date: None,
+    };
 
-    let wallet = wallet.unwrap();
-
-    let id = wallet.wallet.id.as_ref();
-    let handle = kmd.init_wallet_handle(id, "testpassword");
-
-    println!("{:#?}", handle);
-    assert!(handle.is_ok());
-
-    let gen_response = kmd.generate_key(handle.unwrap().wallet_handle_token.as_ref())?;
-
-    let node_status = algod.status()?;
-
-    let res = algod.transactions(
-        &gen_response.address,
-        Some(node_status.last_round),
-        Some(node_status.last_round),
-        None,
-        None,
-        None,
-    );
+    let res = algod.transactions(address.as_str(), &query);
 
     println!("{:#?}", res);
     assert!(res.is_ok());
