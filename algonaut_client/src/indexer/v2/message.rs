@@ -57,13 +57,19 @@ pub struct AccountResponse {
 
 ///
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct QueryRound {
-    pub round: Round,
+pub struct QueryAccountInfo {
+    /// Include all items including closed accounts, deleted applications, destroyed assets,
+    /// opted-out asset holdings, and closed-out application localstates.
+    #[serde(rename = "include-all")]
+    pub include_all: Option<bool>,
+
+    /// Include results for the specified round.
+    pub round: Option<Round>,
 }
 
 ///
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AccountIdResponse {
+pub struct AccountInfoResponse {
     /// Account.
     pub account: Account,
 
@@ -140,7 +146,7 @@ pub struct QueryAccountTransaction {
     pub tx_type: Option<TransactionType>,
 
     /// Lookup the specific transaction by ID.
-    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "txid", skip_serializing_if = "Option::is_none")]
     pub txid: Option<String>,
 }
 
@@ -189,6 +195,14 @@ pub struct ApplicationResponse {
     /// Used for pagination, when making another request provide this token with the next parameter.
     #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
     pub next_token: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryApplicationInfo {
+    /// Include all items including closed accounts, deleted applications, destroyed assets,
+    /// opted-out asset holdings, and closed-out application localstates.
+    #[serde(rename = "include-all")]
+    pub include_all: Option<bool>,
 }
 
 /// Response for applications/id endpoint.
@@ -243,6 +257,14 @@ pub struct AssetResponse {
     /// Used for pagination, when making another request provide this token with the next parameter.
     #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
     pub next_token: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QueryAssetsInfo {
+    /// Include all items including closed accounts, deleted applications, destroyed assets,
+    /// opted-out asset holdings, and closed-out application localstates.
+    #[serde(rename = "include-all")]
+    pub include_all: Option<bool>,
 }
 
 /// Assets info response.

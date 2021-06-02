@@ -32,8 +32,7 @@ impl Client {
             .http_client
             .get(&format!("{}v2/accounts", self.url))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -45,14 +44,13 @@ impl Client {
     pub fn account_info(
         &self,
         id: &str,
-        round: Option<Round>,
-    ) -> Result<AccountIdResponse, AlgorandError> {
+        query: &QueryAccountInfo,
+    ) -> Result<AccountInfoResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/accounts/{}", self.url, id))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(&(round.map(|r| QueryRound { round: r })))
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -70,8 +68,7 @@ impl Client {
             .http_client
             .get(&format!("{}v2/accounts/{}/transactions", self.url, id))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -88,8 +85,7 @@ impl Client {
             .http_client
             .get(&format!("{}v2/applications", self.url))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -98,12 +94,16 @@ impl Client {
     }
 
     /// Lookup application.
-    pub fn application_info(&self, id: &str) -> Result<ApplicationInfoResponse, AlgorandError> {
+    pub fn application_info(
+        &self,
+        id: &str,
+        query: &QueryApplicationInfo,
+    ) -> Result<ApplicationInfoResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/applications/{}", self.url, id))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -117,8 +117,7 @@ impl Client {
             .http_client
             .get(&format!("{}v2/assets", self.url))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -127,12 +126,16 @@ impl Client {
     }
 
     /// Lookup asset information.
-    pub fn assets_info(&self, id: &str) -> Result<AssetsInfoResponse, AlgorandError> {
+    pub fn assets_info(
+        &self,
+        id: &str,
+        query: &QueryAssetsInfo,
+    ) -> Result<AssetsInfoResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/assets/{}", self.url, id))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -150,8 +153,7 @@ impl Client {
             .http_client
             .get(&format!("{}v2/assets/{}/balances", self.url, id))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -167,10 +169,9 @@ impl Client {
     ) -> Result<AssetTransactionResponse, AlgorandError> {
         let response = self
             .http_client
-            .get(&format!("{}v2/assets/{}/balances", self.url, id))
+            .get(&format!("{}v2/assets/{}/transactions", self.url, id))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
@@ -200,8 +201,7 @@ impl Client {
             .http_client
             .get(&format!("{}v2/transactions", self.url))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(query)
+            .query(query)
             .send()?
             .http_error_for_status()?
             .json()?;
