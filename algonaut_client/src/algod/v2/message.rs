@@ -686,6 +686,26 @@ pub struct Supply {
     pub total_money: u64,
 }
 
+///
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct KeyRegistration {
+    /// The fee to use when submitting key registration transactions. Defaults to the suggested fee.
+    #[serde(rename = "fee")]
+    pub fee: Option<usize>,
+
+    /// Value to use for two-level participation key.
+    #[serde(rename = "key-dilution")]
+    pub key_dilution: Option<usize>,
+
+    /// Don't wait for transaction to commit before returning response.
+    #[serde(rename = "no-wait")]
+    pub no_wait: Option<bool>,
+
+    /// The last round for which the generated participation keys will be valid.
+    #[serde(rename = "round-last-valid")]
+    pub round_last_valid: Option<String>,
+}
+
 /// TEAL source code.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SourceTeal {

@@ -197,24 +197,8 @@ impl Client {
     pub fn register_participation_keys(
         &self,
         address: &str,
-        fee: Option<usize>,
-        key_dilution: Option<usize>,
-        no_wait: Option<bool>,
-        round_last_valid: Option<String>,
+        params: &KeyRegistration,
     ) -> Result<String, AlgorandError> {
-        let mut query = Vec::new();
-        if let Some(fee) = fee {
-            query.push(("fee", fee.to_string()))
-        }
-        if let Some(key_dilution) = key_dilution {
-            query.push(("key-dilution", key_dilution.to_string()))
-        }
-        if let Some(no_wait) = no_wait {
-            query.push(("no-wait", no_wait.to_string()))
-        }
-        if let Some(round_last_valid) = round_last_valid {
-            query.push(("round-last-valid", round_last_valid))
-        }
         let response = self
             .http_client
             .post(&format!(
@@ -223,7 +207,7 @@ impl Client {
             ))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
-            .query(&query)
+            .query(&params)
             .send()?
             .http_error_for_status()?
             .json()?;

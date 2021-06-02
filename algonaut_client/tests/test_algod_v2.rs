@@ -1,3 +1,4 @@
+use algonaut_client::algod::v2::message::KeyRegistration;
 use algonaut_client::Algod;
 use algonaut_core::Round;
 use dotenv::dotenv;
@@ -223,7 +224,16 @@ fn test_register_participation_keys_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let res = algod.register_participation_keys("all", None, None, None, None);
+    let params = KeyRegistration {
+        fee: None,
+        key_dilution: None,
+        no_wait: None,
+        round_last_valid: None,
+    };
+
+    let address: String = env::var("ACCOUNT")?.parse()?;
+
+    let res = algod.register_participation_keys(address.as_str(), &params);
 
     println!("{:#?}", res);
     assert!(res.is_ok());
