@@ -18,7 +18,7 @@ pub struct Txn {
     genesis_id: String,
     group: Option<HashDigest>,
     lease: Option<HashDigest>,
-    note: Vec<u8>,
+    note: Option<Vec<u8>>,
     rekey_to: Option<Address>,
 }
 
@@ -72,6 +72,11 @@ impl Txn {
         self
     }
 
+    pub fn asset_transfer(mut self, txn: AssetTransferTransaction) -> Self {
+        self.txn_type = Some(TransactionType::AssetTransferTransaction(txn));
+        self
+    }
+
     pub fn genesis_id(mut self, genesis_id: String) -> Self {
         self.genesis_id = genesis_id;
         self
@@ -88,7 +93,7 @@ impl Txn {
     }
 
     pub fn note(mut self, note: Vec<u8>) -> Self {
-        self.note = note;
+        self.note = Some(note);
         self
     }
 
@@ -212,7 +217,7 @@ impl RegisterKey {
 /// A builder for [AssetConfigurationTransaction].
 #[derive(Default)]
 pub struct ConfigureAsset {
-    config_asset: u64,
+    config_asset: Option<u64>,
     total: u64,
     decimals: u32,
     default_frozen: bool,
@@ -232,7 +237,7 @@ impl ConfigureAsset {
     }
 
     pub fn config_asset(mut self, config_asset: u64) -> Self {
-        self.config_asset = config_asset;
+        self.config_asset = Some(config_asset);
         self
     }
 
@@ -355,7 +360,7 @@ impl TransferAsset {
         AssetTransferTransaction {
             xfer: self.xfer,
             amount: self.amount,
-            sender: self.sender.unwrap(),
+            sender: self.sender,
             receiver: self.receiver.unwrap(),
             close_to: self.close_to.unwrap(),
         }
@@ -447,7 +452,6 @@ impl ClawbackAsset {
 
     pub fn build(self) -> AssetClawbackTransaction {
         AssetClawbackTransaction {
-            sender: self.sender.unwrap(),
             xfer: self.xfer,
             asset_amount: self.asset_amount,
             asset_sender: self.asset_sender.unwrap(),

@@ -91,10 +91,8 @@ impl Account {
         &self,
         transaction: &Transaction,
     ) -> Result<SignedTransaction, AlgorandError> {
-        let encoded_tx = rmp_serde::to_vec_named(transaction)?;
-        let mut prefix_encoded_tx = b"TX".to_vec();
-        prefix_encoded_tx.extend_from_slice(&encoded_tx);
-        let signature = self.sign(&prefix_encoded_tx);
+        let transaction_bytes = &transaction.bytes_to_sign()?;
+        let signature = self.sign(&transaction_bytes);
         let id = BASE32_NOPAD.encode(&ChecksumAlg::digest(&signature.0));
         Ok(SignedTransaction {
             transaction: transaction.clone(),
