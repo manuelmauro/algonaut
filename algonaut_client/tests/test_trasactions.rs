@@ -1,7 +1,6 @@
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
-use algonaut_client::{Algod, Kmd};
-use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
-use algonaut_crypto::MasterDerivationKey;
+use algonaut_client::Algod;
+use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
 use algonaut_transaction::tx_group::TxGroup;
 use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, Txn};
 use data_encoding::BASE64;
@@ -18,44 +17,14 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v1()?;
-    let kmd = Kmd::new()
-        .bind(env::var("KMD_URL")?.as_ref())
-        .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
 
-    let wallet = kmd.create_wallet(
-        "testwallet",
-        "testpassword",
-        "sqlite",
-        MasterDerivationKey([0; 32]),
-    );
-
-    println!("{:#?}", wallet);
-
-    let list_response = kmd.list_wallets()?;
-
-    let wallet_id = match list_response
-        .wallets
-        .into_iter()
-        .find(|wallet| wallet.name == "testwallet")
-    {
-        Some(wallet) => wallet.id,
-        None => return Err("Wallet not found".into()),
-    };
-
-    let init_response = kmd.init_wallet_handle(&wallet_id, "testpassword")?;
-    let wallet_handle_token = init_response.wallet_handle_token;
-
-    let gen_response = kmd.generate_key(&wallet_handle_token)?;
-    let from_address = gen_response.address.parse()?;
-
-    let gen_response = kmd.generate_key(&wallet_handle_token)?;
-    let to_address = gen_response.address.parse()?;
+    let from = account1();
+    let to = account2();
 
     let params = algod.transaction_params()?;
 
     let t = Txn::new()
-        .sender(from_address)
+        .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -64,26 +33,20 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
         .payment(
             Pay::new()
                 .amount(MicroAlgos(123_456))
-                .to(to_address)
+                .to(to.address())
                 .build(),
         )
         .build();
 
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &t);
-
+    let sign_response = from.sign_transaction(&t);
     println!("{:#?}", sign_response);
     assert!(sign_response.is_ok());
-
     let sign_response = sign_response.unwrap();
 
-    println!(
-        "kmd made signed transaction with {} bytes",
-        sign_response.signed_transaction.len()
-    );
-
+    let t_bytes = sign_response.to_msg_pack()?;
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.raw_transaction(&sign_response.signed_transaction);
+    let send_response = algod.raw_transaction(&t_bytes);
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
@@ -101,7 +64,7 @@ fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dyn Erro
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let res = algod.compile_teal(
+    let compiled_teal = algod.compile_teal(
         r#"
 #pragma version 3
 arg 0
@@ -115,17 +78,14 @@ byte 0xFF
         .into(),
     )?;
 
-    let program_bytes = BASE64.decode(res.result.as_bytes())?;
+    let program_bytes = BASE64.decode(compiled_teal.result.as_bytes())?;
     let lsig = LogicSignature {
         logic: program_bytes,
         sig: None,
         msig: None,
         args: vec![vec![1, 0], vec![255]],
     };
-
-    let from_address: Address = res.hash.parse()?;
-    let to_address: Address =
-        "ZOSNRNYXOHQIPFDHJWDBWKRZFRJUMCXQGKTHV7LWZZNIKEEU6AWEODSQ4U".parse()?;
+    let from_address = compiled_teal.hash.parse()?;
 
     let params = algod.transaction_params()?;
 
@@ -139,7 +99,7 @@ byte 0xFF
         .payment(
             Pay::new()
                 .amount(MicroAlgos(123_456))
-                .to(to_address)
+                .to(account1().address())
                 .build(),
         )
         .build();
@@ -181,11 +141,10 @@ int 1
         .into(),
     )?;
 
-    let mnemonic = "fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero";
-    let account = Account::from_mnemonic(mnemonic)?;
+    let from = account1();
 
     let program_bytes = BASE64.decode(res.result.as_bytes())?;
-    let signature = account.sign_program(&program_bytes);
+    let signature = from.sign_program(&program_bytes);
     let lsig = LogicSignature {
         logic: program_bytes,
         sig: Some(signature),
@@ -193,14 +152,10 @@ int 1
         args: vec![],
     };
 
-    let from_address = account.address();
-    let to_address: Address =
-        "ZOSNRNYXOHQIPFDHJWDBWKRZFRJUMCXQGKTHV7LWZZNIKEEU6AWEODSQ4U".parse()?;
-
     let params = algod.transaction_params()?;
 
     let t = Txn::new()
-        .sender(from_address)
+        .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -209,7 +164,7 @@ int 1
         .payment(
             Pay::new()
                 .amount(MicroAlgos(123_456))
-                .to(to_address)
+                .to(account2().address())
                 .build(),
         )
         .build();
@@ -251,11 +206,8 @@ int 1
         .into(),
     )?;
 
-    let mnemonic1 = "auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch";
-    let account1 = Account::from_mnemonic(mnemonic1)?;
-
-    let mnemonic2 = "since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left";
-    let account2 = Account::from_mnemonic(mnemonic2)?;
+    let account1 = account1();
+    let account2 = account2();
 
     let multisig_address = MultisigAddress::new(1, 2, &[account1.address(), account2.address()])?;
 
@@ -269,14 +221,10 @@ int 1
     let lsig = account1.sign_logic_msig(lsig, multisig_address.clone())?;
     let lsig = account2.append_to_logic_msig(lsig)?;
 
-    let from_address = multisig_address.address();
-    let to_address: Address =
-        "ZOSNRNYXOHQIPFDHJWDBWKRZFRJUMCXQGKTHV7LWZZNIKEEU6AWEODSQ4U".parse()?;
-
     let params = algod.transaction_params()?;
 
     let t = Txn::new()
-        .sender(from_address)
+        .sender(multisig_address.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -285,7 +233,7 @@ int 1
         .payment(
             Pay::new()
                 .amount(MicroAlgos(123_456))
-                .to(to_address)
+                .to(account3().address())
                 .build(),
         )
         .build();
@@ -319,29 +267,12 @@ fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let kmd = Kmd::new()
-        .bind(env::var("KMD_URL")?.as_ref())
-        .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
-
-    let from_address = env::var("ACCOUNT")?.parse()?;
-
-    let list_response = kmd.list_wallets()?;
-    let wallet_id = match list_response
-        .wallets
-        .into_iter()
-        .find(|wallet| wallet.name == "unencrypted-default-wallet")
-    {
-        Some(wallet) => wallet.id,
-        None => return Err("Wallet not found".into()),
-    };
-    let init_response = kmd.init_wallet_handle(&wallet_id, "")?;
-    let wallet_handle_token = init_response.wallet_handle_token;
+    let from = account1();
 
     let params = algod.transaction_params()?;
 
     let t = Txn::new()
-        .sender(from_address)
+        .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -356,11 +287,11 @@ fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
                 .build(),
         )
         .build();
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t)?;
-    let send_response = algod.broadcast_raw_transaction(&sign_response.signed_transaction);
+    let signed_t = from.sign_transaction(&t)?;
+    let send_response = algod.broadcast_raw_transaction(&signed_t.to_msg_pack()?);
 
     println!("{:#?}", send_response);
-    assert!(send_response.is_ok());
+    assert!(send_response.is_err());
 
     Ok(())
 }
@@ -438,63 +369,66 @@ fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let kmd = Kmd::new()
-        .bind(env::var("KMD_URL")?.as_ref())
-        .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
-
-    let address1: Address = env::var("ACCOUNT")?.parse()?;
-    let address2: Address = env::var("ACCOUNT_2")?.parse()?;
-
-    let list_response = kmd.list_wallets()?;
-    let wallet_id = match list_response
-        .wallets
-        .into_iter()
-        .find(|wallet| wallet.name == "unencrypted-default-wallet")
-    {
-        Some(wallet) => wallet.id,
-        None => return Err("Wallet not found".into()),
-    };
-    let init_response = kmd.init_wallet_handle(&wallet_id, "")?;
-    let wallet_handle_token = init_response.wallet_handle_token;
+    let account1 = account1();
+    let account2 = account2();
 
     let params = algod.transaction_params()?;
 
     let t1 = &mut Txn::new()
-        .sender(address1)
+        .sender(account1.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id.clone())
         .genesis_hash(params.genesis_hash)
         .fee(MicroAlgos(1_000))
-        .payment(Pay::new().amount(MicroAlgos(1_000)).to(address2).build())
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(1_000))
+                .to(account2.address())
+                .build(),
+        )
         .build();
 
     let t2 = &mut Txn::new()
-        .sender(address2)
+        .sender(account2.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
         .genesis_hash(params.genesis_hash)
         .fee(MicroAlgos(1_000))
-        .payment(Pay::new().amount(MicroAlgos(3_000)).to(address1).build())
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(3_000))
+                .to(account1.address())
+                .build(),
+        )
         .build();
 
     TxGroup::assign_group_id(vec![t1, t2])?;
 
-    let sign_response_t1 = kmd.sign_transaction(&wallet_handle_token, "", &t1)?;
-    let sign_response_t2 = kmd.sign_transaction(&wallet_handle_token, "", &t2)?;
+    let signed_t1 = account1.sign_transaction(&t1)?;
+    let signed_t2 = account2.sign_transaction(&t2)?;
 
-    let send_response = algod.broadcast_raw_transaction(
-        &[
-            sign_response_t1.signed_transaction,
-            sign_response_t2.signed_transaction,
-        ]
-        .concat(),
-    );
+    let send_response = algod
+        .broadcast_raw_transaction(&[signed_t1.to_msg_pack()?, signed_t2.to_msg_pack()?].concat());
 
     println!("{:#?}", send_response);
-    assert!(send_response.is_ok());
+    assert!(send_response.is_err());
 
     Ok(())
+}
+
+fn account1() -> Account {
+    let mnemonic = "fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero";
+    Account::from_mnemonic(mnemonic).unwrap()
+}
+
+fn account2() -> Account {
+    let mnemonic = "since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left";
+    Account::from_mnemonic(mnemonic).unwrap()
+}
+
+fn account3() -> Account {
+    let mnemonic = "auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch";
+    Account::from_mnemonic(mnemonic).unwrap()
 }
