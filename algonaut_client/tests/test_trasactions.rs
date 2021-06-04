@@ -1,6 +1,6 @@
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
 use algonaut_client::{Algod, Kmd};
-use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress};
+use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
 use algonaut_crypto::MasterDerivationKey;
 use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, Txn};
 use data_encoding::BASE64;
@@ -151,7 +151,7 @@ byte 0xFF
         transaction_id: "".to_owned(),
     };
 
-    let transaction_bytes = rmp_serde::to_vec_named(&signed_transaction)?;
+    let transaction_bytes = signed_transaction.to_msg_pack()?;
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
@@ -221,7 +221,7 @@ int 1
         transaction_id: "".to_owned(),
     };
 
-    let transaction_bytes = rmp_serde::to_vec_named(&signed_transaction)?;
+    let transaction_bytes = signed_transaction.to_msg_pack()?;
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
@@ -297,7 +297,7 @@ int 1
         transaction_id: "".to_owned(),
     };
 
-    let transaction_bytes = rmp_serde::to_vec_named(&signed_transaction)?;
+    let transaction_bytes = signed_transaction.to_msg_pack()?;
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
@@ -351,7 +351,6 @@ fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
             ConfigureAsset::new()
                 .asset_name("Foo".to_owned())
                 .decimals(2)
-                .config_asset(0)
                 .total(1000000)
                 .unit_name("FOO".to_owned())
                 .build(),

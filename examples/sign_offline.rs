@@ -3,6 +3,7 @@ use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Txn};
 use algonaut::Algod;
+use algonaut_transaction::ApiSignedTransaction;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -49,7 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // sign the transaction
     let signed_transaction = account.sign_transaction(&t)?;
-    let bytes = rmp_serde::to_vec_named(&signed_transaction)?;
+    let bytes = rmp_serde::to_vec_named(&ApiSignedTransaction::from(signed_transaction))?;
 
     let filename = "./signed.tx";
     let mut f = File::create(filename)?;

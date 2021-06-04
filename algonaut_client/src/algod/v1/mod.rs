@@ -1,6 +1,7 @@
 use crate::error::AlgorandError;
 use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::Round;
+use algonaut_core::ToMsgPack;
 use algonaut_transaction::SignedTransaction;
 use message::{
     Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply, Transaction,
@@ -178,8 +179,7 @@ impl Client {
         &self,
         signed_transaction: &SignedTransaction,
     ) -> Result<TransactionId, AlgorandError> {
-        let bytes = rmp_serde::to_vec_named(signed_transaction)?;
-        self.raw_transaction(&bytes)
+        self.raw_transaction(&signed_transaction.to_msg_pack()?)
     }
 
     /// Broadcasts a raw transaction to the network

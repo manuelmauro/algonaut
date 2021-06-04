@@ -1,4 +1,4 @@
-use algonaut_core::{Address, Signature};
+use algonaut_core::{Address, Signature, ToMsgPack};
 use serde::{Deserialize, Serialize};
 
 /// A bid by a user as part of an auction.
@@ -34,3 +34,5 @@ pub struct SignedBid {
     /// A signature by the bidder, as identified in the bid ([Bid.bidder_key]) over the hash of the Bid.
     pub sig: Signature,
 }
+
+impl ToMsgPack for Bid {}

@@ -369,6 +369,12 @@ impl Serialize for LogicSignature {
     }
 }
 
+pub trait ToMsgPack: Serialize {
+    fn to_msg_pack(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
+        rmp_serde::to_vec_named(&self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
