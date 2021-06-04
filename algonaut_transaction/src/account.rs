@@ -3,6 +3,7 @@ use crate::error::{AlgorandError, ApiError};
 use crate::transaction::{SignedTransaction, Transaction};
 use algonaut_core::{
     Address, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig, Signature,
+    ToMsgPack,
 };
 use algonaut_crypto::mnemonic;
 use algonaut_crypto::Ed25519PublicKey;
@@ -76,7 +77,7 @@ impl Account {
 
     /// Sign a bid with the account's private key
     pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, AlgorandError> {
-        let encoded_bid = rmp_serde::to_vec_named(&bid)?;
+        let encoded_bid = bid.to_msg_pack()?;
         let mut prefix_encoded_bid = b"aB".to_vec();
         prefix_encoded_bid.extend_from_slice(&encoded_bid);
         let signature = self.sign(&prefix_encoded_bid);

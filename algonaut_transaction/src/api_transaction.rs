@@ -1,5 +1,6 @@
 use algonaut_core::{
-    Address, LogicSignature, MicroAlgos, MultisigSignature, Round, Signature, VotePk, VrfPk,
+    Address, LogicSignature, MicroAlgos, MultisigSignature, Round, Signature, ToMsgPack, VotePk,
+    VrfPk,
 };
 use algonaut_crypto::HashDigest;
 use serde::Serialize;
@@ -351,5 +352,32 @@ impl From<StateSchema> for ApiStateSchema {
             number_ints: state_schema.number_ints,
             number_byteslices: state_schema.number_byteslices,
         }
+    }
+}
+
+impl ToMsgPack for ApiTransaction {}
+impl ToMsgPack for ApiSignedTransaction {}
+impl ToMsgPack for Transaction {}
+impl ToMsgPack for SignedTransaction {}
+
+/// Convenience to call to_msg_pack() directly on Transaction
+impl Serialize for Transaction {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let api_transaction: ApiTransaction = self.to_owned().into();
+        api_transaction.serialize(serializer)
+    }
+}
+
+/// Convenience to call to_msg_pack() directly on SignedTransaction
+impl Serialize for SignedTransaction {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let api_transaction: ApiSignedTransaction = self.to_owned().into();
+        api_transaction.serialize(serializer)
     }
 }

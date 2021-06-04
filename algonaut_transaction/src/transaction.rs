@@ -1,7 +1,6 @@
 use crate::account::Account;
-use crate::api_transaction::ApiSignedTransaction;
-use crate::api_transaction::ApiTransaction;
 use crate::error::AlgorandError;
+use algonaut_core::ToMsgPack;
 use algonaut_core::{Address, LogicSignature, MultisigSignature, Signature};
 use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
@@ -84,7 +83,7 @@ impl Transaction {
     }
 
     pub fn bytes_to_sign(&self) -> Result<Vec<u8>, AlgorandError> {
-        let encoded_tx = rmp_serde::to_vec_named(&ApiTransaction::from(self.to_owned()))?;
+        let encoded_tx = self.to_owned().to_msg_pack()?;
         let mut prefix_encoded_tx = b"TX".to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
         Ok(prefix_encoded_tx)
@@ -93,13 +92,8 @@ impl Transaction {
     // Estimates the size of the encoded transaction, used in calculating the fee
     fn estimate_size(&self) -> Result<u64, AlgorandError> {
         let account = Account::generate();
-        let len = rmp_serde::to_vec_named(
-            &account
-                .sign_transaction(self)
-                .map(ApiSignedTransaction::from)?,
-        )?
-        .len() as u64;
-        Ok(len)
+        let signed_transaction = account.sign_transaction(self)?;
+        Ok(signed_transaction.to_msg_pack()?.len() as u64)
     }
 }
 

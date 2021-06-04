@@ -1,8 +1,8 @@
 use crate::error::AlgorandError;
 use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::MultisigSignature;
+use algonaut_core::ToMsgPack;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
-use algonaut_transaction::api_transaction::ApiTransaction;
 use algonaut_transaction::Transaction;
 use message::*;
 
@@ -327,11 +327,9 @@ impl Client {
         wallet_password: &str,
         transaction: &Transaction,
     ) -> Result<SignTransactionResponse, AlgorandError> {
-        let transaction_bytes =
-            rmp_serde::to_vec_named(&ApiTransaction::from(transaction.clone()))?;
         let req = SignTransactionRequest {
             wallet_handle_token: wallet_handle.to_string(),
-            transaction: transaction_bytes,
+            transaction: transaction.to_msg_pack()?,
             wallet_password: wallet_password.to_string(),
         };
         let response = self
@@ -449,11 +447,9 @@ impl Client {
         public_key: Ed25519PublicKey,
         partial_multisig: Option<MultisigSignature>,
     ) -> Result<SignMultisigTransactionResponse, AlgorandError> {
-        let transaction_bytes =
-            rmp_serde::to_vec_named(&ApiTransaction::from(transaction.clone()))?;
         let req = SignMultisigTransactionRequest {
             wallet_handle_token: wallet_handle.to_string(),
-            transaction: transaction_bytes,
+            transaction: transaction.to_msg_pack()?,
             public_key,
             partial_multisig,
             wallet_password: wallet_password.to_string(),

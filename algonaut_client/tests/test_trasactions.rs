@@ -1,8 +1,7 @@
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
 use algonaut_client::{Algod, Kmd};
-use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress};
+use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
 use algonaut_crypto::MasterDerivationKey;
-use algonaut_transaction::ApiSignedTransaction;
 use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, Txn};
 use data_encoding::BASE64;
 use dotenv::dotenv;
@@ -152,8 +151,7 @@ byte 0xFF
         transaction_id: "".to_owned(),
     };
 
-    let transaction_bytes =
-        rmp_serde::to_vec_named(&ApiSignedTransaction::from(signed_transaction))?;
+    let transaction_bytes = signed_transaction.to_msg_pack()?;
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
@@ -223,8 +221,7 @@ int 1
         transaction_id: "".to_owned(),
     };
 
-    let transaction_bytes =
-        rmp_serde::to_vec_named(&ApiSignedTransaction::from(signed_transaction))?;
+    let transaction_bytes = signed_transaction.to_msg_pack()?;
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
@@ -300,8 +297,7 @@ int 1
         transaction_id: "".to_owned(),
     };
 
-    let transaction_bytes =
-        rmp_serde::to_vec_named(&ApiSignedTransaction::from(signed_transaction))?;
+    let transaction_bytes = signed_transaction.to_msg_pack()?;
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
