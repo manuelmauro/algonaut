@@ -4,6 +4,7 @@ pub mod auction;
 pub mod builder;
 pub mod error;
 pub mod transaction;
+pub mod tx_group;
 
 pub use api_transaction::ApiSignedTransaction;
 pub use builder::{

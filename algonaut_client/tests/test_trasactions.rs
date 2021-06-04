@@ -2,6 +2,7 @@ use algonaut_client::algod::v1::message::QueryAccountTransactions;
 use algonaut_client::{Algod, Kmd};
 use algonaut_core::{Address, LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
 use algonaut_crypto::MasterDerivationKey;
+use algonaut_transaction::tx_group::TxGroup;
 use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, Txn};
 use data_encoding::BASE64;
 use dotenv::dotenv;
@@ -323,7 +324,6 @@ fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
         .auth(env::var("KMD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    // Replace with a funded address managed by KMD
     let from_address = env::var("ACCOUNT")?.parse()?;
 
     let list_response = kmd.list_wallets()?;
@@ -423,6 +423,78 @@ fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
 
     println!("{:?}", algod.transaction_params());
     assert!(algod.transaction_params().is_ok());
+
+    Ok(())
+}
+
+/// Swap between 2 accounts. For simplicity, both send Algos.
+#[test]
+fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
+    // load variables in .env
+    dotenv().ok();
+
+    let algod = Algod::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .client_v2()?;
+
+    let kmd = Kmd::new()
+        .bind(env::var("KMD_URL")?.as_ref())
+        .auth(env::var("KMD_TOKEN")?.as_ref())
+        .client_v1()?;
+
+    let address1: Address = env::var("ACCOUNT")?.parse()?;
+    let address2: Address = env::var("ACCOUNT_2")?.parse()?;
+
+    let list_response = kmd.list_wallets()?;
+    let wallet_id = match list_response
+        .wallets
+        .into_iter()
+        .find(|wallet| wallet.name == "unencrypted-default-wallet")
+    {
+        Some(wallet) => wallet.id,
+        None => return Err("Wallet not found".into()),
+    };
+    let init_response = kmd.init_wallet_handle(&wallet_id, "")?;
+    let wallet_handle_token = init_response.wallet_handle_token;
+
+    let params = algod.transaction_params()?;
+
+    let t1 = &mut Txn::new()
+        .sender(address1)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 10)
+        .genesis_id(params.genesis_id.clone())
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(1_000))
+        .payment(Pay::new().amount(MicroAlgos(1_000)).to(address2).build())
+        .build();
+
+    let t2 = &mut Txn::new()
+        .sender(address2)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 10)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(1_000))
+        .payment(Pay::new().amount(MicroAlgos(3_000)).to(address1).build())
+        .build();
+
+    TxGroup::assign_group_id(vec![t1, t2])?;
+
+    let sign_response_t1 = kmd.sign_transaction(&wallet_handle_token, "", &t1)?;
+    let sign_response_t2 = kmd.sign_transaction(&wallet_handle_token, "", &t2)?;
+
+    let send_response = algod.broadcast_raw_transaction(
+        &[
+            sign_response_t1.signed_transaction,
+            sign_response_t2.signed_transaction,
+        ]
+        .concat(),
+    );
+
+    println!("{:#?}", send_response);
+    assert!(send_response.is_ok());
 
     Ok(())
 }

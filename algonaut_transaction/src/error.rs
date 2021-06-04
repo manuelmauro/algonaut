@@ -68,4 +68,8 @@ pub enum ApiError {
     MismatchingSignatures,
     #[display(fmt = "Response error: {}", response)]
     ResponseError { response: String },
+    #[display(fmt = "Empty transaction list.")]
+    EmptyTransactionListError,
+    #[display(fmt = "Max group size is {}.", size)]
+    MaxTransactionGroupSizeError { size: usize },
 }
