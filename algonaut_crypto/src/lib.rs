@@ -1,5 +1,7 @@
+use std::fmt::{self, Formatter};
+
 use algonaut_encoding::{deserialize_bytes32, U8_32Visitor};
-use data_encoding::BASE64;
+use data_encoding::{BASE32_NOPAD, BASE64};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Support for turning 32 byte keys into human-readable mnemonics and back
@@ -9,13 +11,13 @@ pub mod mnemonic;
 pub mod error;
 
 /// A SHA512_256 hash
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct HashDigest(pub [u8; 32]);
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Ed25519PublicKey(pub [u8; 32]);
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MasterDerivationKey(pub [u8; 32]);
 
 impl Serialize for HashDigest {
@@ -36,6 +38,12 @@ impl<'de> Deserialize<'de> for HashDigest {
     }
 }
 
+impl fmt::Debug for HashDigest {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", BASE32_NOPAD.encode(&self.0))
+    }
+}
+
 impl Serialize for Ed25519PublicKey {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
@@ -53,6 +61,18 @@ impl<'de> Deserialize<'de> for Ed25519PublicKey {
         Ok(Ed25519PublicKey(
             deserializer.deserialize_bytes(U8_32Visitor)?,
         ))
+    }
+}
+
+impl fmt::Debug for Ed25519PublicKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", BASE32_NOPAD.encode(&self.0))
+    }
+}
+
+impl fmt::Debug for MasterDerivationKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", BASE32_NOPAD.encode(&self.0))
     }
 }
 
