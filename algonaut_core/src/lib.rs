@@ -1,11 +1,12 @@
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_encoding::{SignatureVisitor, U8_32Visitor};
 use data_encoding::BASE32_NOPAD;
+use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
-use std::fmt::{Debug, Formatter};
+use std::fmt::{self, Debug, Formatter};
 use std::{ops::Mul, str::FromStr};
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
@@ -146,20 +147,16 @@ const CHECKSUM_LEN: usize = 4;
 const HASH_LEN: usize = 32;
 
 /// Public key address
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Address(pub [u8; HASH_LEN]);
 
 impl Address {
     pub fn new(bytes: [u8; HASH_LEN]) -> Address {
         Address(bytes)
     }
-}
 
-impl FromStr for Address {
-    type Err = String;
-
-    /// Decode address from base64 string with checksum
-    fn from_str(string: &str) -> Result<Self, Self::Err> {
+    /// Decode from base32 string with checksum
+    fn decode_from_string(string: &str) -> Result<Address, String> {
         let checksum_address = match BASE32_NOPAD.decode(string.as_bytes()) {
             Ok(decoded) => decoded,
             Err(err) => return Err(format!("Error decoding base32: {:?}", err)),
@@ -177,15 +174,32 @@ impl FromStr for Address {
             Err("Input checksum did not validate".to_string())
         }
     }
-}
 
-impl ToString for Address {
-    /// Encode address to base64 string with checksum
-    fn to_string(&self) -> String {
+    /// Encode to base32 string with checksum
+    fn encode_as_string(&self) -> String {
         let hashed = ChecksumAlg::digest(&self.0);
         let checksum = &hashed[(HASH_LEN - CHECKSUM_LEN)..];
         let checksum_address = [&self.0, checksum].concat();
         BASE32_NOPAD.encode(&checksum_address)
+    }
+}
+
+impl FromStr for Address {
+    type Err = String;
+    fn from_str(string: &str) -> Result<Self, Self::Err> {
+        Address::decode_from_string(string)
+    }
+}
+
+impl ToString for Address {
+    fn to_string(&self) -> String {
+        self.encode_as_string()
+    }
+}
+
+impl Debug for Address {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.encode_as_string())
     }
 }
 
@@ -263,7 +277,7 @@ pub struct Signature(pub [u8; 64]);
 
 impl Debug for Signature {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Signature").field(&self.0.to_vec()).finish()
+        write!(f, "{}", &BASE64.encode(&self.0))
     }
 }
 
