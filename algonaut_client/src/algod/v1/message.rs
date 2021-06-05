@@ -325,7 +325,7 @@ pub struct PendingTransactions {
 }
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryAccountTransactions {
     /// Do not fetch any transactions before this round.
     #[serde(rename = "firstRound")]

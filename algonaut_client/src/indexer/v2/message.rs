@@ -4,7 +4,7 @@ use algonaut_encoding::deserialize_bytes;
 use serde::{Deserialize, Serialize};
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryAccount {
     /// Application ID.
     #[serde(rename = "application-id")]
@@ -56,7 +56,7 @@ pub struct AccountResponse {
 }
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryAccountInfo {
     /// Include all items including closed accounts, deleted applications, destroyed assets,
     /// opted-out asset holdings, and closed-out application localstates.
@@ -79,7 +79,7 @@ pub struct AccountInfoResponse {
 }
 
 /// Query account transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryAccountTransaction {
     /// Include results after the given time. Must be an RFC 3339 formatted string.
     #[serde(rename = "after-time", skip_serializing_if = "Option::is_none")]
@@ -167,7 +167,7 @@ pub struct AccountTransactionResponse {
 }
 
 /// Query applications.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryApplications {
     /// Application ID.
     #[serde(rename = "application-id", skip_serializing_if = "Option::is_none")]
@@ -197,7 +197,7 @@ pub struct ApplicationResponse {
     pub next_token: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryApplicationInfo {
     /// Include all items including closed accounts, deleted applications, destroyed assets,
     /// opted-out asset holdings, and closed-out application localstates.
@@ -217,7 +217,7 @@ pub struct ApplicationInfoResponse {
 }
 
 /// Query assets.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryAssets {
     /// Asset ID.
     #[serde(rename = "asset-id", skip_serializing_if = "Option::is_none")]
@@ -259,7 +259,7 @@ pub struct AssetResponse {
     pub next_token: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryAssetsInfo {
     /// Include all items including closed accounts, deleted applications, destroyed assets,
     /// opted-out asset holdings, and closed-out application localstates.
@@ -279,7 +279,7 @@ pub struct AssetsInfoResponse {
 }
 
 /// Query assets.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryBalances {
     /// Results should have an amount greater than this value. MicroAlgos are the default currency
     /// unless an asset-id is provided, in which case the asset will be used.
@@ -323,7 +323,7 @@ pub struct BalancesResponse {
 }
 
 /// Query assets transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryAssetTransaction {
     /// Only include transactions with this address in one of the transaction fields.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -421,7 +421,7 @@ pub struct AssetTransactionResponse {
 }
 
 /// Query transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub struct QueryTransaction {
     /// Only include transactions with this address in one of the transaction fields.
     #[serde(skip_serializing_if = "Option::is_none")]
