@@ -19,7 +19,7 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .client_v2()?;
 
     let from = account1();
     let to = account2();
@@ -49,7 +49,7 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
     let t_bytes = sign_response.to_msg_pack()?;
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.raw_transaction(&t_bytes);
+    let send_response = algod.broadcast_raw_transaction(&t_bytes);
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
