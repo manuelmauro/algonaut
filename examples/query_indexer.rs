@@ -12,13 +12,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .bind(env::var("INDEXER_URL")?.as_ref())
         .client_v2()?;
 
-    // query Account using default query parameters (all None).
+    // query accounts using default query parameters (all None).
     let accounts = indexer.accounts(&QueryAccount::default())?.accounts;
     println!("found {} accounts", accounts.len());
 
-    // query Applications with custom query parameters.
+    // query accounts with custom query parameters.
     let mut accounts_query = QueryAccount::default();
-    accounts_query.limit = Some(2); // why 2? see: https://github.com/algorand/indexer/issues/516
+    // why 2? see: https://github.com/algorand/indexer/issues/516
+    accounts_query.limit = Some(2);
 
     let accounts = indexer.accounts(&accounts_query)?.accounts;
     println!("found {} accounts", accounts.len());
