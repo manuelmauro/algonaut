@@ -1,21 +1,14 @@
 use crate::auction::{Bid, SignedBid};
 use crate::error::{AlgorandError, ApiError};
-use crate::transaction::{SignedTransaction, Transaction};
+use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
-    Address, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig, Signature,
-    ToMsgPack,
+    Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, Signature, ToMsgPack,
 };
 use algonaut_crypto::mnemonic;
-use algonaut_crypto::Ed25519PublicKey;
-use data_encoding::BASE32_NOPAD;
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::Ed25519KeyPair as KeyPairType;
 use ring::signature::KeyPair;
-use sha2::Digest;
-use std::borrow::Borrow;
-
-type ChecksumAlg = sha2::Sha512Trunc256;
 
 pub struct Account {
     seed: [u8; 32],
@@ -71,12 +64,16 @@ impl Account {
         Signature(stripped_signature)
     }
 
-    pub fn sign_program(&self, bytes: &[u8]) -> Signature {
-        self.sign(&["Program".as_bytes(), &bytes].concat())
+    pub fn sign_program(&self, program: &CompiledTeal) -> Signature {
+        self.sign(&["Program".as_bytes(), &program.bytes].concat())
+    }
+
+    fn sign_transaction(&self, transaction: &Transaction) -> Result<Signature, AlgorandError> {
+        Ok(self.sign(&transaction.bytes_to_sign()?))
     }
 
     /// Sign a bid with the account's private key
-    pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, AlgorandError> {
+    pub fn sign_and_generate_signed_bid(&self, bid: Bid) -> Result<SignedBid, AlgorandError> {
         let encoded_bid = bid.to_msg_pack()?;
         let mut prefix_encoded_bid = b"aB".to_vec();
         prefix_encoded_bid.extend_from_slice(&encoded_bid);
@@ -87,177 +84,131 @@ impl Account {
         })
     }
 
-    /// Sign a transaction with the account's private key
-    pub fn sign_transaction(
+    /// Sign transaction and generate a single signature SignedTransaction
+    pub fn sign_and_generate_signed_transaction(
         &self,
         transaction: &Transaction,
     ) -> Result<SignedTransaction, AlgorandError> {
-        let transaction_bytes = &transaction.bytes_to_sign()?;
-        let signature = self.sign(transaction_bytes);
-        let id = BASE32_NOPAD.encode(&ChecksumAlg::digest(transaction_bytes));
         Ok(SignedTransaction {
             transaction: transaction.clone(),
-            sig: Some(signature),
-            logicsig: None,
-            multisig: None,
-            transaction_id: id,
+            transaction_id: transaction.id()?,
+            sig: TransactionSignature::Single(self.sign_transaction(&transaction)?),
         })
     }
 
-    pub fn sign_logic_msig(
+    /// Sign transaction and generate a multi signature SignedTransaction
+    pub fn sign_and_generate_multisig_transaction(
         &self,
-        lsig: LogicSignature,
-        ma: MultisigAddress,
-    ) -> Result<LogicSignature, AlgorandError> {
-        let mut lsig = lsig;
-        let my_public_key = Ed25519PublicKey(self.address.0);
-        if !ma.public_keys.contains(&my_public_key) {
+        from: MultisigAddress,
+        transaction: &Transaction,
+    ) -> Result<SignedTransaction, AlgorandError> {
+        Ok(SignedTransaction {
+            transaction: transaction.clone(),
+            transaction_id: transaction.id()?,
+            sig: TransactionSignature::Multi(self.init_transaction_msig(transaction, from)?),
+        })
+    }
+
+    /// Creates transaction multi signature corresponding to multisign addresses, inserting own signature
+    pub fn init_transaction_msig(
+        &self,
+        transaction: &Transaction,
+        from: MultisigAddress,
+    ) -> Result<MultisigSignature, AlgorandError> {
+        if from.address() != transaction.sender {
+            return Err(ApiError::InvalidSenderInMultisig.into());
+        }
+        if !from.contains(&self.address) {
             return Err(ApiError::InvalidSecretKeyInMultisig.into());
         }
-        let sig = self.sign_program(&lsig.logic);
-        let subsigs: Vec<MultisigSubsig> = ma
-            .public_keys
-            .iter()
-            .map(|key| {
-                if *key == my_public_key {
-                    MultisigSubsig {
-                        key: *key,
-                        sig: Some(sig),
-                    }
-                } else {
-                    MultisigSubsig {
-                        key: *key,
-                        sig: None,
-                    }
-                }
-            })
-            .collect();
-        let multisig = MultisigSignature {
-            version: ma.version,
-            threshold: ma.threshold,
-            subsigs,
-        };
-        lsig.msig = Some(multisig);
-        Ok(lsig)
+
+        Ok(self.init_msig(from, self.sign_transaction(&transaction)?))
+    }
+
+    /// Creates logic multi signature corresponding to multisign addresses, inserting own signature
+    pub fn init_logic_msig(
+        &self,
+        program: &CompiledTeal,
+        ma: MultisigAddress,
+    ) -> Result<MultisigSignature, AlgorandError> {
+        if !ma.contains(&self.address) {
+            return Err(ApiError::InvalidSecretKeyInMultisig.into());
+        }
+
+        Ok(self.init_msig(ma, self.sign_program(program)))
     }
 
     pub fn append_to_logic_msig(
         &self,
-        lsig: LogicSignature,
-    ) -> Result<LogicSignature, AlgorandError> {
-        let mut lsig = lsig;
-        let my_public_key = Ed25519PublicKey(self.address.0);
-        let msig = lsig
-            .msig
-            .ok_or_else(|| AlgorandError::from(ApiError::InvalidSecretKeyInMultisig))?;
-        let mut found_my_public_key = false;
-        let sig = self.sign_program(&lsig.logic);
+        program: &CompiledTeal,
+        msig: MultisigSignature,
+    ) -> Result<MultisigSignature, AlgorandError> {
+        self.append_sig_to_msig(self.sign_program(program), msig)
+    }
+
+    pub fn append_to_transaction_msig(
+        &self,
+        transaction: &Transaction,
+        msig: MultisigSignature,
+    ) -> Result<MultisigSignature, AlgorandError> {
+        self.append_sig_to_msig(self.sign_transaction(transaction)?, msig)
+    }
+
+    /// Creates multi signature corresponding to multisign addresses, inserting own signature
+    fn init_msig(&self, ma: MultisigAddress, sig: Signature) -> MultisigSignature {
+        let my_public_key = self.address.as_public_key();
+        let subsigs: Vec<MultisigSubsig> = ma
+            .public_keys
+            .into_iter()
+            .map(|key| {
+                if key == my_public_key {
+                    MultisigSubsig {
+                        key,
+                        sig: Some(sig),
+                    }
+                } else {
+                    MultisigSubsig { key, sig: None }
+                }
+            })
+            .collect();
+
+        MultisigSignature {
+            version: ma.version,
+            threshold: ma.threshold,
+            subsigs,
+        }
+    }
+
+    /// Inserts signature in multi signature
+    /// Private: Assumes that my_sig was generated with this account
+    fn append_sig_to_msig(
+        &self,
+        my_sig: Signature,
+        msig: MultisigSignature,
+    ) -> Result<MultisigSignature, AlgorandError> {
+        let my_public_key = self.address.as_public_key();
+        if !msig
+            .subsigs
+            .iter()
+            .any(|s: &MultisigSubsig| s.key == my_public_key)
+        {
+            return Err(ApiError::InvalidSecretKeyInMultisig.into());
+        }
+
         let subsigs: Vec<MultisigSubsig> = msig
             .subsigs
             .iter()
             .map(|subsig| {
                 if subsig.key == my_public_key {
-                    found_my_public_key = true;
                     MultisigSubsig {
                         key: subsig.key,
-                        sig: Some(sig),
+                        sig: Some(my_sig),
                     }
                 } else {
-                    MultisigSubsig {
-                        key: subsig.key,
-                        sig: subsig.sig,
-                    }
+                    subsig.clone()
                 }
             })
             .collect();
-        if !found_my_public_key {
-            return Err(ApiError::InvalidSecretKeyInMultisig.into());
-        }
-        lsig.msig = Some(MultisigSignature { subsigs, ..msig });
-        Ok(lsig)
-    }
-
-    /// Sign the transaction and populate the multisig field of the signed transaction with the given multisig address
-    pub fn sign_multisig_transaction(
-        &self,
-        from: MultisigAddress,
-        transaction: &Transaction,
-    ) -> Result<SignedTransaction, AlgorandError> {
-        if from.address() != transaction.sender {
-            return Err(ApiError::InvalidSenderInMultisig.into());
-        }
-        let my_public_key = Ed25519PublicKey(self.address.0);
-        if !from.public_keys.contains(&my_public_key) {
-            return Err(ApiError::InvalidSecretKeyInMultisig.into());
-        }
-        let signed_transaction = self.sign_transaction(transaction)?;
-        let subsigs: Vec<MultisigSubsig> = from
-            .public_keys
-            .iter()
-            .map(|key| {
-                if *key == my_public_key {
-                    MultisigSubsig {
-                        key: *key,
-                        sig: signed_transaction.clone().sig,
-                    }
-                } else {
-                    MultisigSubsig {
-                        key: *key,
-                        sig: None,
-                    }
-                }
-            })
-            .collect();
-        let multisig = MultisigSignature {
-            version: from.version,
-            threshold: from.threshold,
-            subsigs,
-        };
-        Ok(SignedTransaction {
-            multisig: Some(multisig),
-            sig: None,
-            logicsig: None,
-            transaction: transaction.clone(),
-            transaction_id: signed_transaction.transaction_id,
-        })
-    }
-
-    /// Appends the multisig signature from the given multisig address to the transaction
-    pub fn append_multisig_transaction(
-        &self,
-        from: MultisigAddress,
-        transaction: &SignedTransaction,
-    ) -> Result<SignedTransaction, AlgorandError> {
-        let from_transaction = self.sign_multisig_transaction(from, &transaction.transaction)?;
-        Self::merge_multisig_transactions(&[&from_transaction, transaction])
-    }
-
-    /// Returns a signed transaction with the multisig signatures of the passed signed transactions merged
-    pub fn merge_multisig_transactions<T: Borrow<SignedTransaction>>(
-        transactions: &[T],
-    ) -> Result<SignedTransaction, AlgorandError> {
-        if transactions.len() < 2 {
-            return Err(ApiError::InsufficientTransactions.into());
-        }
-        let mut merged = transactions[0].borrow().clone();
-        for transaction in transactions {
-            let merged_msig = merged.multisig.as_mut().unwrap();
-            let msig = transaction.borrow().multisig.as_ref().unwrap();
-            if merged_msig.subsigs.len() != msig.subsigs.len() {
-                return Err(ApiError::InvalidNumberOfSubsignatures.into());
-            }
-            assert_eq!(merged_msig.subsigs.len(), msig.subsigs.len());
-            for (merged_subsig, subsig) in merged_msig.subsigs.iter_mut().zip(&msig.subsigs) {
-                if subsig.key != merged_subsig.key {
-                    return Err(ApiError::InvalidPublicKeyInMultisig.into());
-                }
-                if merged_subsig.sig.is_none() {
-                    merged_subsig.sig = subsig.sig
-                } else if merged_subsig.sig != subsig.sig && subsig.sig.is_some() {
-                    return Err(ApiError::MismatchingSignatures.into());
-                }
-            }
-        }
-        Ok(merged)
+        Ok(MultisigSignature { subsigs, ..msig })
     }
 }

@@ -1,11 +1,14 @@
 use algonaut_core::{
-    Address, LogicSignature, MicroAlgos, MultisigSignature, Round, Signature, ToMsgPack, VotePk,
+    Address, ApiSignedLogic, MicroAlgos, MultisigSignature, Round, Signature, ToMsgPack, VotePk,
     VrfPk,
 };
 use algonaut_crypto::HashDigest;
 use serde::Serialize;
 
-use crate::{transaction::StateSchema, SignedTransaction, Transaction, TransactionType};
+use crate::{
+    transaction::{StateSchema, TransactionSignature},
+    SignedTransaction, Transaction, TransactionType,
+};
 
 // Important: When signing:
 // - Fields have to be sorted alphabetically.
@@ -313,10 +316,10 @@ pub struct ApiSignedTransaction {
     pub sig: Option<Signature>,
 
     #[serde(rename = "msig", skip_serializing_if = "Option::is_none")]
-    pub multisig: Option<MultisigSignature>,
+    pub msig: Option<MultisigSignature>,
 
     #[serde(rename = "lsig", skip_serializing_if = "Option::is_none")]
-    pub logicsig: Option<LogicSignature>,
+    pub lsig: Option<ApiSignedLogic>,
 
     #[serde(rename = "txn")]
     pub transaction: ApiTransaction,
@@ -327,10 +330,15 @@ pub struct ApiSignedTransaction {
 
 impl From<SignedTransaction> for ApiSignedTransaction {
     fn from(t: SignedTransaction) -> Self {
+        let (sig, msig, lsig) = match t.sig {
+            TransactionSignature::Single(sig) => (Some(sig), None, None),
+            TransactionSignature::Multi(msig) => (None, Some(msig), None),
+            TransactionSignature::Logic(lsig) => (None, None, Some(lsig)),
+        };
         ApiSignedTransaction {
-            sig: t.sig,
-            multisig: t.multisig,
-            logicsig: t.logicsig,
+            sig,
+            msig,
+            lsig: lsig.map(|l| l.into()),
             transaction: t.transaction.into(),
             transaction_id: t.transaction_id,
         }

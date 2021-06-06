@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Made unsigned transaction: {:?}", t);
 
     // sign the transaction
-    let signed_transaction = account.sign_transaction(&t)?;
+    let signed_transaction = account.sign_and_generate_signed_transaction(&t)?;
     let bytes = rmp_serde::to_vec_named(&ApiSignedTransaction::from(signed_transaction))?;
 
     let filename = "./signed.tx";

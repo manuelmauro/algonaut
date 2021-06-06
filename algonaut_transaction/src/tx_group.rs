@@ -40,7 +40,7 @@ impl TxGroup {
         }
         let mut ids: Vec<HashDigest> = vec![];
         for t in txns {
-            ids.push(t.raw_tx_id()?);
+            ids.push(t.raw_id()?);
         }
         let group = TxGroup::new(ids);
         let hashed = sha2::Sha512Trunc256::digest(&group.bytes_to_sign()?);
