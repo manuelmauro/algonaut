@@ -58,6 +58,60 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
+fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
+    // load variables in .env
+    dotenv().ok();
+
+    let algod = Algod::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .client_v2()?;
+
+    let account1 = account1();
+    let account2 = account2();
+
+    let multisig_address = MultisigAddress::new(1, 2, &[account1.address(), account2.address()])?;
+
+    let params = algod.transaction_params()?;
+
+    let t = Txn::new()
+        .sender(multisig_address.address())
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 10)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(123_456))
+                .to(account2.address())
+                .build(),
+        )
+        .build();
+
+    let msig = account1.init_transaction_msig(&t, multisig_address.clone())?;
+    let msig = account2.append_to_transaction_msig(&t, msig)?;
+
+    let sig = TransactionSignature::Multi(msig);
+
+    let signed_t = SignedTransaction {
+        transaction: t,
+        transaction_id: "".to_owned(),
+        sig,
+    };
+
+    let t_bytes = signed_t.to_msg_pack()?;
+    // Broadcast the transaction to the network
+    // Note this transaction will get rejected because the accounts do not have any tokens
+    let send_response = algod.broadcast_raw_transaction(&t_bytes);
+
+    println!("{:#?}", send_response);
+    assert!(send_response.is_err());
+
+    Ok(())
+}
+
+#[test]
 fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
