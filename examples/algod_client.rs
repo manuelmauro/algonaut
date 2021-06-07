@@ -4,7 +4,8 @@ use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -14,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .client_v2()?;
 
     // print algod status
-    let node_status = algod.status()?;
+    let node_status = algod.status().await?;
     println!("algod last round: {}", node_status.last_round);
     println!(
         "algod time since last round: {}",
@@ -24,7 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("algod latest version: {}", node_status.last_version);
 
     // fetch block information
-    let last_block = algod.block(Round(node_status.last_round))?;
+    let last_block = algod.block(Round(node_status.last_round)).await?;
     println!("{:#?}", last_block);
 
     Ok(())

@@ -10,7 +10,8 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -20,7 +21,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .client_v2()?;
 
     // print algod status
-    let node_status = algod.status()?;
+    let node_status = algod.status().await?;
     println!("node_status: {:?}", node_status);
 
     let account = Account::generate();
@@ -29,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(account.address())

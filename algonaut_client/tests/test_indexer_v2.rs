@@ -8,9 +8,10 @@ use algonaut_core::Round;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+use tokio::test;
 
 #[test]
-fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -18,7 +19,7 @@ fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
         .bind(env::var("INDEXER_URL")?.as_ref())
         .client_v2()?;
 
-    let res = indexer.health();
+    let res = indexer.health().await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -27,7 +28,7 @@ fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -46,7 +47,7 @@ fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
         round: None,
     };
 
-    let res = indexer.accounts(&query);
+    let res = indexer.accounts(&query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -55,7 +56,7 @@ fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -70,7 +71,7 @@ fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
         round: Some(Round(0)),
     };
 
-    let res = indexer.account_info(account.as_str(), &query);
+    let res = indexer.account_info(account.as_str(), &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -79,7 +80,7 @@ fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -107,7 +108,9 @@ fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
     let account: String = env::var("ACCOUNT")?.parse()?;
 
-    let res = indexer.account_transactions(&account.as_str(), &query);
+    let res = indexer
+        .account_transactions(&account.as_str(), &query)
+        .await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -116,7 +119,7 @@ fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_applications_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_applications_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -130,7 +133,7 @@ fn test_applications_endpoint() -> Result<(), Box<dyn Error>> {
         next: None,
     };
 
-    let res = indexer.applications(&query);
+    let res = indexer.applications(&query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -140,7 +143,7 @@ fn test_applications_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 #[ignore]
-fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -150,7 +153,7 @@ fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
 
     let query = QueryApplicationInfo { include_all: None };
 
-    let res = indexer.application_info("123", &query);
+    let res = indexer.application_info("123", &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -159,7 +162,7 @@ fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_assets_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_assets_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -176,7 +179,7 @@ fn test_assets_endpoint() -> Result<(), Box<dyn Error>> {
         unit: None,
     };
 
-    let res = indexer.assets(&query);
+    let res = indexer.assets(&query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -186,7 +189,7 @@ fn test_assets_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 #[ignore]
-fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -196,7 +199,7 @@ fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
 
     let query = QueryAssetsInfo { include_all: None };
 
-    let res = indexer.assets_info("123", &query);
+    let res = indexer.assets_info("123", &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -205,7 +208,7 @@ fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -221,7 +224,7 @@ fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
         round: None,
     };
 
-    let res = indexer.asset_balances("123", &query);
+    let res = indexer.asset_balances("123", &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -230,7 +233,7 @@ fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -258,7 +261,7 @@ fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         txid: None,
     };
 
-    let res = indexer.asset_transactions("123", &query);
+    let res = indexer.asset_transactions("123", &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -267,7 +270,7 @@ fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -275,7 +278,7 @@ fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
         .bind(env::var("INDEXER_URL")?.as_ref())
         .client_v2()?;
 
-    let res = indexer.block(Round(0));
+    let res = indexer.block(Round(0)).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -285,7 +288,7 @@ fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 #[ignore]
-fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -315,7 +318,7 @@ fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         txid: None,
     };
 
-    let res = indexer.transactions(&query);
+    let res = indexer.transactions(&query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -325,7 +328,7 @@ fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 #[ignore]
-fn test_transaction_info_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_transaction_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -333,7 +336,7 @@ fn test_transaction_info_endpoint() -> Result<(), Box<dyn Error>> {
         .bind(env::var("INDEXER_URL")?.as_ref())
         .client_v2()?;
 
-    let res = indexer.transaction_info("123");
+    let res = indexer.transaction_info("123").await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());

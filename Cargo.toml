@@ -30,3 +30,4 @@ chrono = "0.4.9"
 dirs = "2.0"
 dotenv = "0.15.0"
 rmp-serde = "0.14.0"
+tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }

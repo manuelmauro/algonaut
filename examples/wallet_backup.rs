@@ -3,7 +3,8 @@ use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -12,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("KMD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    let list_response = kmd.list_wallets()?;
+    let list_response = kmd.list_wallets().await?;
 
     let wallet_id = match list_response
         .wallets
@@ -23,10 +24,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => return Err("Wallet not found".into()),
     };
 
-    let init_response = kmd.init_wallet_handle(&wallet_id, "testpassword")?;
+    let init_response = kmd.init_wallet_handle(&wallet_id, "testpassword").await?;
     let wallet_handle_token = init_response.wallet_handle_token;
 
-    let export_response = kmd.export_master_derivation_key(&wallet_handle_token, "testpassword")?;
+    let export_response = kmd
+        .export_master_derivation_key(&wallet_handle_token, "testpassword")
+        .await?;
     let mdk = export_response.master_derivation_key;
 
     // String representation of the mdk, keep in safe place and don't share it

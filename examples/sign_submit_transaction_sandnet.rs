@@ -5,7 +5,8 @@ use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -16,7 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .client_v1()?;
 
     // first we obtain a handle to our wallet
-    let list_response = kmd.list_wallets()?;
+    let list_response = kmd.list_wallets().await?;
     let wallet_id = match list_response
         .wallets
         .into_iter()
@@ -25,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some(wallet) => wallet.id,
         None => return Err("Wallet not found".into()),
     };
-    let init_response = kmd.init_wallet_handle(&wallet_id, "")?;
+    let init_response = kmd.init_wallet_handle(&wallet_id, "").await?;
     let wallet_handle_token = init_response.wallet_handle_token;
     println!("Wallet Handle: {}", wallet_handle_token);
 
@@ -42,7 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     // we are ready to build the transaction
     let t = Txn::new()
@@ -61,10 +62,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .build();
 
     // we need to sign the transaction to prove that we own the sender address
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t)?;
+    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t).await?;
 
     // broadcast the transaction to the network
-    let send_response = algod.broadcast_raw_transaction(&sign_response.signed_transaction)?;
+    let send_response = algod
+        .broadcast_raw_transaction(&sign_response.signed_transaction)
+        .await?;
 
     println!("Transaction ID: {}", send_response.tx_id);
 

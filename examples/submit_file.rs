@@ -6,7 +6,8 @@ use std::io::Read;
 
 use algonaut::Algod;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -19,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v2()?;
 
-    let send_response = algod.broadcast_raw_transaction(&raw_transaction)?;
+    let send_response = algod.broadcast_raw_transaction(&raw_transaction).await?;
     println!("Transaction ID: {}", send_response.tx_id);
 
     Ok(())

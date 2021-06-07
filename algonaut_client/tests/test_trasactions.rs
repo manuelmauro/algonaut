@@ -10,9 +10,10 @@ use dotenv::dotenv;
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
+use tokio::test;
 
 #[test]
-fn test_transaction() -> Result<(), Box<dyn Error>> {
+async fn test_transaction() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -24,7 +25,7 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
     let from = account1();
     let to = account2();
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(from.address())
@@ -49,7 +50,7 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
     let t_bytes = sign_response.to_msg_pack()?;
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&t_bytes);
+    let send_response = algod.broadcast_raw_transaction(&t_bytes).await;
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
@@ -58,7 +59,7 @@ fn test_transaction() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
+async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -72,7 +73,7 @@ fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
 
     let multisig_address = MultisigAddress::new(1, 2, &[account1.address(), account2.address()])?;
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(multisig_address.address())
@@ -103,7 +104,7 @@ fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
     let t_bytes = signed_t.to_msg_pack()?;
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&t_bytes);
+    let send_response = algod.broadcast_raw_transaction(&t_bytes).await;
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
@@ -112,7 +113,7 @@ fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dyn Error>> {
+async fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -134,12 +135,13 @@ byte 0xFF
 &&
 "#
             .into(),
-        )?
+        )
+        .await?
         .try_into()?;
 
     let from_address = program.hash.parse()?;
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(from_address)
@@ -170,7 +172,7 @@ byte 0xFF
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&transaction_bytes);
+    let send_response = algod.broadcast_raw_transaction(&transaction_bytes).await;
     println!("response {:?}", send_response);
     assert!(send_response.is_err());
 
@@ -178,7 +180,7 @@ byte 0xFF
 }
 
 #[test]
-fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error>> {
+async fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -194,12 +196,13 @@ fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error>> {
 int 1
 "#
             .into(),
-        )?
+        )
+        .await?
         .try_into()?;
 
     let from = account1();
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(from.address())
@@ -232,7 +235,7 @@ int 1
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&transaction_bytes);
+    let send_response = algod.broadcast_raw_transaction(&transaction_bytes).await;
     println!("response {:?}", send_response);
     assert!(send_response.is_err());
 
@@ -240,7 +243,7 @@ int 1
 }
 
 #[test]
-fn test_transaction_with_delegated_logic_multisig() -> Result<(), Box<dyn Error>> {
+async fn test_transaction_with_delegated_logic_multisig() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -256,7 +259,8 @@ fn test_transaction_with_delegated_logic_multisig() -> Result<(), Box<dyn Error>
 int 1
 "#
             .into(),
-        )?
+        )
+        .await?
         .try_into()?;
 
     let account1 = account1();
@@ -264,7 +268,7 @@ int 1
 
     let multisig_address = MultisigAddress::new(1, 2, &[account1.address(), account2.address()])?;
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(multisig_address.address())
@@ -300,7 +304,7 @@ int 1
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&transaction_bytes);
+    let send_response = algod.broadcast_raw_transaction(&transaction_bytes).await;
     println!("response {:?}", send_response);
     assert!(send_response.is_err());
 
@@ -308,7 +312,7 @@ int 1
 }
 
 #[test]
-fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
+async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -319,7 +323,7 @@ fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
 
     let from = account1();
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(from.address())
@@ -338,7 +342,9 @@ fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
         )
         .build();
     let signed_t = from.sign_and_generate_signed_transaction(&t)?;
-    let send_response = algod.broadcast_raw_transaction(&signed_t.to_msg_pack()?);
+    let send_response = algod
+        .broadcast_raw_transaction(&signed_t.to_msg_pack()?)
+        .await;
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
@@ -347,7 +353,7 @@ fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -358,7 +364,7 @@ fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
     let address: String = env::var("ACCOUNT")?.parse()?;
 
-    let last_round = algod.status()?.last_round;
+    let last_round = algod.status().await?.last_round;
 
     let query = QueryAccountTransactions {
         first_round: Some(last_round),
@@ -368,7 +374,7 @@ fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         to_date: None,
     };
 
-    let res = algod.transactions(address.as_str(), &query);
+    let res = algod.transactions(address.as_str(), &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -377,7 +383,7 @@ fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 }
 
 #[test]
-fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -386,14 +392,14 @@ fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    println!("{:?}", algod.pending_transactions(0));
-    assert!(algod.pending_transactions(0).is_ok());
+    println!("{:?}", algod.pending_transactions(0).await);
+    assert!(algod.pending_transactions(0).await.is_ok());
 
     Ok(())
 }
 
 #[test]
-fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
+async fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -402,15 +408,15 @@ fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    println!("{:?}", algod.transaction_params());
-    assert!(algod.transaction_params().is_ok());
+    println!("{:?}", algod.transaction_params().await);
+    assert!(algod.transaction_params().await.is_ok());
 
     Ok(())
 }
 
 /// Swap between 2 accounts. For simplicity, both send Algos.
 #[test]
-fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
+async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -422,7 +428,7 @@ fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
     let account1 = account1();
     let account2 = account2();
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t1 = &mut Txn::new()
         .sender(account1.address())
@@ -460,7 +466,8 @@ fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
     let signed_t2 = account2.sign_and_generate_signed_transaction(&t2)?;
 
     let send_response = algod
-        .broadcast_raw_transaction(&[signed_t1.to_msg_pack()?, signed_t2.to_msg_pack()?].concat());
+        .broadcast_raw_transaction(&[signed_t1.to_msg_pack()?, signed_t2.to_msg_pack()?].concat())
+        .await;
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
