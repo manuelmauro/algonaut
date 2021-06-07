@@ -11,37 +11,42 @@ pub mod message;
 pub struct Client {
     pub(super) url: String,
     pub(super) headers: HeaderMap,
-    pub(super) http_client: reqwest::blocking::Client,
+    pub(super) http_client: reqwest::Client,
 }
 
 impl Client {
     /// Returns Ok if healthy
-    pub fn health(&self) -> Result<(), AlgorandError> {
+    pub async fn health(&self) -> Result<(), AlgorandError> {
         let _ = self
             .http_client
             .get(&format!("{}health", self.url))
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?;
         Ok(())
     }
 
     /// Search for accounts.
-    pub fn accounts(&self, query: &QueryAccount) -> Result<AccountResponse, AlgorandError> {
+    pub async fn accounts(&self, query: &QueryAccount) -> Result<AccountResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/accounts", self.url))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Lookup account information.
-    pub fn account_info(
+    pub async fn account_info(
         &self,
         id: &str,
         query: &QueryAccountInfo,
@@ -51,15 +56,18 @@ impl Client {
             .get(&format!("{}v2/accounts/{}", self.url, id))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Lookup account transactions.
-    pub fn account_transactions(
+    pub async fn account_transactions(
         &self,
         id: &str,
         query: &QueryAccountTransaction,
@@ -69,15 +77,18 @@ impl Client {
             .get(&format!("{}v2/accounts/{}/transactions", self.url, id))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Search for applications
-    pub fn applications(
+    pub async fn applications(
         &self,
         query: &QueryApplications,
     ) -> Result<ApplicationResponse, AlgorandError> {
@@ -86,15 +97,18 @@ impl Client {
             .get(&format!("{}v2/applications", self.url))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Lookup application.
-    pub fn application_info(
+    pub async fn application_info(
         &self,
         id: &str,
         query: &QueryApplicationInfo,
@@ -104,29 +118,35 @@ impl Client {
             .get(&format!("{}v2/applications/{}", self.url, id))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Search for assets.
-    pub fn assets(&self, query: &QueryAssets) -> Result<AssetResponse, AlgorandError> {
+    pub async fn assets(&self, query: &QueryAssets) -> Result<AssetResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/assets", self.url))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Lookup asset information.
-    pub fn assets_info(
+    pub async fn assets_info(
         &self,
         id: &str,
         query: &QueryAssetsInfo,
@@ -136,15 +156,18 @@ impl Client {
             .get(&format!("{}v2/assets/{}", self.url, id))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Lookup the list of accounts who hold this asset.
-    pub fn asset_balances(
+    pub async fn asset_balances(
         &self,
         id: &str,
         query: &QueryBalances,
@@ -154,15 +177,18 @@ impl Client {
             .get(&format!("{}v2/assets/{}/balances", self.url, id))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Lookup transactions for an asset.
-    pub fn asset_transactions(
+    pub async fn asset_transactions(
         &self,
         id: &str,
         query: &QueryAssetTransaction,
@@ -172,28 +198,34 @@ impl Client {
             .get(&format!("{}v2/assets/{}/transactions", self.url, id))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Lookup block.
-    pub fn block(&self, round: Round) -> Result<Block, AlgorandError> {
+    pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/blocks/{}", self.url, round))
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Search for transactions.
-    pub fn transactions(
+    pub async fn transactions(
         &self,
         query: &QueryTransaction,
     ) -> Result<TransactionResponse, AlgorandError> {
@@ -202,22 +234,28 @@ impl Client {
             .get(&format!("{}v2/transactions", self.url))
             .headers(self.headers.clone())
             .query(query)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Search for transactions.
-    pub fn transaction_info(&self, id: &str) -> Result<TransactionResponse, AlgorandError> {
+    pub async fn transaction_info(&self, id: &str) -> Result<TransactionResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/{}", self.url, id))
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }

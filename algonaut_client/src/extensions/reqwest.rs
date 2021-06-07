@@ -1,16 +1,19 @@
 use crate::error::HttpError;
-use reqwest::blocking::Response;
+use async_trait::async_trait;
+use reqwest::Response;
 use serde::Deserialize;
 
+#[async_trait]
 pub(crate) trait ResponseExt {
-    fn http_error_for_status(self) -> Result<Response, HttpError>;
+    async fn http_error_for_status(self) -> Result<Response, HttpError>;
 }
 
+#[async_trait]
 impl ResponseExt for Response {
-    fn http_error_for_status(self) -> Result<Response, HttpError> {
+    async fn http_error_for_status(self) -> Result<Response, HttpError> {
         match self.error_for_status_ref() {
             Ok(_) => Ok(self),
-            Err(error) => match self.json::<HttpErrorPayload>() {
+            Err(error) => match self.json::<HttpErrorPayload>().await {
                 Ok(error_payload) => Err(HttpError {
                     reqwest_error: error,
                     message: error_payload.message,
