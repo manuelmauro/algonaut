@@ -17,6 +17,7 @@ data-encoding = "2.3.1"
 derive_more = "0.99.13"
 rand = "0.8.3"
 reqwest = {version = "0.11", features = ["blocking", "json"]}
+getrandom = { version = "0.2.2", features = ["js"] }
 ring = "0.16.19"
 rmp-serde = "0.14.0"
 serde = {version = "1.0", features = ["derive"]}
