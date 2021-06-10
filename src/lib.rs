@@ -16,6 +16,7 @@
 // TODO #![deny(missing_docs)]
 
 // Re-exports
+pub use algonaut_client as client;
 pub use algonaut_client::algod::Algod;
 pub use algonaut_client::indexer::Indexer;
 pub use algonaut_client::kmd::Kmd;
