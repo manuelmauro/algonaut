@@ -93,8 +93,8 @@ impl Account {
         transaction: &Transaction,
     ) -> Result<SignedTransaction, AlgorandError> {
         let transaction_bytes = &transaction.bytes_to_sign()?;
-        let signature = self.sign(&transaction_bytes);
-        let id = BASE32_NOPAD.encode(&ChecksumAlg::digest(&transaction.bytes_to_sign()?));
+        let signature = self.sign(transaction_bytes);
+        let id = BASE32_NOPAD.encode(&ChecksumAlg::digest(transaction_bytes));
         Ok(SignedTransaction {
             transaction: transaction.clone(),
             sig: Some(signature),
