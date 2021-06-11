@@ -1,9 +1,11 @@
 use crate::account::Account;
 use crate::error::AlgorandError;
+use algonaut_core::SignedLogic;
 use algonaut_core::ToMsgPack;
-use algonaut_core::{Address, LogicSignature, MultisigSignature, Signature};
+use algonaut_core::{Address, MultisigSignature, Signature};
 use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
+use data_encoding::BASE32_NOPAD;
 use sha2::Digest;
 
 const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
@@ -90,9 +92,13 @@ impl Transaction {
         Ok(prefix_encoded_tx)
     }
 
-    pub fn raw_tx_id(&self) -> Result<HashDigest, AlgorandError> {
+    pub fn raw_id(&self) -> Result<HashDigest, AlgorandError> {
         let hashed = sha2::Sha512Trunc256::digest(&self.bytes_to_sign()?);
         Ok(HashDigest(hashed.into()))
+    }
+
+    pub fn id(&self) -> Result<String, AlgorandError> {
+        Ok(BASE32_NOPAD.encode(&self.raw_id()?.0))
     }
 
     pub fn assign_group_id(&mut self, group_id: HashDigest) {
@@ -102,7 +108,7 @@ impl Transaction {
     // Estimates the size of the encoded transaction, used in calculating the fee
     fn estimate_size(&self) -> Result<u64, AlgorandError> {
         let account = Account::generate();
-        let signed_transaction = account.sign_transaction(self)?;
+        let signed_transaction = account.sign_and_generate_signed_transaction(self)?;
         Ok(signed_transaction.to_msg_pack()?.len() as u64)
     }
 }
@@ -337,9 +343,14 @@ pub struct StateSchema {
 // #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SignedTransaction {
-    pub sig: Option<Signature>,
-    pub multisig: Option<MultisigSignature>,
-    pub logicsig: Option<LogicSignature>,
     pub transaction: Transaction,
     pub transaction_id: String,
+    pub sig: TransactionSignature,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TransactionSignature {
+    Single(Signature),
+    Multi(MultisigSignature),
+    Logic(SignedLogic),
 }

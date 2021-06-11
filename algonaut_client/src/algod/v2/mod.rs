@@ -266,7 +266,7 @@ impl Client {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
     /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
     /// a node's configuration file sets EnableDeveloperAPI to true.
-    pub fn compile_teal(&self, teal: String) -> Result<CompiledTeal, AlgorandError> {
+    pub fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, AlgorandError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/compile", self.url))

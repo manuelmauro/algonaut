@@ -175,6 +175,10 @@ impl Address {
         }
     }
 
+    pub fn as_public_key(&self) -> Ed25519PublicKey {
+        Ed25519PublicKey(self.0)
+    }
+
     /// Encode to base32 string with checksum
     fn encode_as_string(&self) -> String {
         let hashed = ChecksumAlg::digest(&self.0);
@@ -254,6 +258,10 @@ impl MultisigAddress {
                     .collect(),
             })
         }
+    }
+
+    pub fn contains(&self, address: &Address) -> bool {
+        self.public_keys.contains(&address.as_public_key())
     }
 
     /// Generates a checksum from the contained public keys usable as an address
@@ -351,23 +359,52 @@ impl Serialize for MultisigSubsig {
     }
 }
 
-// LogicSig contains logic for validating a transaction.
-// LogicSig is signed by an account, allowing delegation of operations.
-// OR
-// LogicSig defines a contract account.
-#[derive(Default, Debug, Eq, PartialEq, Clone, Deserialize)]
-pub struct LogicSignature {
-    #[serde(rename = "l")]
-    pub logic: Vec<u8>,
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct SignedLogic {
+    pub logic: CompiledTeal,
+    pub args: Vec<Vec<u8>>,
+    pub sig: LogicSignature,
+}
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct CompiledTeal {
+    /// base32 SHA512_256 of program bytes (Address style)
+    pub hash: String,
+    pub bytes: Vec<u8>,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub enum LogicSignature {
+    ContractAccount,
+    DelegatedSig(Signature),
+    DelegatedMultiSig(MultisigSignature),
+}
+
+#[derive(Debug)]
+pub struct ApiSignedLogic {
+    pub logic: Vec<u8>,
     pub sig: Option<Signature>,
     pub msig: Option<MultisigSignature>,
-
-    #[serde(rename = "arg")]
     pub args: Vec<Vec<u8>>,
 }
 
-impl Serialize for LogicSignature {
+impl From<SignedLogic> for ApiSignedLogic {
+    fn from(s: SignedLogic) -> Self {
+        let (sig, msig) = match s.sig {
+            LogicSignature::ContractAccount => (None, None),
+            LogicSignature::DelegatedSig(sig) => (Some(sig), None),
+            LogicSignature::DelegatedMultiSig(msig) => (None, Some(msig)),
+        };
+        ApiSignedLogic {
+            logic: s.logic.bytes,
+            sig,
+            msig,
+            args: s.args,
+        }
+    }
+}
+
+impl Serialize for ApiSignedLogic {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
         S: Serializer,

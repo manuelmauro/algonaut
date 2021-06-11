@@ -1,6 +1,9 @@
-use algonaut_core::{MicroAlgos, Round};
+use std::convert::TryFrom;
+
+use algonaut_core::{CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
+use data_encoding::{DecodeError, BASE64};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -715,12 +718,29 @@ pub struct SourceTeal {
 
 /// Compiled TEAL program.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CompiledTeal {
+pub struct ApiCompiledTeal {
     /// base32 SHA512_256 of program bytes (Address style)
     pub hash: String,
 
     /// base64 encoded program bytes.
     pub result: String,
+}
+
+impl ApiCompiledTeal {
+    pub fn program_bytes(&self) -> Result<Vec<u8>, DecodeError> {
+        BASE64.decode(self.result.as_bytes())
+    }
+}
+
+impl TryFrom<ApiCompiledTeal> for CompiledTeal {
+    type Error = DecodeError;
+
+    fn try_from(value: ApiCompiledTeal) -> Result<Self, Self::Error> {
+        Ok(CompiledTeal {
+            hash: value.hash.clone(),
+            bytes: value.program_bytes()?,
+        })
+    }
 }
 
 /// TransactionParams contains the parameters that help a client construct a new transaction.
