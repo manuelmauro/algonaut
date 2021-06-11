@@ -2,6 +2,7 @@ use std::fmt::{self, Formatter};
 
 use algonaut_encoding::{deserialize_bytes32, U8_32Visitor};
 use data_encoding::{BASE32_NOPAD, BASE64};
+use fmt::Debug;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Support for turning 32 byte keys into human-readable mnemonics and back
@@ -38,7 +39,7 @@ impl<'de> Deserialize<'de> for HashDigest {
     }
 }
 
-impl fmt::Debug for HashDigest {
+impl Debug for HashDigest {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", BASE32_NOPAD.encode(&self.0))
     }
@@ -64,13 +65,13 @@ impl<'de> Deserialize<'de> for Ed25519PublicKey {
     }
 }
 
-impl fmt::Debug for Ed25519PublicKey {
+impl Debug for Ed25519PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", BASE32_NOPAD.encode(&self.0))
     }
 }
 
-impl fmt::Debug for MasterDerivationKey {
+impl Debug for MasterDerivationKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", BASE32_NOPAD.encode(&self.0))
     }
