@@ -15,7 +15,7 @@ const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 pub struct Client {
     pub(super) address: String,
     pub(super) token: String,
-    pub(super) http_client: reqwest::blocking::Client,
+    pub(super) http_client: reqwest::Client,
 }
 
 impl Client {
@@ -23,38 +23,44 @@ impl Client {
         Client {
             address: address.to_string(),
             token: token.to_string(),
-            http_client: reqwest::blocking::Client::new(),
+            http_client: reqwest::Client::new(),
         }
     }
 
     /// Retrieves the current version
-    pub fn versions(&self) -> Result<VersionsResponse, AlgorandError> {
+    pub async fn versions(&self) -> Result<VersionsResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}versions", self.address))
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// List all of the wallets that kmd is aware of
-    pub fn list_wallets(&self) -> Result<ListWalletsResponse, AlgorandError> {
+    pub async fn list_wallets(&self) -> Result<ListWalletsResponse, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v1/wallets", self.address))
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Creates a wallet
-    pub fn create_wallet(
+    pub async fn create_wallet(
         &self,
         wallet_name: &str,
         wallet_password: &str,
@@ -74,9 +80,12 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
@@ -86,7 +95,7 @@ impl Client {
     /// You can see how much time remains until expiration with [get_wallet_info](Client::get_wallet_info)
     /// and renew it with [renew_wallet_handle](Client::renew_wallet_handle).
     /// When you're done, you can invalidate the token with [release_wallet_handle](Client::release_wallet_handle)
-    pub fn init_wallet_handle(
+    pub async fn init_wallet_handle(
         &self,
         wallet_id: &str,
         wallet_password: &str,
@@ -101,14 +110,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Release a wallet handle token
-    pub fn release_wallet_handle(
+    pub async fn release_wallet_handle(
         &self,
         wallet_handle: &str,
     ) -> Result<ReleaseWalletHandleResponse, AlgorandError> {
@@ -121,14 +133,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Renew a wallet handle token
-    pub fn renew_wallet_handle(
+    pub async fn renew_wallet_handle(
         &self,
         wallet_handle: &str,
     ) -> Result<RenewWalletHandleResponse, AlgorandError> {
@@ -141,14 +156,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Rename a wallet
-    pub fn rename_wallet(
+    pub async fn rename_wallet(
         &self,
         wallet_id: &str,
         wallet_password: &str,
@@ -165,14 +183,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Get wallet info
-    pub fn get_wallet_info(
+    pub async fn get_wallet_info(
         &self,
         wallet_handle: &str,
     ) -> Result<GetWalletInfoResponse, AlgorandError> {
@@ -185,14 +206,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Export the master derivation key from a wallet
-    pub fn export_master_derivation_key(
+    pub async fn export_master_derivation_key(
         &self,
         wallet_handle: &str,
         wallet_password: &str,
@@ -207,14 +231,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Import an externally generated key into the wallet
-    pub fn import_key(
+    pub async fn import_key(
         &self,
         wallet_handle: &str,
         private_key: [u8; 32],
@@ -229,16 +256,19 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Export the Ed25519 seed associated with the passed address
     ///
     /// Note the first 32 bytes of the returned value is the seed, the second 32 bytes is the public key
-    pub fn export_key(
+    pub async fn export_key(
         &self,
         wallet_handle: &str,
         wallet_password: &str,
@@ -255,14 +285,20 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Generates a key and adds it to the wallet, returning the public key
-    pub fn generate_key(&self, wallet_handle: &str) -> Result<GenerateKeyResponse, AlgorandError> {
+    pub async fn generate_key(
+        &self,
+        wallet_handle: &str,
+    ) -> Result<GenerateKeyResponse, AlgorandError> {
         let req = GenerateKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
             display_mnemonic: false,
@@ -273,14 +309,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Deletes the key from the wallet
-    pub fn delete_key(
+    pub async fn delete_key(
         &self,
         wallet_handle: &str,
         wallet_password: &str,
@@ -297,14 +336,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// List all of the public keys in the wallet
-    pub fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, AlgorandError> {
+    pub async fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, AlgorandError> {
         let req = ListKeysRequest {
             wallet_handle_token: wallet_handle.to_string(),
         };
@@ -314,14 +356,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Sign a transaction
-    pub fn sign_transaction(
+    pub async fn sign_transaction(
         &self,
         wallet_handle: &str,
         wallet_password: &str,
@@ -338,14 +383,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Lists all of the multisig accounts whose preimages this wallet stores
-    pub fn list_multisig(
+    pub async fn list_multisig(
         &self,
         wallet_handle: &str,
     ) -> Result<ListMultisigResponse, AlgorandError> {
@@ -358,14 +406,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Import a multisig account
-    pub fn import_multisig(
+    pub async fn import_multisig(
         &self,
         wallet_handle: &str,
         version: u8,
@@ -384,14 +435,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Export multisig address metadata
-    pub fn export_multisig(
+    pub async fn export_multisig(
         &self,
         wallet_handle: &str,
         address: &str,
@@ -406,14 +460,17 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Delete a multisig from the wallet
-    pub fn delete_multisig(
+    pub async fn delete_multisig(
         &self,
         wallet_handle: &str,
         wallet_password: &str,
@@ -430,16 +487,19 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
     /// Sign a multisig transaction.
     ///
     /// Start a multisig signature or add a signature to a partially completed multisig signature.
-    pub fn sign_multisig_transaction(
+    pub async fn sign_multisig_transaction(
         &self,
         wallet_handle: &str,
         wallet_password: &str,
@@ -460,9 +520,12 @@ impl Client {
             .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
             .json(&req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 }

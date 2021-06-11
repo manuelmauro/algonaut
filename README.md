@@ -106,6 +106,10 @@ Planned:
 
 - `algonaut_teal` will add validators, templates, and dryrun helpers.
 
+## Integrations
+
+[Yew example](https://github.com/i-schuetz/algorand-yew-example)
+
 ## Changelog
 
 Read the [changelog](./CHANGELOG.md) for more details.

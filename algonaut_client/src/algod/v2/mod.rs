@@ -14,45 +14,53 @@ pub struct Client {
     pub(super) url: String,
     pub(super) token: String,
     pub(super) headers: HeaderMap,
-    pub(super) http_client: reqwest::blocking::Client,
+    pub(super) http_client: reqwest::Client,
 }
 
 impl Client {
     /// Returns the entire genesis file in json.
-    pub fn genesis(&self) -> Result<GenesisBlock, AlgorandError> {
+    pub async fn genesis(&self) -> Result<GenesisBlock, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}genesis", self.url))
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Returns Ok if healthy
-    pub fn health(&self) -> Result<(), AlgorandError> {
+    pub async fn health(&self) -> Result<(), AlgorandError> {
         let _ = self
             .http_client
             .get(&format!("{}health", self.url))
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?;
 
         Ok(())
     }
 
     /// Return metrics about algod functioning.
-    pub fn metrics(&self) -> Result<String, AlgorandError> {
+    pub async fn metrics(&self) -> Result<String, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}metrics", self.url))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .text()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .text()
+            .await?;
 
         Ok(response)
     }
@@ -60,15 +68,18 @@ impl Client {
     /// Get account information.
     /// Description Given a specific account public key, this call returns the accounts status,
     /// balance and spendable amounts
-    pub fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
+    pub async fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/accounts/{}", self.url, address))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
@@ -76,7 +87,7 @@ impl Client {
     /// Get a list of unconfirmed transactions currently in the transaction pool by address.
     /// Description: Get the list of pending transactions by address, sorted by priority,
     /// in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
-    pub fn pending_transactions_for(
+    pub async fn pending_transactions_for(
         &self,
         address: &str,
         max: u64,
@@ -90,9 +101,12 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&[("max", max.to_string())])
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
         Ok(response)
     }
 
@@ -100,15 +114,18 @@ impl Client {
     ///
     /// Given a application id, it returns application information including creator,
     /// approval and clear programs, global and local schemas, and global state.
-    pub fn application_information(&self, id: usize) -> Result<Application, AlgorandError> {
+    pub async fn application_information(&self, id: usize) -> Result<Application, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/applications/{}", self.url, id))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
@@ -117,71 +134,86 @@ impl Client {
     ///
     /// Given a asset id, it returns asset information including creator, name,
     /// total supply and special addresses.
-    pub fn asset_information(&self, id: usize) -> Result<Application, AlgorandError> {
+    pub async fn asset_information(&self, id: usize) -> Result<Application, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/asset/{}", self.url, id))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Get the block for the given round.
-    pub fn block(&self, round: Round) -> Result<Block, AlgorandError> {
+    pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/blocks/{}", self.url, round))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Starts a catchpoint catchup.
-    pub fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
+    pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
         let response = self
             .http_client
             .post(&format!("{}v2/catchup/{}", self.url, catchpoint))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Aborts a catchpoint catchup.
-    pub fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
+    pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
         let response = self
             .http_client
             .delete(&format!("{}v2/catchup/{}", self.url, catchpoint))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Get the current supply reported by the ledger.
-    pub fn ledger_supply(&self) -> Result<Supply, AlgorandError> {
+    pub async fn ledger_supply(&self) -> Result<Supply, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/ledger/supply", self.url))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
@@ -194,7 +226,7 @@ impl Client {
     /// key-dilution: value to use for two-level participation key.
     /// no-wait: Don't wait for transaction to commit before returning response.
     /// round-last-valid: The last round for which the generated participation keys will be valid.
-    pub fn register_participation_keys(
+    pub async fn register_participation_keys(
         &self,
         address: &str,
         params: &KeyRegistration,
@@ -208,44 +240,53 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&params)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Special management endpoint to shutdown the node. Optionally provide a timeout parameter
     /// to indicate that the node should begin shutting down after a number of seconds.
-    pub fn shutdown(&self, timeout: usize) -> Result<(), AlgorandError> {
+    pub async fn shutdown(&self, timeout: usize) -> Result<(), AlgorandError> {
         self.http_client
             .post(&format!("{}v2/shutdown", self.url))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
             .query(&[("timeout", timeout.to_string())])
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(())
     }
 
     /// Gets the current node status.
-    pub fn status(&self) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status(&self) -> Result<NodeStatus, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/status", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Gets the node status after waiting for the given round.
-    pub fn status_after_round(&self, round: Round) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, AlgorandError> {
         let response = self
             .http_client
             .get(&format!(
@@ -254,9 +295,12 @@ impl Client {
             ))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
@@ -266,7 +310,7 @@ impl Client {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
     /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
     /// a node's configuration file sets EnableDeveloperAPI to true.
-    pub fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, AlgorandError> {
+    pub async fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, AlgorandError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/compile", self.url))
@@ -274,9 +318,12 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .header("Content-Type", "application/x-binary")
             .body(teal)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
@@ -286,7 +333,7 @@ impl Client {
     /// Executes TEAL program(s) in context and returns debugging information about the execution.
     /// This endpoint is only enabled when a node's configureation file sets EnableDeveloperAPI
     /// to true.
-    pub fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, AlgorandError> {
+    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, AlgorandError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/dryrun", self.url))
@@ -294,15 +341,18 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .header("Content-Type", "application/json")
             .json(req)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Broadcasts a raw transaction to the network.
-    pub fn broadcast_raw_transaction(
+    pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],
     ) -> Result<TransactionResponse, AlgorandError> {
@@ -313,23 +363,29 @@ impl Client {
             .header(AUTH_HEADER, &self.token)
             .header("Content-Type", "application/x-binary")
             .body(rawtxn.to_vec())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Get parameters for constructing a new transaction.
-    pub fn transaction_params(&self) -> Result<TransactionParams, AlgorandError> {
+    pub async fn transaction_params(&self) -> Result<TransactionParams, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/params", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
@@ -338,16 +394,22 @@ impl Client {
     ///
     /// Get the list of pending transactions, sorted by priority, in decreasing order,
     /// truncated at the end at MAX. If MAX = 0, returns all pending transactions.
-    pub fn pending_transactions(&self, max: u64) -> Result<PendingTransactions, AlgorandError> {
+    pub async fn pending_transactions(
+        &self,
+        max: u64,
+    ) -> Result<PendingTransactions, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/pending", self.url))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&[("max", max.to_string())])
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
@@ -362,7 +424,7 @@ impl Client {
     ///
     /// Or the transaction may have happened sufficiently long ago that the node no longer remembers
     /// it, and this will return an error.
-    pub fn pending_transaction_with_id(
+    pub async fn pending_transaction_with_id(
         &self,
         txid: &str,
     ) -> Result<PendingTransaction, AlgorandError> {
@@ -371,23 +433,29 @@ impl Client {
             .get(&format!("{}v2/transactions/pending/{}", self.url, txid))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }
 
     /// Retrieves the current version
-    pub fn versions(&self) -> Result<Version, AlgorandError> {
+    pub async fn versions(&self) -> Result<Version, AlgorandError> {
         let response = self
             .http_client
             .get(&format!("{}versions", self.url))
             .headers(self.headers.clone())
             .header(AUTH_HEADER, &self.token)
-            .send()?
-            .http_error_for_status()?
-            .json()?;
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
 
         Ok(response)
     }

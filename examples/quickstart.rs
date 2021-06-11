@@ -3,7 +3,8 @@ use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -19,9 +20,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .bind(env::var("INDEXER_URL")?.as_ref())
         .client_v2()?;
 
-    println!("Algod versions: {:#?}", algod.versions()?);
-    println!("Kmd versions: {:#?}", kmd.versions()?);
-    println!("Indexer health: {:#?}", indexer.health());
+    println!("Algod versions: {:#?}", algod.versions().await?);
+    println!("Kmd versions: {:#?}", kmd.versions().await?);
+    println!("Indexer health: {:#?}", indexer.health().await);
 
     Ok(())
 }

@@ -5,7 +5,8 @@ use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
@@ -18,7 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("KMD_TOKEN")?.as_ref())
         .client_v1()?;
 
-    let list_response = kmd.list_wallets()?;
+    let list_response = kmd.list_wallets().await?;
 
     let wallet_id = match list_response
         .wallets
@@ -29,18 +30,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => return Err("Wallet not found".into()),
     };
 
-    let init_response = kmd.init_wallet_handle(&wallet_id, "testpassword")?;
+    let init_response = kmd.init_wallet_handle(&wallet_id, "testpassword").await?;
     let wallet_handle_token = init_response.wallet_handle_token;
 
-    let gen_response = kmd.generate_key(&wallet_handle_token)?;
+    let gen_response = kmd.generate_key(&wallet_handle_token).await?;
     let from_address = gen_response.address.parse()?;
     println!("from_address: {}", &gen_response.address);
 
-    let gen_response = kmd.generate_key(&wallet_handle_token)?;
+    let gen_response = kmd.generate_key(&wallet_handle_token).await?;
     let to_address = gen_response.address.parse()?;
     println!("to_address: {}", &gen_response.address);
 
-    let params = algod.transaction_params()?;
+    let params = algod.transaction_params().await?;
 
     let t = Txn::new()
         .sender(from_address)
@@ -57,7 +58,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .build();
 
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "testpassword", &t)?;
+    let sign_response = kmd
+        .sign_transaction(&wallet_handle_token, "testpassword", &t)
+        .await?;
 
     println!(
         "kmd made signed transaction with {} bytes",
@@ -66,7 +69,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // broadcast the transaction to the network
     // note: this transaction may get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&sign_response.signed_transaction)?;
+    let send_response = algod
+        .broadcast_raw_transaction(&sign_response.signed_transaction)
+        .await?;
 
     println!("Transaction ID: {}", send_response.tx_id);
 
