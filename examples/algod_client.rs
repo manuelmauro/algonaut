@@ -1,5 +1,5 @@
 use algonaut::core::Round;
-use algonaut::Algod;
+use algonaut_client::Algod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

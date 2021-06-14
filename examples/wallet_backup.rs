@@ -1,4 +1,5 @@
-use algonaut::{crypto::mnemonic, Kmd};
+use algonaut::crypto::mnemonic;
+use algonaut_client::Kmd;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

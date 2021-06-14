@@ -1,10 +1,9 @@
+use algonaut_client::Algod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-
-use algonaut::Algod;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

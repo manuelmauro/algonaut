@@ -1,9 +1,8 @@
-use algonaut::core::MicroAlgos;
+use algonaut::core::{MicroAlgos, ToMsgPack};
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Txn};
-use algonaut::Algod;
-use algonaut_transaction::ApiSignedTransaction;
+use algonaut_client::Algod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -51,7 +50,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // sign the transaction
     let signed_transaction = account.sign_transaction(&t)?;
-    let bytes = rmp_serde::to_vec_named(&ApiSignedTransaction::from(signed_transaction))?;
+    let bytes = signed_transaction.to_msg_pack()?;
 
     let filename = "./signed.tx";
     let mut f = File::create(filename)?;
