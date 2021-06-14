@@ -56,7 +56,7 @@ impl Account {
         self.seed
     }
 
-    fn sign(&self, bytes: &[u8]) -> Signature {
+    fn generate_sig(&self, bytes: &[u8]) -> Signature {
         let signature = self.key_pair.sign(&bytes);
         // ring returns a signature with padding at the end to make it 105 bytes, only 64 bytes are actually used
         let mut stripped_signature = [0; 64];
@@ -64,20 +64,23 @@ impl Account {
         Signature(stripped_signature)
     }
 
-    pub fn sign_program(&self, program: &CompiledTeal) -> Signature {
-        self.sign(&["Program".as_bytes(), &program.bytes].concat())
+    pub fn generate_program_sig(&self, program: &CompiledTeal) -> Signature {
+        self.generate_sig(&["Program".as_bytes(), &program.bytes].concat())
     }
 
-    fn sign_transaction(&self, transaction: &Transaction) -> Result<Signature, AlgorandError> {
-        Ok(self.sign(&transaction.bytes_to_sign()?))
+    fn generate_transaction_sig(
+        &self,
+        transaction: &Transaction,
+    ) -> Result<Signature, AlgorandError> {
+        Ok(self.generate_sig(&transaction.bytes_to_sign()?))
     }
 
     /// Sign a bid with the account's private key
-    pub fn sign_and_generate_signed_bid(&self, bid: Bid) -> Result<SignedBid, AlgorandError> {
+    pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, AlgorandError> {
         let encoded_bid = bid.to_msg_pack()?;
         let mut prefix_encoded_bid = b"aB".to_vec();
         prefix_encoded_bid.extend_from_slice(&encoded_bid);
-        let signature = self.sign(&prefix_encoded_bid);
+        let signature = self.generate_sig(&prefix_encoded_bid);
         Ok(SignedBid {
             bid,
             sig: signature,
@@ -85,19 +88,19 @@ impl Account {
     }
 
     /// Sign transaction and generate a single signature SignedTransaction
-    pub fn sign_and_generate_signed_transaction(
+    pub fn sign_transaction(
         &self,
         transaction: &Transaction,
     ) -> Result<SignedTransaction, AlgorandError> {
         Ok(SignedTransaction {
             transaction: transaction.clone(),
             transaction_id: transaction.id()?,
-            sig: TransactionSignature::Single(self.sign_transaction(&transaction)?),
+            sig: TransactionSignature::Single(self.generate_transaction_sig(&transaction)?),
         })
     }
 
     /// Sign transaction and generate a multi signature SignedTransaction
-    pub fn sign_and_generate_multisig_transaction(
+    pub fn sign_multisig_transaction(
         &self,
         from: MultisigAddress,
         transaction: &Transaction,
@@ -122,7 +125,7 @@ impl Account {
             return Err(ApiError::InvalidSecretKeyInMultisig.into());
         }
 
-        Ok(self.init_msig(from, self.sign_transaction(&transaction)?))
+        Ok(self.init_msig(from, self.generate_transaction_sig(&transaction)?))
     }
 
     /// Creates logic multi signature corresponding to multisign addresses, inserting own signature
@@ -135,7 +138,7 @@ impl Account {
             return Err(ApiError::InvalidSecretKeyInMultisig.into());
         }
 
-        Ok(self.init_msig(ma, self.sign_program(program)))
+        Ok(self.init_msig(ma, self.generate_program_sig(program)))
     }
 
     pub fn append_to_logic_msig(
@@ -143,7 +146,7 @@ impl Account {
         program: &CompiledTeal,
         msig: MultisigSignature,
     ) -> Result<MultisigSignature, AlgorandError> {
-        self.append_sig_to_msig(self.sign_program(program), msig)
+        self.append_sig_to_msig(self.generate_program_sig(program), msig)
     }
 
     pub fn append_to_transaction_msig(
@@ -151,7 +154,7 @@ impl Account {
         transaction: &Transaction,
         msig: MultisigSignature,
     ) -> Result<MultisigSignature, AlgorandError> {
-        self.append_sig_to_msig(self.sign_transaction(transaction)?, msig)
+        self.append_sig_to_msig(self.generate_transaction_sig(transaction)?, msig)
     }
 
     /// Creates multi signature corresponding to multisign addresses, inserting own signature

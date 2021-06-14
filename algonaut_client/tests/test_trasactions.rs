@@ -42,7 +42,7 @@ async fn test_transaction() -> Result<(), Box<dyn Error>> {
         )
         .build();
 
-    let sign_response = from.sign_and_generate_signed_transaction(&t);
+    let sign_response = from.sign_transaction(&t);
     println!("{:#?}", sign_response);
     assert!(sign_response.is_ok());
     let sign_response = sign_response.unwrap();
@@ -219,7 +219,7 @@ int 1
         )
         .build();
 
-    let signature = from.sign_program(&program);
+    let signature = from.generate_program_sig(&program);
 
     let signed_transaction = SignedTransaction {
         transaction: t,
@@ -341,7 +341,7 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
                 .build(),
         )
         .build();
-    let signed_t = from.sign_and_generate_signed_transaction(&t)?;
+    let signed_t = from.sign_transaction(&t)?;
     let send_response = algod
         .broadcast_raw_transaction(&signed_t.to_msg_pack()?)
         .await;
@@ -462,8 +462,8 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
 
     TxGroup::assign_group_id(vec![t1, t2])?;
 
-    let signed_t1 = account1.sign_and_generate_signed_transaction(&t1)?;
-    let signed_t2 = account2.sign_and_generate_signed_transaction(&t2)?;
+    let signed_t1 = account1.sign_transaction(&t1)?;
+    let signed_t2 = account2.sign_transaction(&t2)?;
 
     let send_response = algod
         .broadcast_raw_transaction(&[signed_t1.to_msg_pack()?, signed_t2.to_msg_pack()?].concat())
