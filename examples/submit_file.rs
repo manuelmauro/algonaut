@@ -1,4 +1,4 @@
-use algonaut_client::Algod;
+use algonaut::client::Algod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

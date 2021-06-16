@@ -6,7 +6,7 @@ pub mod v1;
 
 /// Kmd is the entry point to the creation of a client for the Algorand key management daemon.
 /// ```
-/// use algonaut_client::Kmd;
+/// use algonaut::client::Kmd;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let algod = Kmd::new()

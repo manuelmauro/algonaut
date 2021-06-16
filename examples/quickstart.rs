@@ -1,6 +1,6 @@
-use algonaut_client::Algod;
-use algonaut_client::Indexer;
-use algonaut_client::Kmd;
+use algonaut::client::Algod;
+use algonaut::client::Indexer;
+use algonaut::client::Kmd;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

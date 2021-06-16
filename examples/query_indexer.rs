@@ -1,5 +1,5 @@
-use algonaut_client::indexer::v2::message::QueryAccount;
-use algonaut_client::Indexer;
+use algonaut::client::indexer::v2::message::QueryAccount;
+use algonaut::client::Indexer;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

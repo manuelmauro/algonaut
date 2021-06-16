@@ -8,7 +8,7 @@ pub mod v2;
 
 /// Algod is the entry point to the creation of a client for the Algorand protocol daemon.
 /// ```
-/// use algonaut_client::Algod;
+/// use algonaut::client::Algod;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let algod = Algod::new()

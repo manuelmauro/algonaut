@@ -1,6 +1,6 @@
+use algonaut::client::{Algod, Kmd};
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::{ConfigureAsset, Txn};
-use algonaut_client::{Algod, Kmd};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

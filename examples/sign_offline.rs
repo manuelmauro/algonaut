@@ -1,8 +1,8 @@
+use algonaut::client::Algod;
 use algonaut::core::{MicroAlgos, ToMsgPack};
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Txn};
-use algonaut_client::Algod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
