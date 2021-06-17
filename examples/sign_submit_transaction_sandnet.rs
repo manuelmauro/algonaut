@@ -1,7 +1,7 @@
 use algonaut::algod::AlgodBuilder;
 use algonaut::core::MicroAlgos;
 use algonaut::kmd::KmdBuilder;
-use algonaut::transaction::{Pay, Txn};
+use algonaut::transaction::{Pay, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     // we are ready to build the transaction
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(from_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)

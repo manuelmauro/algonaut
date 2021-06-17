@@ -1,7 +1,7 @@
 use algonaut::algod::AlgodBuilder;
 use algonaut::core::MicroAlgos;
 use algonaut::kmd::KmdBuilder;
-use algonaut::transaction::{ConfigureAsset, Txn};
+use algonaut::transaction::{ConfigureAsset, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Last round: {}", params.last_round);
 
     // we are ready to build the transaction
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(creator)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)

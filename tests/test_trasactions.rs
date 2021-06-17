@@ -5,7 +5,7 @@ use algonaut_core::SignedLogic;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
 use algonaut_transaction::transaction::TransactionSignature;
 use algonaut_transaction::tx_group::TxGroup;
-use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, Txn};
+use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, TxnBuilder};
 use dotenv::dotenv;
 use std::convert::TryInto;
 use std::env;
@@ -27,7 +27,7 @@ async fn test_transaction() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
@@ -75,7 +75,7 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(multisig_address.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
@@ -143,7 +143,7 @@ byte 0xFF
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(from_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
@@ -204,7 +204,7 @@ int 1
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
@@ -270,7 +270,7 @@ int 1
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(multisig_address.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
@@ -325,7 +325,7 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
@@ -430,7 +430,7 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t1 = &mut Txn::new()
+    let t1 = &mut TxnBuilder::new()
         .sender(account1.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
@@ -445,7 +445,7 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
         )
         .build();
 
-    let t2 = &mut Txn::new()
+    let t2 = &mut TxnBuilder::new()
         .sender(account2.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)

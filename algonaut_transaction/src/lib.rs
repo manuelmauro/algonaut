@@ -8,6 +8,6 @@ pub mod tx_group;
 
 pub use builder::{
     AcceptAsset, CallApplication, ClawbackAsset, ConfigureAsset, FreezeAsset, Pay, RegisterKey,
-    TransferAsset, Txn,
+    TransferAsset, TxnBuilder,
 };
 pub use transaction::{SignedTransaction, Transaction, TransactionType};
