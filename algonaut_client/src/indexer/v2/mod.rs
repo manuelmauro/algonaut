@@ -3,6 +3,7 @@ use crate::error::AlgorandError;
 use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::Round;
 use reqwest::header::HeaderMap;
+use reqwest::Url;
 
 /// API message structs for Algorand's indexer v2
 pub mod message;
@@ -15,6 +16,14 @@ pub struct Client {
 }
 
 impl Client {
+    pub fn new(url: &str) -> Result<Client, AlgorandError> {
+        Ok(Client {
+            url: Url::parse(url)?.as_ref().into(),
+            headers: HeaderMap::new(),
+            http_client: reqwest::Client::new(),
+        })
+    }
+
     /// Returns Ok if healthy
     pub async fn health(&self) -> Result<(), AlgorandError> {
         let _ = self

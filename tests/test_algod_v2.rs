@@ -1,5 +1,5 @@
+use algonaut::algod::AlgodBuilder;
 use algonaut_client::algod::v2::message::KeyRegistration;
-use algonaut_client::Algod;
 use algonaut_core::Round;
 use dotenv::dotenv;
 use std::env;
@@ -11,10 +11,10 @@ async fn test_genesis_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.genesis().await;
 
@@ -29,10 +29,10 @@ async fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.health().await;
 
@@ -47,10 +47,10 @@ async fn test_metrics_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.metrics().await;
 
@@ -65,10 +65,10 @@ async fn test_account_information_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod
         .account_information("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4")
@@ -85,10 +85,10 @@ async fn test_pending_transactions_for_endpoint() -> Result<(), Box<dyn Error>> 
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod
         .pending_transactions_for(
@@ -109,10 +109,10 @@ async fn test_application_information_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.application_information(0).await;
 
@@ -128,10 +128,10 @@ async fn test_asset_information_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.asset_information(0).await;
 
@@ -147,10 +147,10 @@ async fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let last_round = algod.status().await?.last_round;
     let res = algod.block(Round(last_round)).await;
@@ -167,10 +167,10 @@ async fn test_start_catchup_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod
         .start_catchup("4420000#Q7T2RRTDIRTYESIXKAAFJYFQWG4A3WRA3JIUZVCJ3F4AQ2G2HZRA")
@@ -188,10 +188,10 @@ async fn test_abort_catchup_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod
         .abort_catchup("4420000#Q7T2RRTDIRTYESIXKAAFJYFQWG4A3WRA3JIUZVCJ3F4AQ2G2HZRA")
@@ -208,10 +208,10 @@ async fn test_ledger_supply_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.ledger_supply().await;
 
@@ -227,10 +227,10 @@ async fn test_register_participation_keys_endpoint() -> Result<(), Box<dyn Error
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let params = KeyRegistration {
         fee: None,
@@ -257,10 +257,10 @@ async fn test_shutdown_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.shutdown(0).await;
 
@@ -275,10 +275,10 @@ async fn test_status_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.status().await;
 
@@ -293,10 +293,10 @@ async fn test_status_after_round_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let node_status = algod.status().await?;
 
@@ -315,10 +315,10 @@ async fn test_compile_teal_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod
         .compile_teal(
@@ -344,10 +344,10 @@ async fn test_failure_compiling_teal() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.compile_teal("not-a-teal-program".into()).await;
 
@@ -372,10 +372,10 @@ async fn test_broadcast_raw_transaction_endpoint() -> Result<(), Box<dyn Error>>
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.broadcast_raw_transaction(&[0; 32]).await;
 
@@ -390,10 +390,10 @@ async fn test_transaction_params_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.transaction_params().await;
 
@@ -408,10 +408,10 @@ async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.pending_transactions(0).await;
 
@@ -427,10 +427,10 @@ async fn test_pending_transaction_with_id_endpoint() -> Result<(), Box<dyn Error
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.pending_transaction_with_id("").await;
 
@@ -445,10 +445,10 @@ async fn test_versions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = algod.versions().await;
 

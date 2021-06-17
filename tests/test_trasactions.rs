@@ -1,5 +1,5 @@
+use algonaut::algod::AlgodBuilder;
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
-use algonaut_client::Algod;
 use algonaut_core::CompiledTeal;
 use algonaut_core::SignedLogic;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
@@ -17,10 +17,10 @@ async fn test_transaction() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let from = account1();
     let to = account2();
@@ -63,10 +63,10 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let account1 = account1();
     let account2 = account2();
@@ -117,10 +117,10 @@ async fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dy
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let program: CompiledTeal = algod
         .compile_teal(
@@ -184,10 +184,10 @@ async fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let program = algod
         .compile_teal(
@@ -247,10 +247,10 @@ async fn test_transaction_with_delegated_logic_multisig() -> Result<(), Box<dyn 
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let program: CompiledTeal = algod
         .compile_teal(
@@ -316,10 +316,10 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let from = account1();
 
@@ -357,10 +357,10 @@ async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let address: String = env::var("ACCOUNT")?.parse()?;
 
@@ -387,10 +387,10 @@ async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     println!("{:?}", algod.pending_transactions(0).await);
     assert!(algod.pending_transactions(0).await.is_ok());
@@ -403,10 +403,10 @@ async fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     println!("{:?}", algod.transaction_params().await);
     assert!(algod.transaction_params().await.is_ok());
@@ -420,10 +420,10 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let account1 = account1();
     let account2 = account2();

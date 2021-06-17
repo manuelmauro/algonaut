@@ -1,4 +1,4 @@
-use algonaut::client::Algod;
+use algonaut::algod::AlgodBuilder;
 use algonaut::core::{MicroAlgos, ToMsgPack};
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
@@ -14,10 +14,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     // print algod status
     let node_status = algod.status().await?;
