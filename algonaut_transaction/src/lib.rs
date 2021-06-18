@@ -1,5 +1,5 @@
 pub mod account;
-mod api_models;
+mod api_model;
 pub mod auction;
 pub mod builder;
 pub mod error;
