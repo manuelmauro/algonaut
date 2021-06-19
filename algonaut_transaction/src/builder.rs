@@ -8,7 +8,7 @@ use algonaut_crypto::HashDigest;
 
 /// A builder for [Transaction].
 #[derive(Default)]
-pub struct Txn {
+pub struct TxnBuilder {
     fee: MicroAlgos,
     first_valid: Round,
     genesis_hash: Option<HashDigest>,
@@ -22,7 +22,7 @@ pub struct Txn {
     rekey_to: Option<Address>,
 }
 
-impl Txn {
+impl TxnBuilder {
     pub fn new() -> Self {
         Self::default()
     }

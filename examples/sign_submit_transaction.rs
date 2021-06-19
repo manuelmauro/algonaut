@@ -1,6 +1,7 @@
+use algonaut::algod::AlgodBuilder;
 use algonaut::core::MicroAlgos;
-use algonaut::transaction::{Pay, Txn};
-use algonaut::{Algod, Kmd};
+use algonaut::kmd::KmdBuilder;
+use algonaut::transaction::{Pay, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -10,14 +11,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
-    let kmd = Kmd::new()
+        .build_v2()?;
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let list_response = kmd.list_wallets().await?;
 
@@ -43,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(from_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)

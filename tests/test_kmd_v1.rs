@@ -1,4 +1,4 @@
-use algonaut_client::Kmd;
+use algonaut::kmd::KmdBuilder;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use dotenv::dotenv;
 use rand::{distributions::Alphanumeric, Rng};
@@ -11,10 +11,10 @@ async fn test_versions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let versions = kmd.versions().await;
     println!("{:#?}", versions);
@@ -28,10 +28,10 @@ async fn test_list_wallets_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallets = kmd.list_wallets().await;
     println!("{:#?}", wallets);
@@ -45,10 +45,10 @@ async fn test_create_wallet_and_obtain_handle() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -84,10 +84,10 @@ async fn test_release_wallet_handle_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -129,10 +129,10 @@ async fn test_renew_wallet_handle_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -174,10 +174,10 @@ async fn test_rename_wallet_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -221,10 +221,10 @@ async fn test_get_wallet_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -266,10 +266,10 @@ async fn test_export_wallet_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -311,10 +311,10 @@ async fn test_import_export_key() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -371,10 +371,10 @@ async fn test_generate_key_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -416,10 +416,10 @@ async fn test_delete_key_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -474,10 +474,10 @@ async fn test_list_keys_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -524,10 +524,10 @@ async fn test_list_keys_of_empty_wallet() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -569,10 +569,10 @@ async fn test_list_multisig_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let wallet_name: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -614,10 +614,10 @@ async fn test_import_export_multisig() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let version = 1;
     let threshold = 1;
@@ -680,10 +680,10 @@ async fn test_delete_multisig_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let version = 1;
     let threshold = 1;

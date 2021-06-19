@@ -1,9 +1,9 @@
+use algonaut::indexer::IndexerBuilder;
 use algonaut_client::indexer::v2::message::{
     QueryAccount, QueryAccountInfo, QueryAccountTransaction, QueryApplicationInfo,
     QueryApplications, QueryAssetTransaction, QueryAssets, QueryAssetsInfo, QueryBalances,
     QueryTransaction, Role,
 };
-use algonaut_client::Indexer;
 use algonaut_core::Round;
 use dotenv::dotenv;
 use std::env;
@@ -15,9 +15,9 @@ async fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = indexer.health().await;
 
@@ -32,9 +32,9 @@ async fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryAccount {
         application_id: None,
@@ -60,9 +60,9 @@ async fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let account: String = env::var("ACCOUNT")?.parse()?;
 
@@ -84,9 +84,9 @@ async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryAccountTransaction {
         after_time: None,
@@ -123,9 +123,9 @@ async fn test_applications_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryApplications {
         application_id: None,
@@ -147,9 +147,9 @@ async fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryApplicationInfo { include_all: None };
 
@@ -166,9 +166,9 @@ async fn test_assets_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryAssets {
         asset_id: None,
@@ -193,9 +193,9 @@ async fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryAssetsInfo { include_all: None };
 
@@ -212,9 +212,9 @@ async fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryBalances {
         currency_greater_than: None,
@@ -237,9 +237,9 @@ async fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryAssetTransaction {
         address: None,
@@ -274,9 +274,9 @@ async fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = indexer.block(Round(0)).await;
 
@@ -292,9 +292,9 @@ async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let query = QueryTransaction {
         address: None,
@@ -332,9 +332,9 @@ async fn test_transaction_info_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = Indexer::new()
+    let indexer = IndexerBuilder::new()
         .bind(env::var("INDEXER_URL")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let res = indexer.transaction_info("123").await;
 

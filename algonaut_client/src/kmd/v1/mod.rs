@@ -19,7 +19,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub(super) fn new(address: &str, token: &str) -> Client {
+    pub fn new(address: &str, token: &str) -> Client {
         Client {
             address: address.to_string(),
             token: token.to_string(),
@@ -27,7 +27,6 @@ impl Client {
         }
     }
 
-    /// Retrieves the current version
     pub async fn versions(&self) -> Result<VersionsResponse, AlgorandError> {
         let response = self
             .http_client
@@ -43,7 +42,6 @@ impl Client {
         Ok(response)
     }
 
-    /// List all of the wallets that kmd is aware of
     pub async fn list_wallets(&self) -> Result<ListWalletsResponse, AlgorandError> {
         let response = self
             .http_client
@@ -59,7 +57,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Creates a wallet
     pub async fn create_wallet(
         &self,
         wallet_name: &str,
@@ -89,12 +86,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Unlock the wallet and return a wallet token that can be used for subsequent operations
-    ///
-    /// These tokens expire periodically and must be renewed.
-    /// You can see how much time remains until expiration with [get_wallet_info](Client::get_wallet_info)
-    /// and renew it with [renew_wallet_handle](Client::renew_wallet_handle).
-    /// When you're done, you can invalidate the token with [release_wallet_handle](Client::release_wallet_handle)
     pub async fn init_wallet_handle(
         &self,
         wallet_id: &str,
@@ -119,7 +110,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Release a wallet handle token
     pub async fn release_wallet_handle(
         &self,
         wallet_handle: &str,
@@ -142,7 +132,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Renew a wallet handle token
     pub async fn renew_wallet_handle(
         &self,
         wallet_handle: &str,
@@ -165,7 +154,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Rename a wallet
     pub async fn rename_wallet(
         &self,
         wallet_id: &str,
@@ -192,7 +180,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get wallet info
     pub async fn get_wallet_info(
         &self,
         wallet_handle: &str,
@@ -215,7 +202,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Export the master derivation key from a wallet
     pub async fn export_master_derivation_key(
         &self,
         wallet_handle: &str,
@@ -240,7 +226,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Import an externally generated key into the wallet
     pub async fn import_key(
         &self,
         wallet_handle: &str,
@@ -265,9 +250,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Export the Ed25519 seed associated with the passed address
-    ///
-    /// Note the first 32 bytes of the returned value is the seed, the second 32 bytes is the public key
     pub async fn export_key(
         &self,
         wallet_handle: &str,
@@ -294,7 +276,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Generates a key and adds it to the wallet, returning the public key
     pub async fn generate_key(
         &self,
         wallet_handle: &str,
@@ -318,7 +299,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Deletes the key from the wallet
     pub async fn delete_key(
         &self,
         wallet_handle: &str,
@@ -345,7 +325,6 @@ impl Client {
         Ok(response)
     }
 
-    /// List all of the public keys in the wallet
     pub async fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, AlgorandError> {
         let req = ListKeysRequest {
             wallet_handle_token: wallet_handle.to_string(),
@@ -365,7 +344,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Sign a transaction
     pub async fn sign_transaction(
         &self,
         wallet_handle: &str,
@@ -392,7 +370,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Lists all of the multisig accounts whose preimages this wallet stores
     pub async fn list_multisig(
         &self,
         wallet_handle: &str,
@@ -415,7 +392,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Import a multisig account
     pub async fn import_multisig(
         &self,
         wallet_handle: &str,
@@ -444,7 +420,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Export multisig address metadata
     pub async fn export_multisig(
         &self,
         wallet_handle: &str,
@@ -469,7 +444,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Delete a multisig from the wallet
     pub async fn delete_multisig(
         &self,
         wallet_handle: &str,
@@ -496,9 +470,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Sign a multisig transaction.
-    ///
-    /// Start a multisig signature or add a signature to a partially completed multisig signature.
     pub async fn sign_multisig_transaction(
         &self,
         wallet_handle: &str,

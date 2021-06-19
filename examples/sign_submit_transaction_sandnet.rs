@@ -1,6 +1,7 @@
+use algonaut::algod::AlgodBuilder;
 use algonaut::core::MicroAlgos;
-use algonaut::transaction::{Pay, Txn};
-use algonaut::{Algod, Kmd};
+use algonaut::kmd::KmdBuilder;
+use algonaut::transaction::{Pay, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -11,10 +12,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
     // kmd manages wallets and accounts
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     // first we obtain a handle to our wallet
     let list_response = kmd.list_wallets().await?;
@@ -38,15 +39,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Receiver: {:#?}", to_address);
 
     // algod has a convenient method that retrieves basic information for a transaction
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     let params = algod.transaction_params().await?;
 
     // we are ready to build the transaction
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(from_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)

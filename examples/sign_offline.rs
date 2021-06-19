@@ -1,9 +1,8 @@
-use algonaut::core::MicroAlgos;
+use algonaut::algod::AlgodBuilder;
+use algonaut::core::{MicroAlgos, ToMsgPack};
 use algonaut::crypto::mnemonic;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::{Pay, Txn};
-use algonaut::Algod;
-use algonaut_transaction::ApiSignedTransaction;
+use algonaut::transaction::{Pay, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -15,10 +14,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = Algod::new()
+    let algod = AlgodBuilder::new()
         .bind(env::var("ALGOD_URL")?.as_ref())
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .client_v2()?;
+        .build_v2()?;
 
     // print algod status
     let node_status = algod.status().await?;
@@ -32,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = Txn::new()
+    let t = TxnBuilder::new()
         .sender(account.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)
@@ -50,8 +49,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Made unsigned transaction: {:?}", t);
 
     // sign the transaction
-    let signed_transaction = account.sign_and_generate_signed_transaction(&t)?;
-    let bytes = rmp_serde::to_vec_named(&ApiSignedTransaction::from(signed_transaction))?;
+    let signed_transaction = account.sign_transaction(&t)?;
+    let bytes = signed_transaction.to_msg_pack()?;
 
     let filename = "./signed.tx";
     let mut f = File::create(filename)?;

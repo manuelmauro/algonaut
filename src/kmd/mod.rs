@@ -1,30 +1,31 @@
-use super::token::ApiToken;
-use crate::error::{AlgorandError, BuilderError};
-use url::Url;
+use algonaut_client::{
+    error::{AlgorandError, BuilderError},
+    kmd::v1::Client,
+};
 
 pub mod v1;
 
-/// Kmd is the entry point to the creation of a client for the Algorand key management daemon.
+/// KmdBuilder is the entry point to the creation of a client for the Algorand key management daemon.
 /// ```
-/// use algonaut::client::Kmd;
+/// use algonaut::KmdBuilder;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let algod = Kmd::new()
+///     let algod = KmdBuilder::new()
 ///         .bind("http://localhost:4001")
 ///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-///         .client_v1()?;
+///         .kmd_v1()?;
 ///
 ///     println!("Algod versions: {:?}", algod.versions()?.versions);
 ///
 ///     Ok(())
 /// }
 /// ```
-pub struct Kmd<'a> {
+pub struct KmdBuilder<'a> {
     url: Option<&'a str>,
     token: Option<&'a str>,
 }
 
-impl<'a> Kmd<'a> {
+impl<'a> KmdBuilder<'a> {
     /// Start the creation of a client.
     pub fn new() -> Self {
         Self::default()
@@ -43,12 +44,9 @@ impl<'a> Kmd<'a> {
     }
 
     /// Build a v1 client for Algorand protocol daemon.
-    pub fn client_v1(self) -> Result<v1::Client, AlgorandError> {
+    pub fn build_v1(self) -> Result<v1::Kmd, AlgorandError> {
         match (self.url, self.token) {
-            (Some(url), Some(token)) => Ok(v1::Client::new(
-                Url::parse(url)?.as_str(),
-                ApiToken::parse(token)?.to_string().as_ref(),
-            )),
+            (Some(url), Some(token)) => Ok(v1::Kmd::new(Client::new(url, token))),
             (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
             (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
             (None, None) => Err(BuilderError::UnitializedUrl.into()),
@@ -56,9 +54,9 @@ impl<'a> Kmd<'a> {
     }
 }
 
-impl<'a> Default for Kmd<'a> {
+impl<'a> Default for KmdBuilder<'a> {
     fn default() -> Self {
-        Kmd {
+        KmdBuilder {
             url: None,
             token: None,
         }
@@ -71,10 +69,10 @@ mod tests {
 
     #[test]
     fn test_valid_client_builder() {
-        let algod = Kmd::new()
+        let algod = KmdBuilder::new()
             .bind("http://example.com")
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .client_v1();
+            .build_v1();
 
         assert!(algod.ok().is_some());
     }
@@ -82,15 +80,18 @@ mod tests {
     #[test]
     #[should_panic(expected = "")]
     fn test_client_builder_with_no_token() {
-        let _ = Kmd::new().bind("http://example.com").client_v1().unwrap();
+        let _ = KmdBuilder::new()
+            .bind("http://example.com")
+            .build_v1()
+            .unwrap();
     }
 
     #[test]
     #[should_panic(expected = "")]
     fn test_client_builder_with_no_url() {
-        let _ = Kmd::new()
+        let _ = KmdBuilder::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .client_v1()
+            .build_v1()
             .unwrap();
     }
 }

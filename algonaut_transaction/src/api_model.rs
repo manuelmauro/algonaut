@@ -1,9 +1,9 @@
 use algonaut_core::{
-    Address, ApiSignedLogic, MicroAlgos, MultisigSignature, Round, Signature, ToMsgPack, VotePk,
-    VrfPk,
+    Address, LogicSignature, MicroAlgos, MultisigSignature, Round, Signature, SignedLogic,
+    ToMsgPack, VotePk, VrfPk,
 };
 use algonaut_crypto::HashDigest;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use crate::{
     transaction::{StateSchema, TransactionSignature},
@@ -387,5 +387,45 @@ impl Serialize for SignedTransaction {
     {
         let api_transaction: ApiSignedTransaction = self.to_owned().into();
         api_transaction.serialize(serializer)
+    }
+}
+
+#[derive(Debug)]
+pub struct ApiSignedLogic {
+    pub logic: Vec<u8>,
+    pub sig: Option<Signature>,
+    pub msig: Option<MultisigSignature>,
+    pub args: Vec<Vec<u8>>,
+}
+
+impl From<SignedLogic> for ApiSignedLogic {
+    fn from(s: SignedLogic) -> Self {
+        let (sig, msig) = match s.sig {
+            LogicSignature::ContractAccount => (None, None),
+            LogicSignature::DelegatedSig(sig) => (Some(sig), None),
+            LogicSignature::DelegatedMultiSig(msig) => (None, Some(msig)),
+        };
+        ApiSignedLogic {
+            logic: s.logic.bytes,
+            sig,
+            msig,
+            args: s.args,
+        }
+    }
+}
+
+impl Serialize for ApiSignedLogic {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        // For some reason SerializeStruct ends up serializing as an array, so this explicitly serializes as a map
+        use serde::ser::SerializeMap;
+        let mut state = serializer.serialize_map(Some(4))?;
+        state.serialize_entry("l", &self.logic)?;
+        state.serialize_entry("arg", &self.args)?;
+        state.serialize_entry("sig", &self.sig)?;
+        state.serialize_entry("msig", &self.msig)?;
+        state.end()
     }
 }

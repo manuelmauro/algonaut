@@ -1,4 +1,5 @@
-use algonaut::{crypto::mnemonic, Kmd};
+use algonaut::crypto::mnemonic;
+use algonaut::kmd::KmdBuilder;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -8,10 +9,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let kmd = Kmd::new()
+    let kmd = KmdBuilder::new()
         .bind(env::var("KMD_URL")?.as_ref())
         .auth(env::var("KMD_TOKEN")?.as_ref())
-        .client_v1()?;
+        .build_v1()?;
 
     let list_response = kmd.list_wallets().await?;
 

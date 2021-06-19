@@ -108,7 +108,7 @@ impl Transaction {
     // Estimates the size of the encoded transaction, used in calculating the fee
     fn estimate_size(&self) -> Result<u64, AlgorandError> {
         let account = Account::generate();
-        let signed_transaction = account.sign_and_generate_signed_transaction(self)?;
+        let signed_transaction = account.sign_transaction(self)?;
         Ok(signed_transaction.to_msg_pack()?.len() as u64)
     }
 }

@@ -1,8 +1,10 @@
 use crate::error::AlgorandError;
 use crate::extensions::reqwest::ResponseExt;
+use crate::token::ApiToken;
 use algonaut_core::Round;
 use message::*;
 use reqwest::header::HeaderMap;
+use reqwest::Url;
 
 /// API message structs for Algorand's daemon v2
 pub mod message;
@@ -11,14 +13,22 @@ const AUTH_HEADER: &str = "X-Algo-API-Token";
 
 /// Client for interacting with the Algorand protocol daemon
 pub struct Client {
-    pub(super) url: String,
-    pub(super) token: String,
-    pub(super) headers: HeaderMap,
-    pub(super) http_client: reqwest::Client,
+    url: String,
+    token: String,
+    headers: HeaderMap,
+    http_client: reqwest::Client,
 }
 
 impl Client {
-    /// Returns the entire genesis file in json.
+    pub fn new(url: &str, token: &str) -> Result<Client, AlgorandError> {
+        Ok(Client {
+            url: Url::parse(url)?.as_ref().into(),
+            token: ApiToken::parse(token)?.to_string(),
+            headers: HeaderMap::new(),
+            http_client: reqwest::Client::new(),
+        })
+    }
+
     pub async fn genesis(&self) -> Result<GenesisBlock, AlgorandError> {
         let response = self
             .http_client
@@ -34,7 +44,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Returns Ok if healthy
     pub async fn health(&self) -> Result<(), AlgorandError> {
         let _ = self
             .http_client
@@ -48,7 +57,6 @@ impl Client {
         Ok(())
     }
 
-    /// Return metrics about algod functioning.
     pub async fn metrics(&self) -> Result<String, AlgorandError> {
         let response = self
             .http_client
@@ -65,9 +73,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get account information.
-    /// Description Given a specific account public key, this call returns the accounts status,
-    /// balance and spendable amounts
     pub async fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
         let response = self
             .http_client
@@ -84,9 +89,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get a list of unconfirmed transactions currently in the transaction pool by address.
-    /// Description: Get the list of pending transactions by address, sorted by priority,
-    /// in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
     pub async fn pending_transactions_for(
         &self,
         address: &str,
@@ -110,10 +112,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get application information.
-    ///
-    /// Given a application id, it returns application information including creator,
-    /// approval and clear programs, global and local schemas, and global state.
     pub async fn application_information(&self, id: usize) -> Result<Application, AlgorandError> {
         let response = self
             .http_client
@@ -130,10 +128,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get asset information.
-    ///
-    /// Given a asset id, it returns asset information including creator, name,
-    /// total supply and special addresses.
     pub async fn asset_information(&self, id: usize) -> Result<Application, AlgorandError> {
         let response = self
             .http_client
@@ -150,7 +144,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get the block for the given round.
     pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
         let response = self
             .http_client
@@ -167,7 +160,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Starts a catchpoint catchup.
     pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
         let response = self
             .http_client
@@ -184,7 +176,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Aborts a catchpoint catchup.
     pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
         let response = self
             .http_client
@@ -201,7 +192,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get the current supply reported by the ledger.
     pub async fn ledger_supply(&self) -> Result<Supply, AlgorandError> {
         let response = self
             .http_client
@@ -218,14 +208,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Generate (or renew) and register participation keys on the node for a given account address.
-    ///
-    /// address: The account-id to update, or all to update all accounts.
-    /// fee: The fee to use when submitting key registration transactions. Defaults to the suggested
-    /// fee. (default = 1000)
-    /// key-dilution: value to use for two-level participation key.
-    /// no-wait: Don't wait for transaction to commit before returning response.
-    /// round-last-valid: The last round for which the generated participation keys will be valid.
     pub async fn register_participation_keys(
         &self,
         address: &str,
@@ -250,8 +232,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Special management endpoint to shutdown the node. Optionally provide a timeout parameter
-    /// to indicate that the node should begin shutting down after a number of seconds.
     pub async fn shutdown(&self, timeout: usize) -> Result<(), AlgorandError> {
         self.http_client
             .post(&format!("{}v2/shutdown", self.url))
@@ -268,7 +248,6 @@ impl Client {
         Ok(())
     }
 
-    /// Gets the current node status.
     pub async fn status(&self) -> Result<NodeStatus, AlgorandError> {
         let response = self
             .http_client
@@ -285,7 +264,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Gets the node status after waiting for the given round.
     pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, AlgorandError> {
         let response = self
             .http_client
@@ -305,11 +283,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Compile TEAL source code to binary, produce its hash.
-    ///
-    /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
-    /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
-    /// a node's configuration file sets EnableDeveloperAPI to true.
     pub async fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, AlgorandError> {
         let response = self
             .http_client
@@ -328,11 +301,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Provide debugging information for a transaction (or group).
-    ///
-    /// Executes TEAL program(s) in context and returns debugging information about the execution.
-    /// This endpoint is only enabled when a node's configureation file sets EnableDeveloperAPI
-    /// to true.
     pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, AlgorandError> {
         let response = self
             .http_client
@@ -351,7 +319,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Broadcasts a raw transaction to the network.
     pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],
@@ -373,7 +340,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get parameters for constructing a new transaction.
     pub async fn transaction_params(&self) -> Result<TransactionParams, AlgorandError> {
         let response = self
             .http_client
@@ -390,10 +356,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get a list of unconfirmed transactions currently in the transaction pool.
-    ///
-    /// Get the list of pending transactions, sorted by priority, in decreasing order,
-    /// truncated at the end at MAX. If MAX = 0, returns all pending transactions.
     pub async fn pending_transactions(
         &self,
         max: u64,
@@ -414,16 +376,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Get a specific pending transaction.
-    ///
-    /// Given a transaction id of a recently submitted transaction, it returns information about
-    /// it. There are several cases when this might succeed:
-    /// - transaction committed (committed round > 0)
-    /// - transaction still in the pool (committed round = 0, pool error = "")
-    /// - transaction removed from pool due to error (committed round = 0, pool error != "")
-    ///
-    /// Or the transaction may have happened sufficiently long ago that the node no longer remembers
-    /// it, and this will return an error.
     pub async fn pending_transaction_with_id(
         &self,
         txid: &str,
@@ -443,7 +395,6 @@ impl Client {
         Ok(response)
     }
 
-    /// Retrieves the current version
     pub async fn versions(&self) -> Result<Version, AlgorandError> {
         let response = self
             .http_client
