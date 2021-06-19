@@ -1,10 +1,12 @@
 use crate::error::AlgorandError;
 use crate::extensions::reqwest::ResponseExt;
+use crate::token::ApiToken;
 use algonaut_core::MultisigSignature;
 use algonaut_core::ToMsgPack;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_transaction::Transaction;
 use message::*;
+use reqwest::Url;
 
 /// API message structs for Algorand's kmd v1
 pub mod message;
@@ -19,12 +21,12 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(address: &str, token: &str) -> Client {
-        Client {
-            address: address.to_string(),
-            token: token.to_string(),
+    pub fn new(address: &str, token: &str) -> Result<Client, AlgorandError> {
+        Ok(Client {
+            address: Url::parse(address)?.as_ref().into(),
+            token: ApiToken::parse(token)?.to_string(),
             http_client: reqwest::Client::new(),
-        }
+        })
     }
 
     pub async fn versions(&self) -> Result<VersionsResponse, AlgorandError> {

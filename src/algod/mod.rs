@@ -5,15 +5,16 @@ pub mod v2;
 
 /// AlgodBuilder is the entry point to the creation of a client for the Algorand protocol daemon.
 /// ```
-/// use algonaut::AlgodBuilder;
+/// use algonaut::algod::AlgodBuilder;
 ///
-/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let algod = AlgodBuilder::new()
 ///         .bind("http://localhost:4001")
 ///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-///         .algod_v2()?;
+///         .build_v2()?;
 ///
-///     println!("Algod versions: {:?}", algod.versions()?.versions);
+///     println!("Algod versions: {:?}", algod.versions().await?.versions);
 ///
 ///     Ok(())
 /// }
