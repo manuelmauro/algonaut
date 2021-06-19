@@ -362,7 +362,7 @@ async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v1()?;
 
-    let address: String = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ACCOUNT")?.parse()?;
 
     let last_round = algod.status().await?.last_round;
 
@@ -374,7 +374,7 @@ async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         to_date: None,
     };
 
-    let res = algod.transactions(address.as_str(), &query).await;
+    let res = algod.transactions(&address, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());

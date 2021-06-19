@@ -112,7 +112,7 @@ async fn test_account_information_endpoint() -> Result<(), Box<dyn Error>> {
         .build_v1()?;
 
     assert!(algod
-        .account_information("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4")
+        .account_information(&"4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?)
         .await
         .ok()
         .is_some());

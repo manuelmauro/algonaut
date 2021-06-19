@@ -71,7 +71,7 @@ async fn test_account_information_endpoint() -> Result<(), Box<dyn Error>> {
         .build_v2()?;
 
     let res = algod
-        .account_information("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4")
+        .account_information(&"4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?)
         .await;
 
     println!("{:#?}", res);
@@ -92,7 +92,7 @@ async fn test_pending_transactions_for_endpoint() -> Result<(), Box<dyn Error>> 
 
     let res = algod
         .pending_transactions_for(
-            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4",
+            &"4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?,
             0,
         )
         .await;
@@ -239,11 +239,9 @@ async fn test_register_participation_keys_endpoint() -> Result<(), Box<dyn Error
         round_last_valid: None,
     };
 
-    let address: String = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ACCOUNT")?.parse()?;
 
-    let res = algod
-        .register_participation_keys(address.as_str(), &params)
-        .await;
+    let res = algod.register_participation_keys(&address, &params).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());

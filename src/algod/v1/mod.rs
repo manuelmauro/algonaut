@@ -9,7 +9,7 @@ use algonaut_client::{
     },
     error::AlgorandError,
 };
-use algonaut_core::Round;
+use algonaut_core::{Address, Round};
 
 pub struct Algod {
     pub(crate) client: Client,
@@ -49,8 +49,8 @@ impl Algod {
         self.client.ledger_supply().await
     }
 
-    pub async fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
-        self.client.account_information(address).await
+    pub async fn account_information(&self, address: &Address) -> Result<Account, AlgorandError> {
+        self.client.account_information(&address.to_string()).await
     }
 
     /// Gets a list of unconfirmed transactions currently in the transaction pool
@@ -83,10 +83,10 @@ impl Algod {
     /// Get a list of confirmed transactions, limited to filters if specified
     pub async fn transactions(
         &self,
-        address: &str,
+        address: &Address,
         query: &QueryAccountTransactions,
     ) -> Result<TransactionList, AlgorandError> {
-        self.client.transactions(address, query).await
+        self.client.transactions(&address.to_string(), query).await
     }
 
     /// Broadcasts a raw transaction to the network
@@ -102,11 +102,11 @@ impl Algod {
     /// Gets a specific confirmed transaction
     pub async fn transaction_information(
         &self,
-        address: &str,
+        address: &Address,
         transaction_id: &str,
     ) -> Result<Transaction, AlgorandError> {
         self.client
-            .transaction_information(address, transaction_id)
+            .transaction_information(&address.to_string(), transaction_id)
             .await
     }
 
