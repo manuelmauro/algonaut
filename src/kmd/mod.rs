@@ -7,15 +7,16 @@ pub mod v1;
 
 /// KmdBuilder is the entry point to the creation of a client for the Algorand key management daemon.
 /// ```
-/// use algonaut::KmdBuilder;
+/// use algonaut::kmd::KmdBuilder;
 ///
-/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let algod = KmdBuilder::new()
 ///         .bind("http://localhost:4001")
 ///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-///         .kmd_v1()?;
+///         .build_v1()?;
 ///
-///     println!("Algod versions: {:?}", algod.versions()?.versions);
+///     println!("Algod versions: {:?}", algod.versions().await?.versions);
 ///
 ///     Ok(())
 /// }
@@ -46,7 +47,7 @@ impl<'a> KmdBuilder<'a> {
     /// Build a v1 client for Algorand protocol daemon.
     pub fn build_v1(self) -> Result<v1::Kmd, AlgorandError> {
         match (self.url, self.token) {
-            (Some(url), Some(token)) => Ok(v1::Kmd::new(Client::new(url, token))),
+            (Some(url), Some(token)) => Ok(v1::Kmd::new(Client::new(url, token)?)),
             (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
             (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
             (None, None) => Err(BuilderError::UnitializedUrl.into()),
