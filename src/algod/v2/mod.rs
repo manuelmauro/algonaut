@@ -18,6 +18,8 @@ use algonaut_client::algod::v2::Client;
 use algonaut_client::error::AlgorandError;
 use algonaut_core::Address;
 use algonaut_core::Round;
+use algonaut_core::ToMsgPack;
+use algonaut_transaction::SignedTransaction;
 
 pub struct Algod {
     pub(crate) client: Client,
@@ -151,7 +153,27 @@ impl Algod {
         self.client.dryrun_teal(req).await
     }
 
-    /// Broadcasts a raw transaction to the network.
+    /// Broadcasts a transaction to the network.
+    pub async fn broadcast_signed_transaction(
+        &self,
+        txn: &SignedTransaction,
+    ) -> Result<TransactionResponse, AlgorandError> {
+        self.broadcast_raw_transaction(&txn.to_msg_pack()?).await
+    }
+
+    /// Broadcasts a transaction group to the network.
+    pub async fn broadcast_signed_transactions(
+        &self,
+        txns: &[SignedTransaction],
+    ) -> Result<TransactionResponse, AlgorandError> {
+        let mut bytes = vec![];
+        for t in txns {
+            bytes.push(t.to_msg_pack()?);
+        }
+        self.broadcast_raw_transaction(&bytes.concat()).await
+    }
+
+    /// Broadcasts a raw transaction or transaction group to the network.
     pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],
