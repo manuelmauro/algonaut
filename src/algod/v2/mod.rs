@@ -16,7 +16,10 @@ use algonaut_client::algod::v2::message::TransactionResponse;
 use algonaut_client::algod::v2::message::Version;
 use algonaut_client::algod::v2::Client;
 use algonaut_client::error::AlgorandError;
+use algonaut_core::Address;
 use algonaut_core::Round;
+use algonaut_core::ToMsgPack;
+use algonaut_transaction::SignedTransaction;
 
 pub struct Algod {
     pub(crate) client: Client,
@@ -45,8 +48,8 @@ impl Algod {
     /// Get account information.
     /// Description Given a specific account public key, this call returns the accounts status,
     /// balance and spendable amounts
-    pub async fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
-        self.client.account_information(address).await
+    pub async fn account_information(&self, address: &Address) -> Result<Account, AlgorandError> {
+        self.client.account_information(&address.to_string()).await
     }
 
     /// Get a list of unconfirmed transactions currently in the transaction pool by address.
@@ -54,10 +57,12 @@ impl Algod {
     /// in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
     pub async fn pending_transactions_for(
         &self,
-        address: &str,
+        address: &Address,
         max: u64,
     ) -> Result<PendingTransactions, AlgorandError> {
-        self.client.pending_transactions_for(address, max).await
+        self.client
+            .pending_transactions_for(&address.to_string(), max)
+            .await
     }
 
     /// Get application information.
@@ -106,7 +111,7 @@ impl Algod {
     /// round-last-valid: The last round for which the generated participation keys will be valid.
     pub async fn register_participation_keys(
         &self,
-        address: &str,
+        address: &Address,
         params: &KeyRegistration,
     ) -> Result<String, AlgorandError> {
         self.client
@@ -148,7 +153,27 @@ impl Algod {
         self.client.dryrun_teal(req).await
     }
 
-    /// Broadcasts a raw transaction to the network.
+    /// Broadcasts a transaction to the network.
+    pub async fn broadcast_signed_transaction(
+        &self,
+        txn: &SignedTransaction,
+    ) -> Result<TransactionResponse, AlgorandError> {
+        self.broadcast_raw_transaction(&txn.to_msg_pack()?).await
+    }
+
+    /// Broadcasts a transaction group to the network.
+    pub async fn broadcast_signed_transactions(
+        &self,
+        txns: &[SignedTransaction],
+    ) -> Result<TransactionResponse, AlgorandError> {
+        let mut bytes = vec![];
+        for t in txns {
+            bytes.push(t.to_msg_pack()?);
+        }
+        self.broadcast_raw_transaction(&bytes.concat()).await
+    }
+
+    /// Broadcasts a raw transaction or transaction group to the network.
     pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],

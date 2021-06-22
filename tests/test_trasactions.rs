@@ -2,7 +2,7 @@ use algonaut::algod::AlgodBuilder;
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
 use algonaut_core::CompiledTeal;
 use algonaut_core::SignedLogic;
-use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress, ToMsgPack};
+use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut_transaction::transaction::TransactionSignature;
 use algonaut_transaction::tx_group::TxGroup;
 use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, TxnBuilder};
@@ -47,10 +47,9 @@ async fn test_transaction() -> Result<(), Box<dyn Error>> {
     assert!(sign_response.is_ok());
     let sign_response = sign_response.unwrap();
 
-    let t_bytes = sign_response.to_msg_pack()?;
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&t_bytes).await;
+    let send_response = algod.broadcast_signed_transaction(&sign_response).await;
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
@@ -101,10 +100,9 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
         sig,
     };
 
-    let t_bytes = signed_t.to_msg_pack()?;
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&t_bytes).await;
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
@@ -158,7 +156,7 @@ byte 0xFF
         )
         .build();
 
-    let signed_transaction = SignedTransaction {
+    let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
@@ -168,11 +166,9 @@ byte 0xFF
         }),
     };
 
-    let transaction_bytes = signed_transaction.to_msg_pack()?;
-
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&transaction_bytes).await;
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
     println!("response {:?}", send_response);
     assert!(send_response.is_err());
 
@@ -221,7 +217,7 @@ int 1
 
     let signature = from.generate_program_sig(&program);
 
-    let signed_transaction = SignedTransaction {
+    let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
@@ -231,11 +227,9 @@ int 1
         }),
     };
 
-    let transaction_bytes = signed_transaction.to_msg_pack()?;
-
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&transaction_bytes).await;
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
     println!("response {:?}", send_response);
     assert!(send_response.is_err());
 
@@ -294,17 +288,15 @@ int 1
         sig: LogicSignature::DelegatedMultiSig(msig),
     });
 
-    let signed_transaction = SignedTransaction {
+    let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
         sig,
     };
 
-    let transaction_bytes = signed_transaction.to_msg_pack()?;
-
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_raw_transaction(&transaction_bytes).await;
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
     println!("response {:?}", send_response);
     assert!(send_response.is_err());
 
@@ -342,9 +334,7 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
         )
         .build();
     let signed_t = from.sign_transaction(&t)?;
-    let send_response = algod
-        .broadcast_raw_transaction(&signed_t.to_msg_pack()?)
-        .await;
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
 
     println!("{:#?}", send_response);
     assert!(send_response.is_err());
@@ -362,7 +352,7 @@ async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v1()?;
 
-    let address: String = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ACCOUNT")?.parse()?;
 
     let last_round = algod.status().await?.last_round;
 
@@ -374,7 +364,7 @@ async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         to_date: None,
     };
 
-    let res = algod.transactions(address.as_str(), &query).await;
+    let res = algod.transactions(&address, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -466,7 +456,7 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
     let signed_t2 = account2.sign_transaction(&t2)?;
 
     let send_response = algod
-        .broadcast_raw_transaction(&[signed_t1.to_msg_pack()?, signed_t2.to_msg_pack()?].concat())
+        .broadcast_signed_transactions(&[signed_t1, signed_t2])
         .await;
 
     println!("{:#?}", send_response);

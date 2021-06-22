@@ -1,7 +1,7 @@
 use crate::error::AlgorandError;
 use crate::extensions::reqwest::ResponseExt;
 use crate::token::ApiToken;
-use algonaut_core::Round;
+use algonaut_core::{Address, Round};
 use message::*;
 use reqwest::header::HeaderMap;
 use reqwest::Url;
@@ -210,14 +210,15 @@ impl Client {
 
     pub async fn register_participation_keys(
         &self,
-        address: &str,
+        address: &Address,
         params: &KeyRegistration,
     ) -> Result<String, AlgorandError> {
         let response = self
             .http_client
             .post(&format!(
                 "{}v2/register-participation-keys/{}",
-                self.url, address
+                self.url,
+                address.to_string()
             ))
             .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())

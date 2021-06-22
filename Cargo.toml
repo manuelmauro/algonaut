@@ -29,7 +29,6 @@ algonaut_transaction = {path = "algonaut_transaction", version = "0.2.0"}
 chrono = "0.4.9"
 dirs = "2.0"
 dotenv = "0.15.0"
-rmp-serde = "0.14.0"
 tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
 rand = "0.8.3"
 getrandom = { version = "0.2.2", features = ["js"] }
