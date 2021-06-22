@@ -108,7 +108,8 @@ Planned:
 
 ## Integrations
 
-[Yew example](https://github.com/i-schuetz/algorand-yew-example)
+- [Yew example](https://github.com/i-schuetz/algorand-yew-example)
+- [iOS example (experimental)](https://github.com/i-schuetz/algonaut_ios)
 
 ## Changelog
 
