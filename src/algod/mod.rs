@@ -43,6 +43,8 @@ impl<'a> AlgodBuilder<'a> {
     }
 
     /// Build a v1 client for Algorand protocol daemon.
+    ///
+    /// Returns an error if url or token is not set or has an invalid format.
     pub fn build_v1(self) -> Result<v1::Algod, AlgorandError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Algod::new(
@@ -55,6 +57,8 @@ impl<'a> AlgodBuilder<'a> {
     }
 
     /// Build a v2 client for Algorand protocol daemon.
+    ///
+    /// Returns an error if url or token is not set or has an invalid format.
     pub fn build_v2(self) -> Result<v2::Algod, AlgorandError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v2::Algod::new(
