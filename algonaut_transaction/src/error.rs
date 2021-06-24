@@ -25,7 +25,7 @@ pub enum AlgorandError {
     SerdeJsonError(#[from] serde_json::Error),
     /// Mnemonic error
     #[error("serde encode error {0}")]
-    MnemonicError(#[from] algonaut_crypto::error::AlgorandError),
+    MnemonicError(#[from] algonaut_crypto::error::CryptoError),
 }
 
 #[derive(Debug, Display, Error, From)]

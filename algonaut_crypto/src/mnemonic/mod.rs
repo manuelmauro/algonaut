@@ -1,4 +1,4 @@
-use crate::error::{AlgorandError, ApiError};
+use crate::error::CryptoError;
 use sha2::Digest;
 use static_assertions::const_assert_eq;
 
@@ -17,9 +17,9 @@ const_assert_eq!(mnemonic_constants; MNEM_LEN_WORDS * BITS_PER_WORD - (CHECKSUM_
 /// Converts a 32-byte key into a 25 word mnemonic. The generated
 /// mnemonic includes a checksum. Each word in the mnemonic represents 11 bits
 /// of data, and the last 11 bits are reserved for the checksum.
-pub fn from_key(key: &[u8]) -> Result<String, AlgorandError> {
+pub fn from_key(key: &[u8]) -> Result<String, CryptoError> {
     if key.len() != KEY_LEN_BYTES {
-        return Err(ApiError::InvalidKeyLength.into());
+        return Err(CryptoError::InvalidKeyLength);
     }
     let check_word = checksum(key);
     let mut words: Vec<_> = to_u11_array(key).into_iter().map(get_word).collect();
@@ -31,26 +31,26 @@ pub fn from_key(key: &[u8]) -> Result<String, AlgorandError> {
 /// key used to create it. It returns an error if the passed mnemonic has
 /// an incorrect checksum, if the number of words is unexpected, or if one
 /// of the passed words is not found in the words list.
-pub fn to_key(string: &str) -> Result<[u8; KEY_LEN_BYTES], AlgorandError> {
+pub fn to_key(string: &str) -> Result<[u8; KEY_LEN_BYTES], CryptoError> {
     let mut mnemonic: Vec<&str> = string.split(MNEMONIC_DELIM).collect();
     if mnemonic.len() != MNEM_LEN_WORDS {
-        return Err(ApiError::InvalidMnemonicLength.into());
+        return Err(CryptoError::InvalidMnemonicLength);
     }
     let check_word = mnemonic.pop().unwrap();
     let mut nums = Vec::with_capacity(mnemonic.len());
     for word in mnemonic {
         let n = wordlist::WORDLIST
             .get_full(word)
-            .ok_or(ApiError::InvalidWordsInMnemonic)?;
+            .ok_or(CryptoError::InvalidWordsInMnemonic)?;
         nums.push(n.0 as u32);
     }
     let mut bytes = to_byte_array(&nums);
     if bytes.len() != KEY_LEN_BYTES + 1 {
-        return Err(ApiError::InvalidKeyLength.into());
+        return Err(CryptoError::InvalidKeyLength);
     }
     let _ = bytes.pop();
     if check_word != checksum(&bytes) {
-        return Err(ApiError::InvalidChecksum.into());
+        return Err(CryptoError::InvalidChecksum);
     }
     let mut key = [0; KEY_LEN_BYTES];
     key.copy_from_slice(&bytes);
