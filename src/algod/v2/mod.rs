@@ -15,7 +15,7 @@ use algonaut_client::algod::v2::message::TransactionParams;
 use algonaut_client::algod::v2::message::TransactionResponse;
 use algonaut_client::algod::v2::message::Version;
 use algonaut_client::algod::v2::Client;
-use algonaut_client::error::AlgorandError;
+use algonaut_client::error::ClientError;
 use algonaut_core::Address;
 use algonaut_core::Round;
 use algonaut_core::ToMsgPack;
@@ -31,24 +31,24 @@ impl Algod {
     }
 
     /// Returns the entire genesis file in json.
-    pub async fn genesis(&self) -> Result<GenesisBlock, AlgorandError> {
+    pub async fn genesis(&self) -> Result<GenesisBlock, ClientError> {
         self.client.genesis().await
     }
 
     /// Returns Ok if healthy
-    pub async fn health(&self) -> Result<(), AlgorandError> {
+    pub async fn health(&self) -> Result<(), ClientError> {
         self.client.health().await
     }
 
     /// Return metrics about algod functioning.
-    pub async fn metrics(&self) -> Result<String, AlgorandError> {
+    pub async fn metrics(&self) -> Result<String, ClientError> {
         self.client.metrics().await
     }
 
     /// Get account information.
     /// Description Given a specific account public key, this call returns the accounts status,
     /// balance and spendable amounts
-    pub async fn account_information(&self, address: &Address) -> Result<Account, AlgorandError> {
+    pub async fn account_information(&self, address: &Address) -> Result<Account, ClientError> {
         self.client.account_information(&address.to_string()).await
     }
 
@@ -59,7 +59,7 @@ impl Algod {
         &self,
         address: &Address,
         max: u64,
-    ) -> Result<PendingTransactions, AlgorandError> {
+    ) -> Result<PendingTransactions, ClientError> {
         self.client
             .pending_transactions_for(&address.to_string(), max)
             .await
@@ -69,7 +69,7 @@ impl Algod {
     ///
     /// Given a application id, it returns application information including creator,
     /// approval and clear programs, global and local schemas, and global state.
-    pub async fn application_information(&self, id: usize) -> Result<Application, AlgorandError> {
+    pub async fn application_information(&self, id: usize) -> Result<Application, ClientError> {
         self.client.application_information(id).await
     }
 
@@ -77,27 +77,27 @@ impl Algod {
     ///
     /// Given a asset id, it returns asset information including creator, name,
     /// total supply and special addresses.
-    pub async fn asset_information(&self, id: usize) -> Result<Application, AlgorandError> {
+    pub async fn asset_information(&self, id: usize) -> Result<Application, ClientError> {
         self.client.asset_information(id).await
     }
 
     /// Get the block for the given round.
-    pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
+    pub async fn block(&self, round: Round) -> Result<Block, ClientError> {
         self.client.block(round).await
     }
 
     /// Starts a catchpoint catchup.
-    pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
+    pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, ClientError> {
         self.client.start_catchup(catchpoint).await
     }
 
     /// Aborts a catchpoint catchup.
-    pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
+    pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, ClientError> {
         self.client.abort_catchup(catchpoint).await
     }
 
     /// Get the current supply reported by the ledger.
-    pub async fn ledger_supply(&self) -> Result<Supply, AlgorandError> {
+    pub async fn ledger_supply(&self) -> Result<Supply, ClientError> {
         self.client.ledger_supply().await
     }
 
@@ -113,7 +113,7 @@ impl Algod {
         &self,
         address: &Address,
         params: &KeyRegistration,
-    ) -> Result<String, AlgorandError> {
+    ) -> Result<String, ClientError> {
         self.client
             .register_participation_keys(address, params)
             .await
@@ -121,17 +121,17 @@ impl Algod {
 
     /// Special management endpoint to shutdown the node. Optionally provide a timeout parameter
     /// to indicate that the node should begin shutting down after a number of seconds.
-    pub async fn shutdown(&self, timeout: usize) -> Result<(), AlgorandError> {
+    pub async fn shutdown(&self, timeout: usize) -> Result<(), ClientError> {
         self.client.shutdown(timeout).await
     }
 
     /// Gets the current node status.
-    pub async fn status(&self) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status(&self) -> Result<NodeStatus, ClientError> {
         self.client.status().await
     }
 
     /// Gets the node status after waiting for the given round.
-    pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, ClientError> {
         self.client.status_after_round(round).await
     }
 
@@ -140,7 +140,7 @@ impl Algod {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
     /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
     /// a node's configuration file sets EnableDeveloperAPI to true.
-    pub async fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, AlgorandError> {
+    pub async fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, ClientError> {
         self.client.compile_teal(teal).await
     }
 
@@ -149,7 +149,7 @@ impl Algod {
     /// Executes TEAL program(s) in context and returns debugging information about the execution.
     /// This endpoint is only enabled when a node's configureation file sets EnableDeveloperAPI
     /// to true.
-    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, AlgorandError> {
+    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, ClientError> {
         self.client.dryrun_teal(req).await
     }
 
@@ -157,7 +157,7 @@ impl Algod {
     pub async fn broadcast_signed_transaction(
         &self,
         txn: &SignedTransaction,
-    ) -> Result<TransactionResponse, AlgorandError> {
+    ) -> Result<TransactionResponse, ClientError> {
         self.broadcast_raw_transaction(&txn.to_msg_pack()?).await
     }
 
@@ -165,7 +165,7 @@ impl Algod {
     pub async fn broadcast_signed_transactions(
         &self,
         txns: &[SignedTransaction],
-    ) -> Result<TransactionResponse, AlgorandError> {
+    ) -> Result<TransactionResponse, ClientError> {
         let mut bytes = vec![];
         for t in txns {
             bytes.push(t.to_msg_pack()?);
@@ -177,12 +177,12 @@ impl Algod {
     pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],
-    ) -> Result<TransactionResponse, AlgorandError> {
+    ) -> Result<TransactionResponse, ClientError> {
         self.client.broadcast_raw_transaction(rawtxn).await
     }
 
     /// Get parameters for constructing a new transaction.
-    pub async fn transaction_params(&self) -> Result<TransactionParams, AlgorandError> {
+    pub async fn transaction_params(&self) -> Result<TransactionParams, ClientError> {
         self.client.transaction_params().await
     }
 
@@ -190,10 +190,7 @@ impl Algod {
     ///
     /// Get the list of pending transactions, sorted by priority, in decreasing order,
     /// truncated at the end at MAX. If MAX = 0, returns all pending transactions.
-    pub async fn pending_transactions(
-        &self,
-        max: u64,
-    ) -> Result<PendingTransactions, AlgorandError> {
+    pub async fn pending_transactions(&self, max: u64) -> Result<PendingTransactions, ClientError> {
         self.client.pending_transactions(max).await
     }
 
@@ -210,12 +207,12 @@ impl Algod {
     pub async fn pending_transaction_with_id(
         &self,
         txid: &str,
-    ) -> Result<PendingTransaction, AlgorandError> {
+    ) -> Result<PendingTransaction, ClientError> {
         self.client.pending_transaction_with_id(txid).await
     }
 
     /// Retrieves the current version
-    pub async fn versions(&self) -> Result<Version, AlgorandError> {
+    pub async fn versions(&self) -> Result<Version, ClientError> {
         self.client.versions().await
     }
 }

@@ -1,7 +1,4 @@
-use algonaut_client::{
-    error::{AlgorandError, BuilderError},
-    kmd::v1::Client,
-};
+use algonaut_client::{error::ClientError, kmd::v1::Client};
 
 pub mod v1;
 
@@ -45,12 +42,12 @@ impl<'a> KmdBuilder<'a> {
     }
 
     /// Build a v1 client for Algorand protocol daemon.
-    pub fn build_v1(self) -> Result<v1::Kmd, AlgorandError> {
+    pub fn build_v1(self) -> Result<v1::Kmd, ClientError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Kmd::new(Client::new(url, token)?)),
-            (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
-            (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
-            (None, None) => Err(BuilderError::UnitializedUrl.into()),
+            (None, Some(_)) => Err(ClientError::UnitializedUrl),
+            (Some(_), None) => Err(ClientError::UnitializedToken),
+            (None, None) => Err(ClientError::UnitializedUrl),
         }
     }
 }

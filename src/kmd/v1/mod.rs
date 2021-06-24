@@ -1,4 +1,4 @@
-use algonaut_client::error::AlgorandError;
+use algonaut_client::error::ClientError;
 use algonaut_client::kmd::v1::message::{
     CreateWalletResponse, DeleteKeyResponse, DeleteMultisigResponse, ExportKeyResponse,
     ExportMasterDerivationKeyResponse, ExportMultisigResponse, GenerateKeyResponse,
@@ -8,7 +8,7 @@ use algonaut_client::kmd::v1::message::{
     SignTransactionResponse, VersionsResponse,
 };
 use algonaut_client::kmd::v1::Client;
-use algonaut_core::MultisigSignature;
+use algonaut_core::{MultisigSignature, ToMsgPack};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_transaction::Transaction;
 
@@ -22,12 +22,12 @@ impl Kmd {
     }
 
     /// Retrieves the current version
-    pub async fn versions(&self) -> Result<VersionsResponse, AlgorandError> {
+    pub async fn versions(&self) -> Result<VersionsResponse, ClientError> {
         self.client.versions().await
     }
 
     /// List all of the wallets that kmd is aware of
-    pub async fn list_wallets(&self) -> Result<ListWalletsResponse, AlgorandError> {
+    pub async fn list_wallets(&self) -> Result<ListWalletsResponse, ClientError> {
         self.client.list_wallets().await
     }
 
@@ -38,7 +38,7 @@ impl Kmd {
         wallet_password: &str,
         wallet_driver_name: &str,
         master_derivation_key: MasterDerivationKey,
-    ) -> Result<CreateWalletResponse, AlgorandError> {
+    ) -> Result<CreateWalletResponse, ClientError> {
         self.client
             .create_wallet(
                 wallet_name,
@@ -59,7 +59,7 @@ impl Kmd {
         &self,
         wallet_id: &str,
         wallet_password: &str,
-    ) -> Result<InitWalletHandleResponse, AlgorandError> {
+    ) -> Result<InitWalletHandleResponse, ClientError> {
         self.client
             .init_wallet_handle(wallet_id, wallet_password)
             .await
@@ -69,7 +69,7 @@ impl Kmd {
     pub async fn release_wallet_handle(
         &self,
         wallet_handle: &str,
-    ) -> Result<ReleaseWalletHandleResponse, AlgorandError> {
+    ) -> Result<ReleaseWalletHandleResponse, ClientError> {
         self.client.release_wallet_handle(wallet_handle).await
     }
 
@@ -77,7 +77,7 @@ impl Kmd {
     pub async fn renew_wallet_handle(
         &self,
         wallet_handle: &str,
-    ) -> Result<RenewWalletHandleResponse, AlgorandError> {
+    ) -> Result<RenewWalletHandleResponse, ClientError> {
         self.client.renew_wallet_handle(wallet_handle).await
     }
 
@@ -87,7 +87,7 @@ impl Kmd {
         wallet_id: &str,
         wallet_password: &str,
         new_name: &str,
-    ) -> Result<RenameWalletResponse, AlgorandError> {
+    ) -> Result<RenameWalletResponse, ClientError> {
         self.client
             .rename_wallet(wallet_id, wallet_password, new_name)
             .await
@@ -97,7 +97,7 @@ impl Kmd {
     pub async fn get_wallet_info(
         &self,
         wallet_handle: &str,
-    ) -> Result<GetWalletInfoResponse, AlgorandError> {
+    ) -> Result<GetWalletInfoResponse, ClientError> {
         self.client.get_wallet_info(wallet_handle).await
     }
 
@@ -106,7 +106,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-    ) -> Result<ExportMasterDerivationKeyResponse, AlgorandError> {
+    ) -> Result<ExportMasterDerivationKeyResponse, ClientError> {
         self.client
             .export_master_derivation_key(wallet_handle, wallet_password)
             .await
@@ -117,7 +117,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         private_key: [u8; 32],
-    ) -> Result<ImportKeyResponse, AlgorandError> {
+    ) -> Result<ImportKeyResponse, ClientError> {
         self.client.import_key(wallet_handle, private_key).await
     }
 
@@ -129,7 +129,7 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<ExportKeyResponse, AlgorandError> {
+    ) -> Result<ExportKeyResponse, ClientError> {
         self.client
             .export_key(wallet_handle, wallet_password, address)
             .await
@@ -139,7 +139,7 @@ impl Kmd {
     pub async fn generate_key(
         &self,
         wallet_handle: &str,
-    ) -> Result<GenerateKeyResponse, AlgorandError> {
+    ) -> Result<GenerateKeyResponse, ClientError> {
         self.client.generate_key(wallet_handle).await
     }
 
@@ -149,14 +149,14 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteKeyResponse, AlgorandError> {
+    ) -> Result<DeleteKeyResponse, ClientError> {
         self.client
             .delete_key(wallet_handle, wallet_password, address)
             .await
     }
 
     /// List all of the public keys in the wallet
-    pub async fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, AlgorandError> {
+    pub async fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, ClientError> {
         self.client.list_keys(wallet_handle).await
     }
 
@@ -166,7 +166,7 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         transaction: &Transaction,
-    ) -> Result<SignTransactionResponse, AlgorandError> {
+    ) -> Result<SignTransactionResponse, ClientError> {
         self.client
             .sign_transaction(wallet_handle, wallet_password, transaction)
             .await
@@ -176,7 +176,7 @@ impl Kmd {
     pub async fn list_multisig(
         &self,
         wallet_handle: &str,
-    ) -> Result<ListMultisigResponse, AlgorandError> {
+    ) -> Result<ListMultisigResponse, ClientError> {
         self.client.list_multisig(wallet_handle).await
     }
 
@@ -187,7 +187,7 @@ impl Kmd {
         version: u8,
         threshold: u8,
         pks: &[Ed25519PublicKey],
-    ) -> Result<ImportMultisigResponse, AlgorandError> {
+    ) -> Result<ImportMultisigResponse, ClientError> {
         self.client
             .import_multisig(wallet_handle, version, threshold, pks)
             .await
@@ -198,7 +198,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         address: &str,
-    ) -> Result<ExportMultisigResponse, AlgorandError> {
+    ) -> Result<ExportMultisigResponse, ClientError> {
         self.client.export_multisig(wallet_handle, address).await
     }
 
@@ -208,7 +208,7 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteMultisigResponse, AlgorandError> {
+    ) -> Result<DeleteMultisigResponse, ClientError> {
         self.client
             .delete_multisig(wallet_handle, wallet_password, address)
             .await
@@ -224,12 +224,12 @@ impl Kmd {
         transaction: &Transaction,
         public_key: Ed25519PublicKey,
         partial_multisig: Option<MultisigSignature>,
-    ) -> Result<SignMultisigTransactionResponse, AlgorandError> {
+    ) -> Result<SignMultisigTransactionResponse, ClientError> {
         self.client
             .sign_multisig_transaction(
                 wallet_handle,
                 wallet_password,
-                transaction,
+                transaction.to_msg_pack()?,
                 public_key,
                 partial_multisig,
             )

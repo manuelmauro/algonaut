@@ -7,7 +7,7 @@ use algonaut_client::{
         },
         Client,
     },
-    error::AlgorandError,
+    error::ClientError,
 };
 use algonaut_core::{Address, Round};
 
@@ -20,36 +20,36 @@ impl Algod {
         Algod { client }
     }
 
-    pub async fn health(&self) -> Result<(), AlgorandError> {
+    pub async fn health(&self) -> Result<(), ClientError> {
         self.client.health().await
     }
 
     /// Retrieves the current version
-    pub async fn versions(&self) -> Result<Version, AlgorandError> {
+    pub async fn versions(&self) -> Result<Version, ClientError> {
         self.client.versions().await
     }
 
     /// Gets the current node status
-    pub async fn status(&self) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status(&self) -> Result<NodeStatus, ClientError> {
         self.client.status().await
     }
 
     /// Waits for a block to appear after the specified round and returns the node status at the time
-    pub async fn status_after_block(&self, round: Round) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status_after_block(&self, round: Round) -> Result<NodeStatus, ClientError> {
         self.client.status_after_block(round).await
     }
 
     /// Get the block for the given round
-    pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
+    pub async fn block(&self, round: Round) -> Result<Block, ClientError> {
         self.client.block(round).await
     }
 
     /// Gets the current supply reported by the ledger
-    pub async fn ledger_supply(&self) -> Result<Supply, AlgorandError> {
+    pub async fn ledger_supply(&self) -> Result<Supply, ClientError> {
         self.client.ledger_supply().await
     }
 
-    pub async fn account_information(&self, address: &Address) -> Result<Account, AlgorandError> {
+    pub async fn account_information(&self, address: &Address) -> Result<Account, ClientError> {
         self.client.account_information(&address.to_string()).await
     }
 
@@ -59,7 +59,7 @@ impl Algod {
     pub async fn pending_transactions(
         &self,
         limit: u64,
-    ) -> Result<PendingTransactions, AlgorandError> {
+    ) -> Result<PendingTransactions, ClientError> {
         self.client.pending_transactions(limit).await
     }
 
@@ -74,7 +74,7 @@ impl Algod {
     pub async fn pending_transaction_information(
         &self,
         transaction_id: &str,
-    ) -> Result<Transaction, AlgorandError> {
+    ) -> Result<Transaction, ClientError> {
         self.client
             .pending_transaction_information(transaction_id)
             .await
@@ -85,17 +85,17 @@ impl Algod {
         &self,
         address: &Address,
         query: &QueryAccountTransactions,
-    ) -> Result<TransactionList, AlgorandError> {
+    ) -> Result<TransactionList, ClientError> {
         self.client.transactions(&address.to_string(), query).await
     }
 
     /// Broadcasts a raw transaction to the network
-    pub async fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionId, AlgorandError> {
+    pub async fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionId, ClientError> {
         self.client.raw_transaction(raw).await
     }
 
     /// Gets the information of a single transaction
-    pub async fn transaction(&self, transaction_id: &str) -> Result<Transaction, AlgorandError> {
+    pub async fn transaction(&self, transaction_id: &str) -> Result<Transaction, ClientError> {
         self.client.transaction(transaction_id).await
     }
 
@@ -104,19 +104,19 @@ impl Algod {
         &self,
         address: &Address,
         transaction_id: &str,
-    ) -> Result<Transaction, AlgorandError> {
+    ) -> Result<Transaction, ClientError> {
         self.client
             .transaction_information(&address.to_string(), transaction_id)
             .await
     }
 
     /// Gets suggested fee in units of micro-Algos per byte
-    pub async fn suggested_fee(&self) -> Result<TransactionFee, AlgorandError> {
+    pub async fn suggested_fee(&self) -> Result<TransactionFee, ClientError> {
         self.client.suggested_fee().await
     }
 
     /// Gets parameters for constructing a new transaction
-    pub async fn transaction_params(&self) -> Result<TransactionParams, AlgorandError> {
+    pub async fn transaction_params(&self) -> Result<TransactionParams, ClientError> {
         self.client.transaction_params().await
     }
 }
