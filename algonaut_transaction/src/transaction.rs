@@ -1,5 +1,5 @@
 use crate::account::Account;
-use crate::error::AlgorandError;
+use crate::error::TransactionError;
 use algonaut_core::SignedLogic;
 use algonaut_core::ToMsgPack;
 use algonaut_core::{Address, MultisigSignature, Signature};
@@ -80,24 +80,27 @@ pub struct Transaction {
 
 impl Transaction {
     /// Creates a new transaction with a fee calculated based on `fee_per_byte`.
-    pub fn fee_per_byte(mut self, fee_per_byte: MicroAlgos) -> Result<Transaction, AlgorandError> {
+    pub fn fee_per_byte(
+        mut self,
+        fee_per_byte: MicroAlgos,
+    ) -> Result<Transaction, TransactionError> {
         self.fee = MIN_TXN_FEE.max(fee_per_byte * self.estimate_size()?);
         Ok(self)
     }
 
-    pub fn bytes_to_sign(&self) -> Result<Vec<u8>, AlgorandError> {
+    pub fn bytes_to_sign(&self) -> Result<Vec<u8>, TransactionError> {
         let encoded_tx = self.to_owned().to_msg_pack()?;
         let mut prefix_encoded_tx = b"TX".to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
         Ok(prefix_encoded_tx)
     }
 
-    pub fn raw_id(&self) -> Result<HashDigest, AlgorandError> {
+    pub fn raw_id(&self) -> Result<HashDigest, TransactionError> {
         let hashed = sha2::Sha512Trunc256::digest(&self.bytes_to_sign()?);
         Ok(HashDigest(hashed.into()))
     }
 
-    pub fn id(&self) -> Result<String, AlgorandError> {
+    pub fn id(&self) -> Result<String, TransactionError> {
         Ok(BASE32_NOPAD.encode(&self.raw_id()?.0))
     }
 
@@ -106,7 +109,7 @@ impl Transaction {
     }
 
     // Estimates the size of the encoded transaction, used in calculating the fee
-    fn estimate_size(&self) -> Result<u64, AlgorandError> {
+    fn estimate_size(&self) -> Result<u64, TransactionError> {
         let account = Account::generate();
         let signed_transaction = account.sign_transaction(self)?;
         Ok(signed_transaction.to_msg_pack()?.len() as u64)
