@@ -1,4 +1,4 @@
-use algonaut_client::error::{AlgorandError, BuilderError};
+use crate::error::AlgonautError;
 
 pub mod v1;
 pub mod v2;
@@ -43,26 +43,26 @@ impl<'a> AlgodBuilder<'a> {
     }
 
     /// Build a v1 client for Algorand protocol daemon.
-    pub fn build_v1(self) -> Result<v1::Algod, AlgorandError> {
+    pub fn build_v1(self) -> Result<v1::Algod, AlgonautError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Algod::new(
                 algonaut_client::algod::v1::Client::new(url, token)?,
             )),
-            (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
-            (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
-            (None, None) => Err(BuilderError::UnitializedUrl.into()),
+            (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
+            (Some(_), None) => Err(AlgonautError::UnitializedToken),
+            (None, None) => Err(AlgonautError::UnitializedUrl),
         }
     }
 
     /// Build a v2 client for Algorand protocol daemon.
-    pub fn build_v2(self) -> Result<v2::Algod, AlgorandError> {
+    pub fn build_v2(self) -> Result<v2::Algod, AlgonautError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v2::Algod::new(
                 algonaut_client::algod::v2::Client::new(url, token)?,
             )),
-            (None, Some(_)) => Err(BuilderError::UnitializedUrl.into()),
-            (Some(_), None) => Err(BuilderError::UnitializedToken.into()),
-            (None, None) => Err(BuilderError::UnitializedUrl.into()),
+            (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
+            (Some(_), None) => Err(AlgonautError::UnitializedToken),
+            (None, None) => Err(AlgonautError::UnitializedUrl),
         }
     }
 }

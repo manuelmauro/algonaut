@@ -1,5 +1,5 @@
 use crate::auction::{Bid, SignedBid};
-use crate::error::{AlgorandError, ApiError};
+use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
     Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, Signature, ToMsgPack,
@@ -23,7 +23,7 @@ impl Account {
     }
 
     /// Create account from human readable mnemonic of a 32 byte seed
-    pub fn from_mnemonic(mnemonic: &str) -> Result<Account, AlgorandError> {
+    pub fn from_mnemonic(mnemonic: &str) -> Result<Account, TransactionError> {
         let seed = mnemonic::to_key(mnemonic)?;
         Ok(Self::from_seed(seed))
     }
@@ -71,12 +71,12 @@ impl Account {
     fn generate_transaction_sig(
         &self,
         transaction: &Transaction,
-    ) -> Result<Signature, AlgorandError> {
+    ) -> Result<Signature, TransactionError> {
         Ok(self.generate_sig(&transaction.bytes_to_sign()?))
     }
 
     /// Sign a bid with the account's private key
-    pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, AlgorandError> {
+    pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, TransactionError> {
         let encoded_bid = bid.to_msg_pack()?;
         let mut prefix_encoded_bid = b"aB".to_vec();
         prefix_encoded_bid.extend_from_slice(&encoded_bid);
@@ -91,7 +91,7 @@ impl Account {
     pub fn sign_transaction(
         &self,
         transaction: &Transaction,
-    ) -> Result<SignedTransaction, AlgorandError> {
+    ) -> Result<SignedTransaction, TransactionError> {
         Ok(SignedTransaction {
             transaction: transaction.clone(),
             transaction_id: transaction.id()?,
@@ -104,7 +104,7 @@ impl Account {
         &self,
         from: MultisigAddress,
         transaction: &Transaction,
-    ) -> Result<SignedTransaction, AlgorandError> {
+    ) -> Result<SignedTransaction, TransactionError> {
         Ok(SignedTransaction {
             transaction: transaction.clone(),
             transaction_id: transaction.id()?,
@@ -117,12 +117,12 @@ impl Account {
         &self,
         transaction: &Transaction,
         from: MultisigAddress,
-    ) -> Result<MultisigSignature, AlgorandError> {
+    ) -> Result<MultisigSignature, TransactionError> {
         if from.address() != transaction.sender {
-            return Err(ApiError::InvalidSenderInMultisig.into());
+            return Err(TransactionError::InvalidSenderInMultisig);
         }
         if !from.contains(&self.address) {
-            return Err(ApiError::InvalidSecretKeyInMultisig.into());
+            return Err(TransactionError::InvalidSecretKeyInMultisig);
         }
 
         Ok(self.init_msig(from, self.generate_transaction_sig(&transaction)?))
@@ -133,9 +133,9 @@ impl Account {
         &self,
         program: &CompiledTeal,
         ma: MultisigAddress,
-    ) -> Result<MultisigSignature, AlgorandError> {
+    ) -> Result<MultisigSignature, TransactionError> {
         if !ma.contains(&self.address) {
-            return Err(ApiError::InvalidSecretKeyInMultisig.into());
+            return Err(TransactionError::InvalidSecretKeyInMultisig);
         }
 
         Ok(self.init_msig(ma, self.generate_program_sig(program)))
@@ -145,7 +145,7 @@ impl Account {
         &self,
         program: &CompiledTeal,
         msig: MultisigSignature,
-    ) -> Result<MultisigSignature, AlgorandError> {
+    ) -> Result<MultisigSignature, TransactionError> {
         self.append_sig_to_msig(self.generate_program_sig(program), msig)
     }
 
@@ -153,7 +153,7 @@ impl Account {
         &self,
         transaction: &Transaction,
         msig: MultisigSignature,
-    ) -> Result<MultisigSignature, AlgorandError> {
+    ) -> Result<MultisigSignature, TransactionError> {
         self.append_sig_to_msig(self.generate_transaction_sig(transaction)?, msig)
     }
 
@@ -188,14 +188,14 @@ impl Account {
         &self,
         my_sig: Signature,
         msig: MultisigSignature,
-    ) -> Result<MultisigSignature, AlgorandError> {
+    ) -> Result<MultisigSignature, TransactionError> {
         let my_public_key = self.address.as_public_key();
         if !msig
             .subsigs
             .iter()
             .any(|s: &MultisigSubsig| s.key == my_public_key)
         {
-            return Err(ApiError::InvalidSecretKeyInMultisig.into());
+            return Err(TransactionError::InvalidSecretKeyInMultisig);
         }
 
         let subsigs: Vec<MultisigSubsig> = msig

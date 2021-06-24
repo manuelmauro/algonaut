@@ -7,6 +7,7 @@ use serde::{Serialize, Serializer};
 
 use crate::{
     transaction::{StateSchema, TransactionSignature},
+    tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
 };
 
@@ -367,6 +368,7 @@ impl ToMsgPack for ApiTransaction {}
 impl ToMsgPack for ApiSignedTransaction {}
 impl ToMsgPack for Transaction {}
 impl ToMsgPack for SignedTransaction {}
+impl ToMsgPack for TxGroup {}
 
 /// Convenience to call to_msg_pack() directly on Transaction
 impl Serialize for Transaction {

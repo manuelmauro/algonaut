@@ -1,4 +1,4 @@
-use crate::error::AlgorandError;
+use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
 use crate::token::ApiToken;
 use algonaut_core::Round;
@@ -23,7 +23,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(url: &str, token: &str) -> Result<Client, AlgorandError> {
+    pub fn new(url: &str, token: &str) -> Result<Client, ClientError> {
         Ok(Client {
             url: Url::parse(url)?.as_ref().into(),
             token: ApiToken::parse(token)?.to_string(),
@@ -32,7 +32,7 @@ impl Client {
         })
     }
 
-    pub async fn health(&self) -> Result<(), AlgorandError> {
+    pub async fn health(&self) -> Result<(), ClientError> {
         let _ = self
             .http_client
             .get(&format!("{}health", self.url))
@@ -44,7 +44,7 @@ impl Client {
         Ok(())
     }
 
-    pub async fn versions(&self) -> Result<Version, AlgorandError> {
+    pub async fn versions(&self) -> Result<Version, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}versions", self.url))
@@ -59,7 +59,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn status(&self) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status(&self) -> Result<NodeStatus, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/status", self.url))
@@ -74,7 +74,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn status_after_block(&self, round: Round) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status_after_block(&self, round: Round) -> Result<NodeStatus, ClientError> {
         let response = self
             .http_client
             .get(&format!(
@@ -92,7 +92,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
+    pub async fn block(&self, round: Round) -> Result<Block, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/block/{}", self.url, round.0))
@@ -107,7 +107,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn ledger_supply(&self) -> Result<Supply, AlgorandError> {
+    pub async fn ledger_supply(&self) -> Result<Supply, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/ledger/supply", self.url))
@@ -122,7 +122,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
+    pub async fn account_information(&self, address: &str) -> Result<Account, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/account/{}", self.url, address))
@@ -140,7 +140,7 @@ impl Client {
     pub async fn pending_transactions(
         &self,
         limit: u64,
-    ) -> Result<PendingTransactions, AlgorandError> {
+    ) -> Result<PendingTransactions, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/transactions/pending", self.url))
@@ -159,7 +159,7 @@ impl Client {
     pub async fn pending_transaction_information(
         &self,
         transaction_id: &str,
-    ) -> Result<Transaction, AlgorandError> {
+    ) -> Result<Transaction, ClientError> {
         let response = self
             .http_client
             .get(&format!(
@@ -181,7 +181,7 @@ impl Client {
         &self,
         address: &str,
         query: &QueryAccountTransactions,
-    ) -> Result<TransactionList, AlgorandError> {
+    ) -> Result<TransactionList, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/account/{}/transactions", self.url, address))
@@ -197,7 +197,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionId, AlgorandError> {
+    pub async fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionId, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v1/transactions", self.url))
@@ -214,7 +214,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn transaction(&self, transaction_id: &str) -> Result<Transaction, AlgorandError> {
+    pub async fn transaction(&self, transaction_id: &str) -> Result<Transaction, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/transaction/{}", self.url, transaction_id))
@@ -233,7 +233,7 @@ impl Client {
         &self,
         address: &str,
         transaction_id: &str,
-    ) -> Result<Transaction, AlgorandError> {
+    ) -> Result<Transaction, ClientError> {
         let response = self
             .http_client
             .get(&format!(
@@ -251,7 +251,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn suggested_fee(&self) -> Result<TransactionFee, AlgorandError> {
+    pub async fn suggested_fee(&self) -> Result<TransactionFee, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/transactions/fee", self.url))
@@ -266,7 +266,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn transaction_params(&self) -> Result<TransactionParams, AlgorandError> {
+    pub async fn transaction_params(&self) -> Result<TransactionParams, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v1/transactions/params", self.url))

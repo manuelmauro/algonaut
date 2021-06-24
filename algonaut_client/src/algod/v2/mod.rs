@@ -1,4 +1,4 @@
-use crate::error::AlgorandError;
+use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
 use crate::token::ApiToken;
 use algonaut_core::{Address, Round};
@@ -20,7 +20,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(url: &str, token: &str) -> Result<Client, AlgorandError> {
+    pub fn new(url: &str, token: &str) -> Result<Client, ClientError> {
         Ok(Client {
             url: Url::parse(url)?.as_ref().into(),
             token: ApiToken::parse(token)?.to_string(),
@@ -29,7 +29,7 @@ impl Client {
         })
     }
 
-    pub async fn genesis(&self) -> Result<GenesisBlock, AlgorandError> {
+    pub async fn genesis(&self) -> Result<GenesisBlock, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}genesis", self.url))
@@ -44,7 +44,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn health(&self) -> Result<(), AlgorandError> {
+    pub async fn health(&self) -> Result<(), ClientError> {
         let _ = self
             .http_client
             .get(&format!("{}health", self.url))
@@ -57,7 +57,7 @@ impl Client {
         Ok(())
     }
 
-    pub async fn metrics(&self) -> Result<String, AlgorandError> {
+    pub async fn metrics(&self) -> Result<String, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}metrics", self.url))
@@ -73,7 +73,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn account_information(&self, address: &str) -> Result<Account, AlgorandError> {
+    pub async fn account_information(&self, address: &str) -> Result<Account, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/accounts/{}", self.url, address))
@@ -93,7 +93,7 @@ impl Client {
         &self,
         address: &str,
         max: u64,
-    ) -> Result<PendingTransactions, AlgorandError> {
+    ) -> Result<PendingTransactions, ClientError> {
         let response = self
             .http_client
             .get(&format!(
@@ -112,7 +112,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn application_information(&self, id: usize) -> Result<Application, AlgorandError> {
+    pub async fn application_information(&self, id: usize) -> Result<Application, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/applications/{}", self.url, id))
@@ -128,7 +128,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn asset_information(&self, id: usize) -> Result<Application, AlgorandError> {
+    pub async fn asset_information(&self, id: usize) -> Result<Application, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/asset/{}", self.url, id))
@@ -144,7 +144,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
+    pub async fn block(&self, round: Round) -> Result<Block, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/blocks/{}", self.url, round))
@@ -160,7 +160,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
+    pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v2/catchup/{}", self.url, catchpoint))
@@ -176,7 +176,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgorandError> {
+    pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, ClientError> {
         let response = self
             .http_client
             .delete(&format!("{}v2/catchup/{}", self.url, catchpoint))
@@ -192,7 +192,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn ledger_supply(&self) -> Result<Supply, AlgorandError> {
+    pub async fn ledger_supply(&self) -> Result<Supply, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/ledger/supply", self.url))
@@ -212,7 +212,7 @@ impl Client {
         &self,
         address: &Address,
         params: &KeyRegistration,
-    ) -> Result<String, AlgorandError> {
+    ) -> Result<String, ClientError> {
         let response = self
             .http_client
             .post(&format!(
@@ -233,7 +233,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn shutdown(&self, timeout: usize) -> Result<(), AlgorandError> {
+    pub async fn shutdown(&self, timeout: usize) -> Result<(), ClientError> {
         self.http_client
             .post(&format!("{}v2/shutdown", self.url))
             .headers(self.headers.clone())
@@ -249,7 +249,7 @@ impl Client {
         Ok(())
     }
 
-    pub async fn status(&self) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status(&self) -> Result<NodeStatus, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/status", self.url))
@@ -265,7 +265,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, AlgorandError> {
+    pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, ClientError> {
         let response = self
             .http_client
             .get(&format!(
@@ -284,7 +284,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, AlgorandError> {
+    pub async fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/compile", self.url))
@@ -302,7 +302,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, AlgorandError> {
+    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/dryrun", self.url))
@@ -323,7 +323,7 @@ impl Client {
     pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],
-    ) -> Result<TransactionResponse, AlgorandError> {
+    ) -> Result<TransactionResponse, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v2/transactions", self.url))
@@ -341,7 +341,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn transaction_params(&self) -> Result<TransactionParams, AlgorandError> {
+    pub async fn transaction_params(&self) -> Result<TransactionParams, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/params", self.url))
@@ -357,10 +357,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn pending_transactions(
-        &self,
-        max: u64,
-    ) -> Result<PendingTransactions, AlgorandError> {
+    pub async fn pending_transactions(&self, max: u64) -> Result<PendingTransactions, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/pending", self.url))
@@ -380,7 +377,7 @@ impl Client {
     pub async fn pending_transaction_with_id(
         &self,
         txid: &str,
-    ) -> Result<PendingTransaction, AlgorandError> {
+    ) -> Result<PendingTransaction, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/pending/{}", self.url, txid))
@@ -396,7 +393,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn versions(&self) -> Result<Version, AlgorandError> {
+    pub async fn versions(&self) -> Result<Version, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}versions", self.url))

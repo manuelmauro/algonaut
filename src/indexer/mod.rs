@@ -1,7 +1,6 @@
-use algonaut_client::{
-    error::{AlgorandError, BuilderError},
-    indexer::v2::Client,
-};
+use algonaut_client::indexer::v2::Client;
+
+use crate::error::AlgonautError;
 
 pub mod v2;
 
@@ -23,10 +22,10 @@ impl<'a> IndexerBuilder<'a> {
     }
 
     /// Build a v2 client for Algorand's indexer.
-    pub fn build_v2(self) -> Result<v2::Indexer, AlgorandError> {
+    pub fn build_v2(self) -> Result<v2::Indexer, AlgonautError> {
         match self.url {
             Some(url) => Ok(v2::Indexer::new(Client::new(url)?)),
-            None => Err(BuilderError::UnitializedUrl.into()),
+            None => Err(AlgonautError::UnitializedUrl),
         }
     }
 }

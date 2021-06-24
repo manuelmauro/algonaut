@@ -1,11 +1,9 @@
+use algonaut_core::ToMsgPack;
 use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize, Serializer};
 use sha2::Digest;
 
-use crate::{
-    error::{AlgorandError, ApiError},
-    Transaction,
-};
+use crate::{error::TransactionError, Transaction};
 
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
 pub struct TxGroup {
@@ -20,7 +18,7 @@ impl TxGroup {
         TxGroup { tx_group_hashes }
     }
 
-    pub fn assign_group_id(txns: Vec<&mut Transaction>) -> Result<(), AlgorandError> {
+    pub fn assign_group_id(txns: Vec<&mut Transaction>) -> Result<(), TransactionError> {
         let gid = TxGroup::compute_group_id(&txns)?;
         for tx in txns {
             tx.assign_group_id(gid);
@@ -28,15 +26,14 @@ impl TxGroup {
         Ok(())
     }
 
-    fn compute_group_id(txns: &[&mut Transaction]) -> Result<HashDigest, AlgorandError> {
+    fn compute_group_id(txns: &[&mut Transaction]) -> Result<HashDigest, TransactionError> {
         if txns.is_empty() {
-            return Err(ApiError::EmptyTransactionListError.into());
+            return Err(TransactionError::EmptyTransactionListError);
         }
         if txns.len() > Self::MAX_TX_GROUP_SIZE {
-            return Err(ApiError::MaxTransactionGroupSizeError {
+            return Err(TransactionError::MaxTransactionGroupSizeError {
                 size: Self::MAX_TX_GROUP_SIZE,
-            }
-            .into());
+            });
         }
         let mut ids: Vec<HashDigest> = vec![];
         for t in txns {
@@ -47,8 +44,8 @@ impl TxGroup {
         Ok(HashDigest(hashed.into()))
     }
 
-    fn bytes_to_sign(&self) -> Result<Vec<u8>, AlgorandError> {
-        let encoded_tx = rmp_serde::to_vec_named(self)?;
+    fn bytes_to_sign(&self) -> Result<Vec<u8>, TransactionError> {
+        let encoded_tx = self.to_msg_pack()?;
         let mut prefix_encoded_tx = b"TG".to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
         Ok(prefix_encoded_tx)
