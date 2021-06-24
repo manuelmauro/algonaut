@@ -168,6 +168,8 @@ impl Algod {
     }
 
     /// Broadcasts a transaction group to the network.
+    ///
+    /// Atomic if the transactions share a [group](algonaut_transaction::transaction::Transaction::group)
     pub async fn broadcast_signed_transactions(
         &self,
         txns: &[SignedTransaction],
@@ -179,7 +181,14 @@ impl Algod {
         Ok(self.broadcast_raw_transaction(&bytes.concat()).await?)
     }
 
-    /// Broadcasts a raw transaction or transaction group to the network.
+    /// Broadcasts raw transactions to the network.
+    ///
+    /// When passing multiple transactions, the transactions are atomic if they share a [group](algonaut_transaction::transaction::Transaction::group)
+    ///
+    /// Use this when using a third party (e.g. KMD) that delivers directly the serialized signed transaction.
+    ///
+    /// Otherwise, prefer [broadcast_signed_transaction](Self::broadcast_signed_transaction) or [broadcast_signed_transactions][Self::broadcast_signed_transactions]
+
     pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],

@@ -1,6 +1,5 @@
-use algonaut_client::indexer::v2::Client;
-
 use crate::error::AlgonautError;
+use algonaut_client::indexer::v2::Client;
 
 pub mod v2;
 
@@ -22,6 +21,8 @@ impl<'a> IndexerBuilder<'a> {
     }
 
     /// Build a v2 client for Algorand's indexer.
+    ///
+    /// Returns an error if url is not set or has an invalid format.
     pub fn build_v2(self) -> Result<v2::Indexer, AlgonautError> {
         match self.url {
             Some(url) => Ok(v2::Indexer::new(Client::new(url)?)),

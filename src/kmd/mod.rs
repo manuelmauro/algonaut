@@ -1,6 +1,5 @@
-use algonaut_client::kmd::v1::Client;
-
 use crate::error::AlgonautError;
+use algonaut_client::kmd::v1::Client;
 
 pub mod v1;
 
@@ -44,6 +43,8 @@ impl<'a> KmdBuilder<'a> {
     }
 
     /// Build a v1 client for Algorand protocol daemon.
+    ///
+    /// Returns an error if url or token is not set or has an invalid format.
     pub fn build_v1(self) -> Result<v1::Kmd, AlgonautError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Kmd::new(Client::new(url, token)?)),
