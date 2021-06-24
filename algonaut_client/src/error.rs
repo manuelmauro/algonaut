@@ -5,7 +5,7 @@ use thiserror::Error;
 pub enum ClientError {
     /// URL parse error.
     #[error("Url parsing error.")]
-    BadUrl(#[from] url::ParseError),
+    BadUrl(String),
     /// Token parse error.
     #[error("Token parsing error.")]
     BadToken,
@@ -22,7 +22,7 @@ pub enum ClientError {
     // TODO remove after adding AlgonautError, client doesn't serialize to msgpack anymore
     /// Serialization error
     #[error("serde encode error: {0}")]
-    RmpSerdeError(#[from] rmp_serde::encode::Error),
+    RmpSerdeError(String),
 }
 
 #[derive(Error, Debug)]
@@ -49,6 +49,18 @@ pub enum RequestErrorDetails {
     /// Client generated errors (while e.g. building request or decoding response)
     #[error("Client error: {}", description)]
     Client { description: String },
+}
+
+impl From<url::ParseError> for ClientError {
+    fn from(error: url::ParseError) -> Self {
+        ClientError::BadUrl(error.to_string())
+    }
+}
+
+impl From<rmp_serde::encode::Error> for ClientError {
+    fn from(error: rmp_serde::encode::Error) -> Self {
+        ClientError::RmpSerdeError(error.to_string())
+    }
 }
 
 impl From<reqwest::Error> for ClientError {
