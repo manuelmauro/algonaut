@@ -1,84 +1,72 @@
-extern crate derive_more;
-use derive_more::{Display, From};
 use std::fmt::Debug;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum AlgorandError {
-    /// A builder error.
-    #[error("builder error: {0}")]
-    BuilderError(#[from] BuilderError),
-    /// An api error.
-    #[error("api error: {0}")]
-    ApiError(#[from] ApiError),
-    /// A url parsing error
-    #[error("parse error: {0}")]
-    BadUrl(#[from] url::ParseError),
-    /// Http error
+pub enum ClientError {
+    /// URL parse error.
+    #[error("Url parsing error.")]
+    BadUrl(String),
+    /// Token parse error.
+    #[error("Token parsing error.")]
+    BadToken,
+    /// HTTP calls.
     #[error("http error: {0}")]
-    HttpError(#[from] HttpError),
-    /// Serialization error
-    #[error("serde encode error: {0}")]
-    RmpSerdeError(#[from] rmp_serde::encode::Error),
-    /// Serialization error
-    #[error("serde encode error: {0}")]
-    SerdeJsonError(#[from] serde_json::Error),
+    Request(#[from] RequestError),
 }
 
-#[derive(Error, Debug, Display)]
-#[display(fmt = "{}, {}", message, reqwest_error)]
-pub struct HttpError {
-    pub message: String,
-    pub reqwest_error: reqwest::Error,
+#[derive(Error, Debug)]
+#[error("{:?}, {}", url, details)]
+pub struct RequestError {
+    pub url: Option<String>,
+    pub details: RequestErrorDetails,
 }
 
-impl From<reqwest::Error> for AlgorandError {
-    fn from(error: reqwest::Error) -> Self {
-        AlgorandError::HttpError(HttpError {
-            reqwest_error: error,
-            message: "".to_owned(),
-        })
+impl RequestError {
+    pub fn new(url: Option<String>, details: RequestErrorDetails) -> RequestError {
+        RequestError { url, details }
     }
 }
 
-#[derive(Debug, Display, Error, From)]
-pub enum BuilderError {
-    /// URL parse error.
-    #[display(fmt = "Url parsing error.")]
-    BadUrl(url::ParseError),
-    /// Token parse error.
-    #[display(fmt = "Token parsing error.")]
-    BadToken,
-    /// Missing the base URL of the REST API server.
-    #[display(fmt = "Bind the client to URL before calling client().")]
-    UnitializedUrl,
-    /// Missing the authentication token for the REST API server.
-    #[display(fmt = "Authenticate with a token before calling client().")]
-    UnitializedToken,
+#[derive(Error, Debug, Clone)]
+pub enum RequestErrorDetails {
+    /// Http call error with optional message (returned by remote API)
+    #[error("Http error: {}, {}", status, message)]
+    Http { status: u16, message: String },
+    /// Timeout
+    #[error("Timeout connecting to the server.")]
+    Timeout,
+    /// Client generated errors (while e.g. building request or decoding response)
+    #[error("Client error: {}", description)]
+    Client { description: String },
 }
 
-#[derive(Debug, Display, Error, From)]
-pub enum ApiError {
-    #[display(fmt = "Key length is invalid.")]
-    InvalidKeyLength,
-    #[display(fmt = "Mnemonic length is invalid.")]
-    InvalidMnemonicLength,
-    #[display(fmt = "Mnemonic contains invalid words.")]
-    InvalidWordsInMnemonic,
-    #[display(fmt = "Invalid checksum.")]
-    InvalidChecksum,
-    #[display(fmt = "Transaction sender does not match multisig identity.")]
-    InvalidSenderInMultisig,
-    #[display(fmt = "Multisig identity does not contain this secret key.")]
-    InvalidSecretKeyInMultisig,
-    #[display(fmt = "Can't merge only one transaction.")]
-    InsufficientTransactions,
-    #[display(fmt = "Multisig signatures to merge must have the same number of subsignatures.")]
-    InvalidNumberOfSubsignatures,
-    #[display(fmt = "Transaction msig public keys do not match.")]
-    InvalidPublicKeyInMultisig,
-    #[display(fmt = "Transaction msig has mismatched signatures.")]
-    MismatchingSignatures,
-    #[display(fmt = "Response error: {}", response)]
-    ResponseError { response: String },
+impl From<url::ParseError> for ClientError {
+    fn from(error: url::ParseError) -> Self {
+        ClientError::BadUrl(error.to_string())
+    }
+}
+
+impl From<reqwest::Error> for ClientError {
+    fn from(error: reqwest::Error) -> Self {
+        let url_str = error.url().map(|u| u.to_string());
+        let request_error = if let Some(status) = error.status() {
+            RequestError::new(
+                url_str,
+                RequestErrorDetails::Http {
+                    status: status.as_u16(),
+                    message: "".to_owned(),
+                },
+            )
+        } else if error.is_timeout() {
+            RequestError::new(url_str, RequestErrorDetails::Timeout)
+        } else {
+            RequestError::new(
+                url_str,
+                RequestErrorDetails::Client {
+                    description: error.to_string(),
+                },
+            )
+        };
+        ClientError::Request(request_error)
+    }
 }

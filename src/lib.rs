@@ -21,5 +21,6 @@ pub use algonaut_crypto as crypto;
 pub use algonaut_transaction as transaction;
 
 pub mod algod;
+pub mod error;
 pub mod indexer;
 pub mod kmd;

@@ -1,5 +1,5 @@
 use self::message::*;
-use crate::error::AlgorandError;
+use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::Round;
 use reqwest::header::HeaderMap;
@@ -16,7 +16,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(url: &str) -> Result<Client, AlgorandError> {
+    pub fn new(url: &str) -> Result<Client, ClientError> {
         Ok(Client {
             url: Url::parse(url)?.as_ref().into(),
             headers: HeaderMap::new(),
@@ -25,7 +25,7 @@ impl Client {
     }
 
     /// Returns Ok if healthy
-    pub async fn health(&self) -> Result<(), AlgorandError> {
+    pub async fn health(&self) -> Result<(), ClientError> {
         let _ = self
             .http_client
             .get(&format!("{}health", self.url))
@@ -38,7 +38,7 @@ impl Client {
     }
 
     /// Search for accounts.
-    pub async fn accounts(&self, query: &QueryAccount) -> Result<AccountResponse, AlgorandError> {
+    pub async fn accounts(&self, query: &QueryAccount) -> Result<AccountResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/accounts", self.url))
@@ -59,7 +59,7 @@ impl Client {
         &self,
         id: &str,
         query: &QueryAccountInfo,
-    ) -> Result<AccountInfoResponse, AlgorandError> {
+    ) -> Result<AccountInfoResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/accounts/{}", self.url, id))
@@ -80,7 +80,7 @@ impl Client {
         &self,
         id: &str,
         query: &QueryAccountTransaction,
-    ) -> Result<AccountTransactionResponse, AlgorandError> {
+    ) -> Result<AccountTransactionResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/accounts/{}/transactions", self.url, id))
@@ -100,7 +100,7 @@ impl Client {
     pub async fn applications(
         &self,
         query: &QueryApplications,
-    ) -> Result<ApplicationResponse, AlgorandError> {
+    ) -> Result<ApplicationResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/applications", self.url))
@@ -121,7 +121,7 @@ impl Client {
         &self,
         id: &str,
         query: &QueryApplicationInfo,
-    ) -> Result<ApplicationInfoResponse, AlgorandError> {
+    ) -> Result<ApplicationInfoResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/applications/{}", self.url, id))
@@ -138,7 +138,7 @@ impl Client {
     }
 
     /// Search for assets.
-    pub async fn assets(&self, query: &QueryAssets) -> Result<AssetResponse, AlgorandError> {
+    pub async fn assets(&self, query: &QueryAssets) -> Result<AssetResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/assets", self.url))
@@ -159,7 +159,7 @@ impl Client {
         &self,
         id: &str,
         query: &QueryAssetsInfo,
-    ) -> Result<AssetsInfoResponse, AlgorandError> {
+    ) -> Result<AssetsInfoResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/assets/{}", self.url, id))
@@ -180,7 +180,7 @@ impl Client {
         &self,
         id: &str,
         query: &QueryBalances,
-    ) -> Result<BalancesResponse, AlgorandError> {
+    ) -> Result<BalancesResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/assets/{}/balances", self.url, id))
@@ -201,7 +201,7 @@ impl Client {
         &self,
         id: &str,
         query: &QueryAssetTransaction,
-    ) -> Result<AssetTransactionResponse, AlgorandError> {
+    ) -> Result<AssetTransactionResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/assets/{}/transactions", self.url, id))
@@ -218,7 +218,7 @@ impl Client {
     }
 
     /// Lookup block.
-    pub async fn block(&self, round: Round) -> Result<Block, AlgorandError> {
+    pub async fn block(&self, round: Round) -> Result<Block, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/blocks/{}", self.url, round))
@@ -237,7 +237,7 @@ impl Client {
     pub async fn transactions(
         &self,
         query: &QueryTransaction,
-    ) -> Result<TransactionResponse, AlgorandError> {
+    ) -> Result<TransactionResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions", self.url))
@@ -254,7 +254,7 @@ impl Client {
     }
 
     /// Search for transactions.
-    pub async fn transaction_info(&self, id: &str) -> Result<TransactionResponse, AlgorandError> {
+    pub async fn transaction_info(&self, id: &str) -> Result<TransactionResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/{}", self.url, id))
