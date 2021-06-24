@@ -15,9 +15,9 @@ pub enum ClientError {
     /// Missing the authentication token for the REST API server.
     #[error("Authenticate with a token before calling client().")]
     UnitializedToken,
-    /// Http error
+    /// Related with HTTP calls
     #[error("http error: {0}")]
-    HttpError(#[from] HttpError),
+    RequestError(#[from] RequestError),
 
     // TODO remove after adding AlgonautError, client doesn't serialize to msgpack anymore
     /// Serialization error
@@ -26,17 +26,52 @@ pub enum ClientError {
 }
 
 #[derive(Error, Debug)]
-#[error("{}, {}", message, reqwest_error)]
-pub struct HttpError {
-    pub message: String,
-    pub reqwest_error: reqwest::Error,
+#[error("{:?}, {}", url, details)]
+pub struct RequestError {
+    pub url: Option<String>,
+    pub details: RequestErrorDetails,
+}
+
+impl RequestError {
+    pub fn new(url: Option<String>, details: RequestErrorDetails) -> RequestError {
+        RequestError { url, details }
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum RequestErrorDetails {
+    /// Http call error with optional message (returned by remote API)
+    #[error("Http error: {}, {}", status, message)]
+    Http { status: u16, message: String },
+    /// Timeout
+    #[error("Timeout connecting to the server.")]
+    Timeout,
+    /// Client generated errors (while e.g. building request or decoding response)
+    #[error("Client error: {}", description)]
+    Client { description: String },
 }
 
 impl From<reqwest::Error> for ClientError {
     fn from(error: reqwest::Error) -> Self {
-        ClientError::HttpError(HttpError {
-            reqwest_error: error,
-            message: "".to_owned(),
-        })
+        let url_str = error.url().map(|u| u.to_string());
+        let request_error = if let Some(status) = error.status() {
+            RequestError::new(
+                url_str,
+                RequestErrorDetails::Http {
+                    status: status.as_u16(),
+                    message: "".to_owned(),
+                },
+            )
+        } else if error.is_timeout() {
+            RequestError::new(url_str, RequestErrorDetails::Timeout)
+        } else {
+            RequestError::new(
+                url_str,
+                RequestErrorDetails::Client {
+                    description: error.to_string(),
+                },
+            )
+        };
+        ClientError::RequestError(request_error)
     }
 }

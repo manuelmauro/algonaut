@@ -1,4 +1,4 @@
-use crate::error::HttpError;
+use crate::error::{RequestError, RequestErrorDetails};
 use async_trait::async_trait;
 use reqwest::Response;
 use serde::Deserialize;
@@ -12,28 +12,37 @@ use serde::Deserialize;
 // async_trait doesn't need additional parameters.
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub(crate) trait ResponseExt {
-    async fn http_error_for_status(self) -> Result<Response, HttpError>;
+    /// Maps error to custom error, with a possible message returned by API.
+    async fn http_error_for_status(self) -> Result<Response, RequestError>;
 }
 
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl ResponseExt for Response {
-    async fn http_error_for_status(self) -> Result<Response, HttpError> {
+    async fn http_error_for_status(self) -> Result<Response, RequestError> {
         match self.error_for_status_ref() {
+            // The response is not an error
             Ok(_) => Ok(self),
-            Err(error) => match self.json::<HttpErrorPayload>().await {
-                Ok(error_payload) => Err(HttpError {
-                    reqwest_error: error,
-                    message: error_payload.message,
-                }),
-                // JSON error is optional: if parsing fails we assume it's not present and return the call error.
-                Err(_) => Err(HttpError {
-                    reqwest_error: error,
-                    message: "".to_owned(),
-                }),
-            },
+            // The response is an error
+            Err(_) => Err(RequestError::new(
+                Some(self.url().to_string()),
+                RequestErrorDetails::Http {
+                    status: self.status().as_u16(),
+                    message: parse_error_message_or_empty_string(self).await,
+                },
+            )),
         }
     }
+}
+
+/// Try to retrieve error message from JSON.
+/// If there's no message, return an empty string.
+async fn parse_error_message_or_empty_string(response: Response) -> String {
+    response
+        .json::<HttpErrorPayload>()
+        .await
+        .map(|p| p.message)
+        .unwrap_or_else(|_| "".to_owned())
 }
 
 #[derive(Deserialize)]
