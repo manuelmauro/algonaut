@@ -9,20 +9,9 @@ pub enum ClientError {
     /// Token parse error.
     #[error("Token parsing error.")]
     BadToken,
-    /// Missing the base URL of the REST API server.
-    #[error("Bind the client to URL before calling client().")]
-    UnitializedUrl,
-    /// Missing the authentication token for the REST API server.
-    #[error("Authenticate with a token before calling client().")]
-    UnitializedToken,
-    /// Related with HTTP calls
+    /// HTTP calls.
     #[error("http error: {0}")]
-    RequestError(#[from] RequestError),
-
-    // TODO remove after adding AlgonautError, client doesn't serialize to msgpack anymore
-    /// Serialization error
-    #[error("serde encode error: {0}")]
-    RmpSerdeError(String),
+    Request(#[from] RequestError),
 }
 
 #[derive(Error, Debug)]
@@ -38,7 +27,7 @@ impl RequestError {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum RequestErrorDetails {
     /// Http call error with optional message (returned by remote API)
     #[error("Http error: {}, {}", status, message)]
@@ -54,12 +43,6 @@ pub enum RequestErrorDetails {
 impl From<url::ParseError> for ClientError {
     fn from(error: url::ParseError) -> Self {
         ClientError::BadUrl(error.to_string())
-    }
-}
-
-impl From<rmp_serde::encode::Error> for ClientError {
-    fn from(error: rmp_serde::encode::Error) -> Self {
-        ClientError::RmpSerdeError(error.to_string())
     }
 }
 
@@ -84,6 +67,6 @@ impl From<reqwest::Error> for ClientError {
                 },
             )
         };
-        ClientError::RequestError(request_error)
+        ClientError::Request(request_error)
     }
 }

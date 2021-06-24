@@ -1,15 +1,13 @@
-use algonaut_client::{
-    algod::v1::{
-        message::{
-            Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply,
-            Transaction, TransactionFee, TransactionId, TransactionList, TransactionParams,
-            Version,
-        },
-        Client,
+use algonaut_client::algod::v1::{
+    message::{
+        Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply,
+        Transaction, TransactionFee, TransactionId, TransactionList, TransactionParams, Version,
     },
-    error::ClientError,
+    Client,
 };
 use algonaut_core::{Address, Round};
+
+use crate::error::AlgonautError;
 
 pub struct Algod {
     pub(crate) client: Client,
@@ -20,37 +18,40 @@ impl Algod {
         Algod { client }
     }
 
-    pub async fn health(&self) -> Result<(), ClientError> {
-        self.client.health().await
+    pub async fn health(&self) -> Result<(), AlgonautError> {
+        Ok(self.client.health().await?)
     }
 
     /// Retrieves the current version
-    pub async fn versions(&self) -> Result<Version, ClientError> {
-        self.client.versions().await
+    pub async fn versions(&self) -> Result<Version, AlgonautError> {
+        Ok(self.client.versions().await?)
     }
 
     /// Gets the current node status
-    pub async fn status(&self) -> Result<NodeStatus, ClientError> {
-        self.client.status().await
+    pub async fn status(&self) -> Result<NodeStatus, AlgonautError> {
+        Ok(self.client.status().await?)
     }
 
     /// Waits for a block to appear after the specified round and returns the node status at the time
-    pub async fn status_after_block(&self, round: Round) -> Result<NodeStatus, ClientError> {
-        self.client.status_after_block(round).await
+    pub async fn status_after_block(&self, round: Round) -> Result<NodeStatus, AlgonautError> {
+        Ok(self.client.status_after_block(round).await?)
     }
 
     /// Get the block for the given round
-    pub async fn block(&self, round: Round) -> Result<Block, ClientError> {
-        self.client.block(round).await
+    pub async fn block(&self, round: Round) -> Result<Block, AlgonautError> {
+        Ok(self.client.block(round).await?)
     }
 
     /// Gets the current supply reported by the ledger
-    pub async fn ledger_supply(&self) -> Result<Supply, ClientError> {
-        self.client.ledger_supply().await
+    pub async fn ledger_supply(&self) -> Result<Supply, AlgonautError> {
+        Ok(self.client.ledger_supply().await?)
     }
 
-    pub async fn account_information(&self, address: &Address) -> Result<Account, ClientError> {
-        self.client.account_information(&address.to_string()).await
+    pub async fn account_information(&self, address: &Address) -> Result<Account, AlgonautError> {
+        Ok(self
+            .client
+            .account_information(&address.to_string())
+            .await?)
     }
 
     /// Gets a list of unconfirmed transactions currently in the transaction pool
@@ -59,8 +60,8 @@ impl Algod {
     pub async fn pending_transactions(
         &self,
         limit: u64,
-    ) -> Result<PendingTransactions, ClientError> {
-        self.client.pending_transactions(limit).await
+    ) -> Result<PendingTransactions, AlgonautError> {
+        Ok(self.client.pending_transactions(limit).await?)
     }
 
     /// Get a specified pending transaction
@@ -74,10 +75,11 @@ impl Algod {
     pub async fn pending_transaction_information(
         &self,
         transaction_id: &str,
-    ) -> Result<Transaction, ClientError> {
-        self.client
+    ) -> Result<Transaction, AlgonautError> {
+        Ok(self
+            .client
             .pending_transaction_information(transaction_id)
-            .await
+            .await?)
     }
 
     /// Get a list of confirmed transactions, limited to filters if specified
@@ -85,18 +87,21 @@ impl Algod {
         &self,
         address: &Address,
         query: &QueryAccountTransactions,
-    ) -> Result<TransactionList, ClientError> {
-        self.client.transactions(&address.to_string(), query).await
+    ) -> Result<TransactionList, AlgonautError> {
+        Ok(self
+            .client
+            .transactions(&address.to_string(), query)
+            .await?)
     }
 
     /// Broadcasts a raw transaction to the network
-    pub async fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionId, ClientError> {
-        self.client.raw_transaction(raw).await
+    pub async fn raw_transaction(&self, raw: &[u8]) -> Result<TransactionId, AlgonautError> {
+        Ok(self.client.raw_transaction(raw).await?)
     }
 
     /// Gets the information of a single transaction
-    pub async fn transaction(&self, transaction_id: &str) -> Result<Transaction, ClientError> {
-        self.client.transaction(transaction_id).await
+    pub async fn transaction(&self, transaction_id: &str) -> Result<Transaction, AlgonautError> {
+        Ok(self.client.transaction(transaction_id).await?)
     }
 
     /// Gets a specific confirmed transaction
@@ -104,19 +109,20 @@ impl Algod {
         &self,
         address: &Address,
         transaction_id: &str,
-    ) -> Result<Transaction, ClientError> {
-        self.client
+    ) -> Result<Transaction, AlgonautError> {
+        Ok(self
+            .client
             .transaction_information(&address.to_string(), transaction_id)
-            .await
+            .await?)
     }
 
     /// Gets suggested fee in units of micro-Algos per byte
-    pub async fn suggested_fee(&self) -> Result<TransactionFee, ClientError> {
-        self.client.suggested_fee().await
+    pub async fn suggested_fee(&self) -> Result<TransactionFee, AlgonautError> {
+        Ok(self.client.suggested_fee().await?)
     }
 
     /// Gets parameters for constructing a new transaction
-    pub async fn transaction_params(&self) -> Result<TransactionParams, ClientError> {
-        self.client.transaction_params().await
+    pub async fn transaction_params(&self) -> Result<TransactionParams, AlgonautError> {
+        Ok(self.client.transaction_params().await?)
     }
 }

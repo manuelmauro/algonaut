@@ -22,6 +22,6 @@ pub enum TransactionError {
     MaxTransactionGroupSizeError { size: usize },
     #[error("serde encode error {0}")]
     RmpSerdeError(#[from] rmp_serde::encode::Error),
-    #[error("serde encode error {0}")]
+    #[error("crypto error {0}")]
     MnemonicError(#[from] algonaut_crypto::error::CryptoError),
 }

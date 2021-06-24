@@ -1,3 +1,4 @@
+use algonaut_core::ToMsgPack;
 use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize, Serializer};
 use sha2::Digest;
@@ -44,7 +45,7 @@ impl TxGroup {
     }
 
     fn bytes_to_sign(&self) -> Result<Vec<u8>, TransactionError> {
-        let encoded_tx = rmp_serde::to_vec_named(self)?;
+        let encoded_tx = self.to_msg_pack()?;
         let mut prefix_encoded_tx = b"TG".to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
         Ok(prefix_encoded_tx)

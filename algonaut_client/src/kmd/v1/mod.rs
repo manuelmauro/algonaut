@@ -2,9 +2,7 @@ use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
 use crate::token::ApiToken;
 use algonaut_core::MultisigSignature;
-use algonaut_core::ToMsgPack;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
-use algonaut_transaction::Transaction;
 use message::*;
 use reqwest::Url;
 
@@ -350,11 +348,11 @@ impl Client {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-        transaction: &Transaction,
+        transaction_bytes: Vec<u8>,
     ) -> Result<SignTransactionResponse, ClientError> {
         let req = SignTransactionRequest {
             wallet_handle_token: wallet_handle.to_string(),
-            transaction: transaction.to_msg_pack()?,
+            transaction: transaction_bytes,
             wallet_password: wallet_password.to_string(),
         };
         let response = self
