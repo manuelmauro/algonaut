@@ -52,11 +52,6 @@ impl TxnBuilder {
         self
     }
 
-    pub fn txn_type(mut self, txn_type: TransactionType) -> Self {
-        self.txn_type = Some(txn_type);
-        self
-    }
-
     pub fn payment(mut self, txn: Payment) -> Self {
         self.txn_type = Some(TransactionType::Payment(txn));
         self
@@ -74,6 +69,26 @@ impl TxnBuilder {
 
     pub fn asset_transfer(mut self, txn: AssetTransferTransaction) -> Self {
         self.txn_type = Some(TransactionType::AssetTransferTransaction(txn));
+        self
+    }
+
+    pub fn asset_accept(mut self, txn: AssetAcceptTransaction) -> Self {
+        self.txn_type = Some(TransactionType::AssetAcceptTransaction(txn));
+        self
+    }
+
+    pub fn asset_clawback(mut self, txn: AssetClawbackTransaction) -> Self {
+        self.txn_type = Some(TransactionType::AssetClawbackTransaction(txn));
+        self
+    }
+
+    pub fn asset_freeze(mut self, txn: AssetFreezeTransaction) -> Self {
+        self.txn_type = Some(TransactionType::AssetFreezeTransaction(txn));
+        self
+    }
+
+    pub fn application_call(mut self, txn: ApplicationCallTransaction) -> Self {
+        self.txn_type = Some(TransactionType::ApplicationCallTransaction(txn));
         self
     }
 
