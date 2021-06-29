@@ -336,7 +336,6 @@ impl ConfigureAsset {
 pub struct TransferAsset {
     xfer: u64,
     amount: u64,
-    sender: Option<Address>,
     receiver: Option<Address>,
     close_to: Option<Address>,
 }
@@ -356,11 +355,6 @@ impl TransferAsset {
         self
     }
 
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
     pub fn receiver(mut self, receiver: Address) -> Self {
         self.receiver = Some(receiver);
         self
@@ -375,9 +369,8 @@ impl TransferAsset {
         AssetTransferTransaction {
             xfer: self.xfer,
             amount: self.amount,
-            sender: self.sender,
             receiver: self.receiver.unwrap(),
-            close_to: self.close_to.unwrap(),
+            close_to: self.close_to,
         }
     }
 }
