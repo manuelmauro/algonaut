@@ -264,29 +264,23 @@ impl From<Transaction> for ApiTransaction {
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct ApiAssetParams {
-    #[serde(rename = "an", skip_serializing_if = "Option::is_none")]
-    pub asset_name: Option<String>,
-
-    #[serde(rename = "dc")]
-    pub decimals: u32,
-
-    #[serde(rename = "df", skip_serializing)]
-    pub default_frozen: bool,
-
-    #[serde(rename = "t")]
-    pub total: u64,
-
-    #[serde(rename = "un", skip_serializing_if = "Option::is_none")]
-    pub unit_name: Option<String>,
-
     #[serde(rename = "am", skip_serializing_if = "Option::is_none")]
     pub meta_data_hash: Option<Vec<u8>>,
+
+    #[serde(rename = "an", skip_serializing_if = "Option::is_none")]
+    pub asset_name: Option<String>,
 
     #[serde(rename = "au", skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
 
     #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
     pub clawback: Option<Address>,
+
+    #[serde(rename = "dc")]
+    pub decimals: u32,
+
+    #[serde(rename = "df", skip_serializing)]
+    pub default_frozen: bool,
 
     #[serde(rename = "f", skip_serializing_if = "Option::is_none")]
     pub freeze: Option<Address>,
@@ -296,6 +290,12 @@ pub struct ApiAssetParams {
 
     #[serde(rename = "r", skip_serializing_if = "Option::is_none")]
     pub reserve: Option<Address>,
+
+    #[serde(rename = "t")]
+    pub total: u64,
+
+    #[serde(rename = "un", skip_serializing_if = "Option::is_none")]
+    pub unit_name: Option<String>,
 }
 
 fn to_api_transaction_type<'a>(type_: &TransactionType) -> &'a str {
