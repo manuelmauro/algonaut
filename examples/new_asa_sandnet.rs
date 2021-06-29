@@ -1,10 +1,14 @@
+use algonaut::algod::v2::Algod;
 use algonaut::algod::AlgodBuilder;
 use algonaut::core::MicroAlgos;
 use algonaut::kmd::KmdBuilder;
+use algonaut::error::AlgonautError;
 use algonaut::transaction::{ConfigureAsset, TxnBuilder};
+use algonaut_client::algod::v2::message::PendingTransaction;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+use std::time::{Duration, Instant};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -78,5 +82,28 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Transaction ID: {}", send_response.tx_id);
 
+    let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
+    assert!(pending_t.is_some());
+    println!("Asset index: {:?}", pending_t.unwrap().asset_index);
+
     Ok(())
+}
+
+/// Utility function to wait on a transaction to be confirmed
+async fn wait_for_pending_transaction(
+    algod: &Algod,
+    txid: &str,
+) -> Result<Option<PendingTransaction>, AlgonautError> {
+    let timeout = Duration::from_secs(10);
+    let start = Instant::now();
+    loop {
+        let pending_transaction = algod.pending_transaction_with_id(txid).await?;
+        // If the transaction has been confirmed or we time out, exit.
+        if pending_transaction.confirmed_round.is_some() {
+            return Ok(Some(pending_transaction));
+        } else if start.elapsed() >= timeout {
+            return Ok(None);
+        }
+        std::thread::sleep(Duration::from_millis(250))
+    }
 }
