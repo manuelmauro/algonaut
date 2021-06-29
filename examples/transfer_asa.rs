@@ -16,8 +16,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let from = account1();
-    let to = account2();
+    let from = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
+    let to = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?;
 
     let params = algod.transaction_params().await?;
 
@@ -50,14 +50,4 @@ async fn main() -> Result<(), Box<dyn Error>> {
     assert!(send_response.is_err());
 
     Ok(())
-}
-
-fn account1() -> Account {
-    let mnemonic = "fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero";
-    Account::from_mnemonic(mnemonic).unwrap()
-}
-
-fn account2() -> Account {
-    let mnemonic = "since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left";
-    Account::from_mnemonic(mnemonic).unwrap()
 }

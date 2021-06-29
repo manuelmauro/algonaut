@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let account = account();
+    let account = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?;
 
     let params = algod.transaction_params().await?;
 
@@ -48,9 +48,4 @@ async fn main() -> Result<(), Box<dyn Error>> {
     assert!(send_response.is_err());
 
     Ok(())
-}
-
-fn account() -> Account {
-    let mnemonic = "since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left";
-    Account::from_mnemonic(mnemonic).unwrap()
 }
