@@ -379,7 +379,6 @@ impl TransferAsset {
 #[derive(Default)]
 pub struct AcceptAsset {
     xfer: u64,
-    sender: Option<Address>,
     receiver: Option<Address>,
 }
 
@@ -393,11 +392,6 @@ impl AcceptAsset {
         self
     }
 
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
     pub fn receiver(mut self, receiver: Address) -> Self {
         self.receiver = Some(receiver);
         self
@@ -406,7 +400,6 @@ impl AcceptAsset {
     pub fn build(self) -> AssetAcceptTransaction {
         AssetAcceptTransaction {
             xfer: self.xfer,
-            sender: self.sender.unwrap(),
             receiver: self.receiver.unwrap(),
         }
     }

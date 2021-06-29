@@ -227,7 +227,6 @@ impl From<Transaction> for ApiTransaction {
             }
             TransactionType::AssetAcceptTransaction(accept) => {
                 api_t.xfer = Some(accept.xfer);
-                api_t.asset_sender = Some(accept.sender);
                 api_t.asset_receiver = Some(accept.receiver);
             }
             TransactionType::AssetClawbackTransaction(clawback) => {
