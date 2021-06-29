@@ -1,10 +1,10 @@
 use algonaut::algod::v2::Algod;
 use algonaut::algod::AlgodBuilder;
 use algonaut::core::MicroAlgos;
-use algonaut::kmd::KmdBuilder;
 use algonaut::error::AlgonautError;
 use algonaut::transaction::{ConfigureAsset, TxnBuilder};
 use algonaut_client::algod::v2::message::PendingTransaction;
+use algonaut_transaction::account::Account;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -15,29 +15,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    // kmd manages wallets and accounts
-    let kmd = KmdBuilder::new()
-        .bind(env::var("KMD_URL")?.as_ref())
-        .auth(env::var("KMD_TOKEN")?.as_ref())
-        .build_v1()?;
-
-    // first we obtain a handle to our wallet
-    let list_response = kmd.list_wallets().await?;
-    let wallet_id = match list_response
-        .wallets
-        .into_iter()
-        .find(|wallet| wallet.name == "unencrypted-default-wallet")
-    {
-        Some(wallet) => wallet.id,
-        None => return Err("Wallet not found".into()),
-    };
-    let init_response = kmd.init_wallet_handle(&wallet_id, "").await?;
-    let wallet_handle_token = init_response.wallet_handle_token;
-    println!("Wallet Handle: {}", wallet_handle_token);
-
     // an account with some funds in our sandbox
-    let creator = env::var("ACCOUNT")?.parse()?;
-    println!("Creator: {:?}", creator);
+    let creator = account1();
+    println!("Creator: {:?}", creator.address());
 
     // algod has a convenient method that retrieves basic information for a transaction
     let algod = AlgodBuilder::new()
@@ -50,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // we are ready to build the transaction
     let t = TxnBuilder::new()
-        .sender(creator)
+        .sender(creator.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)
         .genesis_id(params.genesis_id)
@@ -62,10 +42,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .default_frozen(false)
                 .unit_name("EIRI".to_owned())
                 .asset_name("Naki".to_owned())
-                .manager(creator)
-                .reserve(creator)
-                .freeze(creator)
-                .clawback(creator)
+                .manager(creator.address())
+                .reserve(creator.address())
+                .freeze(creator.address())
+                .clawback(creator.address())
                 .url("example.com".to_owned())
                 .decimals(2)
                 .build(),
@@ -73,13 +53,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .build();
 
     // we need to sign the transaction to prove that we own the sender address
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t).await?;
+    let signed_t = creator.sign_transaction(&t)?;
 
     // broadcast the transaction to the network
-    let send_response = algod
-        .broadcast_raw_transaction(&sign_response.signed_transaction)
-        .await?;
-
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
     println!("Transaction ID: {}", send_response.tx_id);
 
     let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
@@ -87,6 +64,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Asset index: {:?}", pending_t.unwrap().asset_index);
 
     Ok(())
+}
+
+fn account1() -> Account {
+    let mnemonic = "fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero";
+    Account::from_mnemonic(mnemonic).unwrap()
 }
 
 /// Utility function to wait on a transaction to be confirmed
