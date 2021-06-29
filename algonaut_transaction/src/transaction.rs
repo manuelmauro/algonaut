@@ -224,18 +224,12 @@ pub struct AssetTransferTransaction {
     /// asset in the account's Asset map.
     pub amount: u64,
 
-    /// The sender of the transfer. The regular sender field should be used and this one set to the
-    /// zero value for regular transfers between accounts. If this value is nonzero, it indicates a
-    /// clawback transaction where the sender is the asset's clawback address and the asset sender
-    /// is the address from which the funds will be withdrawn.
-    pub sender: Option<Address>,
-
     /// The recipient of the asset transfer.
     pub receiver: Address,
 
     /// Specify this field to remove the asset holding from the sender account and reduce the
     /// account's minimum balance.
-    pub close_to: Address,
+    pub close_to: Option<Address>,
 }
 
 /// This is a special form of an Asset Transfer Transaction.

@@ -221,12 +221,9 @@ impl From<Transaction> for ApiTransaction {
             }
             TransactionType::AssetTransferTransaction(transfer) => {
                 api_t.xfer = Some(transfer.xfer);
-                api_t.amount = Some(transfer.amount);
-                if let Some(sender) = transfer.sender {
-                    api_t.sender = sender;
-                }
-                api_t.receiver = Some(transfer.receiver);
-                api_t.asset_close_to = Some(transfer.close_to);
+                api_t.asset_amount = Some(transfer.amount);
+                api_t.asset_receiver = Some(transfer.receiver);
+                api_t.asset_close_to = transfer.close_to;
             }
             TransactionType::AssetAcceptTransaction(accept) => {
                 api_t.xfer = Some(accept.xfer);
