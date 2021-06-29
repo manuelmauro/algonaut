@@ -135,21 +135,21 @@ pub struct Payment {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct KeyRegistration {
     /// The root participation public key. See Generate a Participation Key to learn more.
-    pub vote_pk: VotePk,
+    pub vote_pk: Option<VotePk>,
 
     /// The VRF public key.
-    pub selection_pk: VrfPk,
+    pub selection_pk: Option<VrfPk>,
 
     /// The first round that the participation key is valid. Not to be confused with the FirstValid
     /// round of the keyreg transaction.
-    pub vote_first: Round,
+    pub vote_first: Option<Round>,
 
     /// The last round that the participation key is valid. Not to be confused with the LastValid
     /// round of the keyreg transaction.
-    pub vote_last: Round,
+    pub vote_last: Option<Round>,
 
     /// This is the dilution for the 2-level participation key.
-    pub vote_key_dilution: u64,
+    pub vote_key_dilution: Option<u64>,
 
     /// All new Algorand accounts are participating by default. This means that they earn rewards.
     /// Mark an account nonparticipating by setting this value to true and this account will no
