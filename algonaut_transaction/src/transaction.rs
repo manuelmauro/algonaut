@@ -244,10 +244,7 @@ pub struct AssetAcceptTransaction {
     /// The unique ID of the asset to be transferred.
     pub xfer: u64,
 
-    /// The account which is allocating the asset to their account's Asset map.
-    pub sender: Address,
-
-    /// The account which is allocating the asset to their account's Asset map.
+    /// The account opting in (must be the same as the transaction's sender).
     pub receiver: Address,
 }
 
