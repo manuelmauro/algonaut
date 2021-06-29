@@ -54,7 +54,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(100_000))
         .asset_configuration(
             ConfigureAsset::new()
-                .config_asset(0)
                 .total(10)
                 .default_frozen(false)
                 .unit_name("EIRI".to_owned())
@@ -64,7 +63,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 .freeze(creator)
                 .clawback(creator)
                 .url("example.com".to_owned())
-                .meta_data_hash(Vec::new())
                 .decimals(2)
                 .build(),
         )
