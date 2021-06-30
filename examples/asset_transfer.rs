@@ -47,7 +47,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let send_response = algod.broadcast_signed_transaction(&sign_response).await;
 
     println!("{:#?}", send_response);
-    assert!(send_response.is_err());
 
     Ok(())
 }
