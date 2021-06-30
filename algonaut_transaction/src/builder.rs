@@ -408,7 +408,6 @@ impl AcceptAsset {
 /// A builder for [AssetClawbackTransaction].
 #[derive(Default)]
 pub struct ClawbackAsset {
-    sender: Option<Address>,
     xfer: u64,
     asset_amount: u64,
     asset_sender: Option<Address>,
@@ -419,11 +418,6 @@ pub struct ClawbackAsset {
 impl ClawbackAsset {
     pub fn new() -> Self {
         ClawbackAsset::default()
-    }
-
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
     }
 
     pub fn xfer(mut self, xfer: u64) -> Self {
