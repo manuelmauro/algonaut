@@ -196,11 +196,11 @@ impl From<Transaction> for ApiTransaction {
                 api_t.close_reminder_to = payment.close_remainder_to;
             }
             TransactionType::KeyRegistration(reg) => {
-                api_t.vote_pk = Some(reg.vote_pk);
-                api_t.selection_pk = Some(reg.selection_pk);
-                api_t.vote_first = Some(reg.vote_first);
-                api_t.vote_last = Some(reg.vote_last);
-                api_t.vote_key_dilution = Some(reg.vote_key_dilution);
+                api_t.vote_pk = reg.vote_pk;
+                api_t.selection_pk = reg.selection_pk;
+                api_t.vote_first = reg.vote_first;
+                api_t.vote_last = reg.vote_last;
+                api_t.vote_key_dilution = reg.vote_key_dilution;
                 api_t.nonparticipating = reg.nonparticipating;
             }
             TransactionType::AssetConfigurationTransaction(config) => {

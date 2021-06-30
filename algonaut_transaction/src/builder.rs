@@ -176,9 +176,9 @@ impl Pay {
 pub struct RegisterKey {
     vote_pk: Option<VotePk>,
     selection_pk: Option<VrfPk>,
-    vote_first: Round,
-    vote_last: Round,
-    vote_key_dilution: u64,
+    vote_first: Option<Round>,
+    vote_last: Option<Round>,
+    vote_key_dilution: Option<u64>,
     nonparticipating: Option<bool>,
 }
 
@@ -198,17 +198,17 @@ impl RegisterKey {
     }
 
     pub fn vote_first(mut self, vote_first: Round) -> Self {
-        self.vote_first = vote_first;
+        self.vote_first = Some(vote_first);
         self
     }
 
     pub fn vote_last(mut self, vote_last: Round) -> Self {
-        self.vote_last = vote_last;
+        self.vote_last = Some(vote_last);
         self
     }
 
     pub fn vote_key_dilution(mut self, vote_key_dilution: u64) -> Self {
-        self.vote_key_dilution = vote_key_dilution;
+        self.vote_key_dilution = Some(vote_key_dilution);
         self
     }
 
@@ -219,8 +219,8 @@ impl RegisterKey {
 
     pub fn build(self) -> KeyRegistration {
         KeyRegistration {
-            vote_pk: self.vote_pk.unwrap(),
-            selection_pk: self.selection_pk.unwrap(),
+            vote_pk: self.vote_pk,
+            selection_pk: self.selection_pk,
             vote_first: self.vote_first,
             vote_last: self.vote_last,
             vote_key_dilution: self.vote_key_dilution,
