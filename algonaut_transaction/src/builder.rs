@@ -451,7 +451,7 @@ impl ClawbackAsset {
             asset_amount: self.asset_amount,
             asset_sender: self.asset_sender.unwrap(),
             asset_receiver: self.asset_receiver.unwrap(),
-            asset_close_to: self.asset_close_to.unwrap(),
+            asset_close_to: self.asset_close_to,
         }
     }
 }

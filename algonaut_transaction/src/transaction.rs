@@ -259,7 +259,7 @@ pub struct AssetClawbackTransaction {
 
     /// Specify this field to remove the entire asset holding balance from the AssetSender
     /// account. It will not remove the asset holding.
-    pub asset_close_to: Address,
+    pub asset_close_to: Option<Address>,
 }
 
 /// This is a special form of an Asset Transfer Transaction.

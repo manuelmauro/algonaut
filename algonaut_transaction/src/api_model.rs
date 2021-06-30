@@ -234,7 +234,7 @@ impl From<Transaction> for ApiTransaction {
                 api_t.asset_amount = Some(clawback.asset_amount);
                 api_t.asset_sender = Some(clawback.asset_sender);
                 api_t.asset_receiver = Some(clawback.asset_receiver);
-                api_t.asset_close_to = Some(clawback.asset_close_to);
+                api_t.asset_close_to = clawback.asset_close_to;
             }
             TransactionType::AssetFreezeTransaction(freeze) => {
                 api_t.freeze_account = Some(freeze.freeze_account);
