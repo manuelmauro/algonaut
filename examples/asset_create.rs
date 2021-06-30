@@ -60,8 +60,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Transaction ID: {}", send_response.tx_id);
 
     let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
-    assert!(pending_t.is_some());
-    println!("Asset index: {:?}", pending_t.unwrap().asset_index);
+    println!("Asset index: {:?}", pending_t.map(|t| t.asset_index));
 
     Ok(())
 }
