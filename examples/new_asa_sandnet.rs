@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
     // an account with some funds in our sandbox
-    let creator = account1();
+    let creator = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
     println!("Creator: {:?}", creator.address());
 
     // algod has a convenient method that retrieves basic information for a transaction
@@ -64,11 +64,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Asset index: {:?}", pending_t.unwrap().asset_index);
 
     Ok(())
-}
-
-fn account1() -> Account {
-    let mnemonic = "fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero";
-    Account::from_mnemonic(mnemonic).unwrap()
 }
 
 /// Utility function to wait on a transaction to be confirmed
