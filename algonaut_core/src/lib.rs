@@ -3,9 +3,11 @@ use algonaut_encoding::{SignatureVisitor, U8_32Visitor};
 use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
+use error::CoreError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
+use std::convert::TryInto;
 use std::fmt::{self, Debug, Formatter};
 use std::{ops::Mul, str::FromStr};
 
@@ -121,6 +123,12 @@ impl<'de> Deserialize<'de> for VotePk {
     }
 }
 
+impl VotePk {
+    pub fn from_base64_str(base64_str: &str) -> Result<VotePk, CoreError> {
+        Ok(VotePk(base64_str_to_u8_array(base64_str)?))
+    }
+}
+
 /// VRF public key used in key registration transaction
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct VrfPk(pub [u8; 32]);
@@ -140,6 +148,12 @@ impl<'de> Deserialize<'de> for VrfPk {
         D: Deserializer<'de>,
     {
         Ok(VrfPk(deserializer.deserialize_bytes(U8_32Visitor)?))
+    }
+}
+
+impl VrfPk {
+    pub fn from_base64_str(base64_str: &str) -> Result<VrfPk, CoreError> {
+        Ok(VrfPk(base64_str_to_u8_array(base64_str)?))
     }
 }
 
@@ -386,6 +400,13 @@ pub trait ToMsgPack: Serialize {
     fn to_msg_pack(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
         rmp_serde::to_vec_named(&self)
     }
+}
+
+fn base64_str_to_u8_array<const N: usize>(base64_str: &str) -> Result<[u8; N], CoreError> {
+    BASE64
+        .decode(base64_str.as_bytes())?
+        .try_into()
+        .map_err(|v| CoreError::General(format!("Couldn't convert vec: {:?} into u8 array", v)))
 }
 
 #[cfg(test)]
