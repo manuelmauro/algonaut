@@ -9,6 +9,8 @@ use static_assertions::_core::ops::{Add, Sub};
 use std::fmt::{self, Debug, Formatter};
 use std::{ops::Mul, str::FromStr};
 
+mod error;
+
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
 /// MicroAlgos are the base unit of currency in Algorand
