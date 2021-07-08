@@ -83,6 +83,7 @@ Planned:
 
 ## Integrations
 
+- [My Algo signing example](https://github.com/i-schuetz/algonaut-myalgo-yew-template)
 - [Yew example](https://github.com/i-schuetz/algorand-yew-example)
 - [iOS example (experimental)](https://github.com/i-schuetz/algonaut_ios)
 
