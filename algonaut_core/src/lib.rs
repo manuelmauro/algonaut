@@ -102,7 +102,7 @@ impl Mul<u64> for Round {
 }
 
 /// Participation public key used in key registration transactions
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct VotePk(pub [u8; 32]);
 
 impl Serialize for VotePk {
@@ -123,14 +123,24 @@ impl<'de> Deserialize<'de> for VotePk {
     }
 }
 
+impl Debug for VotePk {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_base64_str())
+    }
+}
+
 impl VotePk {
     pub fn from_base64_str(base64_str: &str) -> Result<VotePk, CoreError> {
         Ok(VotePk(base64_str_to_u8_array(base64_str)?))
     }
+
+    pub fn to_base64_str(self) -> String {
+        BASE64.encode(&self.0)
+    }
 }
 
 /// VRF public key used in key registration transaction
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct VrfPk(pub [u8; 32]);
 
 impl Serialize for VrfPk {
@@ -151,9 +161,19 @@ impl<'de> Deserialize<'de> for VrfPk {
     }
 }
 
+impl Debug for VrfPk {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_base64_str())
+    }
+}
+
 impl VrfPk {
     pub fn from_base64_str(base64_str: &str) -> Result<VrfPk, CoreError> {
         Ok(VrfPk(base64_str_to_u8_array(base64_str)?))
+    }
+
+    pub fn to_base64_str(self) -> String {
+        BASE64.encode(&self.0)
     }
 }
 
