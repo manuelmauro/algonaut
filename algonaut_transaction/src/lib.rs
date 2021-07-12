@@ -5,6 +5,7 @@ pub mod builder;
 pub mod error;
 pub mod transaction;
 pub mod tx_group;
+pub mod url;
 
 pub use builder::{
     AcceptAsset, CallApplication, ClawbackAsset, ConfigureAsset, FreezeAsset, Pay, RegisterKey,
