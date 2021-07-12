@@ -84,6 +84,7 @@ Planned:
 ## Integrations
 
 - [My Algo signing example](https://github.com/i-schuetz/algonaut-myalgo-yew-template)
+- [Transaction prompt Yew component](https://github.com/i-schuetz/algo-prompt)
 - [Yew example](https://github.com/i-schuetz/algorand-yew-example)
 - [iOS example (experimental)](https://github.com/i-schuetz/algonaut_ios)
 
