@@ -3,7 +3,7 @@ use crate::transaction::{
     AssetConfigurationTransaction, AssetFreezeTransaction, AssetParams, AssetTransferTransaction,
     KeyRegistration, Payment, StateSchema, Transaction, TransactionType,
 };
-use algonaut_core::{Address, MicroAlgos, Round, VotePk, VrfPk};
+use algonaut_core::{Address, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 
 /// A builder for [Transaction].
@@ -21,6 +21,17 @@ pub struct TxnBuilder {
 }
 
 impl TxnBuilder {
+    pub fn with(params: SuggestedTransactionParams, txn_type: TransactionType) -> Self {
+        Self::new(
+            params.fee,
+            params.first_valid,
+            params.last_valid,
+            params.genesis_hash,
+            params.genesis_id,
+            txn_type,
+        )
+    }
+
     pub fn new(
         fee: MicroAlgos,
         first_valid: Round,

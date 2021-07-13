@@ -25,14 +25,10 @@ async fn test_transaction() -> Result<(), Box<dyn Error>> {
     let from = account1();
     let to = account2();
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(100_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         Pay::new(from.address(), to.address(), MicroAlgos(123_456)).build(),
     )
     .build();
@@ -67,14 +63,10 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
 
     let multisig_address = MultisigAddress::new(1, 2, &[account1.address(), account2.address()])?;
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(10_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         Pay::new(
             multisig_address.address(),
             account2.address(),
@@ -134,14 +126,10 @@ byte 0xFF
 
     let from_address = program.hash.parse()?;
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(10_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         Pay::new(from_address, account1().address(), MicroAlgos(123_456)).build(),
     )
     .build();
@@ -188,14 +176,10 @@ int 1
 
     let from = account1();
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(10_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         Pay::new(from.address(), account2().address(), MicroAlgos(123_456)).build(),
     )
     .build();
@@ -247,14 +231,10 @@ int 1
 
     let multisig_address = MultisigAddress::new(1, 2, &[account1.address(), account2.address()])?;
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(10_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         Pay::new(
             multisig_address.address(),
             account3().address(),
@@ -300,14 +280,10 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
 
     let from = account1();
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(10_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         CreateAsset::new(from.address(), 1000000, 2, false)
             .unit_name("FOO".to_owned())
             .asset_name("Foo".to_owned())
@@ -400,24 +376,16 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
     let account1 = account1();
     let account2 = account2();
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t1 = &mut TxnBuilder::new(
-        MicroAlgos(1_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id.clone(),
+    let t1 = &mut TxnBuilder::with(
+        params.clone(),
         Pay::new(account1.address(), account2.address(), MicroAlgos(1_000)).build(),
     )
     .build();
 
-    let t2 = &mut TxnBuilder::new(
-        MicroAlgos(1_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t2 = &mut TxnBuilder::with(
+        params,
         Pay::new(account2.address(), account1.address(), MicroAlgos(3_000)).build(),
     )
     .build();

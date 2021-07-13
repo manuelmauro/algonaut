@@ -1,6 +1,5 @@
 use algonaut::algod::v2::Algod;
 use algonaut::algod::AlgodBuilder;
-use algonaut::core::MicroAlgos;
 use algonaut::error::AlgonautError;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
 use algonaut_client::algod::v2::message::PendingTransaction;
@@ -25,15 +24,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let params = algod.transaction_params().await?;
-    println!("Last round: {}", params.last_round);
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(100_000),
-        params.last_round,
-        params.last_round + 1000,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         CreateAsset::new(creator.address(), 10, 2, false)
             .unit_name("EIRI".to_owned())
             .asset_name("Naki".to_owned())

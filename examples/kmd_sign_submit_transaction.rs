@@ -44,14 +44,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(10_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         Pay::new(from_address, to_address, MicroAlgos(123_456)).build(),
     )
     .build();

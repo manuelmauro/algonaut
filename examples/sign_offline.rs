@@ -29,14 +29,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(10_000),
-        params.last_round,
-        params.last_round + 1000,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         Pay::new(
             account.address(),
             "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?,

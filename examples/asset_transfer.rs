@@ -1,5 +1,4 @@
 use algonaut::algod::AlgodBuilder;
-use algonaut_core::MicroAlgos;
 use algonaut_transaction::TransferAsset;
 use algonaut_transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
@@ -19,14 +18,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let from = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
     let to = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?;
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new(
-        MicroAlgos(100_000),
-        params.last_round,
-        params.last_round + 10,
-        params.genesis_hash,
-        params.genesis_id,
+    let t = TxnBuilder::with(
+        params,
         TransferAsset::new(from.address(), 4, 3, to.address()).build(),
     )
     .build();

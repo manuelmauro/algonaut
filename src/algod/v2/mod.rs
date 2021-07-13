@@ -17,6 +17,7 @@ use algonaut_client::algod::v2::message::Version;
 use algonaut_client::algod::v2::Client;
 use algonaut_core::Address;
 use algonaut_core::Round;
+use algonaut_core::SuggestedTransactionParams;
 use algonaut_core::ToMsgPack;
 use algonaut_transaction::SignedTransaction;
 
@@ -199,6 +200,22 @@ impl Algod {
     /// Get parameters for constructing a new transaction.
     pub async fn transaction_params(&self) -> Result<TransactionParams, AlgonautError> {
         Ok(self.client.transaction_params().await?)
+    }
+
+    /// Get suggested parameters for constructing a new transaction.
+    pub async fn suggested_transaction_params(
+        &self,
+    ) -> Result<SuggestedTransactionParams, AlgonautError> {
+        let params = self.client.transaction_params().await?;
+        Ok(SuggestedTransactionParams {
+            genesis_id: params.genesis_id,
+            genesis_hash: params.genesis_hash,
+            consensus_version: params.consensus_version,
+            fee: params.fee,
+            min_fee: params.min_fee,
+            first_valid: params.last_round,
+            last_valid: params.last_round + 1000,
+        })
     }
 
     /// Get a list of unconfirmed transactions currently in the transaction pool.

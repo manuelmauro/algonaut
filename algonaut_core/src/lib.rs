@@ -1,4 +1,5 @@
 use algonaut_crypto::Ed25519PublicKey;
+use algonaut_crypto::HashDigest;
 use algonaut_encoding::{SignatureVisitor, U8_32Visitor};
 use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
@@ -439,4 +440,15 @@ mod tests {
 
         assert!(invalid_csum.parse::<Address>().is_err());
     }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct SuggestedTransactionParams {
+    pub genesis_id: String,
+    pub genesis_hash: HashDigest,
+    pub consensus_version: String,
+    pub fee: MicroAlgos,
+    pub min_fee: MicroAlgos,
+    pub first_valid: Round,
+    pub last_valid: Round,
 }
