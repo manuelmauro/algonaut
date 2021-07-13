@@ -1,4 +1,5 @@
 use algonaut_crypto::Ed25519PublicKey;
+use algonaut_crypto::HashDigest;
 use algonaut_encoding::{SignatureVisitor, U8_32Visitor};
 use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
@@ -17,19 +18,7 @@ pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
 /// MicroAlgos are the base unit of currency in Algorand
 #[derive(
-    Copy,
-    Clone,
-    Default,
-    Debug,
-    Ord,
-    PartialOrd,
-    Eq,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    Display,
-    Add,
-    Sub,
+    Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize, Display, Add, Sub,
 )]
 pub struct MicroAlgos(pub u64);
 
@@ -71,7 +60,7 @@ impl Mul<u64> for MicroAlgos {
 }
 
 /// Round of the Algorand consensus protocol
-#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Serialize, Deserialize, Display, Add, Sub)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize, Display, Add, Sub)]
 pub struct Round(pub u64);
 
 impl Add<u64> for Round {
@@ -451,4 +440,15 @@ mod tests {
 
         assert!(invalid_csum.parse::<Address>().is_err());
     }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct SuggestedTransactionParams {
+    pub genesis_id: String,
+    pub genesis_hash: HashDigest,
+    pub consensus_version: String,
+    pub fee: MicroAlgos,
+    pub min_fee: MicroAlgos,
+    pub first_valid: Round,
+    pub last_valid: Round,
 }

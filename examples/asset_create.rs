@@ -1,8 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::algod::AlgodBuilder;
-use algonaut::core::MicroAlgos;
 use algonaut::error::AlgonautError;
-use algonaut::transaction::{ConfigureAsset, TxnBuilder};
+use algonaut::transaction::{CreateAsset, TxnBuilder};
 use algonaut_client::algod::v2::message::PendingTransaction;
 use algonaut_transaction::account::Account;
 use dotenv::dotenv;
@@ -25,32 +24,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let params = algod.transaction_params().await?;
-    println!("Last round: {}", params.last_round);
+    let params = algod.suggested_transaction_params().await?;
 
-    // we are ready to build the transaction
-    let t = TxnBuilder::new()
-        .sender(creator.address())
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 1000)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(100_000))
-        .asset_configuration(
-            ConfigureAsset::new()
-                .total(10)
-                .default_frozen(false)
-                .unit_name("EIRI".to_owned())
-                .asset_name("Naki".to_owned())
-                .manager(creator.address())
-                .reserve(creator.address())
-                .freeze(creator.address())
-                .clawback(creator.address())
-                .url("example.com".to_owned())
-                .decimals(2)
-                .build(),
-        )
-        .build();
+    let t = TxnBuilder::with(
+        params,
+        CreateAsset::new(creator.address(), 10, 2, false)
+            .unit_name("EIRI".to_owned())
+            .asset_name("Naki".to_owned())
+            .manager(creator.address())
+            .reserve(creator.address())
+            .freeze(creator.address())
+            .clawback(creator.address())
+            .url("example.com".to_owned())
+            .build(),
+    )
+    .build();
 
     // we need to sign the transaction to prove that we own the sender address
     let signed_t = creator.sign_transaction(&t)?;

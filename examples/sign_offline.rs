@@ -29,22 +29,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let m = mnemonic::from_key(&account.seed())?;
     println!("Backup phrase: {}", m);
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .sender(account.address())
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 1000)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(10_000))
-        .payment(
-            Pay::new()
-                .amount(MicroAlgos(123_456))
-                .to("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?)
-                .build(),
+    let t = TxnBuilder::with(
+        params,
+        Pay::new(
+            account.address(),
+            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?,
+            MicroAlgos(123_456),
         )
-        .build();
+        .build(),
+    )
+    .build();
 
     println!("Made unsigned transaction: {:?}", t);
 

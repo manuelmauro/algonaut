@@ -6,7 +6,7 @@ use algonaut_crypto::HashDigest;
 use serde::{Serialize, Serializer};
 
 use crate::{
-    transaction::{StateSchema, TransactionSignature},
+    transaction::{AssetParams, StateSchema, TransactionSignature},
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
 };
@@ -148,14 +148,14 @@ impl From<Transaction> for ApiTransaction {
             // Common fields
             fee: t.fee,
             first_valid: t.first_valid,
-            genesis_id: Some(t.genesis_id),
+            genesis_id: Some(t.genesis_id.clone()),
             genesis_hash: t.genesis_hash,
             group: t.group,
             last_valid: t.last_valid,
             lease: t.lease,
-            note: t.note,
+            note: t.note.clone(),
             rekey_to: t.rekey_to,
-            sender: t.sender,
+            sender: t.sender(),
             type_: to_api_transaction_type(&t.txn_type).to_owned(),
             ///////////////
             asset_amount: None,
@@ -204,19 +204,7 @@ impl From<Transaction> for ApiTransaction {
                 api_t.nonparticipating = reg.nonparticipating;
             }
             TransactionType::AssetConfigurationTransaction(config) => {
-                api_t.asset_params = Some(ApiAssetParams {
-                    asset_name: config.params.asset_name.to_owned(),
-                    decimals: config.params.decimals,
-                    default_frozen: config.params.default_frozen,
-                    total: config.params.total,
-                    unit_name: config.params.unit_name.to_owned(),
-                    meta_data_hash: config.params.meta_data_hash.to_owned(),
-                    url: config.params.url.to_owned(),
-                    clawback: config.params.clawback,
-                    freeze: config.params.freeze,
-                    manager: config.params.manager,
-                    reserve: config.params.reserve,
-                });
+                api_t.asset_params = config.to_owned().params.map(|p| p.into());
                 api_t.config_asset = config.config_asset;
             }
             TransactionType::AssetTransferTransaction(transfer) => {
@@ -227,7 +215,7 @@ impl From<Transaction> for ApiTransaction {
             }
             TransactionType::AssetAcceptTransaction(accept) => {
                 api_t.xfer = Some(accept.xfer);
-                api_t.asset_receiver = Some(accept.receiver);
+                api_t.asset_receiver = Some(accept.sender);
             }
             TransactionType::AssetClawbackTransaction(clawback) => {
                 api_t.xfer = Some(clawback.xfer);
@@ -273,10 +261,10 @@ pub struct ApiAssetParams {
     pub clawback: Option<Address>,
 
     #[serde(rename = "dc")]
-    pub decimals: u32,
+    pub decimals: Option<u32>,
 
     #[serde(rename = "df", skip_serializing)]
-    pub default_frozen: bool,
+    pub default_frozen: Option<bool>,
 
     #[serde(rename = "f", skip_serializing_if = "Option::is_none")]
     pub freeze: Option<Address>,
@@ -288,10 +276,28 @@ pub struct ApiAssetParams {
     pub reserve: Option<Address>,
 
     #[serde(rename = "t")]
-    pub total: u64,
+    pub total: Option<u64>,
 
     #[serde(rename = "un", skip_serializing_if = "Option::is_none")]
     pub unit_name: Option<String>,
+}
+
+impl From<AssetParams> for ApiAssetParams {
+    fn from(params: AssetParams) -> Self {
+        ApiAssetParams {
+            asset_name: params.asset_name,
+            decimals: params.decimals,
+            default_frozen: params.default_frozen,
+            total: params.total,
+            unit_name: params.unit_name,
+            meta_data_hash: params.meta_data_hash,
+            url: params.url,
+            clawback: params.clawback,
+            freeze: params.freeze,
+            manager: params.manager,
+            reserve: params.reserve,
+        }
+    }
 }
 
 fn to_api_transaction_type<'a>(type_: &TransactionType) -> &'a str {

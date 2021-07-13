@@ -1,5 +1,4 @@
 use algonaut::algod::AlgodBuilder;
-use algonaut_core::MicroAlgos;
 use algonaut_transaction::ClawbackAsset;
 use algonaut_transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
@@ -26,24 +25,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // The asset "sender": The account from which the asset is withdrawn.
     let asset_sender_address = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?.address();
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .sender(sender_address)
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(100_000))
-        .asset_clawback(
-            ClawbackAsset::new()
-                .asset_amount(2)
-                .xfer(4)
-                .asset_receiver(asset_receiver_address)
-                .asset_sender(asset_sender_address)
-                .build(),
+    let t = TxnBuilder::with(
+        params,
+        ClawbackAsset::new(
+            sender_address,
+            4,
+            2,
+            asset_sender_address,
+            asset_receiver_address,
         )
-        .build();
+        .build(),
+    )
+    .build();
 
     let sign_response = sender.sign_transaction(&t);
     println!("{:#?}", sign_response);

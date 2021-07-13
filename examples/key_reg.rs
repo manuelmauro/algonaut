@@ -1,5 +1,5 @@
 use algonaut::algod::AlgodBuilder;
-use algonaut_core::{MicroAlgos, VotePk, VrfPk};
+use algonaut_core::{VotePk, VrfPk};
 use algonaut_transaction::RegisterKey;
 use algonaut_transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
@@ -21,25 +21,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let vote_pk_str = "KgL5qW1jtHAQb1lQNIKuqHBqDWXRmb7GTmBN92a/sOQ=";
     let selection_pk_str = "A3s+2bgKlbG9qIaA4wJsrrJl8mVKGzTp/h6gGEyZmAg=";
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .sender(account.address())
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(100_000))
-        .key_registration(
-            RegisterKey::new()
-                .vote_pk(VotePk::from_base64_str(vote_pk_str)?)
-                .selection_pk(VrfPk::from_base64_str(selection_pk_str)?)
-                .vote_first(params.last_round)
-                .vote_last(params.last_round + 3_000_000)
-                .vote_key_dilution(10_000)
-                .build(),
+    let t = TxnBuilder::with(
+        params.clone(),
+        RegisterKey::online(
+            account.address(),
+            VotePk::from_base64_str(vote_pk_str)?,
+            VrfPk::from_base64_str(selection_pk_str)?,
+            params.first_valid,
+            params.first_valid + 3_000_000,
+            10_000,
         )
-        .build();
+        .build(),
+    )
+    .build();
 
     let sign_response = account.sign_transaction(&t);
     println!("{:#?}", sign_response);

@@ -1,5 +1,4 @@
 use algonaut::algod::AlgodBuilder;
-use algonaut_core::MicroAlgos;
 use algonaut_transaction::AcceptAsset;
 use algonaut_transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
@@ -18,22 +17,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let account = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?;
 
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .sender(account.address())
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(100_000))
-        .asset_accept(
-            AcceptAsset::new()
-                .xfer(4)
-                .receiver(account.address())
-                .build(),
-        )
-        .build();
+    let t = TxnBuilder::with(params, AcceptAsset::new(account.address(), 4).build()).build();
 
     let sign_response = account.sign_transaction(&t);
     println!("{:#?}", sign_response);

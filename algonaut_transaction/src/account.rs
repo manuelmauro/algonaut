@@ -118,7 +118,7 @@ impl Account {
         transaction: &Transaction,
         from: MultisigAddress,
     ) -> Result<MultisigSignature, TransactionError> {
-        if from.address() != transaction.sender {
+        if from.address() != transaction.sender() {
             return Err(TransactionError::InvalidSenderInMultisig);
         }
         if !from.contains(&self.address) {
