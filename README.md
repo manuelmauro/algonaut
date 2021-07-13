@@ -27,23 +27,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let to_address = "2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY".parse()?;
 
     // algod has a convenient method that retrieves basic information for a transaction
-    let params = algod.transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
     // we are ready to build the transaction
-    let t = TxnBuilder::new()
-        .sender(from_account.address())
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(10_000))
-        .payment(
-            Pay::new()
-                .amount(MicroAlgos(123_456))
-                .to(to_address)
-                .build(),
-        )
-        .build();
+    let t = TxnBuilder::with(
+        params,
+        Pay::new(from_address, to_address, MicroAlgos(123_456)).build(),
+    )
+    .build();
 
     // we need to sign the transaction to prove that we own the sender address
     let signed_t = from_account.sign_transaction(&t)?;
