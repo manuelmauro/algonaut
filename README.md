@@ -9,10 +9,10 @@ Rust **algonaut** aims at becoming a rusty SDK for [Algorand](https://www.algora
 
 ```rust
 use algonaut::algod::AlgodBuilder;
-use algonaut::core::MicroAlgos;
-use algonaut::transaction::{Pay, TxnBuilder};
-use algonaut_transaction::account::Account;
-use std::error::Error;
+use algonaut_core::MicroAlgos;
+use algonaut_transaction::Pay;
+use algonaut_transaction::{account::Account, TxnBuilder};
+use std::error::Error;;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // we are ready to build the transaction
     let t = TxnBuilder::with(
         params,
-        Pay::new(from_address, to_address, MicroAlgos(123_456)).build(),
+        Pay::new(from_account.address(), to_address, MicroAlgos(123_456)).build(),
     )
     .build();
 
