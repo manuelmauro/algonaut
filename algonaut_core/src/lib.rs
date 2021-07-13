@@ -17,19 +17,7 @@ pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
 /// MicroAlgos are the base unit of currency in Algorand
 #[derive(
-    Copy,
-    Clone,
-    Default,
-    Debug,
-    Ord,
-    PartialOrd,
-    Eq,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    Display,
-    Add,
-    Sub,
+    Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Serialize, Deserialize, Display, Add, Sub,
 )]
 pub struct MicroAlgos(pub u64);
 
@@ -71,7 +59,7 @@ impl Mul<u64> for MicroAlgos {
 }
 
 /// Round of the Algorand consensus protocol
-#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Serialize, Deserialize, Display, Add, Sub)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize, Display, Add, Sub)]
 pub struct Round(pub u64);
 
 impl Add<u64> for Round {
