@@ -227,7 +227,7 @@ impl From<Transaction> for ApiTransaction {
             }
             TransactionType::AssetAcceptTransaction(accept) => {
                 api_t.xfer = Some(accept.xfer);
-                api_t.asset_receiver = Some(accept.receiver);
+                api_t.asset_receiver = Some(accept.sender);
             }
             TransactionType::AssetClawbackTransaction(clawback) => {
                 api_t.xfer = Some(clawback.xfer);
@@ -273,10 +273,10 @@ pub struct ApiAssetParams {
     pub clawback: Option<Address>,
 
     #[serde(rename = "dc")]
-    pub decimals: u32,
+    pub decimals: Option<u32>,
 
     #[serde(rename = "df", skip_serializing)]
-    pub default_frozen: bool,
+    pub default_frozen: Option<bool>,
 
     #[serde(rename = "f", skip_serializing_if = "Option::is_none")]
     pub freeze: Option<Address>,
@@ -288,7 +288,7 @@ pub struct ApiAssetParams {
     pub reserve: Option<Address>,
 
     #[serde(rename = "t")]
-    pub total: u64,
+    pub total: Option<u64>,
 
     #[serde(rename = "un", skip_serializing_if = "Option::is_none")]
     pub unit_name: Option<String>,

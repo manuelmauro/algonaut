@@ -31,20 +31,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 1000)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(10_000))
-        .payment(
-            Pay::new()
-                .sender(account.address())
-                .amount(MicroAlgos(123_456))
-                .to("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?)
-                .build(),
+    let t = TxnBuilder::new(
+        MicroAlgos(10_000),
+        params.last_round,
+        params.last_round + 1000,
+        params.genesis_hash,
+        params.genesis_id,
+        Pay::new(
+            account.address(),
+            "4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?,
+            MicroAlgos(123_456),
         )
-        .build();
+        .build(),
+    )
+    .build();
 
     println!("Made unsigned transaction: {:?}", t);
 

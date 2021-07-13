@@ -23,23 +23,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(100_000))
-        .key_registration(
-            RegisterKey::new()
-                .sender(account.address())
-                .vote_pk(VotePk::from_base64_str(vote_pk_str)?)
-                .selection_pk(VrfPk::from_base64_str(selection_pk_str)?)
-                .vote_first(params.last_round)
-                .vote_last(params.last_round + 3_000_000)
-                .vote_key_dilution(10_000)
-                .build(),
+    let t = TxnBuilder::new(
+        MicroAlgos(100_000),
+        params.last_round,
+        params.last_round + 10,
+        params.genesis_hash,
+        params.genesis_id,
+        RegisterKey::online(
+            account.address(),
+            VotePk::from_base64_str(vote_pk_str)?,
+            VrfPk::from_base64_str(selection_pk_str)?,
+            params.last_round,
+            params.last_round + 3_000_000,
+            10_000,
         )
-        .build();
+        .build(),
+    )
+    .build();
 
     let sign_response = account.sign_transaction(&t);
     println!("{:#?}", sign_response);

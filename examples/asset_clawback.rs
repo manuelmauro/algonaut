@@ -28,22 +28,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(100_000))
-        .asset_clawback(
-            ClawbackAsset::new()
-                .sender(sender_address)
-                .asset_amount(2)
-                .xfer(4)
-                .asset_receiver(asset_receiver_address)
-                .asset_sender(asset_sender_address)
-                .build(),
+    let t = TxnBuilder::new(
+        MicroAlgos(100_000),
+        params.last_round,
+        params.last_round + 10,
+        params.genesis_hash,
+        params.genesis_id,
+        ClawbackAsset::new(
+            sender_address,
+            4,
+            2,
+            asset_sender_address,
+            asset_receiver_address,
         )
-        .build();
+        .build(),
+    )
+    .build();
 
     let sign_response = sender.sign_transaction(&t);
     println!("{:#?}", sign_response);

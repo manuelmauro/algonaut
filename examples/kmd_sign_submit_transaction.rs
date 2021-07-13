@@ -46,21 +46,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    // we are ready to build the transaction
-    let t = TxnBuilder::new()
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(10_000))
-        .payment(
-            Pay::new()
-                .sender(from_address)
-                .amount(MicroAlgos(123_456))
-                .to(to_address)
-                .build(),
-        )
-        .build();
+    let t = TxnBuilder::new(
+        MicroAlgos(10_000),
+        params.last_round,
+        params.last_round + 10,
+        params.genesis_hash,
+        params.genesis_id,
+        Pay::new(from_address, to_address, MicroAlgos(123_456)).build(),
+    )
+    .build();
 
     // we need to sign the transaction to prove that we own the sender address
     let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t).await?;

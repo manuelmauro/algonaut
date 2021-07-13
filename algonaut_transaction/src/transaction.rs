@@ -197,13 +197,13 @@ pub struct AssetParams {
     /// The number of digits to use after the decimal point when displaying the asset. If 0,
     /// the asset is not divisible. If 1, the base unit of the asset is in tenths. If 2,
     /// the base unit of the asset is in hundredths.
-    pub decimals: u32,
+    pub decimals: Option<u32>,
     /// True to freeze holdings for this asset by default.
     // #[serde(rename = "df", skip_serializing_if = "is_false")]
-    pub default_frozen: bool,
+    pub default_frozen: Option<bool>,
 
     /// The total number of base units of the asset to create. This number cannot be changed.
-    pub total: u64,
+    pub total: Option<u64>,
 
     /// The name of a unit of this asset. Supplied on creation. Example: USDT
     pub unit_name: Option<String>,
@@ -263,9 +263,6 @@ pub struct AssetAcceptTransaction {
 
     /// The unique ID of the asset to be transferred.
     pub xfer: u64,
-
-    /// The account opting in (must be the same as the transaction's sender).
-    pub receiver: Address,
 }
 
 /// This is a special form of an Asset Transfer Transaction.

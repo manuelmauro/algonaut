@@ -7,13 +7,12 @@ use algonaut_core::{Address, MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 
 /// A builder for [Transaction].
-#[derive(Default)]
 pub struct TxnBuilder {
     fee: MicroAlgos,
     first_valid: Round,
-    genesis_hash: Option<HashDigest>,
+    genesis_hash: HashDigest,
     last_valid: Round,
-    txn_type: Option<TransactionType>,
+    txn_type: TransactionType,
     genesis_id: String,
     group: Option<HashDigest>,
     lease: Option<HashDigest>,
@@ -22,73 +21,26 @@ pub struct TxnBuilder {
 }
 
 impl TxnBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn fee(mut self, fee: MicroAlgos) -> Self {
-        self.fee = fee;
-        self
-    }
-
-    pub fn first_valid(mut self, first_valid: Round) -> Self {
-        self.first_valid = first_valid;
-        self
-    }
-
-    pub fn genesis_hash(mut self, genesis_hash: HashDigest) -> Self {
-        self.genesis_hash = Some(genesis_hash);
-        self
-    }
-
-    pub fn last_valid(mut self, last_valid: Round) -> Self {
-        self.last_valid = last_valid;
-        self
-    }
-
-    pub fn payment(mut self, txn: Payment) -> Self {
-        self.txn_type = Some(TransactionType::Payment(txn));
-        self
-    }
-
-    pub fn key_registration(mut self, txn: KeyRegistration) -> Self {
-        self.txn_type = Some(TransactionType::KeyRegistration(txn));
-        self
-    }
-
-    pub fn asset_configuration(mut self, txn: AssetConfigurationTransaction) -> Self {
-        self.txn_type = Some(TransactionType::AssetConfigurationTransaction(txn));
-        self
-    }
-
-    pub fn asset_transfer(mut self, txn: AssetTransferTransaction) -> Self {
-        self.txn_type = Some(TransactionType::AssetTransferTransaction(txn));
-        self
-    }
-
-    pub fn asset_accept(mut self, txn: AssetAcceptTransaction) -> Self {
-        self.txn_type = Some(TransactionType::AssetAcceptTransaction(txn));
-        self
-    }
-
-    pub fn asset_clawback(mut self, txn: AssetClawbackTransaction) -> Self {
-        self.txn_type = Some(TransactionType::AssetClawbackTransaction(txn));
-        self
-    }
-
-    pub fn asset_freeze(mut self, txn: AssetFreezeTransaction) -> Self {
-        self.txn_type = Some(TransactionType::AssetFreezeTransaction(txn));
-        self
-    }
-
-    pub fn application_call(mut self, txn: ApplicationCallTransaction) -> Self {
-        self.txn_type = Some(TransactionType::ApplicationCallTransaction(txn));
-        self
-    }
-
-    pub fn genesis_id(mut self, genesis_id: String) -> Self {
-        self.genesis_id = genesis_id;
-        self
+    pub fn new(
+        fee: MicroAlgos,
+        first_valid: Round,
+        last_valid: Round,
+        genesis_hash: HashDigest,
+        genesis_id: String,
+        txn_type: TransactionType,
+    ) -> Self {
+        TxnBuilder {
+            fee,
+            first_valid,
+            genesis_hash,
+            last_valid,
+            txn_type,
+            genesis_id,
+            group: None,
+            lease: None,
+            note: None,
+            rekey_to: None,
+        }
     }
 
     pub fn group(mut self, group: HashDigest) -> Self {
@@ -115,9 +67,9 @@ impl TxnBuilder {
         Transaction {
             fee: self.fee,
             first_valid: self.first_valid,
-            genesis_hash: self.genesis_hash.unwrap(),
+            genesis_hash: self.genesis_hash,
             last_valid: self.last_valid,
-            txn_type: self.txn_type.unwrap(),
+            txn_type: self.txn_type,
             genesis_id: self.genesis_id,
             group: self.group,
             lease: self.lease,
@@ -128,32 +80,21 @@ impl TxnBuilder {
 }
 
 /// A builder for [Payment].
-#[derive(Default)]
 pub struct Pay {
-    sender: Option<Address>,
-    receiver: Option<Address>,
+    sender: Address,
+    receiver: Address,
     amount: MicroAlgos,
     close_remainder_to: Option<Address>,
 }
 
 impl Pay {
-    pub fn new() -> Self {
-        Pay::default()
-    }
-
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn to(mut self, receiver: Address) -> Self {
-        self.receiver = Some(receiver);
-        self
-    }
-
-    pub fn amount(mut self, amount: MicroAlgos) -> Self {
-        self.amount = amount;
-        self
+    pub fn new(sender: Address, receiver: Address, amount: MicroAlgos) -> Self {
+        Pay {
+            sender,
+            receiver,
+            amount,
+            close_remainder_to: None,
+        }
     }
 
     pub fn close_remainder_to(mut self, close_remainder_to: Address) -> Self {
@@ -161,20 +102,19 @@ impl Pay {
         self
     }
 
-    pub fn build(self) -> Payment {
-        Payment {
-            sender: self.sender.unwrap(),
-            receiver: self.receiver.unwrap(),
+    pub fn build(self) -> TransactionType {
+        TransactionType::Payment(Payment {
+            sender: self.sender,
+            receiver: self.receiver,
             amount: self.amount,
             close_remainder_to: self.close_remainder_to,
-        }
+        })
     }
 }
 
 /// A builder for [KeyRegistration].
-#[derive(Default)]
 pub struct RegisterKey {
-    sender: Option<Address>,
+    sender: Address,
     vote_pk: Option<VotePk>,
     selection_pk: Option<VrfPk>,
     vote_first: Option<Round>,
@@ -184,66 +124,69 @@ pub struct RegisterKey {
 }
 
 impl RegisterKey {
-    pub fn new() -> Self {
-        RegisterKey::default()
+    pub fn online(
+        sender: Address,
+        vote_pk: VotePk,
+        selection_pk: VrfPk,
+        vote_first: Round,
+        vote_last: Round,
+        vote_key_dilution: u64,
+    ) -> Self {
+        RegisterKey {
+            sender,
+            vote_pk: Some(vote_pk),
+            selection_pk: Some(selection_pk),
+            vote_first: Some(vote_first),
+            vote_last: Some(vote_last),
+            vote_key_dilution: Some(vote_key_dilution),
+            nonparticipating: None,
+        }
     }
 
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
+    pub fn offline(sender: Address) -> Self {
+        RegisterKey {
+            sender,
+            vote_pk: None,
+            selection_pk: None,
+            vote_first: None,
+            vote_last: None,
+            vote_key_dilution: None,
+            nonparticipating: None,
+        }
     }
 
-    pub fn vote_pk(mut self, vote_pk: VotePk) -> Self {
-        self.vote_pk = Some(vote_pk);
-        self
+    pub fn nonpartipating(sender: Address, nonparticipating: bool) -> Self {
+        RegisterKey {
+            sender,
+            vote_pk: None,
+            selection_pk: None,
+            vote_first: None,
+            vote_last: None,
+            vote_key_dilution: None,
+            nonparticipating: Some(nonparticipating),
+        }
     }
 
-    pub fn selection_pk(mut self, selection_pk: VrfPk) -> Self {
-        self.selection_pk = Some(selection_pk);
-        self
-    }
-
-    pub fn vote_first(mut self, vote_first: Round) -> Self {
-        self.vote_first = Some(vote_first);
-        self
-    }
-
-    pub fn vote_last(mut self, vote_last: Round) -> Self {
-        self.vote_last = Some(vote_last);
-        self
-    }
-
-    pub fn vote_key_dilution(mut self, vote_key_dilution: u64) -> Self {
-        self.vote_key_dilution = Some(vote_key_dilution);
-        self
-    }
-
-    pub fn nonparticipating(mut self, nonparticipating: Option<bool>) -> Self {
-        self.nonparticipating = nonparticipating;
-        self
-    }
-
-    pub fn build(self) -> KeyRegistration {
-        KeyRegistration {
-            sender: self.sender.unwrap(),
+    pub fn build(self) -> TransactionType {
+        TransactionType::KeyRegistration(KeyRegistration {
+            sender: self.sender,
             vote_pk: self.vote_pk,
             selection_pk: self.selection_pk,
             vote_first: self.vote_first,
             vote_last: self.vote_last,
             vote_key_dilution: self.vote_key_dilution,
             nonparticipating: self.nonparticipating,
-        }
+        })
     }
 }
 
 /// A builder for [AssetConfigurationTransaction].
-#[derive(Default)]
 pub struct ConfigureAsset {
-    sender: Option<Address>,
+    sender: Address,
     config_asset: Option<u64>,
-    total: u64,
-    decimals: u32,
-    default_frozen: bool,
+    total: Option<u64>,
+    decimals: Option<u32>,
+    default_frozen: Option<bool>,
     unit_name: Option<String>,
     asset_name: Option<String>,
     url: Option<String>,
@@ -255,32 +198,54 @@ pub struct ConfigureAsset {
 }
 
 impl ConfigureAsset {
-    pub fn new() -> Self {
-        ConfigureAsset::default()
+    pub fn create(sender: Address, total: u64, decimals: u32, default_frozen: bool) -> Self {
+        ConfigureAsset {
+            sender,
+            config_asset: None,
+            total: Some(total),
+            decimals: Some(decimals),
+            default_frozen: Some(default_frozen),
+            unit_name: None,
+            asset_name: None,
+            url: None,
+            meta_data_hash: None,
+            manager: None,
+            reserve: None,
+            freeze: None,
+            clawback: None,
+        }
     }
 
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn config_asset(mut self, config_asset: u64) -> Self {
-        self.config_asset = Some(config_asset);
-        self
+    pub fn update(sender: Address, asset_id: u64) -> Self {
+        ConfigureAsset {
+            sender,
+            config_asset: Some(asset_id),
+            total: None,
+            decimals: None,
+            default_frozen: None,
+            unit_name: None,
+            asset_name: None,
+            url: None,
+            meta_data_hash: None,
+            manager: None,
+            reserve: None,
+            freeze: None,
+            clawback: None,
+        }
     }
 
     pub fn total(mut self, total: u64) -> Self {
-        self.total = total;
+        self.total = Some(total);
         self
     }
 
     pub fn decimals(mut self, decimals: u32) -> Self {
-        self.decimals = decimals;
+        self.decimals = Some(decimals);
         self
     }
 
     pub fn default_frozen(mut self, default_frozen: bool) -> Self {
-        self.default_frozen = default_frozen;
+        self.default_frozen = Some(default_frozen);
         self
     }
 
@@ -324,9 +289,9 @@ impl ConfigureAsset {
         self
     }
 
-    pub fn build(self) -> AssetConfigurationTransaction {
-        AssetConfigurationTransaction {
-            sender: self.sender.unwrap(),
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
+            sender: self.sender,
             config_asset: self.config_asset,
             params: AssetParams {
                 total: self.total,
@@ -341,43 +306,28 @@ impl ConfigureAsset {
                 freeze: self.freeze,
                 clawback: self.clawback,
             },
-        }
+        })
     }
 }
 
 /// A builder for [AssetTransferTransaction].
-#[derive(Default)]
 pub struct TransferAsset {
-    sender: Option<Address>,
+    sender: Address,
     xfer: u64,
     amount: u64,
-    receiver: Option<Address>,
+    receiver: Address,
     close_to: Option<Address>,
 }
 
 impl TransferAsset {
-    pub fn new() -> Self {
-        TransferAsset::default()
-    }
-
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn xfer(mut self, xfer: u64) -> Self {
-        self.xfer = xfer;
-        self
-    }
-
-    pub fn amount(mut self, amount: u64) -> Self {
-        self.amount = amount;
-        self
-    }
-
-    pub fn receiver(mut self, receiver: Address) -> Self {
-        self.receiver = Some(receiver);
-        self
+    pub fn new(sender: Address, asset_id: u64, amount: u64, receiver: Address) -> Self {
+        TransferAsset {
+            sender,
+            xfer: asset_id,
+            amount,
+            receiver,
+            close_to: None,
+        }
     }
 
     pub fn close_to(mut self, close_to: Address) -> Self {
@@ -385,93 +335,62 @@ impl TransferAsset {
         self
     }
 
-    pub fn build(self) -> AssetTransferTransaction {
-        AssetTransferTransaction {
-            sender: self.sender.unwrap(),
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetTransferTransaction(AssetTransferTransaction {
+            sender: self.sender,
             xfer: self.xfer,
             amount: self.amount,
-            receiver: self.receiver.unwrap(),
+            receiver: self.receiver,
             close_to: self.close_to,
-        }
+        })
     }
 }
 
 /// A builder for [AssetAcceptTransaction].
-#[derive(Default)]
 pub struct AcceptAsset {
-    sender: Option<Address>,
-    xfer: u64,
-    receiver: Option<Address>,
+    sender: Address,
+    asset_id: u64,
 }
 
 impl AcceptAsset {
-    pub fn new() -> Self {
-        AcceptAsset::default()
+    pub fn new(sender: Address, asset_id: u64) -> Self {
+        AcceptAsset { sender, asset_id }
     }
 
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn xfer(mut self, xfer: u64) -> Self {
-        self.xfer = xfer;
-        self
-    }
-
-    pub fn receiver(mut self, receiver: Address) -> Self {
-        self.receiver = Some(receiver);
-        self
-    }
-
-    pub fn build(self) -> AssetAcceptTransaction {
-        AssetAcceptTransaction {
-            sender: self.sender.unwrap(),
-            xfer: self.xfer,
-            receiver: self.receiver.unwrap(),
-        }
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetAcceptTransaction(AssetAcceptTransaction {
+            sender: self.sender,
+            xfer: self.asset_id,
+        })
     }
 }
 
 /// A builder for [AssetClawbackTransaction].
-#[derive(Default)]
 pub struct ClawbackAsset {
-    sender: Option<Address>,
-    xfer: u64,
+    sender: Address,
+    asset_id: u64,
     asset_amount: u64,
-    asset_sender: Option<Address>,
-    asset_receiver: Option<Address>,
+    asset_sender: Address,
+    asset_receiver: Address,
     asset_close_to: Option<Address>,
 }
 
 impl ClawbackAsset {
-    pub fn new() -> Self {
-        ClawbackAsset::default()
-    }
-
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn xfer(mut self, xfer: u64) -> Self {
-        self.xfer = xfer;
-        self
-    }
-
-    pub fn asset_amount(mut self, asset_amount: u64) -> Self {
-        self.asset_amount = asset_amount;
-        self
-    }
-
-    pub fn asset_sender(mut self, asset_sender: Address) -> Self {
-        self.asset_sender = Some(asset_sender);
-        self
-    }
-
-    pub fn asset_receiver(mut self, asset_receiver: Address) -> Self {
-        self.asset_receiver = Some(asset_receiver);
-        self
+    pub fn new(
+        sender: Address,
+        asset_id: u64,
+        asset_amount: u64,
+        asset_sender: Address,
+        asset_receiver: Address,
+    ) -> Self {
+        ClawbackAsset {
+            sender,
+            asset_id,
+            asset_amount,
+            asset_sender,
+            asset_receiver,
+            asset_close_to: None,
+        }
     }
 
     pub fn asset_close_to(mut self, asset_close_to: Address) -> Self {
@@ -479,56 +398,40 @@ impl ClawbackAsset {
         self
     }
 
-    pub fn build(self) -> AssetClawbackTransaction {
-        AssetClawbackTransaction {
-            sender: self.sender.unwrap(),
-            xfer: self.xfer,
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetClawbackTransaction(AssetClawbackTransaction {
+            sender: self.sender,
+            xfer: self.asset_id,
             asset_amount: self.asset_amount,
-            asset_sender: self.asset_sender.unwrap(),
-            asset_receiver: self.asset_receiver.unwrap(),
+            asset_sender: self.asset_sender,
+            asset_receiver: self.asset_receiver,
             asset_close_to: self.asset_close_to,
-        }
+        })
     }
 }
 
 /// A builder for [AssetFreezeTransaction].
-#[derive(Default)]
 pub struct FreezeAsset {
-    sender: Option<Address>,
-    freeze_account: Option<Address>,
+    sender: Address,
+    freeze_account: Address,
     asset_id: u64,
     frozen: bool,
 }
 
 impl FreezeAsset {
-    pub fn new() -> Self {
-        FreezeAsset::default()
-    }
-
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn freeze_account(mut self, freeze_account: Address) -> Self {
-        self.freeze_account = Some(freeze_account);
-        self
-    }
-
-    pub fn asset_id(mut self, asset_id: u64) -> Self {
-        self.asset_id = asset_id;
-        self
-    }
-
-    pub fn frozen(mut self, frozen: bool) -> Self {
-        self.frozen = frozen;
-        self
+    pub fn new(sender: Address, freeze_account: Address, asset_id: u64, frozen: bool) -> Self {
+        FreezeAsset {
+            sender,
+            freeze_account,
+            asset_id,
+            frozen,
+        }
     }
 
     pub fn build(self) -> AssetFreezeTransaction {
         AssetFreezeTransaction {
-            sender: self.sender.unwrap(),
-            freeze_account: self.freeze_account.unwrap(),
+            sender: self.sender,
+            freeze_account: self.freeze_account,
             asset_id: self.asset_id,
             frozen: self.frozen,
         }
@@ -536,9 +439,8 @@ impl FreezeAsset {
 }
 
 /// A builder for [ApplicationCallTransaction].
-#[derive(Default)]
 pub struct CallApplication {
-    sender: Option<Address>,
+    sender: Address,
     app_id: u64,
     on_complete: u64,
     accounts: Option<Vec<Address>>,
@@ -552,23 +454,20 @@ pub struct CallApplication {
 }
 
 impl CallApplication {
-    pub fn new() -> Self {
-        CallApplication::default()
-    }
-
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
-        self
-    }
-
-    pub fn app_id(mut self, app_id: u64) -> Self {
-        self.app_id = app_id;
-        self
-    }
-
-    pub fn on_complete(mut self, on_complete: u64) -> Self {
-        self.on_complete = on_complete;
-        self
+    pub fn new(sender: Address, app_id: u64, on_complete: u64) -> Self {
+        CallApplication {
+            sender,
+            app_id,
+            on_complete,
+            accounts: None,
+            approval_program: None,
+            app_arguments: None,
+            clear_state_program: None,
+            foreign_apps: None,
+            foreign_assets: None,
+            global_state_schema: None,
+            local_state_schema: None,
+        }
     }
 
     pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
@@ -613,7 +512,7 @@ impl CallApplication {
 
     pub fn build(self) -> ApplicationCallTransaction {
         ApplicationCallTransaction {
-            sender: self.sender.unwrap(),
+            sender: self.sender,
             app_id: self.app_id,
             on_complete: self.on_complete,
             accounts: self.accounts,

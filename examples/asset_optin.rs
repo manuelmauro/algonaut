@@ -20,20 +20,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.transaction_params().await?;
 
-    let t = TxnBuilder::new()
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(100_000))
-        .asset_accept(
-            AcceptAsset::new()
-                .sender(account.address())
-                .xfer(4)
-                .receiver(account.address())
-                .build(),
-        )
-        .build();
+    let t = TxnBuilder::new(
+        MicroAlgos(100_000),
+        params.last_round,
+        params.last_round + 10,
+        params.genesis_hash,
+        params.genesis_id,
+        AcceptAsset::new(account.address(), 4).build(),
+    )
+    .build();
 
     let sign_response = account.sign_transaction(&t);
     println!("{:#?}", sign_response);
