@@ -148,14 +148,14 @@ impl From<Transaction> for ApiTransaction {
             // Common fields
             fee: t.fee,
             first_valid: t.first_valid,
-            genesis_id: Some(t.genesis_id),
+            genesis_id: Some(t.genesis_id.clone()),
             genesis_hash: t.genesis_hash,
             group: t.group,
             last_valid: t.last_valid,
             lease: t.lease,
-            note: t.note,
+            note: t.note.clone(),
             rekey_to: t.rekey_to,
-            sender: t.sender,
+            sender: t.sender(),
             type_: to_api_transaction_type(&t.txn_type).to_owned(),
             ///////////////
             asset_amount: None,

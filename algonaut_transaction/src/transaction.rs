@@ -42,9 +42,6 @@ pub struct Transaction {
     /// be rejected by the network.
     pub last_valid: Round,
 
-    /// The address of the account that pays the fee and amount.
-    pub sender: Address,
-
     /// Specifies the type of transaction. This value is automatically generated using any of the
     /// developer tools.
     pub txn_type: TransactionType,
@@ -114,11 +111,28 @@ impl Transaction {
         let signed_transaction = account.sign_transaction(self)?;
         Ok(signed_transaction.to_msg_pack()?.len() as u64)
     }
+
+    /// The address of the account that signs and pays the fee.
+    pub(crate) fn sender(&self) -> Address {
+        match &self.txn_type {
+            TransactionType::Payment(t) => t.sender,
+            TransactionType::KeyRegistration(t) => t.sender,
+            TransactionType::AssetConfigurationTransaction(t) => t.sender,
+            TransactionType::AssetTransferTransaction(t) => t.sender,
+            TransactionType::AssetAcceptTransaction(t) => t.sender,
+            TransactionType::AssetClawbackTransaction(t) => t.sender,
+            TransactionType::AssetFreezeTransaction(t) => t.sender,
+            TransactionType::ApplicationCallTransaction(t) => t.sender,
+        }
+    }
 }
 
 /// Fields for a payment transaction
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Payment {
+    /// The address of the account that signs, pays the fee and amount.
+    pub sender: Address,
+
     /// The address of the account that receives the amount.
     pub receiver: Address,
 
@@ -134,6 +148,9 @@ pub struct Payment {
 /// Fields for a key registration transaction
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct KeyRegistration {
+    /// The address of the account that signs and pays the fee.
+    pub sender: Address,
+
     /// The root participation public key. See Generate a Participation Key to learn more.
     pub vote_pk: Option<VotePk>,
 
@@ -161,6 +178,9 @@ pub struct KeyRegistration {
 /// This is used to create, configure and destroy an asset depending on which fields are set.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AssetConfigurationTransaction {
+    /// The address of the account that signs and pays the fee.
+    pub sender: Address,
+
     /// See AssetParams table for all available fields.
     pub params: AssetParams,
     /// For re-configure or destroy transactions, this is the unique asset ID. On asset creation,
@@ -217,6 +237,9 @@ pub struct AssetParams {
 /// This is used to transfer an asset.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AssetTransferTransaction {
+    /// The address of the account that signs, pays the fee and sends the asset
+    pub sender: Address,
+
     /// The unique ID of the asset to be transferred.
     pub xfer: u64,
 
@@ -235,6 +258,9 @@ pub struct AssetTransferTransaction {
 /// This is a special form of an Asset Transfer Transaction.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AssetAcceptTransaction {
+    /// The address of the account that signs, pays the fee and opts-in to the asset.
+    pub sender: Address,
+
     /// The unique ID of the asset to be transferred.
     pub xfer: u64,
 
@@ -245,6 +271,9 @@ pub struct AssetAcceptTransaction {
 /// This is a special form of an Asset Transfer Transaction.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AssetClawbackTransaction {
+    /// The address of the account that signs, pays the fee and was set as clawback when creating the asset.
+    pub sender: Address,
+
     /// The unique ID of the asset to be transferred.
     pub xfer: u64,
 
@@ -265,6 +294,9 @@ pub struct AssetClawbackTransaction {
 /// This is a special form of an Asset Transfer Transaction.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AssetFreezeTransaction {
+    /// The address of the account that signs, pays the fee and was set as freeze when creating the asset.
+    pub sender: Address,
+
     /// The address of the account whose asset is being frozen or unfrozen.
     pub freeze_account: Address,
 
@@ -278,6 +310,9 @@ pub struct AssetFreezeTransaction {
 ///
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ApplicationCallTransaction {
+    /// The address of the account that signs and pays the fee.
+    pub sender: Address,
+
     /// ID of the application being configured or empty if creating.
     pub app_id: u64,
 

@@ -13,7 +13,6 @@ pub struct TxnBuilder {
     first_valid: Round,
     genesis_hash: Option<HashDigest>,
     last_valid: Round,
-    sender: Option<Address>,
     txn_type: Option<TransactionType>,
     genesis_id: String,
     group: Option<HashDigest>,
@@ -44,11 +43,6 @@ impl TxnBuilder {
 
     pub fn last_valid(mut self, last_valid: Round) -> Self {
         self.last_valid = last_valid;
-        self
-    }
-
-    pub fn sender(mut self, sender: Address) -> Self {
-        self.sender = Some(sender);
         self
     }
 
@@ -123,7 +117,6 @@ impl TxnBuilder {
             first_valid: self.first_valid,
             genesis_hash: self.genesis_hash.unwrap(),
             last_valid: self.last_valid,
-            sender: self.sender.unwrap(),
             txn_type: self.txn_type.unwrap(),
             genesis_id: self.genesis_id,
             group: self.group,
@@ -137,6 +130,7 @@ impl TxnBuilder {
 /// A builder for [Payment].
 #[derive(Default)]
 pub struct Pay {
+    sender: Option<Address>,
     receiver: Option<Address>,
     amount: MicroAlgos,
     close_remainder_to: Option<Address>,
@@ -145,6 +139,11 @@ pub struct Pay {
 impl Pay {
     pub fn new() -> Self {
         Pay::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn to(mut self, receiver: Address) -> Self {
@@ -164,6 +163,7 @@ impl Pay {
 
     pub fn build(self) -> Payment {
         Payment {
+            sender: self.sender.unwrap(),
             receiver: self.receiver.unwrap(),
             amount: self.amount,
             close_remainder_to: self.close_remainder_to,
@@ -174,6 +174,7 @@ impl Pay {
 /// A builder for [KeyRegistration].
 #[derive(Default)]
 pub struct RegisterKey {
+    sender: Option<Address>,
     vote_pk: Option<VotePk>,
     selection_pk: Option<VrfPk>,
     vote_first: Option<Round>,
@@ -185,6 +186,11 @@ pub struct RegisterKey {
 impl RegisterKey {
     pub fn new() -> Self {
         RegisterKey::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn vote_pk(mut self, vote_pk: VotePk) -> Self {
@@ -219,6 +225,7 @@ impl RegisterKey {
 
     pub fn build(self) -> KeyRegistration {
         KeyRegistration {
+            sender: self.sender.unwrap(),
             vote_pk: self.vote_pk,
             selection_pk: self.selection_pk,
             vote_first: self.vote_first,
@@ -232,6 +239,7 @@ impl RegisterKey {
 /// A builder for [AssetConfigurationTransaction].
 #[derive(Default)]
 pub struct ConfigureAsset {
+    sender: Option<Address>,
     config_asset: Option<u64>,
     total: u64,
     decimals: u32,
@@ -249,6 +257,11 @@ pub struct ConfigureAsset {
 impl ConfigureAsset {
     pub fn new() -> Self {
         ConfigureAsset::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn config_asset(mut self, config_asset: u64) -> Self {
@@ -313,6 +326,7 @@ impl ConfigureAsset {
 
     pub fn build(self) -> AssetConfigurationTransaction {
         AssetConfigurationTransaction {
+            sender: self.sender.unwrap(),
             config_asset: self.config_asset,
             params: AssetParams {
                 total: self.total,
@@ -334,6 +348,7 @@ impl ConfigureAsset {
 /// A builder for [AssetTransferTransaction].
 #[derive(Default)]
 pub struct TransferAsset {
+    sender: Option<Address>,
     xfer: u64,
     amount: u64,
     receiver: Option<Address>,
@@ -343,6 +358,11 @@ pub struct TransferAsset {
 impl TransferAsset {
     pub fn new() -> Self {
         TransferAsset::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn xfer(mut self, xfer: u64) -> Self {
@@ -367,6 +387,7 @@ impl TransferAsset {
 
     pub fn build(self) -> AssetTransferTransaction {
         AssetTransferTransaction {
+            sender: self.sender.unwrap(),
             xfer: self.xfer,
             amount: self.amount,
             receiver: self.receiver.unwrap(),
@@ -378,6 +399,7 @@ impl TransferAsset {
 /// A builder for [AssetAcceptTransaction].
 #[derive(Default)]
 pub struct AcceptAsset {
+    sender: Option<Address>,
     xfer: u64,
     receiver: Option<Address>,
 }
@@ -385,6 +407,11 @@ pub struct AcceptAsset {
 impl AcceptAsset {
     pub fn new() -> Self {
         AcceptAsset::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn xfer(mut self, xfer: u64) -> Self {
@@ -399,6 +426,7 @@ impl AcceptAsset {
 
     pub fn build(self) -> AssetAcceptTransaction {
         AssetAcceptTransaction {
+            sender: self.sender.unwrap(),
             xfer: self.xfer,
             receiver: self.receiver.unwrap(),
         }
@@ -408,6 +436,7 @@ impl AcceptAsset {
 /// A builder for [AssetClawbackTransaction].
 #[derive(Default)]
 pub struct ClawbackAsset {
+    sender: Option<Address>,
     xfer: u64,
     asset_amount: u64,
     asset_sender: Option<Address>,
@@ -418,6 +447,11 @@ pub struct ClawbackAsset {
 impl ClawbackAsset {
     pub fn new() -> Self {
         ClawbackAsset::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn xfer(mut self, xfer: u64) -> Self {
@@ -447,6 +481,7 @@ impl ClawbackAsset {
 
     pub fn build(self) -> AssetClawbackTransaction {
         AssetClawbackTransaction {
+            sender: self.sender.unwrap(),
             xfer: self.xfer,
             asset_amount: self.asset_amount,
             asset_sender: self.asset_sender.unwrap(),
@@ -459,6 +494,7 @@ impl ClawbackAsset {
 /// A builder for [AssetFreezeTransaction].
 #[derive(Default)]
 pub struct FreezeAsset {
+    sender: Option<Address>,
     freeze_account: Option<Address>,
     asset_id: u64,
     frozen: bool,
@@ -467,6 +503,11 @@ pub struct FreezeAsset {
 impl FreezeAsset {
     pub fn new() -> Self {
         FreezeAsset::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn freeze_account(mut self, freeze_account: Address) -> Self {
@@ -486,6 +527,7 @@ impl FreezeAsset {
 
     pub fn build(self) -> AssetFreezeTransaction {
         AssetFreezeTransaction {
+            sender: self.sender.unwrap(),
             freeze_account: self.freeze_account.unwrap(),
             asset_id: self.asset_id,
             frozen: self.frozen,
@@ -496,6 +538,7 @@ impl FreezeAsset {
 /// A builder for [ApplicationCallTransaction].
 #[derive(Default)]
 pub struct CallApplication {
+    sender: Option<Address>,
     app_id: u64,
     on_complete: u64,
     accounts: Option<Vec<Address>>,
@@ -511,6 +554,11 @@ pub struct CallApplication {
 impl CallApplication {
     pub fn new() -> Self {
         CallApplication::default()
+    }
+
+    pub fn sender(mut self, sender: Address) -> Self {
+        self.sender = Some(sender);
+        self
     }
 
     pub fn app_id(mut self, app_id: u64) -> Self {
@@ -565,6 +613,7 @@ impl CallApplication {
 
     pub fn build(self) -> ApplicationCallTransaction {
         ApplicationCallTransaction {
+            sender: self.sender.unwrap(),
             app_id: self.app_id,
             on_complete: self.on_complete,
             accounts: self.accounts,

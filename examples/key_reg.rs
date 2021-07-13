@@ -24,7 +24,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(account.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -32,6 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(100_000))
         .key_registration(
             RegisterKey::new()
+                .sender(account.address())
                 .vote_pk(VotePk::from_base64_str(vote_pk_str)?)
                 .selection_pk(VrfPk::from_base64_str(selection_pk_str)?)
                 .vote_first(params.last_round)

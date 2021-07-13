@@ -32,7 +32,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(account.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)
         .genesis_id(params.genesis_id)
@@ -40,6 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(10_000))
         .payment(
             Pay::new()
+                .sender(account.address())
                 .amount(MicroAlgos(123_456))
                 .to("4MYUHDWHWXAKA5KA7U5PEN646VYUANBFXVJNONBK3TIMHEMWMD4UBOJBI4".parse()?)
                 .build(),

@@ -22,7 +22,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -30,6 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(100_000))
         .asset_transfer(
             TransferAsset::new()
+                .sender(from.address())
                 .xfer(4)
                 .amount(3)
                 .receiver(to.address())

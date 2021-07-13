@@ -28,7 +28,6 @@ async fn test_transaction() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -36,6 +35,7 @@ async fn test_transaction() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(10_000))
         .payment(
             Pay::new()
+                .sender(from.address())
                 .amount(MicroAlgos(123_456))
                 .to(to.address())
                 .build(),
@@ -75,7 +75,6 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(multisig_address.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -83,6 +82,7 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(10_000))
         .payment(
             Pay::new()
+                .sender(multisig_address.address())
                 .amount(MicroAlgos(123_456))
                 .to(account2.address())
                 .build(),
@@ -142,7 +142,6 @@ byte 0xFF
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(from_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -150,6 +149,7 @@ byte 0xFF
         .fee(MicroAlgos(10_000))
         .payment(
             Pay::new()
+                .sender(from_address)
                 .amount(MicroAlgos(123_456))
                 .to(account1().address())
                 .build(),
@@ -201,7 +201,6 @@ int 1
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -209,6 +208,7 @@ int 1
         .fee(MicroAlgos(10_000))
         .payment(
             Pay::new()
+                .sender(from.address())
                 .amount(MicroAlgos(123_456))
                 .to(account2().address())
                 .build(),
@@ -265,7 +265,6 @@ int 1
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(multisig_address.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -273,6 +272,7 @@ int 1
         .fee(MicroAlgos(10_000))
         .payment(
             Pay::new()
+                .sender(multisig_address.address())
                 .amount(MicroAlgos(123_456))
                 .to(account3().address())
                 .build(),
@@ -318,7 +318,6 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(from.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -326,6 +325,7 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(10_000))
         .asset_configuration(
             ConfigureAsset::new()
+                .sender(from.address())
                 .asset_name("Foo".to_owned())
                 .decimals(2)
                 .total(1000000)
@@ -421,7 +421,6 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t1 = &mut TxnBuilder::new()
-        .sender(account1.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id.clone())
@@ -429,6 +428,7 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(1_000))
         .payment(
             Pay::new()
+                .sender(account1.address())
                 .amount(MicroAlgos(1_000))
                 .to(account2.address())
                 .build(),
@@ -436,7 +436,6 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
         .build();
 
     let t2 = &mut TxnBuilder::new()
-        .sender(account2.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -444,6 +443,7 @@ async fn test_atomic_swap() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(1_000))
         .payment(
             Pay::new()
+                .sender(account2.address())
                 .amount(MicroAlgos(3_000))
                 .to(account1.address())
                 .build(),

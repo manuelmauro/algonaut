@@ -48,7 +48,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // we are ready to build the transaction
     let t = TxnBuilder::new()
-        .sender(from_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -56,6 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(10_000))
         .payment(
             Pay::new()
+                .sender(from_address)
                 .amount(MicroAlgos(123_456))
                 .to(to_address)
                 .build(),

@@ -29,7 +29,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     let t = TxnBuilder::new()
-        .sender(sender_address)
         .first_valid(params.last_round)
         .last_valid(params.last_round + 10)
         .genesis_id(params.genesis_id)
@@ -37,6 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(100_000))
         .asset_clawback(
             ClawbackAsset::new()
+                .sender(sender_address)
                 .asset_amount(2)
                 .xfer(4)
                 .asset_receiver(asset_receiver_address)

@@ -30,7 +30,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // we are ready to build the transaction
     let t = TxnBuilder::new()
-        .sender(creator.address())
         .first_valid(params.last_round)
         .last_valid(params.last_round + 1000)
         .genesis_id(params.genesis_id)
@@ -38,6 +37,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fee(MicroAlgos(100_000))
         .asset_configuration(
             ConfigureAsset::new()
+                .sender(creator.address())
                 .total(10)
                 .default_frozen(false)
                 .unit_name("EIRI".to_owned())
