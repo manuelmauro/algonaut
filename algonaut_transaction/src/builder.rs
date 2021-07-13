@@ -181,9 +181,8 @@ impl RegisterKey {
 }
 
 /// A builder for [AssetConfigurationTransaction].
-pub struct ConfigureAsset {
+pub struct CreateAsset {
     sender: Address,
-    config_asset: Option<u64>,
     total: Option<u64>,
     decimals: Option<u32>,
     default_frozen: Option<bool>,
@@ -197,11 +196,10 @@ pub struct ConfigureAsset {
     clawback: Option<Address>,
 }
 
-impl ConfigureAsset {
-    pub fn create(sender: Address, total: u64, decimals: u32, default_frozen: bool) -> Self {
-        ConfigureAsset {
+impl CreateAsset {
+    pub fn new(sender: Address, total: u64, decimals: u32, default_frozen: bool) -> Self {
+        CreateAsset {
             sender,
-            config_asset: None,
             total: Some(total),
             decimals: Some(decimals),
             default_frozen: Some(default_frozen),
@@ -216,10 +214,89 @@ impl ConfigureAsset {
         }
     }
 
-    pub fn update(sender: Address, asset_id: u64) -> Self {
-        ConfigureAsset {
+    pub fn unit_name(mut self, unit_name: String) -> Self {
+        self.unit_name = Some(unit_name);
+        self
+    }
+
+    pub fn asset_name(mut self, asset_name: String) -> Self {
+        self.asset_name = Some(asset_name);
+        self
+    }
+
+    pub fn url(mut self, url: String) -> Self {
+        self.url = Some(url);
+        self
+    }
+
+    pub fn meta_data_hash(mut self, meta_data_hash: Vec<u8>) -> Self {
+        self.meta_data_hash = Some(meta_data_hash);
+        self
+    }
+
+    pub fn manager(mut self, manager: Address) -> Self {
+        self.manager = Some(manager);
+        self
+    }
+
+    pub fn reserve(mut self, reserve: Address) -> Self {
+        self.reserve = Some(reserve);
+        self
+    }
+
+    pub fn freeze(mut self, freeze: Address) -> Self {
+        self.freeze = Some(freeze);
+        self
+    }
+
+    pub fn clawback(mut self, clawback: Address) -> Self {
+        self.clawback = Some(clawback);
+        self
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
+            sender: self.sender,
+            config_asset: None,
+            params: AssetParams {
+                total: self.total,
+                decimals: self.decimals,
+                default_frozen: self.default_frozen,
+                unit_name: self.unit_name,
+                asset_name: self.asset_name,
+                url: self.url,
+                meta_data_hash: self.meta_data_hash,
+                manager: self.manager,
+                reserve: self.reserve,
+                freeze: self.freeze,
+                clawback: self.clawback,
+            },
+        })
+    }
+}
+
+/// A builder for [AssetConfigurationTransaction].
+pub struct UpdateAsset {
+    sender: Address,
+    asset_id: u64,
+    total: Option<u64>,
+    decimals: Option<u32>,
+    default_frozen: Option<bool>,
+    unit_name: Option<String>,
+    asset_name: Option<String>,
+    url: Option<String>,
+    meta_data_hash: Option<Vec<u8>>,
+    manager: Option<Address>,
+    reserve: Option<Address>,
+    freeze: Option<Address>,
+    clawback: Option<Address>,
+}
+
+impl UpdateAsset {
+    pub fn new(sender: Address, asset_id: u64) -> Self {
+        UpdateAsset {
             sender,
-            config_asset: Some(asset_id),
+            asset_id,
             total: None,
             decimals: None,
             default_frozen: None,
@@ -292,7 +369,7 @@ impl ConfigureAsset {
     pub fn build(self) -> TransactionType {
         TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
             sender: self.sender,
-            config_asset: self.config_asset,
+            config_asset: Some(self.asset_id),
             params: AssetParams {
                 total: self.total,
                 decimals: self.decimals,

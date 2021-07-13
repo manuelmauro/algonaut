@@ -2,7 +2,7 @@ use algonaut::algod::v2::Algod;
 use algonaut::algod::AlgodBuilder;
 use algonaut::core::MicroAlgos;
 use algonaut::error::AlgonautError;
-use algonaut::transaction::{ConfigureAsset, TxnBuilder};
+use algonaut::transaction::{CreateAsset, TxnBuilder};
 use algonaut_client::algod::v2::message::PendingTransaction;
 use algonaut_transaction::account::Account;
 use dotenv::dotenv;
@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         params.last_round + 1000,
         params.genesis_hash,
         params.genesis_id,
-        ConfigureAsset::create(creator.address(), 10, 2, false)
+        CreateAsset::new(creator.address(), 10, 2, false)
             .unit_name("EIRI".to_owned())
             .asset_name("Naki".to_owned())
             .manager(creator.address())

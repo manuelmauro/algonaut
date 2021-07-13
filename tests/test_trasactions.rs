@@ -5,7 +5,7 @@ use algonaut_core::SignedLogic;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut_transaction::transaction::TransactionSignature;
 use algonaut_transaction::tx_group::TxGroup;
-use algonaut_transaction::{account::Account, ConfigureAsset, Pay, SignedTransaction, TxnBuilder};
+use algonaut_transaction::{account::Account, CreateAsset, Pay, SignedTransaction, TxnBuilder};
 use dotenv::dotenv;
 use std::convert::TryInto;
 use std::env;
@@ -308,7 +308,7 @@ async fn test_create_asset_transaction() -> Result<(), Box<dyn Error>> {
         params.last_round + 10,
         params.genesis_hash,
         params.genesis_id,
-        ConfigureAsset::create(from.address(), 1000000, 2, false)
+        CreateAsset::new(from.address(), 1000000, 2, false)
             .unit_name("FOO".to_owned())
             .asset_name("Foo".to_owned())
             .build(),
