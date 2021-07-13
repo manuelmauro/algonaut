@@ -6,7 +6,7 @@ use algonaut_crypto::HashDigest;
 use serde::{Serialize, Serializer};
 
 use crate::{
-    transaction::{StateSchema, TransactionSignature},
+    transaction::{AssetParams, StateSchema, TransactionSignature},
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
 };
@@ -204,19 +204,7 @@ impl From<Transaction> for ApiTransaction {
                 api_t.nonparticipating = reg.nonparticipating;
             }
             TransactionType::AssetConfigurationTransaction(config) => {
-                api_t.asset_params = Some(ApiAssetParams {
-                    asset_name: config.params.asset_name.to_owned(),
-                    decimals: config.params.decimals,
-                    default_frozen: config.params.default_frozen,
-                    total: config.params.total,
-                    unit_name: config.params.unit_name.to_owned(),
-                    meta_data_hash: config.params.meta_data_hash.to_owned(),
-                    url: config.params.url.to_owned(),
-                    clawback: config.params.clawback,
-                    freeze: config.params.freeze,
-                    manager: config.params.manager,
-                    reserve: config.params.reserve,
-                });
+                api_t.asset_params = config.to_owned().params.map(|p| p.into());
                 api_t.config_asset = config.config_asset;
             }
             TransactionType::AssetTransferTransaction(transfer) => {
@@ -292,6 +280,24 @@ pub struct ApiAssetParams {
 
     #[serde(rename = "un", skip_serializing_if = "Option::is_none")]
     pub unit_name: Option<String>,
+}
+
+impl From<AssetParams> for ApiAssetParams {
+    fn from(params: AssetParams) -> Self {
+        ApiAssetParams {
+            asset_name: params.asset_name,
+            decimals: params.decimals,
+            default_frozen: params.default_frozen,
+            total: params.total,
+            unit_name: params.unit_name,
+            meta_data_hash: params.meta_data_hash,
+            url: params.url,
+            clawback: params.clawback,
+            freeze: params.freeze,
+            manager: params.manager,
+            reserve: params.reserve,
+        }
+    }
 }
 
 fn to_api_transaction_type<'a>(type_: &TransactionType) -> &'a str {

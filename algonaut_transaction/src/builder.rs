@@ -258,7 +258,7 @@ impl CreateAsset {
         TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
             sender: self.sender,
             config_asset: None,
-            params: AssetParams {
+            params: Some(AssetParams {
                 total: self.total,
                 decimals: self.decimals,
                 default_frozen: self.default_frozen,
@@ -270,7 +270,7 @@ impl CreateAsset {
                 reserve: self.reserve,
                 freeze: self.freeze,
                 clawback: self.clawback,
-            },
+            }),
         })
     }
 }
@@ -370,7 +370,7 @@ impl UpdateAsset {
         TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
             sender: self.sender,
             config_asset: Some(self.asset_id),
-            params: AssetParams {
+            params: Some(AssetParams {
                 total: self.total,
                 decimals: self.decimals,
                 default_frozen: self.default_frozen,
@@ -382,7 +382,27 @@ impl UpdateAsset {
                 reserve: self.reserve,
                 freeze: self.freeze,
                 clawback: self.clawback,
-            },
+            }),
+        })
+    }
+}
+
+/// A builder for [AssetConfigurationTransaction].
+pub struct DestroyAsset {
+    sender: Address,
+    asset_id: u64,
+}
+
+impl DestroyAsset {
+    pub fn new(sender: Address, asset_id: u64) -> Self {
+        DestroyAsset { sender, asset_id }
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
+            sender: self.sender,
+            config_asset: Some(self.asset_id),
+            params: None,
         })
     }
 }

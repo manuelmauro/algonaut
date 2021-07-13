@@ -182,7 +182,7 @@ pub struct AssetConfigurationTransaction {
     pub sender: Address,
 
     /// See AssetParams table for all available fields.
-    pub params: AssetParams,
+    pub params: Option<AssetParams>,
     /// For re-configure or destroy transactions, this is the unique asset ID. On asset creation,
     /// the ID is set to zero.
     /// NOTE: Algorand's REST documentation seems incorrect. The ID has to be not set for creation to work.
