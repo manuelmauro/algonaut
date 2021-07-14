@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::auction::{Bid, SignedBid};
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
@@ -7,13 +9,12 @@ use algonaut_core::{
 use algonaut_crypto::mnemonic;
 use rand::rngs::OsRng;
 use rand::Rng;
-use ring::signature::Ed25519KeyPair as KeyPairType;
-use ring::signature::KeyPair;
+use ring::signature::{Ed25519KeyPair, KeyPair};
 
 pub struct Account {
     seed: [u8; 32],
     address: Address,
-    key_pair: KeyPairType,
+    key_pair: Ed25519KeyPair,
 }
 
 impl Account {
@@ -30,10 +31,14 @@ impl Account {
 
     /// Create account from 32 byte seed
     pub fn from_seed(seed: [u8; 32]) -> Account {
-        let key_pair = KeyPairType::from_seed_unchecked(&seed).unwrap();
-        let mut pk = [0; 32];
-        pk.copy_from_slice(key_pair.public_key().as_ref());
-        let address = Address::new(pk);
+        let key_pair = Ed25519KeyPair::from_seed_unchecked(&seed).unwrap();
+        let public_key = key_pair.public_key().as_ref();
+        let public_key_byte_array = key_pair
+            .public_key()
+            .as_ref()
+            .try_into()
+            .expect(&format!("Invalid public key length: {}", public_key.len()));
+        let address = Address::new(public_key_byte_array);
         Account {
             seed,
             address,
@@ -59,8 +64,10 @@ impl Account {
     fn generate_sig(&self, bytes: &[u8]) -> Signature {
         let signature = self.key_pair.sign(&bytes);
         // ring returns a signature with padding at the end to make it 105 bytes, only 64 bytes are actually used
-        let mut stripped_signature = [0; 64];
-        stripped_signature.copy_from_slice(&signature.as_ref()[..64]);
+        let stripped_signature: [u8; 64] = signature.as_ref()[..64]
+            .try_into()
+            // unwrap: we passed ..64, try_into() always succeeds
+            .unwrap();
         Signature(stripped_signature)
     }
 
