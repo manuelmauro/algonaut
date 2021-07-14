@@ -76,7 +76,7 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
     )
     .build();
 
-    let msig = account1.init_transaction_msig(&t, multisig_address.clone())?;
+    let msig = account1.init_transaction_msig(&t, &multisig_address)?;
     let msig = account2.append_to_transaction_msig(&t, msig)?;
 
     let sig = TransactionSignature::Multi(msig);
@@ -244,7 +244,7 @@ int 1
     )
     .build();
 
-    let msig = account1.init_logic_msig(&program, multisig_address.clone())?;
+    let msig = account1.init_logic_msig(&program, &multisig_address)?;
     let msig = account2.append_to_logic_msig(&program, msig)?;
 
     let sig = TransactionSignature::Logic(SignedLogic {

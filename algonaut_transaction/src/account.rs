@@ -109,7 +109,7 @@ impl Account {
     /// Sign transaction and generate a multi signature SignedTransaction
     pub fn sign_multisig_transaction(
         &self,
-        from: MultisigAddress,
+        from: &MultisigAddress,
         transaction: &Transaction,
     ) -> Result<SignedTransaction, TransactionError> {
         Ok(SignedTransaction {
@@ -123,7 +123,7 @@ impl Account {
     pub fn init_transaction_msig(
         &self,
         transaction: &Transaction,
-        from: MultisigAddress,
+        from: &MultisigAddress,
     ) -> Result<MultisigSignature, TransactionError> {
         if from.address() != transaction.sender() {
             return Err(TransactionError::InvalidSenderInMultisig);
@@ -139,7 +139,7 @@ impl Account {
     pub fn init_logic_msig(
         &self,
         program: &CompiledTeal,
-        ma: MultisigAddress,
+        ma: &MultisigAddress,
     ) -> Result<MultisigSignature, TransactionError> {
         if !ma.contains(&self.address) {
             return Err(TransactionError::InvalidSecretKeyInMultisig);
@@ -165,19 +165,22 @@ impl Account {
     }
 
     /// Creates multi signature corresponding to multisign addresses, inserting own signature
-    fn init_msig(&self, ma: MultisigAddress, sig: Signature) -> MultisigSignature {
+    fn init_msig(&self, ma: &MultisigAddress, sig: Signature) -> MultisigSignature {
         let my_public_key = self.address.as_public_key();
         let subsigs: Vec<MultisigSubsig> = ma
             .public_keys
-            .into_iter()
+            .iter()
             .map(|key| {
-                if key == my_public_key {
+                if *key == my_public_key {
                     MultisigSubsig {
-                        key,
+                        key: *key,
                         sig: Some(sig),
                     }
                 } else {
-                    MultisigSubsig { key, sig: None }
+                    MultisigSubsig {
+                        key: *key,
+                        sig: None,
+                    }
                 }
             })
             .collect();
