@@ -138,7 +138,7 @@ byte 0xFF
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program,
+            logic: program.bytes,
             args: vec![vec![1, 0], vec![255]],
             sig: LogicSignature::ContractAccount,
         }),
@@ -190,7 +190,7 @@ int 1
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program,
+            logic: program.bytes,
             args: vec![],
             sig: LogicSignature::DelegatedSig(signature),
         }),
@@ -248,7 +248,7 @@ int 1
     let msig = account2.append_to_logic_msig(&program, msig)?;
 
     let sig = TransactionSignature::Logic(SignedLogic {
-        logic: program,
+        logic: program.bytes,
         args: vec![],
         sig: LogicSignature::DelegatedMultiSig(msig),
     });

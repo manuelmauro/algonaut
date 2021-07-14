@@ -366,7 +366,6 @@ pub struct StateSchema {
 
 /// Wraps a transaction in a signature. The encoding of this struct is suitable to be broadcast
 /// on the network
-// #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SignedTransaction {
     pub transaction: Transaction,

@@ -386,7 +386,7 @@ impl Serialize for MultisigSubsig {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct SignedLogic {
-    pub logic: CompiledTeal,
+    pub logic: Vec<u8>,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
 }

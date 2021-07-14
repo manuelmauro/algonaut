@@ -1,12 +1,19 @@
+use std::convert::{TryFrom, TryInto};
+
 use algonaut_core::{
     Address, LogicSignature, MicroAlgos, MultisigSignature, Round, Signature, SignedLogic,
     ToMsgPack, VotePk, VrfPk,
 };
 use algonaut_crypto::HashDigest;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 
 use crate::{
-    transaction::{AssetParams, StateSchema, TransactionSignature},
+    error::TransactionError,
+    transaction::{
+        ApplicationCallTransaction, AssetAcceptTransaction, AssetClawbackTransaction,
+        AssetConfigurationTransaction, AssetFreezeTransaction, AssetParams,
+        AssetTransferTransaction, KeyRegistration, Payment, StateSchema, TransactionSignature,
+    },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
 };
@@ -15,7 +22,7 @@ use crate::{
 // - Fields have to be sorted alphabetically.
 // - Keys must be excluded if they've no value.
 // The signature validation fails otherwise.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApiTransaction {
     #[serde(rename = "aamt", skip_serializing_if = "Option::is_none")]
     pub asset_amount: Option<u64>,
@@ -246,7 +253,131 @@ impl From<Transaction> for ApiTransaction {
     }
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+impl From<ApiTransaction> for Transaction {
+    fn from(api_t: ApiTransaction) -> Self {
+        let txn_type = match api_t.type_.as_ref() {
+            "pay" => TransactionType::Payment(Payment {
+                sender: api_t.sender,
+                receiver: api_t.receiver.unwrap(),
+                amount: MicroAlgos(api_t.amount.unwrap()),
+                close_remainder_to: api_t.close_reminder_to,
+            }),
+            "keyreg" => TransactionType::KeyRegistration(KeyRegistration {
+                sender: api_t.sender,
+                vote_pk: api_t.vote_pk,
+                selection_pk: api_t.selection_pk,
+                vote_first: api_t.vote_first,
+                vote_last: api_t.vote_last,
+                vote_key_dilution: api_t.vote_key_dilution,
+                nonparticipating: api_t.nonparticipating,
+            }),
+            "acfg" => {
+                TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
+                    sender: api_t.sender,
+                    params: None, // TODO
+                    config_asset: api_t.config_asset,
+                })
+            }
+            "axfer" => parse_asset_transfer_transaction(&api_t),
+            "afrz" => TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
+                sender: api_t.sender,
+                freeze_account: api_t.freeze_account.unwrap(),
+                asset_id: api_t.asset_id.unwrap(),
+                frozen: api_t.frozen.unwrap(),
+            }),
+            "appl" => TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+                sender: api_t.sender,
+                app_id: api_t.app_id.unwrap(),
+                on_complete: api_t.on_complete.unwrap(),
+                accounts: api_t.accounts,
+                approval_program: api_t.approval_program,
+                app_arguments: api_t.app_arguments,
+                clear_state_program: api_t.clear_state_program,
+                foreign_apps: api_t.foreign_apps,
+                foreign_assets: api_t.foreign_assets,
+                global_state_schema: api_t.global_state_schema.map(|s| s.into()),
+                local_state_schema: api_t.local_state_schema.map(|s| s.into()),
+            }),
+            _ => panic!(),
+        };
+        Transaction {
+            fee: api_t.fee,
+            first_valid: api_t.first_valid,
+            genesis_id: api_t.genesis_id.unwrap(),
+            genesis_hash: api_t.genesis_hash,
+            group: api_t.group,
+            last_valid: api_t.last_valid,
+            lease: api_t.lease,
+            note: api_t.note.clone(),
+            rekey_to: api_t.rekey_to,
+            txn_type,
+        }
+    }
+}
+
+fn parse_asset_transfer_transaction(api_t: &ApiTransaction) -> TransactionType {
+    match (
+        api_t.xfer,
+        api_t.asset_sender,
+        api_t.asset_receiver,
+        api_t.asset_amount,
+    ) {
+        (Some(xfer), Some(asset_sender), Some(asset_receiver), Some(asset_amount)) => {
+            TransactionType::AssetClawbackTransaction(AssetClawbackTransaction {
+                sender: api_t.sender,
+                xfer,
+                asset_amount,
+                asset_sender,
+                asset_receiver,
+                asset_close_to: api_t.asset_close_to,
+            })
+        }
+        (Some(xfer), None, Some(asset_receiver), Some(asset_amount)) => {
+            TransactionType::AssetTransferTransaction(AssetTransferTransaction {
+                sender: api_t.sender,
+                xfer,
+                amount: asset_amount,
+                receiver: asset_receiver,
+                close_to: api_t.asset_close_to,
+            })
+        }
+        (Some(xfer), None, None, None) => {
+            TransactionType::AssetAcceptTransaction(AssetAcceptTransaction {
+                sender: api_t.sender,
+                xfer,
+            })
+        }
+        _ => panic!(),
+    }
+}
+
+impl TryFrom<ApiSignedTransaction> for SignedTransaction {
+    type Error = TransactionError;
+
+    fn try_from(api_t: ApiSignedTransaction) -> Result<Self, Self::Error> {
+        Ok(SignedTransaction {
+            transaction: api_t.transaction.clone().into(),
+            transaction_id: api_t.transaction_id.clone(),
+            sig: transaction_signature(&api_t)?,
+        })
+    }
+}
+
+fn transaction_signature(
+    api_t: &ApiSignedTransaction,
+) -> Result<TransactionSignature, TransactionError> {
+    match (&api_t.sig, &api_t.lsig, &api_t.msig) {
+        (Some(sig), None, None) => Ok(TransactionSignature::Single(sig.clone())),
+        (None, Some(lsig), None) => Ok(TransactionSignature::Logic(lsig.clone().try_into()?)),
+        (None, None, Some(msig)) => Ok(TransactionSignature::Multi(msig.clone())),
+        _ => Err(TransactionError::Deserialization(format!(
+            "Invalid sig combination: {:?}",
+            api_t
+        ))),
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct ApiAssetParams {
     #[serde(rename = "am", skip_serializing_if = "Option::is_none")]
     pub meta_data_hash: Option<Vec<u8>>,
@@ -300,6 +431,24 @@ impl From<AssetParams> for ApiAssetParams {
     }
 }
 
+impl From<ApiAssetParams> for AssetParams {
+    fn from(params: ApiAssetParams) -> Self {
+        AssetParams {
+            asset_name: params.asset_name,
+            decimals: params.decimals,
+            default_frozen: params.default_frozen,
+            total: params.total,
+            unit_name: params.unit_name,
+            meta_data_hash: params.meta_data_hash,
+            url: params.url,
+            clawback: params.clawback,
+            freeze: params.freeze,
+            manager: params.manager,
+            reserve: params.reserve,
+        }
+    }
+}
+
 fn to_api_transaction_type<'a>(type_: &TransactionType) -> &'a str {
     match type_ {
         TransactionType::Payment(_) => "pay",
@@ -313,7 +462,7 @@ fn to_api_transaction_type<'a>(type_: &TransactionType) -> &'a str {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApiSignedTransaction {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sig: Option<Signature>,
@@ -348,7 +497,7 @@ impl From<SignedTransaction> for ApiSignedTransaction {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ApiStateSchema {
     #[serde(rename = "nui")]
     pub number_ints: u64,
@@ -366,13 +515,22 @@ impl From<StateSchema> for ApiStateSchema {
     }
 }
 
+impl From<ApiStateSchema> for StateSchema {
+    fn from(state_schema: ApiStateSchema) -> Self {
+        StateSchema {
+            number_ints: state_schema.number_ints,
+            number_byteslices: state_schema.number_byteslices,
+        }
+    }
+}
+
 impl ToMsgPack for ApiTransaction {}
 impl ToMsgPack for ApiSignedTransaction {}
 impl ToMsgPack for Transaction {}
 impl ToMsgPack for SignedTransaction {}
 impl ToMsgPack for TxGroup {}
 
-/// Convenience to call to_msg_pack() directly on Transaction
+/// Convenience to serialize Transaction directly to msg pack
 impl Serialize for Transaction {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -383,7 +541,18 @@ impl Serialize for Transaction {
     }
 }
 
-/// Convenience to call to_msg_pack() directly on SignedTransaction
+/// Convenience to deserialize Transaction directly from msg pack
+impl<'de> Deserialize<'de> for Transaction {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let api_transaction = ApiTransaction::deserialize(deserializer)?;
+        Ok(api_transaction.into())
+    }
+}
+
+/// Convenience to serialize SignedTransaction directly to msg pack
 impl Serialize for SignedTransaction {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -394,7 +563,19 @@ impl Serialize for SignedTransaction {
     }
 }
 
-#[derive(Debug)]
+/// Convenience to deserialize SignedTransaction directly from msg pack
+impl<'de> Deserialize<'de> for SignedTransaction {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(ApiSignedTransaction::deserialize(deserializer)?
+            .try_into()
+            .map_err(serde::de::Error::custom)?)
+    }
+}
+
+#[derive(Default, Debug, Eq, PartialEq, Clone, Deserialize)]
 pub struct ApiSignedLogic {
     pub logic: Vec<u8>,
     pub sig: Option<Signature>,
@@ -410,11 +591,31 @@ impl From<SignedLogic> for ApiSignedLogic {
             LogicSignature::DelegatedMultiSig(msig) => (None, Some(msig)),
         };
         ApiSignedLogic {
-            logic: s.logic.bytes,
+            logic: s.logic,
             sig,
             msig,
             args: s.args,
         }
+    }
+}
+
+impl TryFrom<ApiSignedLogic> for SignedLogic {
+    type Error = TransactionError;
+
+    fn try_from(s: ApiSignedLogic) -> Result<Self, Self::Error> {
+        let sig = match (s.sig, s.msig) {
+            (Some(sig), None) => LogicSignature::DelegatedSig(sig),
+            (None, Some(msig)) => LogicSignature::DelegatedMultiSig(msig),
+            (None, None) => LogicSignature::ContractAccount,
+            _ => Err(TransactionError::Deserialization(
+                "Invalid sig/msig combination".to_owned(),
+            ))?,
+        };
+        Ok(SignedLogic {
+            logic: s.logic,
+            args: s.args,
+            sig,
+        })
     }
 }
 

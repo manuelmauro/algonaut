@@ -24,4 +24,6 @@ pub enum TransactionError {
     RmpSerdeError(#[from] rmp_serde::encode::Error),
     #[error("crypto error {0}")]
     MnemonicError(#[from] algonaut_crypto::error::CryptoError),
+    #[error("Deserialization error: {0}")]
+    Deserialization(String),
 }
