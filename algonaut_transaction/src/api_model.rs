@@ -155,7 +155,7 @@ impl From<Transaction> for ApiTransaction {
             // Common fields
             fee: t.fee,
             first_valid: t.first_valid,
-            genesis_id: Some(t.genesis_id.clone()),
+            genesis_id: t.genesis_id.clone(),
             genesis_hash: t.genesis_hash,
             group: t.group,
             last_valid: t.last_valid,
@@ -303,7 +303,7 @@ impl From<ApiTransaction> for Transaction {
         Transaction {
             fee: api_t.fee,
             first_valid: api_t.first_valid,
-            genesis_id: api_t.genesis_id.unwrap(),
+            genesis_id: api_t.genesis_id,
             genesis_hash: api_t.genesis_hash,
             group: api_t.group,
             last_valid: api_t.last_valid,

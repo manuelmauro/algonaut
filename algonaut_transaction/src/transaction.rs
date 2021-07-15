@@ -48,7 +48,7 @@ pub struct Transaction {
 
     /// The human-readable string that identifies the network for the transaction. The genesis ID is
     /// found in the genesis block. See the genesis ID for MainNet, TestNet, and BetaNet.
-    pub genesis_id: String,
+    pub genesis_id: Option<String>,
 
     /// The group specifies that the transaction is part of a group and, if so, specifies the hash of
     /// the transaction group. Assign a group ID to a transaction through the workflow described in
