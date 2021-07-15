@@ -384,11 +384,26 @@ impl Serialize for MultisigSubsig {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone)]
 pub struct SignedLogic {
     pub logic: Vec<u8>,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
+}
+
+impl Debug for SignedLogic {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "logic: {:?}, args: {:?}, sig: {:?}",
+            BASE64.encode(&self.logic),
+            self.args
+                .iter()
+                .map(|a| BASE64.encode(a))
+                .collect::<Vec<String>>(),
+            self.sig
+        )
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
