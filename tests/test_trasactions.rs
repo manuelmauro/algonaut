@@ -12,6 +12,9 @@ use std::env;
 use std::error::Error;
 use tokio::test;
 
+// reference:
+// https://github.com/algorand/java-algorand-sdk/tree/840cf26043f475e43938c64fbda4526a874c258f
+
 #[test]
 async fn test_transaction() -> Result<(), Box<dyn Error>> {
     // load variables in .env
