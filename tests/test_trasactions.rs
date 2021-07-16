@@ -172,7 +172,7 @@ int 1
             .into(),
         )
         .await?
-        .try_into()?;
+        .program_bytes()?;
 
     let from = account1();
 
@@ -190,7 +190,7 @@ int 1
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program.bytes,
+            logic: program,
             args: vec![],
             sig: LogicSignature::DelegatedSig(signature),
         }),
@@ -244,8 +244,8 @@ int 1
     )
     .build();
 
-    let msig = account1.init_logic_msig(&program, &multisig_address)?;
-    let msig = account2.append_to_logic_msig(&program, msig)?;
+    let msig = account1.init_logic_msig(&program.bytes, &multisig_address)?;
+    let msig = account2.append_to_logic_msig(&program.bytes, msig)?;
 
     let sig = TransactionSignature::Logic(SignedLogic {
         logic: program.bytes,
