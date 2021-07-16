@@ -368,7 +368,7 @@ fn transaction_signature(
     api_t: &ApiSignedTransaction,
 ) -> Result<TransactionSignature, TransactionError> {
     match (&api_t.sig, &api_t.lsig, &api_t.msig) {
-        (Some(sig), None, None) => Ok(TransactionSignature::Single(sig.clone())),
+        (Some(sig), None, None) => Ok(TransactionSignature::Single(*sig)),
         (None, Some(lsig), None) => Ok(TransactionSignature::Logic(lsig.clone().try_into()?)),
         (None, None, Some(msig)) => Ok(TransactionSignature::Multi(msig.clone())),
         _ => Err(TransactionError::Deserialization(format!(
@@ -570,9 +570,9 @@ impl<'de> Deserialize<'de> for SignedTransaction {
     where
         D: serde::Deserializer<'de>,
     {
-        Ok(ApiSignedTransaction::deserialize(deserializer)?
+        ApiSignedTransaction::deserialize(deserializer)?
             .try_into()
-            .map_err(serde::de::Error::custom)?)
+            .map_err(serde::de::Error::custom)
     }
 }
 
@@ -602,7 +602,7 @@ impl From<SignedLogic> for ApiSignedLogic {
             logic: s.logic,
             sig,
             msig,
-            args: s.args.into_iter().map(|a| ApiSignedLogicArg(a)).collect(),
+            args: s.args.into_iter().map(ApiSignedLogicArg).collect(),
         }
     }
 }
@@ -615,9 +615,11 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
             (Some(sig), None) => LogicSignature::DelegatedSig(sig),
             (None, Some(msig)) => LogicSignature::DelegatedMultiSig(msig),
             (None, None) => LogicSignature::ContractAccount,
-            _ => Err(TransactionError::Deserialization(
-                "Invalid sig/msig combination".to_owned(),
-            ))?,
+            _ => {
+                return Err(TransactionError::Deserialization(
+                    "Invalid sig/msig combination".to_owned(),
+                ))
+            }
         };
         Ok(SignedLogic {
             logic: s.logic,

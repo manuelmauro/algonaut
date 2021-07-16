@@ -37,7 +37,7 @@ impl Account {
             .public_key()
             .as_ref()
             .try_into()
-            .expect(&format!("Invalid public key length: {}", public_key.len()));
+            .unwrap_or_else(|_| panic!("Invalid public key length: {}", public_key.len()));
         let address = Address::new(public_key_byte_array);
         Account {
             seed,
