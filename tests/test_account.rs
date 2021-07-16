@@ -9,7 +9,8 @@ use std::convert::TryInto;
 use std::error::Error;
 use tokio::test;
 
-const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
+// Reference:
+// https://github.com/algorand/java-algorand-sdk/tree/840cf26043f475e43938c64fbda4526a874c258f
 
 #[test]
 async fn test_signs_transaction_e2e() -> Result<(), Box<dyn Error>> {
@@ -24,7 +25,7 @@ async fn test_signs_transaction_e2e() -> Result<(), Box<dyn Error>> {
 
     // build unsigned transaction
     let tx = TxnBuilder::new(
-        MIN_TXN_FEE,
+        MicroAlgos(1000),
         Round(106575),
         Round(107575),
         // non 0 array for easier comparison with (modified) Java SDK test. Java SDK doesn't serialize 0 value array.
@@ -69,7 +70,7 @@ async fn test_signs_transaction_zero_val_e2e() -> Result<(), Box<dyn Error>> {
 
     // build unsigned transaction
     let tx = TxnBuilder::new(
-        MIN_TXN_FEE,
+        MicroAlgos(1000),
         // Java SDK 0 replaced with non zero value (see comment on test)
         Round(106575),
         Round(107575),
