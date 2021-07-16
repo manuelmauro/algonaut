@@ -21,9 +21,11 @@ pub struct TxnBuilder {
 }
 
 impl TxnBuilder {
+    /// Convenience to initialize builder with suggested transaction params
+    /// Also sets the fee to max(params.fee, params.min_fee)
     pub fn with(params: SuggestedTransactionParams, txn_type: TransactionType) -> Self {
         Self::new(
-            params.fee,
+            params.fee.max(params.min_fee),
             params.first_valid,
             params.last_valid,
             params.genesis_hash,
