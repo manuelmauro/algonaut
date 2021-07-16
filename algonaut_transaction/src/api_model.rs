@@ -5,7 +5,7 @@ use algonaut_core::{
     ToMsgPack, VotePk, VrfPk,
 };
 use algonaut_crypto::HashDigest;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     error::TransactionError,
@@ -465,14 +465,14 @@ fn to_api_transaction_type<'a>(type_: &TransactionType) -> &'a str {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApiSignedTransaction {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sig: Option<Signature>,
+    #[serde(rename = "lsig", skip_serializing_if = "Option::is_none")]
+    pub lsig: Option<ApiSignedLogic>,
 
     #[serde(rename = "msig", skip_serializing_if = "Option::is_none")]
     pub msig: Option<MultisigSignature>,
 
-    #[serde(rename = "lsig", skip_serializing_if = "Option::is_none")]
-    pub lsig: Option<ApiSignedLogic>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sig: Option<Signature>,
 
     #[serde(rename = "txn")]
     pub transaction: ApiTransaction,
@@ -576,12 +576,19 @@ impl<'de> Deserialize<'de> for SignedTransaction {
     }
 }
 
-#[derive(Default, Debug, Eq, PartialEq, Clone, Deserialize)]
+#[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+struct ApiSignedLogicArg(#[serde(with = "serde_bytes")] Vec<u8>);
+
+#[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct ApiSignedLogic {
+    #[serde(rename = "arg")]
+    args: Vec<ApiSignedLogicArg>,
+    #[serde(rename = "l", with = "serde_bytes")]
     pub logic: Vec<u8>,
-    pub sig: Option<Signature>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub msig: Option<MultisigSignature>,
-    pub args: Vec<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sig: Option<Signature>,
 }
 
 impl From<SignedLogic> for ApiSignedLogic {
@@ -595,7 +602,7 @@ impl From<SignedLogic> for ApiSignedLogic {
             logic: s.logic,
             sig,
             msig,
-            args: s.args,
+            args: s.args.into_iter().map(|a| ApiSignedLogicArg(a)).collect(),
         }
     }
 }
@@ -614,24 +621,8 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
         };
         Ok(SignedLogic {
             logic: s.logic,
-            args: s.args,
+            args: s.args.into_iter().map(|a| a.0).collect(),
             sig,
         })
-    }
-}
-
-impl Serialize for ApiSignedLogic {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        // For some reason SerializeStruct ends up serializing as an array, so this explicitly serializes as a map
-        use serde::ser::SerializeMap;
-        let mut state = serializer.serialize_map(Some(4))?;
-        state.serialize_entry("l", &self.logic)?;
-        state.serialize_entry("arg", &self.args)?;
-        state.serialize_entry("sig", &self.sig)?;
-        state.serialize_entry("msig", &self.msig)?;
-        state.end()
     }
 }
