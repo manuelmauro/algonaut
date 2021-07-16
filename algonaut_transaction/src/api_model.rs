@@ -112,6 +112,7 @@ pub struct ApiTransaction {
     pub nonparticipating: Option<bool>,
 
     #[serde(
+        default,
         rename = "note",
         with = "serde_bytes",
         skip_serializing_if = "Option::is_none"
