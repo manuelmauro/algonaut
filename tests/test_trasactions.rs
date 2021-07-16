@@ -76,7 +76,7 @@ async fn test_multisig_transaction() -> Result<(), Box<dyn Error>> {
     )
     .build();
 
-    let msig = account1.init_transaction_msig(&t, multisig_address.clone())?;
+    let msig = account1.init_transaction_msig(&t, &multisig_address)?;
     let msig = account2.append_to_transaction_msig(&t, msig)?;
 
     let sig = TransactionSignature::Multi(msig);
@@ -138,7 +138,7 @@ byte 0xFF
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program,
+            logic: program.bytes,
             args: vec![vec![1, 0], vec![255]],
             sig: LogicSignature::ContractAccount,
         }),
@@ -172,7 +172,7 @@ int 1
             .into(),
         )
         .await?
-        .try_into()?;
+        .program_bytes()?;
 
     let from = account1();
 
@@ -244,11 +244,11 @@ int 1
     )
     .build();
 
-    let msig = account1.init_logic_msig(&program, multisig_address.clone())?;
-    let msig = account2.append_to_logic_msig(&program, msig)?;
+    let msig = account1.init_logic_msig(&program.bytes, &multisig_address)?;
+    let msig = account2.append_to_logic_msig(&program.bytes, msig)?;
 
     let sig = TransactionSignature::Logic(SignedLogic {
-        logic: program,
+        logic: program.bytes,
         args: vec![],
         sig: LogicSignature::DelegatedMultiSig(msig),
     });

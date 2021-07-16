@@ -5,6 +5,7 @@ use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
 use error::CoreError;
+use ring::signature::UnparsedPublicKey;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
@@ -211,6 +212,23 @@ impl Address {
         let checksum_address = [&self.0, checksum].concat();
         BASE32_NOPAD.encode(&checksum_address)
     }
+
+    pub fn verify_bytes(&self, message: &[u8], signature: Signature) -> bool {
+        // prepend the message prefix
+        let mut bytes_sign_prefix = b"MX".to_vec();
+        bytes_sign_prefix.extend_from_slice(&message);
+
+        // verify signature
+        let public_key_bytes = &self.as_public_key().0;
+        let peer_public_key = UnparsedPublicKey::new(&ring::signature::ED25519, public_key_bytes);
+        match peer_public_key.verify(&bytes_sign_prefix, signature.0.as_ref()) {
+            Ok(()) => true,
+            Err(_e) => {
+                println!("Signature verification failed");
+                false
+            }
+        }
+    }
 }
 
 impl FromStr for Address {
@@ -384,11 +402,26 @@ impl Serialize for MultisigSubsig {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone)]
 pub struct SignedLogic {
-    pub logic: CompiledTeal,
+    pub logic: Vec<u8>,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
+}
+
+impl Debug for SignedLogic {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "logic: {:?}, args: {:?}, sig: {:?}",
+            BASE64.encode(&self.logic),
+            self.args
+                .iter()
+                .map(|a| BASE64.encode(a))
+                .collect::<Vec<String>>(),
+            self.sig
+        )
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]

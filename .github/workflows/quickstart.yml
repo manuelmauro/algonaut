@@ -18,7 +18,7 @@ jobs:
           command: check
 
   unit:
-    name: Unit Tests and Examples
+    name: Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --workspace --lib --examples
+          args: --workspace --lib --examples --test test_account
 
   fmt:
     name: Rustfmt

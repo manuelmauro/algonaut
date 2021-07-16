@@ -13,7 +13,7 @@ pub struct TxnBuilder {
     genesis_hash: HashDigest,
     last_valid: Round,
     txn_type: TransactionType,
-    genesis_id: String,
+    genesis_id: Option<String>,
     group: Option<HashDigest>,
     lease: Option<HashDigest>,
     note: Option<Vec<u8>>,
@@ -21,15 +21,17 @@ pub struct TxnBuilder {
 }
 
 impl TxnBuilder {
+    /// Convenience to initialize builder with suggested transaction params
+    /// Also sets the fee to max(params.fee, params.min_fee)
     pub fn with(params: SuggestedTransactionParams, txn_type: TransactionType) -> Self {
         Self::new(
-            params.fee,
+            params.fee.max(params.min_fee),
             params.first_valid,
             params.last_valid,
             params.genesis_hash,
-            params.genesis_id,
             txn_type,
         )
+        .genesis_id(params.genesis_id)
     }
 
     pub fn new(
@@ -37,7 +39,6 @@ impl TxnBuilder {
         first_valid: Round,
         last_valid: Round,
         genesis_hash: HashDigest,
-        genesis_id: String,
         txn_type: TransactionType,
     ) -> Self {
         TxnBuilder {
@@ -46,12 +47,17 @@ impl TxnBuilder {
             genesis_hash,
             last_valid,
             txn_type,
-            genesis_id,
+            genesis_id: None,
             group: None,
             lease: None,
             note: None,
             rekey_to: None,
         }
+    }
+
+    pub fn genesis_id(mut self, id: String) -> Self {
+        self.genesis_id = Some(id);
+        self
     }
 
     pub fn group(mut self, group: HashDigest) -> Self {
