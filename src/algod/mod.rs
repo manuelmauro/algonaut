@@ -89,26 +89,64 @@ mod tests {
         let algod = AlgodBuilder::new()
             .bind("http://example.com")
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .build_v1();
+            .build_v2();
 
         assert!(algod.ok().is_some());
     }
 
     #[test]
-    #[should_panic(expected = "")]
     fn test_client_builder_with_no_token() {
-        let _ = AlgodBuilder::new()
-            .bind("http://example.com")
-            .build_v1()
-            .unwrap();
+        let res = AlgodBuilder::new().bind("http://example.com").build_v2();
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::UnitializedToken);
     }
 
     #[test]
-    #[should_panic(expected = "")]
     fn test_client_builder_with_no_url() {
-        let _ = AlgodBuilder::new()
+        let res = AlgodBuilder::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .build_v1()
-            .unwrap();
+            .build_v2();
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::UnitializedUrl);
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_url() {
+        let res = AlgodBuilder::new()
+            .bind("asfdsdfs")
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_url_no_scheme() {
+        let res = AlgodBuilder::new()
+            .bind("example.com")
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_token() {
+        let res = AlgodBuilder::new()
+            .bind("http://example.com")
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::BadToken);
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_token_empty() {
+        let res = AlgodBuilder::new()
+            .bind("http://example.com")
+            .auth("")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::BadToken);
     }
 }
