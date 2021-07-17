@@ -1,6 +1,5 @@
 use algonaut::algod::AlgodBuilder;
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
-use algonaut_core::CompiledTeal;
 use algonaut_core::CompiledTealWithHash;
 use algonaut_core::SignedLogic;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress};

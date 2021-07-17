@@ -10,7 +10,7 @@ use std::error::Error;
 use tokio::test;
 
 // Reference:
-// https://github.com/algorand/java-algorand-sdk/tree/840cf26043f475e43938c64fbda4526a874c258f
+// https://github.com/algorand/java-algorand-sdk/blob/840cf26043f475e43938c64fbda4526a874c258f/src/test/java/com/algorand/algosdk/account/TestAccount.java
 
 #[test]
 async fn test_signs_transaction_e2e() -> Result<(), Box<dyn Error>> {

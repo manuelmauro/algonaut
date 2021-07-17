@@ -628,3 +628,52 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_serialize_signed_logic_contract_account() {
+        let program = CompiledTeal(vec![
+            0x01, 0x20, 0x01, 0x01, 0x22, // int 1
+        ]);
+        let args = vec![vec![1, 2, 3], vec![4, 5, 6]];
+        let lsig = SignedLogic {
+            logic: program.clone(),
+            args,
+            sig: LogicSignature::ContractAccount,
+        };
+
+        // TODO generic utility to test serialization. Test all api structs.
+        // https://github.com/manuelmauro/algonaut/issues/67
+        let api_lsig: ApiSignedLogic = lsig.clone().into();
+        let serialized = rmp_serde::to_vec_named(&api_lsig).unwrap();
+        let deserialized: ApiSignedLogic = rmp_serde::from_slice(&serialized).unwrap();
+        let lsig_deserialized: SignedLogic = deserialized.try_into().unwrap();
+
+        assert_eq!(lsig, lsig_deserialized);
+    }
+
+    #[test]
+    fn test_serialize_signed_logic_contract_account_no_args() {
+        let program = CompiledTeal(vec![
+            0x01, 0x20, 0x01, 0x01, 0x22, // int 1
+        ]);
+        let args = vec![];
+        let lsig = SignedLogic {
+            logic: program.clone(),
+            args,
+            sig: LogicSignature::ContractAccount,
+        };
+
+        // TODO generic utility to test serialization. Test all api structs.
+        // https://github.com/manuelmauro/algonaut/issues/67
+        let api_lsig: ApiSignedLogic = lsig.clone().into();
+        let serialized = rmp_serde::to_vec_named(&api_lsig).unwrap();
+        let deserialized: ApiSignedLogic = rmp_serde::from_slice(&serialized).unwrap();
+        let lsig_deserialized: SignedLogic = deserialized.try_into().unwrap();
+
+        assert_eq!(lsig, lsig_deserialized);
+    }
+}

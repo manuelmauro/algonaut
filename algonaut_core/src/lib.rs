@@ -258,7 +258,7 @@ pub struct SignedLogic {
 }
 
 impl SignedLogic {
-    fn as_address(&self) -> Address {
+    pub fn as_address(&self) -> Address {
         Address(sha2::Sha512Trunc256::digest(&self.logic.bytes_to_sign()).into())
     }
 
