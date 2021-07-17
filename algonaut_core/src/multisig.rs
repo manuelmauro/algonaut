@@ -19,7 +19,7 @@ pub struct MultisigSignature {
 
 impl MultisigSignature {
     pub fn verify(&self, message: &[u8]) -> bool {
-        if self.version != MULTISIG_VERSION || self.threshold <= 0 || self.subsigs.is_empty() {
+        if self.version != MULTISIG_VERSION || self.threshold == 0 || self.subsigs.is_empty() {
             return false;
         }
         if self.threshold as usize > self.subsigs.len() {
@@ -38,8 +38,7 @@ impl MultisigSignature {
                     .map(|sig| subsig.key.verify(message, &sig))
                     .unwrap_or(false) // not signed yet
             })
-            .collect::<Vec<&MultisigSubsig>>()
-            .len()
+            .count()
             == self.threshold as usize
     }
 }
