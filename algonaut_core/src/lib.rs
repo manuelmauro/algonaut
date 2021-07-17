@@ -453,6 +453,8 @@ fn base64_str_to_u8_array<const N: usize>(base64_str: &str) -> Result<[u8; N], C
 
 #[cfg(test)]
 mod tests {
+    use rand::{rngs::OsRng, Rng};
+
     use super::*;
 
     /// Trying to decode a valid base32 address should succeed.
@@ -472,6 +474,32 @@ mod tests {
         let invalid_csum = "737777777777777777777777777777777777777777777777777UFEJ2CJ";
 
         assert!(invalid_csum.parse::<Address>().is_err());
+    }
+
+    #[test]
+    fn encode() {
+        let expected = "7777777777777777777777777777777777777777777777777774MSJUVU";
+        assert_eq!(expected, Address([255; 32]).to_string())
+    }
+
+    #[test]
+    fn encode_decode_str() {
+        for _ in 0..1_000 {
+            let bytes: [u8; 32] = OsRng.gen();
+            let addr = Address(bytes);
+            let addr_str = addr.to_string();
+            let reenc_addr = Address::from_str(&addr_str).unwrap();
+            assert_eq!(reenc_addr, addr)
+        }
+    }
+
+    #[test]
+    fn serializes_deserializes() {
+        let addr = Address(OsRng.gen());
+        // arbitrary serde serializer
+        let bytes = rmp_serde::to_vec_named(&addr).unwrap();
+        let deserialized: Address = rmp_serde::from_slice(&bytes).unwrap();
+        assert_eq!(deserialized, addr);
     }
 }
 
