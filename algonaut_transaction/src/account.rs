@@ -6,7 +6,7 @@ use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
     Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
 };
-use algonaut_crypto::mnemonic;
+use algonaut_crypto::{mnemonic, Signature};
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
@@ -242,8 +242,8 @@ impl Account {
 #[cfg(test)]
 mod tests {
     use crate::account::Account;
-    use algonaut_core::{Address, Signature};
-    use algonaut_crypto::mnemonic;
+    use algonaut_core::Address;
+    use algonaut_crypto::{mnemonic, Signature};
     use data_encoding::BASE64;
     use rand::Rng;
     use std::convert::TryInto;
@@ -287,9 +287,9 @@ mod tests {
         let account = Account::generate();
         let signature = account.generate_sig(&b);
 
-        assert!(account.address().verify_bytes(&b, signature));
+        assert!(account.address().verify_bytes(&b, &signature));
         b[0] = b[0].wrapping_add(1);
-        assert!(!account.address().verify_bytes(&b, signature));
+        assert!(!account.address().verify_bytes(&b, &signature));
     }
 
     #[test]
@@ -300,9 +300,9 @@ mod tests {
             .parse()
             .unwrap();
 
-        assert!(address.verify_bytes(&message, signature));
+        assert!(address.verify_bytes(&message, &signature));
         message[0] = message[0].wrapping_add(1);
-        assert!(!address.verify_bytes(&message, signature));
+        assert!(!address.verify_bytes(&message, &signature));
     }
 
     #[test]

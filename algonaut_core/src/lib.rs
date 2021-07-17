@@ -1,6 +1,7 @@
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_crypto::HashDigest;
-use algonaut_encoding::{SignatureVisitor, U8_32Visitor};
+use algonaut_crypto::Signature;
+use algonaut_encoding::U8_32Visitor;
 use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
 use error::CoreError;
@@ -165,34 +166,6 @@ impl VrfPk {
 
     pub fn to_base64_str(self) -> String {
         BASE64.encode(&self.0)
-    }
-}
-
-/// An Ed25519 Signature
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub struct Signature(pub [u8; 64]);
-
-impl Debug for Signature {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &BASE64.encode(&self.0))
-    }
-}
-
-impl Serialize for Signature {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_bytes(&self.0[..])
-    }
-}
-
-impl<'de> Deserialize<'de> for Signature {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(Signature(deserializer.deserialize_bytes(SignatureVisitor)?))
     }
 }
 

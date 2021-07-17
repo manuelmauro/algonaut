@@ -1,8 +1,9 @@
 use std::fmt::{self, Formatter};
 
-use algonaut_encoding::{deserialize_bytes32, U8_32Visitor};
+use algonaut_encoding::{deserialize_bytes32, SignatureVisitor, U8_32Visitor};
 use data_encoding::{BASE32_NOPAD, BASE64};
 use fmt::Debug;
+use ring::signature::UnparsedPublicKey;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Support for turning 32 byte keys into human-readable mnemonics and back
@@ -18,8 +19,49 @@ pub struct HashDigest(pub [u8; 32]);
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Ed25519PublicKey(pub [u8; 32]);
 
+impl Ed25519PublicKey {
+    pub fn verify(&self, message: &[u8], signature: &Signature) -> bool {
+        let peer_public_key = UnparsedPublicKey::new(&ring::signature::ED25519, self.0);
+        match peer_public_key.verify(message, signature.0.as_ref()) {
+            Ok(()) => true,
+            Err(_e) => {
+                println!("Signature verification failed");
+                false
+            }
+        }
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MasterDerivationKey(pub [u8; 32]);
+
+/// An Ed25519 Signature
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct Signature(pub [u8; 64]);
+
+impl Debug for Signature {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", &BASE64.encode(&self.0))
+    }
+}
+
+impl Serialize for Signature {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for Signature {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Signature(deserializer.deserialize_bytes(SignatureVisitor)?))
+    }
+}
 
 impl Serialize for HashDigest {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>

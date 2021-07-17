@@ -19,3 +19,4 @@ serde = {version = "1.0", features = ["derive"]}
 sha2 = "0.8.0"
 static_assertions = "0.3.4"
 thiserror = "1.0.23"
+ring = "0.16.19"

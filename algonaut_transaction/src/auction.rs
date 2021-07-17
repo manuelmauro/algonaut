@@ -1,4 +1,5 @@
-use algonaut_core::{Address, Signature, ToMsgPack};
+use algonaut_core::{Address, ToMsgPack};
+use algonaut_crypto::Signature;
 use serde::{Deserialize, Serialize};
 
 /// A bid by a user as part of an auction.

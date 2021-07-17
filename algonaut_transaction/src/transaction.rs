@@ -2,9 +2,10 @@ use crate::account::Account;
 use crate::error::TransactionError;
 use algonaut_core::SignedLogic;
 use algonaut_core::ToMsgPack;
-use algonaut_core::{Address, MultisigSignature, Signature};
+use algonaut_core::{Address, MultisigSignature};
 use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
+use algonaut_crypto::Signature;
 use data_encoding::BASE32_NOPAD;
 use sha2::Digest;
 

@@ -4,7 +4,7 @@ use algonaut_core::{
     Address, CompiledTeal, LogicSignature, MicroAlgos, MultisigSignature, Round, SignedLogic,
     ToMsgPack, VotePk, VrfPk,
 };
-use algonaut_crypto::HashDigest;
+use algonaut_crypto::{HashDigest, Signature};
 use serde::{Deserialize, Serialize};
 
 use crate::{
