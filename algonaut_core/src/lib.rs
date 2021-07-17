@@ -6,6 +6,7 @@ use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
 use error::CoreError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
 use std::convert::TryInto;
 use std::fmt::{self, Debug, Formatter};
@@ -18,6 +19,7 @@ mod address;
 mod error;
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
+pub const MULTISIG_VERSION: u8 = 1;
 
 /// MicroAlgos are the base unit of currency in Algorand
 #[derive(
@@ -181,6 +183,33 @@ pub struct MultisigSignature {
     pub version: u8,
 }
 
+impl MultisigSignature {
+    pub fn verify(&self, message: &[u8]) -> bool {
+        if self.version != MULTISIG_VERSION || self.threshold <= 0 || self.subsigs.is_empty() {
+            return false;
+        }
+        if self.threshold as usize > self.subsigs.len() {
+            return false;
+        }
+        self.verify_subsigs(message)
+    }
+
+    /// Checks threshold subsigs are signed and that the signatures are valid.
+    fn verify_subsigs(&self, message: &[u8]) -> bool {
+        self.subsigs
+            .iter()
+            .filter(|subsig| {
+                subsig
+                    .sig
+                    .map(|sig| subsig.key.verify(message, &sig))
+                    .unwrap_or(false) // not signed yet
+            })
+            .collect::<Vec<&MultisigSubsig>>()
+            .len()
+            == self.threshold as usize
+    }
+}
+
 impl Serialize for MultisigSignature {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
@@ -226,6 +255,24 @@ pub struct SignedLogic {
     pub logic: CompiledTeal,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
+}
+
+impl SignedLogic {
+    fn as_address(&self) -> Address {
+        Address(sha2::Sha512Trunc256::digest(&self.logic.bytes_to_sign()).into())
+    }
+
+    /// Performs signature verification against the sender address, and general consistency checks.
+    pub fn verify(&self, address: Address) -> bool {
+        match &self.sig {
+            LogicSignature::ContractAccount => self.as_address() == address,
+            LogicSignature::DelegatedSig(sig) => {
+                let pk = address.as_public_key();
+                pk.verify(&self.logic.bytes_to_sign(), sig)
+            }
+            LogicSignature::DelegatedMultiSig(msig) => msig.verify(&self.logic.bytes_to_sign()),
+        }
+    }
 }
 
 impl Debug for SignedLogic {
