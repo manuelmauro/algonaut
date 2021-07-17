@@ -97,7 +97,8 @@ mod tests {
     #[test]
     fn test_client_builder_with_no_token() {
         let res = AlgodBuilder::new().bind("http://example.com").build_v2();
-        assert!(res.is_err())
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::UnitializedToken);
     }
 
     #[test]
@@ -105,6 +106,47 @@ mod tests {
         let res = AlgodBuilder::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             .build_v2();
-        assert!(res.is_err())
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::UnitializedUrl);
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_url() {
+        let res = AlgodBuilder::new()
+            .bind("asfdsdfs")
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_url_no_scheme() {
+        let res = AlgodBuilder::new()
+            .bind("example.com")
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_token() {
+        let res = AlgodBuilder::new()
+            .bind("http://example.com")
+            .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::BadToken);
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_token_empty() {
+        let res = AlgodBuilder::new()
+            .bind("http://example.com")
+            .auth("")
+            .build_v2();
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::BadToken);
     }
 }
