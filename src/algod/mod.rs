@@ -89,26 +89,22 @@ mod tests {
         let algod = AlgodBuilder::new()
             .bind("http://example.com")
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .build_v1();
+            .build_v2();
 
         assert!(algod.ok().is_some());
     }
 
     #[test]
-    #[should_panic(expected = "")]
     fn test_client_builder_with_no_token() {
-        let _ = AlgodBuilder::new()
-            .bind("http://example.com")
-            .build_v1()
-            .unwrap();
+        let res = AlgodBuilder::new().bind("http://example.com").build_v2();
+        assert!(res.is_err())
     }
 
     #[test]
-    #[should_panic(expected = "")]
     fn test_client_builder_with_no_url() {
-        let _ = AlgodBuilder::new()
+        let res = AlgodBuilder::new()
             .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .build_v1()
-            .unwrap();
+            .build_v2();
+        assert!(res.is_err())
     }
 }
