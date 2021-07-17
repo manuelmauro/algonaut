@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use algonaut_core::{CompiledTeal, MicroAlgos, Round};
+use algonaut_core::{CompiledTeal, CompiledTealWithHash, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
 use data_encoding::{DecodeError, BASE64};
@@ -718,7 +718,7 @@ pub struct SourceTeal {
 
 /// Compiled TEAL program.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ApiCompiledTeal {
+pub struct ApiCompiledTealWithHash {
     /// base32 SHA512_256 of program bytes (Address style)
     pub hash: String,
 
@@ -726,19 +726,19 @@ pub struct ApiCompiledTeal {
     pub result: String,
 }
 
-impl ApiCompiledTeal {
-    pub fn program_bytes(&self) -> Result<Vec<u8>, DecodeError> {
-        BASE64.decode(self.result.as_bytes())
+impl ApiCompiledTealWithHash {
+    pub fn program(&self) -> Result<CompiledTeal, DecodeError> {
+        Ok(CompiledTeal(BASE64.decode(self.result.as_bytes())?))
     }
 }
 
-impl TryFrom<ApiCompiledTeal> for CompiledTeal {
+impl TryFrom<ApiCompiledTealWithHash> for CompiledTealWithHash {
     type Error = DecodeError;
 
-    fn try_from(value: ApiCompiledTeal) -> Result<Self, Self::Error> {
-        Ok(CompiledTeal {
+    fn try_from(value: ApiCompiledTealWithHash) -> Result<Self, Self::Error> {
+        Ok(CompiledTealWithHash {
             hash: value.hash.clone(),
-            bytes: value.program_bytes()?,
+            program: value.program()?,
         })
     }
 }

@@ -1,10 +1,11 @@
-use algonaut_crypto::Ed25519PublicKey;
 use algonaut_crypto::HashDigest;
-use algonaut_encoding::{SignatureVisitor, U8_32Visitor};
+use algonaut_crypto::Signature;
+use algonaut_encoding::U8_32Visitor;
 use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
 use error::CoreError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
 use std::convert::TryInto;
 use std::fmt::{self, Debug, Formatter};
@@ -12,9 +13,12 @@ use std::ops::Mul;
 
 pub use address::Address;
 pub use address::MultisigAddress;
+pub use multisig::MultisigSignature;
+pub use multisig::MultisigSubsig;
 
 mod address;
 mod error;
+mod multisig;
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 
@@ -168,91 +172,29 @@ impl VrfPk {
     }
 }
 
-/// An Ed25519 Signature
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub struct Signature(pub [u8; 64]);
-
-impl Debug for Signature {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &BASE64.encode(&self.0))
-    }
-}
-
-impl Serialize for Signature {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_bytes(&self.0[..])
-    }
-}
-
-impl<'de> Deserialize<'de> for Signature {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(Signature(deserializer.deserialize_bytes(SignatureVisitor)?))
-    }
-}
-
-#[derive(Default, Debug, Eq, PartialEq, Clone, Deserialize)]
-pub struct MultisigSignature {
-    #[serde(rename = "subsig")]
-    pub subsigs: Vec<MultisigSubsig>,
-
-    #[serde(rename = "thr")]
-    pub threshold: u8,
-
-    #[serde(rename = "v")]
-    pub version: u8,
-}
-
-impl Serialize for MultisigSignature {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        // For some reason SerializeStruct ends up serializing as an array, so this explicitly serializes as a map
-        use serde::ser::SerializeMap;
-        let mut state = serializer.serialize_map(Some(3))?;
-        state.serialize_entry("subsig", &self.subsigs)?;
-        state.serialize_entry("thr", &self.threshold)?;
-        state.serialize_entry("v", &self.version)?;
-        state.end()
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Clone, Deserialize)]
-pub struct MultisigSubsig {
-    #[serde(rename = "pk")]
-    pub key: Ed25519PublicKey,
-
-    #[serde(rename = "s")]
-    pub sig: Option<Signature>,
-}
-
-impl Serialize for MultisigSubsig {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        use serde::ser::SerializeMap;
-        let len = if self.sig.is_some() { 2 } else { 1 };
-        let mut state = serializer.serialize_map(Some(len))?;
-        state.serialize_entry("pk", &self.key)?;
-        if let Some(sig) = &self.sig {
-            state.serialize_entry("s", sig)?;
-        }
-        state.end()
-    }
-}
-
 #[derive(Eq, PartialEq, Clone)]
 pub struct SignedLogic {
-    pub logic: Vec<u8>,
+    pub logic: CompiledTeal,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
+}
+
+impl SignedLogic {
+    pub fn as_address(&self) -> Address {
+        Address(sha2::Sha512Trunc256::digest(&self.logic.bytes_to_sign()).into())
+    }
+
+    /// Performs signature verification against the sender address, and general consistency checks.
+    pub fn verify(&self, address: Address) -> bool {
+        match &self.sig {
+            LogicSignature::ContractAccount => self.as_address() == address,
+            LogicSignature::DelegatedSig(sig) => {
+                let pk = address.as_public_key();
+                pk.verify(&self.logic.bytes_to_sign(), sig)
+            }
+            LogicSignature::DelegatedMultiSig(msig) => msig.verify(&self.logic.bytes_to_sign()),
+        }
+    }
 }
 
 impl Debug for SignedLogic {
@@ -260,7 +202,7 @@ impl Debug for SignedLogic {
         write!(
             f,
             "logic: {:?}, args: {:?}, sig: {:?}",
-            BASE64.encode(&self.logic),
+            BASE64.encode(&self.logic.0),
             self.args
                 .iter()
                 .map(|a| BASE64.encode(a))
@@ -271,12 +213,24 @@ impl Debug for SignedLogic {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct CompiledTeal {
-    /// base32 SHA512_256 of program bytes (Address style)
-    pub hash: String,
-    pub bytes: Vec<u8>,
+pub struct CompiledTeal(pub Vec<u8>);
+
+impl CompiledTeal {
+    pub fn bytes_to_sign(&self) -> Vec<u8> {
+        let mut prefix_encoded_tx = b"Program".to_vec();
+        prefix_encoded_tx.extend_from_slice(&self.0);
+        prefix_encoded_tx
+    }
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct CompiledTealWithHash {
+    /// base32 SHA512_256 of program bytes (Address style)
+    pub hash: String,
+    pub program: CompiledTeal,
+}
+
+// TODO rename
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum LogicSignature {
     ContractAccount,

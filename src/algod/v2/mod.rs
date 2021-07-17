@@ -1,5 +1,5 @@
 use algonaut_client::algod::v2::message::Account;
-use algonaut_client::algod::v2::message::ApiCompiledTeal;
+use algonaut_client::algod::v2::message::ApiCompiledTealWithHash;
 use algonaut_client::algod::v2::message::Application;
 use algonaut_client::algod::v2::message::Block;
 use algonaut_client::algod::v2::message::Catchup;
@@ -147,7 +147,10 @@ impl Algod {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
     /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
     /// a node's configuration file sets EnableDeveloperAPI to true.
-    pub async fn compile_teal(&self, teal: String) -> Result<ApiCompiledTeal, AlgonautError> {
+    pub async fn compile_teal(
+        &self,
+        teal: String,
+    ) -> Result<ApiCompiledTealWithHash, AlgonautError> {
         Ok(self.client.compile_teal(teal).await?)
     }
 

@@ -1,10 +1,10 @@
 use std::convert::{TryFrom, TryInto};
 
 use algonaut_core::{
-    Address, LogicSignature, MicroAlgos, MultisigSignature, Round, Signature, SignedLogic,
+    Address, CompiledTeal, LogicSignature, MicroAlgos, MultisigSignature, Round, SignedLogic,
     ToMsgPack, VotePk, VrfPk,
 };
-use algonaut_crypto::HashDigest;
+use algonaut_crypto::{HashDigest, Signature};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -599,7 +599,7 @@ impl From<SignedLogic> for ApiSignedLogic {
             LogicSignature::DelegatedMultiSig(msig) => (None, Some(msig)),
         };
         ApiSignedLogic {
-            logic: s.logic,
+            logic: s.logic.0,
             sig,
             msig,
             args: s.args.into_iter().map(ApiSignedLogicArg).collect(),
@@ -622,9 +622,58 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
             }
         };
         Ok(SignedLogic {
-            logic: s.logic,
+            logic: CompiledTeal(s.logic),
             args: s.args.into_iter().map(|a| a.0).collect(),
             sig,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_serialize_signed_logic_contract_account() {
+        let program = CompiledTeal(vec![
+            0x01, 0x20, 0x01, 0x01, 0x22, // int 1
+        ]);
+        let args = vec![vec![1, 2, 3], vec![4, 5, 6]];
+        let lsig = SignedLogic {
+            logic: program.clone(),
+            args,
+            sig: LogicSignature::ContractAccount,
+        };
+
+        // TODO generic utility to test serialization. Test all api structs.
+        // https://github.com/manuelmauro/algonaut/issues/67
+        let api_lsig: ApiSignedLogic = lsig.clone().into();
+        let serialized = rmp_serde::to_vec_named(&api_lsig).unwrap();
+        let deserialized: ApiSignedLogic = rmp_serde::from_slice(&serialized).unwrap();
+        let lsig_deserialized: SignedLogic = deserialized.try_into().unwrap();
+
+        assert_eq!(lsig, lsig_deserialized);
+    }
+
+    #[test]
+    fn test_serialize_signed_logic_contract_account_no_args() {
+        let program = CompiledTeal(vec![
+            0x01, 0x20, 0x01, 0x01, 0x22, // int 1
+        ]);
+        let args = vec![];
+        let lsig = SignedLogic {
+            logic: program.clone(),
+            args,
+            sig: LogicSignature::ContractAccount,
+        };
+
+        // TODO generic utility to test serialization. Test all api structs.
+        // https://github.com/manuelmauro/algonaut/issues/67
+        let api_lsig: ApiSignedLogic = lsig.clone().into();
+        let serialized = rmp_serde::to_vec_named(&api_lsig).unwrap();
+        let deserialized: ApiSignedLogic = rmp_serde::from_slice(&serialized).unwrap();
+        let lsig_deserialized: SignedLogic = deserialized.try_into().unwrap();
+
+        assert_eq!(lsig, lsig_deserialized);
     }
 }

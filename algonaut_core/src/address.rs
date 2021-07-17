@@ -2,7 +2,6 @@ use crate::Signature;
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_encoding::U8_32Visitor;
 use data_encoding::BASE32_NOPAD;
-use ring::signature::UnparsedPublicKey;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use std::fmt::{self, Debug, Formatter};
@@ -54,21 +53,10 @@ impl Address {
         BASE32_NOPAD.encode(&checksum_address)
     }
 
-    pub fn verify_bytes(&self, message: &[u8], signature: Signature) -> bool {
-        // prepend the message prefix
-        let mut bytes_sign_prefix = b"MX".to_vec();
-        bytes_sign_prefix.extend_from_slice(&message);
-
-        // verify signature
-        let public_key_bytes = &self.as_public_key().0;
-        let peer_public_key = UnparsedPublicKey::new(&ring::signature::ED25519, public_key_bytes);
-        match peer_public_key.verify(&bytes_sign_prefix, signature.0.as_ref()) {
-            Ok(()) => true,
-            Err(_e) => {
-                println!("Signature verification failed");
-                false
-            }
-        }
+    pub fn verify_bytes(&self, message: &[u8], signature: &Signature) -> bool {
+        let mut message_to_verify = b"MX".to_vec();
+        message_to_verify.extend_from_slice(&message);
+        self.as_public_key().verify(&message_to_verify, signature)
     }
 }
 

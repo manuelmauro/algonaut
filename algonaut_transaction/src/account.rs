@@ -4,9 +4,9 @@ use crate::auction::{Bid, SignedBid};
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
-    Address, MultisigAddress, MultisigSignature, MultisigSubsig, Signature, ToMsgPack,
+    Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
 };
-use algonaut_crypto::mnemonic;
+use algonaut_crypto::{mnemonic, Signature};
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
@@ -84,8 +84,8 @@ impl Account {
         self.generate_raw_sig(&bytes_sign_prefix)
     }
 
-    pub fn generate_program_sig(&self, program_bytes: &[u8]) -> Signature {
-        self.generate_raw_sig(&["Program".as_bytes(), program_bytes].concat())
+    pub fn generate_program_sig(&self, program: &CompiledTeal) -> Signature {
+        self.generate_raw_sig(&["Program".as_bytes(), &program.0].concat())
     }
 
     fn generate_transaction_sig(
@@ -151,22 +151,22 @@ impl Account {
     /// Creates logic multi signature corresponding to multisign addresses, inserting own signature
     pub fn init_logic_msig(
         &self,
-        program_bytes: &[u8],
+        program: &CompiledTeal,
         ma: &MultisigAddress,
     ) -> Result<MultisigSignature, TransactionError> {
         if !ma.contains(&self.address) {
             return Err(TransactionError::InvalidSecretKeyInMultisig);
         }
 
-        Ok(self.init_msig(ma, self.generate_program_sig(program_bytes)))
+        Ok(self.init_msig(ma, self.generate_program_sig(program)))
     }
 
     pub fn append_to_logic_msig(
         &self,
-        program_bytes: &[u8],
+        program: &CompiledTeal,
         msig: MultisigSignature,
     ) -> Result<MultisigSignature, TransactionError> {
-        self.append_sig_to_msig(self.generate_program_sig(program_bytes), msig)
+        self.append_sig_to_msig(self.generate_program_sig(program), msig)
     }
 
     pub fn append_to_transaction_msig(
@@ -242,8 +242,8 @@ impl Account {
 #[cfg(test)]
 mod tests {
     use crate::account::Account;
-    use algonaut_core::{Address, Signature};
-    use algonaut_crypto::mnemonic;
+    use algonaut_core::Address;
+    use algonaut_crypto::{mnemonic, Signature};
     use data_encoding::BASE64;
     use rand::Rng;
     use std::convert::TryInto;
@@ -287,9 +287,9 @@ mod tests {
         let account = Account::generate();
         let signature = account.generate_sig(&b);
 
-        assert!(account.address().verify_bytes(&b, signature));
+        assert!(account.address().verify_bytes(&b, &signature));
         b[0] = b[0].wrapping_add(1);
-        assert!(!account.address().verify_bytes(&b, signature));
+        assert!(!account.address().verify_bytes(&b, &signature));
     }
 
     #[test]
@@ -300,9 +300,9 @@ mod tests {
             .parse()
             .unwrap();
 
-        assert!(address.verify_bytes(&message, signature));
+        assert!(address.verify_bytes(&message, &signature));
         message[0] = message[0].wrapping_add(1);
-        assert!(!address.verify_bytes(&message, signature));
+        assert!(!address.verify_bytes(&message, &signature));
     }
 
     #[test]
