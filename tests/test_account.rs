@@ -1,4 +1,4 @@
-use algonaut_core::{Address, LogicSignature, MicroAlgos, Round, SignedLogic};
+use algonaut_core::{Address, CompiledTeal, LogicSignature, MicroAlgos, Round, SignedLogic};
 use algonaut_core::{MultisigAddress, ToMsgPack};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::account::Account;
@@ -227,9 +227,9 @@ async fn test_logic_sig_transaction() -> Result<(), Box<dyn Error>> {
     .note(BASE64.decode(b"8xMCTuLQ810=")?)
     .build();
 
-    let program = vec![
+    let program = CompiledTeal(vec![
         0x01, 0x20, 0x01, 0x01, 0x22, // int 1
-    ];
+    ]);
     let args = vec![vec![49, 50, 51], vec![52, 53, 54]];
     let signature = account.generate_program_sig(&program);
 

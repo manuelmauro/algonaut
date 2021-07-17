@@ -250,7 +250,7 @@ impl Serialize for MultisigSubsig {
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct SignedLogic {
-    pub logic: Vec<u8>,
+    pub logic: CompiledTeal,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
 }
@@ -260,7 +260,7 @@ impl Debug for SignedLogic {
         write!(
             f,
             "logic: {:?}, args: {:?}, sig: {:?}",
-            BASE64.encode(&self.logic),
+            BASE64.encode(&self.logic.0),
             self.args
                 .iter()
                 .map(|a| BASE64.encode(a))
@@ -271,12 +271,24 @@ impl Debug for SignedLogic {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct CompiledTeal {
-    /// base32 SHA512_256 of program bytes (Address style)
-    pub hash: String,
-    pub bytes: Vec<u8>,
+pub struct CompiledTeal(pub Vec<u8>);
+
+impl CompiledTeal {
+    pub fn bytes_to_sign(&self) -> Vec<u8> {
+        let mut prefix_encoded_tx = b"Program".to_vec();
+        prefix_encoded_tx.extend_from_slice(&self.0);
+        prefix_encoded_tx
+    }
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct CompiledTealWithHash {
+    /// base32 SHA512_256 of program bytes (Address style)
+    pub hash: String,
+    pub program: CompiledTeal,
+}
+
+// TODO rename
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum LogicSignature {
     ContractAccount,

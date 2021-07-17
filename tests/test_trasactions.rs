@@ -1,6 +1,7 @@
 use algonaut::algod::AlgodBuilder;
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
 use algonaut_core::CompiledTeal;
+use algonaut_core::CompiledTealWithHash;
 use algonaut_core::SignedLogic;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut_transaction::transaction::TransactionSignature;
@@ -107,7 +108,7 @@ async fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dy
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let program: CompiledTeal = algod
+    let program: CompiledTealWithHash = algod
         .compile_teal(
             r#"
 #pragma version 3
@@ -138,7 +139,7 @@ byte 0xFF
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program.bytes,
+            logic: program.program,
             args: vec![vec![1, 0], vec![255]],
             sig: LogicSignature::ContractAccount,
         }),
@@ -163,7 +164,7 @@ async fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let program = algod
+    let program: CompiledTealWithHash = algod
         .compile_teal(
             r#"
 #pragma version 3
@@ -172,7 +173,7 @@ int 1
             .into(),
         )
         .await?
-        .program_bytes()?;
+        .try_into()?;
 
     let from = account1();
 
@@ -184,13 +185,13 @@ int 1
     )
     .build();
 
-    let signature = from.generate_program_sig(&program);
+    let signature = from.generate_program_sig(&program.program);
 
     let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program,
+            logic: program.program,
             args: vec![],
             sig: LogicSignature::DelegatedSig(signature),
         }),
@@ -215,7 +216,7 @@ async fn test_transaction_with_delegated_logic_multisig() -> Result<(), Box<dyn 
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let program: CompiledTeal = algod
+    let program: CompiledTealWithHash = algod
         .compile_teal(
             r#"
 #pragma version 3
@@ -244,11 +245,11 @@ int 1
     )
     .build();
 
-    let msig = account1.init_logic_msig(&program.bytes, &multisig_address)?;
-    let msig = account2.append_to_logic_msig(&program.bytes, msig)?;
+    let msig = account1.init_logic_msig(&program.program, &multisig_address)?;
+    let msig = account2.append_to_logic_msig(&program.program, msig)?;
 
     let sig = TransactionSignature::Logic(SignedLogic {
-        logic: program.bytes,
+        logic: program.program,
         args: vec![],
         sig: LogicSignature::DelegatedMultiSig(msig),
     });

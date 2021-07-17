@@ -1,7 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 
 use algonaut_core::{
-    Address, LogicSignature, MicroAlgos, MultisigSignature, Round, Signature, SignedLogic,
+    Address, CompiledTeal, LogicSignature, MicroAlgos, MultisigSignature, Round, SignedLogic,
     ToMsgPack, VotePk, VrfPk,
 };
 use algonaut_crypto::HashDigest;
@@ -599,7 +599,7 @@ impl From<SignedLogic> for ApiSignedLogic {
             LogicSignature::DelegatedMultiSig(msig) => (None, Some(msig)),
         };
         ApiSignedLogic {
-            logic: s.logic,
+            logic: s.logic.0,
             sig,
             msig,
             args: s.args.into_iter().map(ApiSignedLogicArg).collect(),
@@ -622,7 +622,7 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
             }
         };
         Ok(SignedLogic {
-            logic: s.logic,
+            logic: CompiledTeal(s.logic),
             args: s.args.into_iter().map(|a| a.0).collect(),
             sig,
         })
