@@ -147,11 +147,8 @@ impl Algod {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
     /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
     /// a node's configuration file sets EnableDeveloperAPI to true.
-    pub async fn compile_teal<T: Into<String>>(
-        &self,
-        teal: T,
-    ) -> Result<CompiledTealWithHash, AlgonautError> {
-        Ok(self.client.compile_teal(teal.into()).await?)
+    pub async fn compile_teal(&self, teal: &[u8]) -> Result<CompiledTealWithHash, AlgonautError> {
+        Ok(self.client.compile_teal(teal.to_vec()).await?)
     }
 
     /// Provide debugging information for a transaction (or group).

@@ -116,7 +116,8 @@ arg 1
 byte 0xFF
 ==
 &&
-"#,
+"#
+            .as_bytes(),
         )
         .await?;
 
@@ -164,7 +165,8 @@ async fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error
             r#"
 #pragma version 3
 int 1
-"#,
+"#
+            .as_bytes(),
         )
         .await?;
 
@@ -214,7 +216,8 @@ async fn test_transaction_with_delegated_logic_multisig() -> Result<(), Box<dyn 
             r#"
 #pragma version 3
 int 1
-"#,
+"#
+            .as_bytes(),
         )
         .await?;
 
