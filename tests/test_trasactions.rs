@@ -1,13 +1,11 @@
 use algonaut::algod::AlgodBuilder;
 use algonaut_client::algod::v1::message::QueryAccountTransactions;
-use algonaut_core::CompiledTealWithHash;
 use algonaut_core::SignedLogic;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut_transaction::transaction::TransactionSignature;
 use algonaut_transaction::tx_group::TxGroup;
 use algonaut_transaction::{account::Account, CreateAsset, Pay, SignedTransaction, TxnBuilder};
 use dotenv::dotenv;
-use std::convert::TryInto;
 use std::env;
 use std::error::Error;
 use tokio::test;
@@ -107,7 +105,7 @@ async fn test_transaction_with_contract_account_logic_sig() -> Result<(), Box<dy
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let program: CompiledTealWithHash = algod
+    let program = algod
         .compile_teal(
             r#"
 #pragma version 3
@@ -118,11 +116,9 @@ arg 1
 byte 0xFF
 ==
 &&
-"#
-            .into(),
+"#,
         )
-        .await?
-        .try_into()?;
+        .await?;
 
     let from_address = program.hash.parse()?;
 
@@ -163,16 +159,14 @@ async fn test_transaction_with_delegated_logic_sig() -> Result<(), Box<dyn Error
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let program: CompiledTealWithHash = algod
+    let program = algod
         .compile_teal(
             r#"
 #pragma version 3
 int 1
-"#
-            .into(),
+"#,
         )
-        .await?
-        .try_into()?;
+        .await?;
 
     let from = account1();
 
@@ -215,16 +209,14 @@ async fn test_transaction_with_delegated_logic_multisig() -> Result<(), Box<dyn 
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let program: CompiledTealWithHash = algod
+    let program = algod
         .compile_teal(
             r#"
 #pragma version 3
 int 1
-"#
-            .into(),
+"#,
         )
-        .await?
-        .try_into()?;
+        .await?;
 
     let account1 = account1();
     let account2 = account2();

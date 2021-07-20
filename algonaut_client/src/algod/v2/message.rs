@@ -1,10 +1,8 @@
-use std::convert::TryFrom;
-
-use algonaut_core::{CompiledTeal, CompiledTealWithHash, MicroAlgos, Round};
+use algonaut_core::{CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
-use data_encoding::{DecodeError, BASE64};
-use serde::{Deserialize, Serialize};
+use data_encoding::BASE64;
+use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Account {
@@ -726,19 +724,28 @@ pub struct ApiCompiledTealWithHash {
     pub result: String,
 }
 
-impl ApiCompiledTealWithHash {
-    pub fn program(&self) -> Result<CompiledTeal, DecodeError> {
-        Ok(CompiledTeal(BASE64.decode(self.result.as_bytes())?))
-    }
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct CompiledTealWithHash {
+    /// base32 SHA512_256 of program bytes (Address style)
+    pub hash: String,
+
+    // Program bytes
+    pub program: CompiledTeal,
 }
 
-impl TryFrom<ApiCompiledTealWithHash> for CompiledTealWithHash {
-    type Error = DecodeError;
-
-    fn try_from(value: ApiCompiledTealWithHash) -> Result<Self, Self::Error> {
+impl<'de> Deserialize<'de> for CompiledTealWithHash {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let api_obj = ApiCompiledTealWithHash::deserialize(deserializer)?;
         Ok(CompiledTealWithHash {
-            hash: value.hash.clone(),
-            program: value.program()?,
+            hash: api_obj.hash.clone(),
+            program: CompiledTeal(
+                BASE64
+                    .decode(api_obj.result.as_bytes())
+                    .map_err(serde::de::Error::custom)?,
+            ),
         })
     }
 }
