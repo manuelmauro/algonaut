@@ -223,13 +223,6 @@ impl CompiledTeal {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub struct CompiledTealWithHash {
-    /// base32 SHA512_256 of program bytes (Address style)
-    pub hash: String,
-    pub program: CompiledTeal,
-}
-
 // TODO rename
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum LogicSignature {
