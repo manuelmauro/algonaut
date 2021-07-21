@@ -1,0 +1,85 @@
+use algonaut::algod::v2::Algod;
+use algonaut::algod::AlgodBuilder;
+use algonaut::error::AlgonautError;
+use algonaut::transaction::TxnBuilder;
+use algonaut_client::algod::v2::message::PendingTransaction;
+use algonaut_transaction::account::Account;
+use algonaut_transaction::transaction::StateSchema;
+use algonaut_transaction::CreateApplication;
+use dotenv::dotenv;
+use std::env;
+use std::error::Error;
+use std::time::{Duration, Instant};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    // load variables in .env
+    dotenv().ok();
+
+    let algod = AlgodBuilder::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .build_v2()?;
+
+    let creator = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
+
+    // For brevity, using the same program for approval and clear
+    let program = r#"
+#pragma version 4
+int 1
+"#
+    .as_bytes();
+
+    let compiled_program = algod.compile_teal(&program).await?;
+
+    let params = algod.suggested_transaction_params().await?;
+    let t = TxnBuilder::with(
+        params,
+        CreateApplication::new(
+            creator.address(),
+            compiled_program.clone().program,
+            compiled_program.program,
+            StateSchema {
+                number_ints: 0,
+                number_byteslices: 0,
+            },
+            StateSchema {
+                number_ints: 0,
+                number_byteslices: 0,
+            },
+        )
+        .build(),
+    )
+    .build();
+
+    let signed_t = creator.sign_transaction(&t)?;
+
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+
+    let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
+    println!(
+        "Application id: {:?}",
+        pending_t.map(|t| t.application_index)
+    );
+
+    Ok(())
+}
+
+/// Utility function to wait on a transaction to be confirmed
+async fn wait_for_pending_transaction(
+    algod: &Algod,
+    txid: &str,
+) -> Result<Option<PendingTransaction>, AlgonautError> {
+    let timeout = Duration::from_secs(10);
+    let start = Instant::now();
+    loop {
+        let pending_transaction = algod.pending_transaction_with_id(txid).await?;
+        // If the transaction has been confirmed or we time out, exit.
+        if pending_transaction.confirmed_round.is_some() {
+            return Ok(Some(pending_transaction));
+        } else if start.elapsed() >= timeout {
+            return Ok(None);
+        }
+        std::thread::sleep(Duration::from_millis(250))
+    }
+}

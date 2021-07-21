@@ -1,0 +1,62 @@
+use algonaut::algod::AlgodBuilder;
+use algonaut::transaction::TxnBuilder;
+use algonaut_transaction::account::Account;
+use algonaut_transaction::builder::UpdateApplication;
+use dotenv::dotenv;
+use std::env;
+use std::error::Error;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    // load variables in .env
+    dotenv().ok();
+
+    let algod = AlgodBuilder::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .build_v2()?;
+
+    let creator = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
+
+    let program = r#"
+#pragma version 4
+txna ApplicationArgs 0
+byte 0x0100
+==
+txna ApplicationArgs 1
+byte 0xFF
+==
+&&
+"#
+    .as_bytes();
+
+    let clear_program = r#"
+#pragma version 4
+int 1
+"#
+    .as_bytes();
+
+    let compiled_program = algod.compile_teal(&program).await?;
+    let compiled_clear_program = algod.compile_teal(&clear_program).await?;
+
+    let params = algod.suggested_transaction_params().await?;
+    // contract being updated: no args, returns success
+    let t = TxnBuilder::with(
+        params,
+        UpdateApplication::new(
+            creator.address(),
+            5,
+            compiled_program.program,
+            compiled_clear_program.program,
+        )
+        .build(),
+    )
+    .build();
+
+    let signed_t = creator.sign_transaction(&t)?;
+
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+    println!("response: {:?}", send_response);
+
+    Ok(())
+}
