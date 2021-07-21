@@ -317,7 +317,7 @@ pub struct ApplicationCallTransaction {
 
     /// Defines what additional actions occur with the transaction. See the OnComplete section of
     /// the TEAL spec for details.
-    pub on_complete: u64,
+    pub on_complete: ApplicationCallOnComplete,
 
     /// List of accounts in addition to the sender that may be accessed from the application's
     /// approval-program and clear-state-program.
@@ -350,6 +350,23 @@ pub struct ApplicationCallTransaction {
 
     /// Holds the maximum number of local state values defined within a StateSchema object.
     pub local_state_schema: Option<StateSchema>,
+}
+
+/// An application transaction must indicate the action to be taken following the execution of its approvalProgram or clearStateProgram. The variants below describe the available actions.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ApplicationCallOnComplete {
+    /// Only execute the ApprovalProgram associated with this application ID, with no additional effects.
+    NoOp,
+    /// Before executing the ApprovalProgram, allocate local state for this application into the sender's account data.
+    OptIn,
+    /// After executing the ApprovalProgram, clear any local state for this application out of the sender's account data.
+    CloseOut,
+    /// Don't execute the ApprovalProgram, and instead execute the ClearStateProgram (which may not reject this transaction). Additionally, clear any local state for this application out of the sender's account data as in CloseOutOC.
+    ClearState,
+    /// After executing the ApprovalProgram, replace the ApprovalProgram and ClearStateProgram associated with this application ID with the programs specified in this transaction.
+    UpdateApplication,
+    /// After executing the ApprovalProgram, delete the application parameters from the account data of the application's creator.
+    DeleteApplication,
 }
 
 /// Storage state schema. The StateSchema object is only required for the create application call

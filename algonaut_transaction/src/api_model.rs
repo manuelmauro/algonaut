@@ -11,9 +11,10 @@ use serde::{Deserialize, Serialize};
 use crate::{
     error::TransactionError,
     transaction::{
-        ApplicationCallTransaction, AssetAcceptTransaction, AssetClawbackTransaction,
-        AssetConfigurationTransaction, AssetFreezeTransaction, AssetParams,
-        AssetTransferTransaction, KeyRegistration, Payment, StateSchema, TransactionSignature,
+        ApplicationCallOnComplete, ApplicationCallTransaction, AssetAcceptTransaction,
+        AssetClawbackTransaction, AssetConfigurationTransaction, AssetFreezeTransaction,
+        AssetParams, AssetTransferTransaction, KeyRegistration, Payment, StateSchema,
+        TransactionSignature,
     },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
@@ -41,7 +42,7 @@ pub struct ApiTransaction {
     pub app_arguments: Option<Vec<AppArgument>>,
 
     #[serde(rename = "apan", skip_serializing_if = "Option::is_none")]
-    pub on_complete: Option<u64>,
+    pub on_complete: Option<u32>,
 
     #[serde(
         default,
@@ -253,7 +254,8 @@ impl From<Transaction> for ApiTransaction {
             }
             TransactionType::ApplicationCallTransaction(call) => {
                 api_t.app_id = call.app_id;
-                api_t.on_complete = as_api_option(call.on_complete);
+                api_t.on_complete =
+                    as_api_option(application_call_on_complete_to_int(&call.on_complete));
                 api_t.accounts = call.accounts.to_owned();
                 api_t.approval_program = call.approval_program.to_owned().map(|c| c.0);
                 api_t.app_arguments = call
@@ -320,7 +322,10 @@ impl TryFrom<ApiTransaction> for Transaction {
             "appl" => TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
                 sender: api_t.sender,
                 app_id: api_t.app_id,
-                on_complete: from_api_option(api_t.on_complete),
+                on_complete: match api_t.on_complete {
+                    Some(oc) => int_to_application_call_on_complete(oc)?,
+                    None => return Err(TransactionError::Deserialization("TODO confirm that receiving non existent on_complete key from API means 0/NoOp OnComplete".to_owned())),
+                },
                 accounts: api_t.accounts,
                 approval_program: api_t.approval_program.map(CompiledTeal),
                 app_arguments: api_t.app_arguments.map(|args| args.into_iter().map(|a| a.0).collect()),
@@ -688,6 +693,34 @@ fn as_api_option<T: Num>(n: T) -> Option<T> {
 
 fn from_api_option<T: Num>(opt: Option<T>) -> T {
     opt.unwrap_or_else(T::zero)
+}
+
+fn application_call_on_complete_to_int(call: &ApplicationCallOnComplete) -> u32 {
+    match call {
+        ApplicationCallOnComplete::NoOp => 0,
+        ApplicationCallOnComplete::OptIn => 1,
+        ApplicationCallOnComplete::CloseOut => 2,
+        ApplicationCallOnComplete::ClearState => 3,
+        ApplicationCallOnComplete::UpdateApplication => 4,
+        ApplicationCallOnComplete::DeleteApplication => 5,
+    }
+}
+
+fn int_to_application_call_on_complete(
+    i: u32,
+) -> Result<ApplicationCallOnComplete, TransactionError> {
+    match i {
+        0 => Ok(ApplicationCallOnComplete::NoOp),
+        1 => Ok(ApplicationCallOnComplete::OptIn),
+        2 => Ok(ApplicationCallOnComplete::CloseOut),
+        3 => Ok(ApplicationCallOnComplete::ClearState),
+        4 => Ok(ApplicationCallOnComplete::UpdateApplication),
+        5 => Ok(ApplicationCallOnComplete::DeleteApplication),
+        _ => Err(TransactionError::Deserialization(format!(
+            "Invalid on complete value: {}",
+            i
+        ))),
+    }
 }
 
 #[cfg(test)]
