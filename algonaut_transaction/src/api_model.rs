@@ -5,6 +5,7 @@ use algonaut_core::{
     ToMsgPack, VotePk, VrfPk,
 };
 use algonaut_crypto::{HashDigest, Signature};
+use num_traits::Num;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
     SignedTransaction, Transaction, TransactionType,
 };
 
-// Important: When signing:
+// Important:
 // - Fields have to be sorted alphabetically.
 // - Keys must be excluded if they've no value.
 // The signature validation fails otherwise.
@@ -37,13 +38,18 @@ pub struct ApiTransaction {
     pub amount: Option<u64>,
 
     #[serde(rename = "apaa", skip_serializing_if = "Option::is_none")]
-    pub app_arguments: Option<Vec<u8>>,
+    pub app_arguments: Option<Vec<AppArgument>>,
 
     #[serde(rename = "apan", skip_serializing_if = "Option::is_none")]
     pub on_complete: Option<u64>,
 
-    #[serde(rename = "apap", skip_serializing_if = "Option::is_none")]
-    pub approval_program: Option<Address>,
+    #[serde(
+        default,
+        rename = "apap",
+        with = "serde_bytes",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub approval_program: Option<Vec<u8>>,
 
     #[serde(rename = "apar", skip_serializing_if = "Option::is_none")]
     pub asset_params: Option<ApiAssetParams>,
@@ -66,8 +72,13 @@ pub struct ApiTransaction {
     #[serde(rename = "apls", skip_serializing_if = "Option::is_none")]
     pub local_state_schema: Option<ApiStateSchema>,
 
-    #[serde(rename = "apsu", skip_serializing_if = "Option::is_none")]
-    pub clear_state_program: Option<Address>,
+    #[serde(
+        default,
+        rename = "apsu",
+        with = "serde_bytes",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub clear_state_program: Option<Vec<u8>>,
 
     #[serde(rename = "arcv", skip_serializing_if = "Option::is_none")]
     pub asset_receiver: Option<Address>,
@@ -149,6 +160,9 @@ pub struct ApiTransaction {
     #[serde(rename = "xaid", skip_serializing_if = "Option::is_none")]
     pub xfer: Option<u64>,
 }
+
+#[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+pub struct AppArgument(#[serde(with = "serde_bytes")] Vec<u8>);
 
 impl From<Transaction> for ApiTransaction {
     fn from(t: Transaction) -> Self {
@@ -238,29 +252,40 @@ impl From<Transaction> for ApiTransaction {
                 api_t.frozen = Some(freeze.frozen);
             }
             TransactionType::ApplicationCallTransaction(call) => {
-                api_t.app_id = Some(call.app_id);
-                api_t.on_complete = Some(call.on_complete);
+                api_t.app_id = call.app_id;
+                api_t.on_complete = as_api_option(call.on_complete);
                 api_t.accounts = call.accounts.to_owned();
-                api_t.approval_program = call.approval_program;
-                api_t.app_arguments = call.app_arguments.to_owned();
-                api_t.clear_state_program = call.clear_state_program;
+                api_t.approval_program = call.approval_program.to_owned().map(|c| c.0);
+                api_t.app_arguments = call
+                    .app_arguments
+                    .to_owned()
+                    .map(|args| args.into_iter().map(AppArgument).collect());
+                api_t.clear_state_program = call.clear_state_program.to_owned().map(|c| c.0);
                 api_t.foreign_apps = call.foreign_apps;
                 api_t.foreign_assets = call.foreign_assets;
-                api_t.global_state_schema = call.to_owned().global_state_schema.map(|s| s.into());
-                api_t.local_state_schema = call.to_owned().local_state_schema.map(|s| s.into());
+                api_t.global_state_schema =
+                    call.to_owned().global_state_schema.and_then(|s| s.into());
+                api_t.local_state_schema =
+                    call.to_owned().local_state_schema.and_then(|s| s.into());
             }
         }
         api_t
     }
 }
 
-impl From<ApiTransaction> for Transaction {
-    fn from(api_t: ApiTransaction) -> Self {
+impl TryFrom<ApiTransaction> for Transaction {
+    type Error = TransactionError;
+
+    fn try_from(api_t: ApiTransaction) -> Result<Self, Self::Error> {
         let txn_type = match api_t.type_.as_ref() {
             "pay" => TransactionType::Payment(Payment {
                 sender: api_t.sender,
-                receiver: api_t.receiver.unwrap(),
-                amount: MicroAlgos(api_t.amount.unwrap()),
+                receiver: api_t.receiver.ok_or_else(|| {
+                    TransactionError::Deserialization("receiver missing".to_owned())
+                })?,
+                amount: MicroAlgos(api_t.amount.ok_or_else(|| {
+                    TransactionError::Deserialization("amount missing".to_owned())
+                })?),
                 close_remainder_to: api_t.close_reminder_to,
             }),
             "keyreg" => TransactionType::KeyRegistration(KeyRegistration {
@@ -282,26 +307,37 @@ impl From<ApiTransaction> for Transaction {
             "axfer" => parse_asset_transfer_transaction(&api_t),
             "afrz" => TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
                 sender: api_t.sender,
-                freeze_account: api_t.freeze_account.unwrap(),
-                asset_id: api_t.asset_id.unwrap(),
-                frozen: api_t.frozen.unwrap(),
+                freeze_account: api_t.freeze_account.ok_or_else(|| {
+                    TransactionError::Deserialization("freeze_account missing".to_owned())
+                })?,
+                asset_id: api_t.asset_id.ok_or_else(|| {
+                    TransactionError::Deserialization("asset_id missing".to_owned())
+                })?,
+                frozen: api_t.frozen.ok_or_else(|| {
+                    TransactionError::Deserialization("frozen missing".to_owned())
+                })?,
             }),
             "appl" => TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
                 sender: api_t.sender,
-                app_id: api_t.app_id.unwrap(),
-                on_complete: api_t.on_complete.unwrap(),
+                app_id: api_t.app_id,
+                on_complete: from_api_option(api_t.on_complete),
                 accounts: api_t.accounts,
-                approval_program: api_t.approval_program,
-                app_arguments: api_t.app_arguments,
-                clear_state_program: api_t.clear_state_program,
+                approval_program: api_t.approval_program.map(CompiledTeal),
+                app_arguments: api_t.app_arguments.map(|args| args.into_iter().map(|a| a.0).collect()),
+                clear_state_program: api_t.clear_state_program.map(CompiledTeal),
                 foreign_apps: api_t.foreign_apps,
                 foreign_assets: api_t.foreign_assets,
                 global_state_schema: api_t.global_state_schema.map(|s| s.into()),
                 local_state_schema: api_t.local_state_schema.map(|s| s.into()),
             }),
-            _ => panic!(),
+            unsupported_type => {
+                return Err(TransactionError::Deserialization(format!(
+                    "Not supported transaction type: {}",
+                    unsupported_type
+                )))
+            }
         };
-        Transaction {
+        Ok(Transaction {
             fee: api_t.fee,
             first_valid: api_t.first_valid,
             genesis_id: api_t.genesis_id,
@@ -312,7 +348,7 @@ impl From<ApiTransaction> for Transaction {
             note: api_t.note.clone(),
             rekey_to: api_t.rekey_to,
             txn_type,
-        }
+        })
     }
 }
 
@@ -357,7 +393,7 @@ impl TryFrom<ApiSignedTransaction> for SignedTransaction {
 
     fn try_from(api_t: ApiSignedTransaction) -> Result<Self, Self::Error> {
         Ok(SignedTransaction {
-            transaction: api_t.transaction.clone().into(),
+            transaction: api_t.transaction.clone().try_into()?,
             transaction_id: api_t.transaction_id.clone(),
             sig: transaction_signature(&api_t)?,
         })
@@ -500,18 +536,24 @@ impl From<SignedTransaction> for ApiSignedTransaction {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ApiStateSchema {
-    #[serde(rename = "nui")]
-    pub number_ints: u64,
+    #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
+    pub number_ints: Option<u64>,
 
-    #[serde(rename = "nbs")]
-    pub number_byteslices: u64,
+    #[serde(rename = "nbs", skip_serializing_if = "Option::is_none")]
+    pub number_byteslices: Option<u64>,
 }
 
-impl From<StateSchema> for ApiStateSchema {
+impl From<StateSchema> for Option<ApiStateSchema> {
     fn from(state_schema: StateSchema) -> Self {
-        ApiStateSchema {
-            number_ints: state_schema.number_ints,
-            number_byteslices: state_schema.number_byteslices,
+        match state_schema {
+            StateSchema {
+                number_ints: 0,
+                number_byteslices: 0,
+            } => None,
+            _ => Some(ApiStateSchema {
+                number_ints: as_api_option(state_schema.number_ints),
+                number_byteslices: as_api_option(state_schema.number_byteslices),
+            }),
         }
     }
 }
@@ -519,8 +561,8 @@ impl From<StateSchema> for ApiStateSchema {
 impl From<ApiStateSchema> for StateSchema {
     fn from(state_schema: ApiStateSchema) -> Self {
         StateSchema {
-            number_ints: state_schema.number_ints,
-            number_byteslices: state_schema.number_byteslices,
+            number_ints: from_api_option(state_schema.number_ints),
+            number_byteslices: from_api_option(state_schema.number_byteslices),
         }
     }
 }
@@ -549,7 +591,7 @@ impl<'de> Deserialize<'de> for Transaction {
         D: serde::Deserializer<'de>,
     {
         let api_transaction = ApiTransaction::deserialize(deserializer)?;
-        Ok(api_transaction.into())
+        api_transaction.try_into().map_err(serde::de::Error::custom)
     }
 }
 
@@ -627,6 +669,25 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
             sig,
         })
     }
+}
+
+// Conversion from 0 to None, to skip serialization.
+// The API doesn't accept 0 as numeric value (contrary to stated in docs),
+// and seems to map "not existent key" to 0 (at least for some fields), so we convert explicitly 0 to None.
+// Note that this function is needed only for values which can be meaningfully 0 in the domain
+// (otherwise they should be represented as None everywhere)
+// Intentionally not using serde's skip for anything other than Option, for consistency.
+// related: https://github.com/algorand/docs/pull/454, https://github.com/algorand/docs/issues/415
+fn as_api_option<T: Num>(n: T) -> Option<T> {
+    if n.is_zero() {
+        None
+    } else {
+        Some(n)
+    }
+}
+
+fn from_api_option<T: Num>(opt: Option<T>) -> T {
+    opt.unwrap_or_else(T::zero)
 }
 
 #[cfg(test)]

@@ -3,7 +3,9 @@ use crate::transaction::{
     AssetConfigurationTransaction, AssetFreezeTransaction, AssetParams, AssetTransferTransaction,
     KeyRegistration, Payment, StateSchema, Transaction, TransactionType,
 };
-use algonaut_core::{Address, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk};
+use algonaut_core::{
+    Address, CompiledTeal, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk,
+};
 use algonaut_crypto::HashDigest;
 
 /// A builder for [Transaction].
@@ -542,25 +544,25 @@ impl FreezeAsset {
         }
     }
 
-    pub fn build(self) -> AssetFreezeTransaction {
-        AssetFreezeTransaction {
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
             sender: self.sender,
             freeze_account: self.freeze_account,
             asset_id: self.asset_id,
             frozen: self.frozen,
-        }
+        })
     }
 }
 
 /// A builder for [ApplicationCallTransaction].
 pub struct CallApplication {
     sender: Address,
-    app_id: u64,
+    app_id: Option<u64>,
     on_complete: u64,
     accounts: Option<Vec<Address>>,
-    approval_program: Option<Address>,
+    approval_program: Option<CompiledTeal>,
     app_arguments: Option<Vec<u8>>,
-    clear_state_program: Option<Address>,
+    clear_state_program: Option<CompiledTeal>,
     foreign_apps: Option<Address>,
     foreign_assets: Option<Address>,
     global_state_schema: Option<StateSchema>,
@@ -568,10 +570,33 @@ pub struct CallApplication {
 }
 
 impl CallApplication {
+    pub fn create(
+        sender: Address,
+        on_complete: u64,
+        approval_program: CompiledTeal,
+        clear_state_program: CompiledTeal,
+        global_state_schema: StateSchema,
+        local_state_schema: StateSchema,
+    ) -> Self {
+        CallApplication {
+            sender,
+            app_id: None,
+            on_complete,
+            accounts: None,
+            approval_program: Some(approval_program),
+            app_arguments: None,
+            clear_state_program: Some(clear_state_program),
+            foreign_apps: None,
+            foreign_assets: None,
+            global_state_schema: Some(global_state_schema),
+            local_state_schema: Some(local_state_schema),
+        }
+    }
+
     pub fn new(sender: Address, app_id: u64, on_complete: u64) -> Self {
         CallApplication {
             sender,
-            app_id,
+            app_id: Some(app_id),
             on_complete,
             accounts: None,
             approval_program: None,
@@ -589,7 +614,7 @@ impl CallApplication {
         self
     }
 
-    pub fn approval_program(mut self, approval_program: Address) -> Self {
+    pub fn approval_program(mut self, approval_program: CompiledTeal) -> Self {
         self.approval_program = Some(approval_program);
         self
     }
@@ -599,7 +624,7 @@ impl CallApplication {
         self
     }
 
-    pub fn clear_state_program(mut self, clear_state_program: Address) -> Self {
+    pub fn clear_state_program(mut self, clear_state_program: CompiledTeal) -> Self {
         self.clear_state_program = Some(clear_state_program);
         self
     }
@@ -624,8 +649,8 @@ impl CallApplication {
         self
     }
 
-    pub fn build(self) -> ApplicationCallTransaction {
-        ApplicationCallTransaction {
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: self.app_id,
             on_complete: self.on_complete,
@@ -637,6 +662,6 @@ impl CallApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: self.global_state_schema,
             local_state_schema: self.local_state_schema,
-        }
+        })
     }
 }

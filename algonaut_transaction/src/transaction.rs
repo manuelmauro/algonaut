@@ -1,5 +1,6 @@
 use crate::account::Account;
 use crate::error::TransactionError;
+use algonaut_core::CompiledTeal;
 use algonaut_core::SignedLogic;
 use algonaut_core::ToMsgPack;
 use algonaut_core::{Address, MultisigSignature};
@@ -312,7 +313,7 @@ pub struct ApplicationCallTransaction {
     pub sender: Address,
 
     /// ID of the application being configured or empty if creating.
-    pub app_id: u64,
+    pub app_id: Option<u64>,
 
     /// Defines what additional actions occur with the transaction. See the OnComplete section of
     /// the TEAL spec for details.
@@ -325,16 +326,16 @@ pub struct ApplicationCallTransaction {
     /// Logic executed for every application transaction, except when on-completion is set to
     /// "clear". It can read and write global state for the application, as well as account-specific
     /// local state. Approval programs may reject the transaction.
-    pub approval_program: Option<Address>,
+    pub approval_program: Option<CompiledTeal>,
 
     /// Transaction specific arguments accessed from the application's approval-program and
     /// clear-state-program.
-    pub app_arguments: Option<Vec<u8>>,
+    pub app_arguments: Option<Vec<Vec<u8>>>,
 
     /// Logic executed for application transactions with on-completion set to "clear". It can read
     /// and write global state for the application, as well as account-specific local state. Clear
     /// state programs cannot reject the transaction.
-    pub clear_state_program: Option<Address>,
+    pub clear_state_program: Option<CompiledTeal>,
 
     /// Lists the applications in addition to the application-id whose global states may be accessed
     /// by this application's approval-program and clear-state-program. The access is read-only.
