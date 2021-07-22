@@ -1,12 +1,15 @@
-use self::message::*;
 use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
 use algonaut_core::Round;
+use algonaut_model::indexer::v2::{
+    AccountInfoResponse, AccountResponse, AccountTransactionResponse, ApplicationInfoResponse,
+    ApplicationResponse, AssetResponse, AssetTransactionResponse, AssetsInfoResponse,
+    BalancesResponse, Block, QueryAccount, QueryAccountInfo, QueryAccountTransaction,
+    QueryApplicationInfo, QueryApplications, QueryAssetTransaction, QueryAssets, QueryAssetsInfo,
+    QueryBalances, QueryTransaction, TransactionResponse,
+};
 use reqwest::header::HeaderMap;
 use reqwest::Url;
-
-/// API message structs for Algorand's indexer v2
-pub mod message;
 
 /// Client interacting with the Algorand's indexer
 pub struct Client {

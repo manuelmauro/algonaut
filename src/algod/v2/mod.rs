@@ -1,24 +1,10 @@
-use algonaut_client::algod::v2::message::Account;
-use algonaut_client::algod::v2::message::Application;
-use algonaut_client::algod::v2::message::Block;
-use algonaut_client::algod::v2::message::Catchup;
-use algonaut_client::algod::v2::message::CompiledTealWithHash;
-use algonaut_client::algod::v2::message::DryrunRequest;
-use algonaut_client::algod::v2::message::DryrunResponse;
-use algonaut_client::algod::v2::message::GenesisBlock;
-use algonaut_client::algod::v2::message::KeyRegistration;
-use algonaut_client::algod::v2::message::NodeStatus;
-use algonaut_client::algod::v2::message::PendingTransaction;
-use algonaut_client::algod::v2::message::PendingTransactions;
-use algonaut_client::algod::v2::message::Supply;
-use algonaut_client::algod::v2::message::TransactionParams;
-use algonaut_client::algod::v2::message::TransactionResponse;
-use algonaut_client::algod::v2::message::Version;
 use algonaut_client::algod::v2::Client;
-use algonaut_core::Address;
-use algonaut_core::Round;
-use algonaut_core::SuggestedTransactionParams;
-use algonaut_core::ToMsgPack;
+use algonaut_core::{Address, Round, SuggestedTransactionParams, ToMsgPack};
+use algonaut_model::algod::v2::{
+    Account, Application, Block, Catchup, CompiledTealWithHash, DryrunRequest, DryrunResponse,
+    GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
+    TransactionParams, TransactionResponse, Version,
+};
 use algonaut_transaction::SignedTransaction;
 
 use crate::error::AlgonautError;

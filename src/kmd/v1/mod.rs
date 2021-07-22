@@ -1,4 +1,7 @@
-use algonaut_client::kmd::v1::message::{
+use algonaut_client::kmd::v1::Client;
+use algonaut_core::{MultisigSignature, ToMsgPack};
+use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
+use algonaut_model::kmd::v1::{
     CreateWalletResponse, DeleteKeyResponse, DeleteMultisigResponse, ExportKeyResponse,
     ExportMasterDerivationKeyResponse, ExportMultisigResponse, GenerateKeyResponse,
     GetWalletInfoResponse, ImportKeyResponse, ImportMultisigResponse, InitWalletHandleResponse,
@@ -6,9 +9,6 @@ use algonaut_client::kmd::v1::message::{
     RenameWalletResponse, RenewWalletHandleResponse, SignMultisigTransactionResponse,
     SignTransactionResponse, VersionsResponse,
 };
-use algonaut_client::kmd::v1::Client;
-use algonaut_core::{MultisigSignature, ToMsgPack};
-use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_transaction::Transaction;
 
 use crate::error::AlgonautError;

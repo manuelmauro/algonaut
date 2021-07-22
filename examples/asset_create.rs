@@ -2,7 +2,7 @@ use algonaut::algod::v2::Algod;
 use algonaut::algod::AlgodBuilder;
 use algonaut::error::AlgonautError;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
-use algonaut_client::algod::v2::message::PendingTransaction;
+use algonaut_model::algod::v2::PendingTransaction;
 use algonaut_transaction::account::Account;
 use dotenv::dotenv;
 use std::env;

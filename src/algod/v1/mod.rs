@@ -1,11 +1,9 @@
-use algonaut_client::algod::v1::{
-    message::{
-        Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply,
-        Transaction, TransactionFee, TransactionId, TransactionList, TransactionParams, Version,
-    },
-    Client,
-};
+use algonaut_client::algod::v1::Client;
 use algonaut_core::{Address, Round};
+use algonaut_model::algod::v1::{
+    Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply, Transaction,
+    TransactionFee, TransactionId, TransactionList, TransactionParams, Version,
+};
 
 use crate::error::AlgonautError;
 

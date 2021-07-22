@@ -1,5 +1,5 @@
 [package]
-authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
 description = "A Rusty sdk for the Algorand blockchain."
 documentation = "https://docs.rs/algonaut"
 edition = "2018"
@@ -12,6 +12,7 @@ version = "0.2.0"
 [workspace]
 members = [
   "algonaut_client",
+  "algonaut_model",
   "algonaut_core",
   "algonaut_crypto",
   "algonaut_encoding",
@@ -20,6 +21,7 @@ members = [
 
 [dependencies]
 algonaut_client = {path = "algonaut_client", version = "0.2.0"}
+algonaut_model = {path = "algonaut_model", version = "0.2.0"}
 algonaut_core = {path = "algonaut_core", version = "0.2.0"}
 algonaut_crypto = {path = "algonaut_crypto", version = "0.2.0"}
 algonaut_encoding = {path = "algonaut_encoding", version = "0.2.0"}

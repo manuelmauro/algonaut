@@ -2,12 +2,13 @@ use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
 use crate::token::ApiToken;
 use algonaut_core::{Address, Round};
-use message::*;
+use algonaut_model::algod::v2::{
+    Account, Application, Block, Catchup, CompiledTealWithHash, DryrunRequest, DryrunResponse,
+    GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
+    TransactionParams, TransactionResponse, Version,
+};
 use reqwest::header::HeaderMap;
 use reqwest::Url;
-
-/// API message structs for Algorand's daemon v2
-pub mod message;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 

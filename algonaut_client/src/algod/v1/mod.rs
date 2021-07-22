@@ -2,7 +2,7 @@ use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
 use crate::token::ApiToken;
 use algonaut_core::Round;
-use message::{
+use algonaut_model::algod::v1::{
     Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply, Transaction,
     TransactionFee, TransactionId, TransactionList, TransactionParams, Version,
 };
@@ -10,7 +10,6 @@ use reqwest::header::HeaderMap;
 use reqwest::Url;
 
 /// API message structs for Algorand's daemon v1
-pub mod message;
 
 const AUTH_HEADER: &str = "X-Algo-API-Token";
 
