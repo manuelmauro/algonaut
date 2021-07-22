@@ -23,22 +23,34 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let creator = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
 
-    // For brevity, using the same program for approval and clear
-    let program = r#"
+    let approval_program = r#"
+#pragma version 4
+txna ApplicationArgs 0
+byte 0x0100
+==
+txna ApplicationArgs 1
+byte 0xFF
+==
+&&
+"#
+    .as_bytes();
+
+    let clear_program = r#"
 #pragma version 4
 int 1
 "#
     .as_bytes();
 
-    let compiled_program = algod.compile_teal(&program).await?;
+    let compiled_approval_program = algod.compile_teal(&approval_program).await?;
+    let compiled_clear_program = algod.compile_teal(&clear_program).await?;
 
     let params = algod.suggested_transaction_params().await?;
     let t = TxnBuilder::with(
         params,
         CreateApplication::new(
             creator.address(),
-            compiled_program.clone().program,
-            compiled_program.program,
+            compiled_approval_program.clone().program,
+            compiled_clear_program.program,
             StateSchema {
                 number_ints: 0,
                 number_byteslices: 0,
@@ -48,6 +60,7 @@ int 1
                 number_byteslices: 0,
             },
         )
+        .app_arguments(vec![vec![1, 0], vec![255]])
         .build(),
     )
     .build();

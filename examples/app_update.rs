@@ -18,15 +18,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let creator = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
 
-    let program = r#"
+    let approval_program = r#"
 #pragma version 4
-txna ApplicationArgs 0
-byte 0x0100
-==
-txna ApplicationArgs 1
-byte 0xFF
-==
-&&
+int 1
 "#
     .as_bytes();
 
@@ -36,19 +30,31 @@ int 1
 "#
     .as_bytes();
 
-    let compiled_program = algod.compile_teal(&program).await?;
+    let compiled_approval_program = algod.compile_teal(&approval_program).await?;
     let compiled_clear_program = algod.compile_teal(&clear_program).await?;
 
     let params = algod.suggested_transaction_params().await?;
-    // contract being updated: no args, returns success
+    // example approval program:
+    // #pragma version 4
+    // txna ApplicationArgs 0
+    // byte 0x0100
+    // ==
+    // txna ApplicationArgs 1
+    // byte 0xFF
+    // ==
+    // &&
+    // example clear program:
+    // #pragma version 4
+    // int 1
     let t = TxnBuilder::with(
         params,
         UpdateApplication::new(
             creator.address(),
             5,
-            compiled_program.program,
+            compiled_approval_program.program,
             compiled_clear_program.program,
         )
+        .app_arguments(vec![vec![1, 0], vec![255]]) // for the program being upgraded
         .build(),
     )
     .build();
