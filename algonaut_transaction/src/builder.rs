@@ -565,6 +565,7 @@ pub struct CreateApplication {
     foreign_assets: Option<Address>,
     global_state_schema: Option<StateSchema>,
     local_state_schema: Option<StateSchema>,
+    extra_pages: u64,
 }
 
 impl CreateApplication {
@@ -585,6 +586,7 @@ impl CreateApplication {
             foreign_assets: None,
             global_state_schema: Some(global_state_schema),
             local_state_schema: Some(local_state_schema),
+            extra_pages: 0,
         }
     }
 
@@ -608,6 +610,11 @@ impl CreateApplication {
         self
     }
 
+    pub fn extra_pages(mut self, extra_pages: u64) -> Self {
+        self.extra_pages = extra_pages;
+        self
+    }
+
     pub fn build(self) -> TransactionType {
         TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
@@ -621,6 +628,7 @@ impl CreateApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: self.global_state_schema,
             local_state_schema: self.local_state_schema,
+            extra_pages: Some(self.extra_pages),
         })
     }
 }
@@ -689,6 +697,7 @@ impl UpdateApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
+            extra_pages: None,
         })
     }
 }
@@ -748,6 +757,7 @@ impl CallApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
+            extra_pages: None,
         })
     }
 }
@@ -807,6 +817,7 @@ impl ClearApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
+            extra_pages: None,
         })
     }
 }
@@ -866,6 +877,7 @@ impl CloseApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
+            extra_pages: None,
         })
     }
 }
@@ -925,6 +937,7 @@ impl DeleteApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
+            extra_pages: None,
         })
     }
 }
@@ -984,6 +997,7 @@ impl OptInApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
+            extra_pages: None,
         })
     }
 }

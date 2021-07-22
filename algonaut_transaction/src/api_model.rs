@@ -61,6 +61,9 @@ pub struct ApiTransaction {
     #[serde(rename = "apat", skip_serializing_if = "Option::is_none")]
     pub accounts: Option<Vec<Address>>,
 
+    #[serde(rename = "apep", skip_serializing_if = "Option::is_none")]
+    pub extra_pages: Option<u64>,
+
     #[serde(rename = "apfa", skip_serializing_if = "Option::is_none")]
     pub foreign_apps: Option<Address>,
 
@@ -210,6 +213,7 @@ impl From<Transaction> for ApiTransaction {
             vote_last: None,
             xfer: None,
             nonparticipating: None,
+            extra_pages: None,
         };
 
         match &t.txn_type {
@@ -269,6 +273,7 @@ impl From<Transaction> for ApiTransaction {
                     call.to_owned().global_state_schema.and_then(|s| s.into());
                 api_t.local_state_schema =
                     call.to_owned().local_state_schema.and_then(|s| s.into());
+                api_t.extra_pages = call.extra_pages.and_then(as_api_option);
             }
         }
         api_t
@@ -334,6 +339,7 @@ impl TryFrom<ApiTransaction> for Transaction {
                 foreign_assets: api_t.foreign_assets,
                 global_state_schema: api_t.global_state_schema.map(|s| s.into()),
                 local_state_schema: api_t.local_state_schema.map(|s| s.into()),
+                extra_pages: api_t.extra_pages
             }),
             unsupported_type => {
                 return Err(TransactionError::Deserialization(format!(
