@@ -326,7 +326,8 @@ bnz safe
 err
 safe:
 pop
-"#,
+"#
+            .as_bytes(),
         )
         .await;
 
@@ -346,7 +347,7 @@ async fn test_failure_compiling_teal() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let res = algod.compile_teal("not-a-teal-program").await;
+    let res = algod.compile_teal("not-a-teal-program".as_bytes()).await;
 
     println!("{:#?}", res);
     assert!(res.is_err());

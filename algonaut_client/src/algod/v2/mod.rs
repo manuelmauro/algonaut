@@ -284,7 +284,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn compile_teal(&self, teal: String) -> Result<CompiledTealWithHash, ClientError> {
+    pub async fn compile_teal(&self, teal: Vec<u8>) -> Result<CompiledTealWithHash, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/compile", self.url))

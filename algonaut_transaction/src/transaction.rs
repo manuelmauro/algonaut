@@ -1,5 +1,6 @@
 use crate::account::Account;
 use crate::error::TransactionError;
+use algonaut_core::CompiledTeal;
 use algonaut_core::SignedLogic;
 use algonaut_core::ToMsgPack;
 use algonaut_core::{Address, MultisigSignature};
@@ -312,11 +313,11 @@ pub struct ApplicationCallTransaction {
     pub sender: Address,
 
     /// ID of the application being configured or empty if creating.
-    pub app_id: u64,
+    pub app_id: Option<u64>,
 
     /// Defines what additional actions occur with the transaction. See the OnComplete section of
     /// the TEAL spec for details.
-    pub on_complete: u64,
+    pub on_complete: ApplicationCallOnComplete,
 
     /// List of accounts in addition to the sender that may be accessed from the application's
     /// approval-program and clear-state-program.
@@ -325,16 +326,16 @@ pub struct ApplicationCallTransaction {
     /// Logic executed for every application transaction, except when on-completion is set to
     /// "clear". It can read and write global state for the application, as well as account-specific
     /// local state. Approval programs may reject the transaction.
-    pub approval_program: Option<Address>,
+    pub approval_program: Option<CompiledTeal>,
 
     /// Transaction specific arguments accessed from the application's approval-program and
     /// clear-state-program.
-    pub app_arguments: Option<Vec<u8>>,
+    pub app_arguments: Option<Vec<Vec<u8>>>,
 
     /// Logic executed for application transactions with on-completion set to "clear". It can read
     /// and write global state for the application, as well as account-specific local state. Clear
     /// state programs cannot reject the transaction.
-    pub clear_state_program: Option<Address>,
+    pub clear_state_program: Option<CompiledTeal>,
 
     /// Lists the applications in addition to the application-id whose global states may be accessed
     /// by this application's approval-program and clear-state-program. The access is read-only.
@@ -349,6 +350,26 @@ pub struct ApplicationCallTransaction {
 
     /// Holds the maximum number of local state values defined within a StateSchema object.
     pub local_state_schema: Option<StateSchema>,
+
+    // Number of additional pages allocated to the application's approval and clear state programs. Each ExtraProgramPages is 2048 bytes. The sum of ApprovalProgram and ClearStateProgram may not exceed 2048*(1+ExtraProgramPages) bytes.
+    pub extra_pages: Option<u64>,
+}
+
+/// An application transaction must indicate the action to be taken following the execution of its approvalProgram or clearStateProgram. The variants below describe the available actions.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ApplicationCallOnComplete {
+    /// Only execute the ApprovalProgram associated with this application ID, with no additional effects.
+    NoOp,
+    /// Before executing the ApprovalProgram, allocate local state for this application into the sender's account data.
+    OptIn,
+    /// After executing the ApprovalProgram, clear any local state for this application out of the sender's account data.
+    CloseOut,
+    /// Don't execute the ApprovalProgram, and instead execute the ClearStateProgram (which may not reject this transaction). Additionally, clear any local state for this application out of the sender's account data as in CloseOutOC.
+    ClearState,
+    /// After executing the ApprovalProgram, replace the ApprovalProgram and ClearStateProgram associated with this application ID with the programs specified in this transaction.
+    UpdateApplication,
+    /// After executing the ApprovalProgram, delete the application parameters from the account data of the application's creator.
+    DeleteApplication,
 }
 
 /// Storage state schema. The StateSchema object is only required for the create application call

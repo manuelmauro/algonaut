@@ -1,9 +1,11 @@
 use crate::transaction::{
-    ApplicationCallTransaction, AssetAcceptTransaction, AssetClawbackTransaction,
-    AssetConfigurationTransaction, AssetFreezeTransaction, AssetParams, AssetTransferTransaction,
-    KeyRegistration, Payment, StateSchema, Transaction, TransactionType,
+    ApplicationCallOnComplete, ApplicationCallTransaction, AssetAcceptTransaction,
+    AssetClawbackTransaction, AssetConfigurationTransaction, AssetFreezeTransaction, AssetParams,
+    AssetTransferTransaction, KeyRegistration, Payment, StateSchema, Transaction, TransactionType,
 };
-use algonaut_core::{Address, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk};
+use algonaut_core::{
+    Address, CompiledTeal, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk,
+};
 use algonaut_crypto::HashDigest;
 
 /// A builder for [Transaction].
@@ -542,45 +544,49 @@ impl FreezeAsset {
         }
     }
 
-    pub fn build(self) -> AssetFreezeTransaction {
-        AssetFreezeTransaction {
+    pub fn build(self) -> TransactionType {
+        TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
             sender: self.sender,
             freeze_account: self.freeze_account,
             asset_id: self.asset_id,
             frozen: self.frozen,
-        }
+        })
     }
 }
 
 /// A builder for [ApplicationCallTransaction].
-pub struct CallApplication {
+pub struct CreateApplication {
     sender: Address,
-    app_id: u64,
-    on_complete: u64,
     accounts: Option<Vec<Address>>,
-    approval_program: Option<Address>,
-    app_arguments: Option<Vec<u8>>,
-    clear_state_program: Option<Address>,
+    approval_program: Option<CompiledTeal>,
+    app_arguments: Option<Vec<Vec<u8>>>,
+    clear_state_program: Option<CompiledTeal>,
     foreign_apps: Option<Address>,
     foreign_assets: Option<Address>,
     global_state_schema: Option<StateSchema>,
     local_state_schema: Option<StateSchema>,
+    extra_pages: u64,
 }
 
-impl CallApplication {
-    pub fn new(sender: Address, app_id: u64, on_complete: u64) -> Self {
-        CallApplication {
+impl CreateApplication {
+    pub fn new(
+        sender: Address,
+        approval_program: CompiledTeal,
+        clear_state_program: CompiledTeal,
+        global_state_schema: StateSchema,
+        local_state_schema: StateSchema,
+    ) -> Self {
+        CreateApplication {
             sender,
-            app_id,
-            on_complete,
             accounts: None,
-            approval_program: None,
+            approval_program: Some(approval_program),
             app_arguments: None,
-            clear_state_program: None,
+            clear_state_program: Some(clear_state_program),
             foreign_apps: None,
             foreign_assets: None,
-            global_state_schema: None,
-            local_state_schema: None,
+            global_state_schema: Some(global_state_schema),
+            local_state_schema: Some(local_state_schema),
+            extra_pages: 0,
         }
     }
 
@@ -589,18 +595,8 @@ impl CallApplication {
         self
     }
 
-    pub fn approval_program(mut self, approval_program: Address) -> Self {
-        self.approval_program = Some(approval_program);
-        self
-    }
-
-    pub fn app_arguments(mut self, app_arguments: Vec<u8>) -> Self {
+    pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
-        self
-    }
-
-    pub fn clear_state_program(mut self, clear_state_program: Address) -> Self {
-        self.clear_state_program = Some(clear_state_program);
         self
     }
 
@@ -614,21 +610,16 @@ impl CallApplication {
         self
     }
 
-    pub fn global_state_schema(mut self, global_state_schema: StateSchema) -> Self {
-        self.global_state_schema = Some(global_state_schema);
+    pub fn extra_pages(mut self, extra_pages: u64) -> Self {
+        self.extra_pages = extra_pages;
         self
     }
 
-    pub fn local_state_schema(mut self, local_state_schema: StateSchema) -> Self {
-        self.local_state_schema = Some(local_state_schema);
-        self
-    }
-
-    pub fn build(self) -> ApplicationCallTransaction {
-        ApplicationCallTransaction {
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
-            app_id: self.app_id,
-            on_complete: self.on_complete,
+            app_id: None,
+            on_complete: ApplicationCallOnComplete::NoOp,
             accounts: self.accounts,
             approval_program: self.approval_program,
             app_arguments: self.app_arguments,
@@ -637,6 +628,376 @@ impl CallApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: self.global_state_schema,
             local_state_schema: self.local_state_schema,
+            extra_pages: Some(self.extra_pages),
+        })
+    }
+}
+
+/// A builder for [ApplicationCallTransaction].
+pub struct UpdateApplication {
+    sender: Address,
+    app_id: u64,
+    accounts: Option<Vec<Address>>,
+    approval_program: Option<CompiledTeal>,
+    app_arguments: Option<Vec<Vec<u8>>>,
+    clear_state_program: Option<CompiledTeal>,
+    foreign_apps: Option<Address>,
+    foreign_assets: Option<Address>,
+}
+
+impl UpdateApplication {
+    pub fn new(
+        sender: Address,
+        app_id: u64,
+        approval_program: CompiledTeal,
+        clear_state_program: CompiledTeal,
+    ) -> Self {
+        UpdateApplication {
+            sender,
+            app_id,
+            accounts: None,
+            approval_program: Some(approval_program),
+            app_arguments: None,
+            clear_state_program: Some(clear_state_program),
+            foreign_apps: None,
+            foreign_assets: None,
         }
+    }
+
+    pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
+        self.accounts = Some(accounts);
+        self
+    }
+
+    pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
+        self.app_arguments = Some(app_arguments);
+        self
+    }
+
+    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+        self.foreign_apps = Some(foreign_apps);
+        self
+    }
+
+    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+        self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+            sender: self.sender,
+            app_id: Some(self.app_id),
+            on_complete: ApplicationCallOnComplete::UpdateApplication,
+            accounts: self.accounts,
+            approval_program: self.approval_program,
+            app_arguments: self.app_arguments,
+            clear_state_program: self.clear_state_program,
+            foreign_apps: self.foreign_apps,
+            foreign_assets: self.foreign_assets,
+            global_state_schema: None,
+            local_state_schema: None,
+            extra_pages: None,
+        })
+    }
+}
+
+/// A builder for [ApplicationCallTransaction].
+pub struct CallApplication {
+    sender: Address,
+    app_id: u64,
+    accounts: Option<Vec<Address>>,
+    app_arguments: Option<Vec<Vec<u8>>>,
+    foreign_apps: Option<Address>,
+    foreign_assets: Option<Address>,
+}
+
+impl CallApplication {
+    pub fn new(sender: Address, app_id: u64) -> Self {
+        CallApplication {
+            sender,
+            app_id,
+            accounts: None,
+            app_arguments: None,
+            foreign_apps: None,
+            foreign_assets: None,
+        }
+    }
+
+    pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
+        self.accounts = Some(accounts);
+        self
+    }
+
+    pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
+        self.app_arguments = Some(app_arguments);
+        self
+    }
+
+    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+        self.foreign_apps = Some(foreign_apps);
+        self
+    }
+
+    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+        self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+            sender: self.sender,
+            app_id: Some(self.app_id),
+            on_complete: ApplicationCallOnComplete::NoOp,
+            accounts: self.accounts,
+            approval_program: None,
+            app_arguments: self.app_arguments,
+            clear_state_program: None,
+            foreign_apps: self.foreign_apps,
+            foreign_assets: self.foreign_assets,
+            global_state_schema: None,
+            local_state_schema: None,
+            extra_pages: None,
+        })
+    }
+}
+
+/// A builder for [ApplicationCallTransaction].
+pub struct ClearApplication {
+    sender: Address,
+    app_id: u64,
+    accounts: Option<Vec<Address>>,
+    app_arguments: Option<Vec<Vec<u8>>>,
+    foreign_apps: Option<Address>,
+    foreign_assets: Option<Address>,
+}
+
+impl ClearApplication {
+    pub fn new(sender: Address, app_id: u64) -> Self {
+        ClearApplication {
+            sender,
+            app_id,
+            accounts: None,
+            app_arguments: None,
+            foreign_apps: None,
+            foreign_assets: None,
+        }
+    }
+
+    pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
+        self.accounts = Some(accounts);
+        self
+    }
+
+    pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
+        self.app_arguments = Some(app_arguments);
+        self
+    }
+
+    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+        self.foreign_apps = Some(foreign_apps);
+        self
+    }
+
+    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+        self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+            sender: self.sender,
+            app_id: Some(self.app_id),
+            on_complete: ApplicationCallOnComplete::ClearState,
+            accounts: self.accounts,
+            approval_program: None,
+            app_arguments: self.app_arguments,
+            clear_state_program: None,
+            foreign_apps: self.foreign_apps,
+            foreign_assets: self.foreign_assets,
+            global_state_schema: None,
+            local_state_schema: None,
+            extra_pages: None,
+        })
+    }
+}
+
+/// A builder for [ApplicationCallTransaction].
+pub struct CloseApplication {
+    sender: Address,
+    app_id: u64,
+    accounts: Option<Vec<Address>>,
+    app_arguments: Option<Vec<Vec<u8>>>,
+    foreign_apps: Option<Address>,
+    foreign_assets: Option<Address>,
+}
+
+impl CloseApplication {
+    pub fn new(sender: Address, app_id: u64) -> Self {
+        CloseApplication {
+            sender,
+            app_id,
+            accounts: None,
+            app_arguments: None,
+            foreign_apps: None,
+            foreign_assets: None,
+        }
+    }
+
+    pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
+        self.accounts = Some(accounts);
+        self
+    }
+
+    pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
+        self.app_arguments = Some(app_arguments);
+        self
+    }
+
+    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+        self.foreign_apps = Some(foreign_apps);
+        self
+    }
+
+    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+        self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+            sender: self.sender,
+            app_id: Some(self.app_id),
+            on_complete: ApplicationCallOnComplete::CloseOut,
+            accounts: self.accounts,
+            approval_program: None,
+            app_arguments: self.app_arguments,
+            clear_state_program: None,
+            foreign_apps: self.foreign_apps,
+            foreign_assets: self.foreign_assets,
+            global_state_schema: None,
+            local_state_schema: None,
+            extra_pages: None,
+        })
+    }
+}
+
+/// A builder for [ApplicationCallTransaction].
+pub struct DeleteApplication {
+    sender: Address,
+    app_id: u64,
+    accounts: Option<Vec<Address>>,
+    app_arguments: Option<Vec<Vec<u8>>>,
+    foreign_apps: Option<Address>,
+    foreign_assets: Option<Address>,
+}
+
+impl DeleteApplication {
+    pub fn new(sender: Address, app_id: u64) -> Self {
+        DeleteApplication {
+            sender,
+            app_id,
+            accounts: None,
+            app_arguments: None,
+            foreign_apps: None,
+            foreign_assets: None,
+        }
+    }
+
+    pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
+        self.accounts = Some(accounts);
+        self
+    }
+
+    pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
+        self.app_arguments = Some(app_arguments);
+        self
+    }
+
+    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+        self.foreign_apps = Some(foreign_apps);
+        self
+    }
+
+    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+        self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+            sender: self.sender,
+            app_id: Some(self.app_id),
+            on_complete: ApplicationCallOnComplete::DeleteApplication,
+            accounts: self.accounts,
+            approval_program: None,
+            app_arguments: self.app_arguments,
+            clear_state_program: None,
+            foreign_apps: self.foreign_apps,
+            foreign_assets: self.foreign_assets,
+            global_state_schema: None,
+            local_state_schema: None,
+            extra_pages: None,
+        })
+    }
+}
+
+/// A builder for [ApplicationCallTransaction].
+pub struct OptInApplication {
+    sender: Address,
+    app_id: u64,
+    accounts: Option<Vec<Address>>,
+    app_arguments: Option<Vec<Vec<u8>>>,
+    foreign_apps: Option<Address>,
+    foreign_assets: Option<Address>,
+}
+
+impl OptInApplication {
+    pub fn new(sender: Address, app_id: u64) -> Self {
+        OptInApplication {
+            sender,
+            app_id,
+            accounts: None,
+            app_arguments: None,
+            foreign_apps: None,
+            foreign_assets: None,
+        }
+    }
+
+    pub fn accounts(mut self, accounts: Vec<Address>) -> Self {
+        self.accounts = Some(accounts);
+        self
+    }
+
+    pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
+        self.app_arguments = Some(app_arguments);
+        self
+    }
+
+    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+        self.foreign_apps = Some(foreign_apps);
+        self
+    }
+
+    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+        self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn build(self) -> TransactionType {
+        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+            sender: self.sender,
+            app_id: Some(self.app_id),
+            on_complete: ApplicationCallOnComplete::OptIn,
+            accounts: self.accounts,
+            approval_program: None,
+            app_arguments: self.app_arguments,
+            clear_state_program: None,
+            foreign_apps: self.foreign_apps,
+            foreign_assets: self.foreign_assets,
+            global_state_schema: None,
+            local_state_schema: None,
+            extra_pages: None,
+        })
     }
 }
