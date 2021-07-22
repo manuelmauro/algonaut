@@ -1,6 +1,6 @@
 use algonaut::algod::AlgodBuilder;
-use algonaut_client::algod::v2::message::KeyRegistration;
 use algonaut_core::Round;
+use algonaut_model::algod::v2::KeyRegistration;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

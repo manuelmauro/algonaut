@@ -1,5 +1,5 @@
 [package]
-authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
 description = "Encoding utilities for the Algorand blockchain."
 documentation = "https://docs.rs/algonaut_encoding"
 edition = "2018"

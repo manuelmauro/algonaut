@@ -1,7 +1,7 @@
 use algonaut::algod::AlgodBuilder;
-use algonaut_client::algod::v1::message::QueryAccountTransactions;
 use algonaut_core::SignedLogic;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress};
+use algonaut_model::algod::v1::QueryAccountTransactions;
 use algonaut_transaction::transaction::TransactionSignature;
 use algonaut_transaction::tx_group::TxGroup;
 use algonaut_transaction::{account::Account, CreateAsset, Pay, SignedTransaction, TxnBuilder};

@@ -3,11 +3,20 @@ use crate::extensions::reqwest::ResponseExt;
 use crate::token::ApiToken;
 use algonaut_core::MultisigSignature;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
-use message::*;
+use algonaut_model::kmd::v1::{
+    CreateWalletRequest, CreateWalletResponse, DeleteKeyRequest, DeleteKeyResponse,
+    DeleteMultisigRequest, DeleteMultisigResponse, ExportKeyRequest, ExportKeyResponse,
+    ExportMasterDerivationKeyRequest, ExportMasterDerivationKeyResponse, ExportMultisigRequest,
+    ExportMultisigResponse, GenerateKeyRequest, GenerateKeyResponse, GetWalletInfoRequest,
+    GetWalletInfoResponse, ImportKeyRequest, ImportKeyResponse, ImportMultisigRequest,
+    ImportMultisigResponse, InitWalletHandleRequest, InitWalletHandleResponse, ListKeysRequest,
+    ListKeysResponse, ListMultisigRequest, ListMultisigResponse, ListWalletsResponse,
+    ReleaseWalletHandleRequest, ReleaseWalletHandleResponse, RenameWalletRequest,
+    RenameWalletResponse, RenewWalletHandleRequest, RenewWalletHandleResponse,
+    SignMultisigTransactionRequest, SignMultisigTransactionResponse, SignTransactionRequest,
+    SignTransactionResponse, VersionsResponse,
+};
 use reqwest::Url;
-
-/// API message structs for Algorand's kmd v1
-pub mod message;
 
 const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 

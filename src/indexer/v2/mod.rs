@@ -1,14 +1,12 @@
-use algonaut_client::indexer::v2::{
-    message::{
-        AccountInfoResponse, AccountResponse, AccountTransactionResponse, ApplicationInfoResponse,
-        ApplicationResponse, AssetResponse, AssetTransactionResponse, AssetsInfoResponse,
-        BalancesResponse, Block, QueryAccount, QueryAccountInfo, QueryAccountTransaction,
-        QueryApplicationInfo, QueryApplications, QueryAssetTransaction, QueryAssets,
-        QueryAssetsInfo, QueryBalances, QueryTransaction, TransactionResponse,
-    },
-    Client,
-};
+use algonaut_client::indexer::v2::Client;
 use algonaut_core::Round;
+use algonaut_model::indexer::v2::{
+    AccountInfoResponse, AccountResponse, AccountTransactionResponse, ApplicationInfoResponse,
+    ApplicationResponse, AssetResponse, AssetTransactionResponse, AssetsInfoResponse,
+    BalancesResponse, Block, QueryAccount, QueryAccountInfo, QueryAccountTransaction,
+    QueryApplicationInfo, QueryApplications, QueryAssetTransaction, QueryAssets, QueryAssetsInfo,
+    QueryBalances, QueryTransaction, TransactionResponse,
+};
 
 use crate::error::AlgonautError;
 

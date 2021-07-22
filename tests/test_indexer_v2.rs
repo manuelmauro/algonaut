@@ -1,10 +1,10 @@
 use algonaut::indexer::IndexerBuilder;
-use algonaut_client::indexer::v2::message::{
+use algonaut_core::Round;
+use algonaut_model::indexer::v2::{
     QueryAccount, QueryAccountInfo, QueryAccountTransaction, QueryApplicationInfo,
     QueryApplications, QueryAssetTransaction, QueryAssets, QueryAssetsInfo, QueryBalances,
     QueryTransaction, Role,
 };
-use algonaut_core::Round;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
