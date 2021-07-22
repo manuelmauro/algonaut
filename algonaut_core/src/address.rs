@@ -168,7 +168,7 @@ mod tests {
         assert_eq!(s, addr.to_string());
     }
 
-    /// Tryng to decode a base32 address with an invalid checksum must fail.
+    /// Trying to decode a base32 address with an invalid checksum must fail.
     #[test]
     fn decode_invalid_checksum() {
         let invalid_csum = "737777777777777777777777777777777777777777777777777UFEJ2CJ";
