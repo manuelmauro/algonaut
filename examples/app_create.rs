@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let creator = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
+    let sender = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
 
     let approval_program = r#"
 #pragma version 4
@@ -48,7 +48,7 @@ int 1
     let t = TxnBuilder::with(
         params,
         CreateApplication::new(
-            creator.address(),
+            sender.address(),
             compiled_approval_program.clone().program,
             compiled_clear_program.program,
             StateSchema {
@@ -65,7 +65,7 @@ int 1
     )
     .build();
 
-    let signed_t = creator.sign_transaction(&t)?;
+    let signed_t = sender.sign_transaction(&t)?;
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
 

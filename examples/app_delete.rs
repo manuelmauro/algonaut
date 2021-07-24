@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let creator = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
+    let sender = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
 
     let params = algod.suggested_transaction_params().await?;
     // example approval program:
@@ -33,13 +33,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // int 1
     let t = TxnBuilder::with(
         params,
-        DeleteApplication::new(creator.address(), 5)
+        DeleteApplication::new(sender.address(), 5)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )
     .build();
 
-    let signed_t = creator.sign_transaction(&t)?;
+    let signed_t = sender.sign_transaction(&t)?;
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
     println!("response: {:?}", send_response);
