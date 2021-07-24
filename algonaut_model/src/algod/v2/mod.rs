@@ -434,7 +434,7 @@ pub struct EvalDelta {
     pub action: u64,
 
     /// `bs` bytes value.
-    pub bytes: String,
+    pub bytes: Option<String>,
 
     /// `ui` uint value.
     pub uint: u64,
