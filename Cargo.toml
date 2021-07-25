@@ -27,7 +27,7 @@ algonaut_crypto = {path = "algonaut_crypto", version = "0.2.0"}
 algonaut_encoding = {path = "algonaut_encoding", version = "0.2.0"}
 algonaut_transaction = {path = "algonaut_transaction", version = "0.2.0"}
 thiserror = "1.0.23"
-rmp-serde = "0.14.0"
+rmp-serde = "0.15.5"
 
 [dev-dependencies]
 chrono = "0.4.9"
