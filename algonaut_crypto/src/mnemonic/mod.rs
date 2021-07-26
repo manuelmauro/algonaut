@@ -5,14 +5,19 @@ use static_assertions::const_assert_eq;
 mod wordlist;
 
 const BITS_PER_WORD: usize = 11;
+#[allow(dead_code)]
 const CHECKSUM_LEN_WORDS: usize = 1;
 const KEY_LEN_BYTES: usize = 32;
 const MNEM_LEN_WORDS: usize = 25; // includes checksum word
+#[allow(dead_code)]
 const PADDING_ZEROS: usize = BITS_PER_WORD - ((KEY_LEN_BYTES * 8) % BITS_PER_WORD);
 const MNEMONIC_DELIM: &str = " ";
 type ChecksumAlg = sha2::Sha512Trunc256;
 
-const_assert_eq!(mnemonic_constants; MNEM_LEN_WORDS * BITS_PER_WORD - (CHECKSUM_LEN_WORDS*BITS_PER_WORD), KEY_LEN_BYTES * 8 + PADDING_ZEROS);
+const_assert_eq!(
+    MNEM_LEN_WORDS * BITS_PER_WORD - (CHECKSUM_LEN_WORDS * BITS_PER_WORD),
+    KEY_LEN_BYTES * 8 + PADDING_ZEROS
+);
 
 /// Converts a 32-byte key into a 25 word mnemonic. The generated
 /// mnemonic includes a checksum. Each word in the mnemonic represents 11 bits
