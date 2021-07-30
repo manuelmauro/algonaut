@@ -48,19 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 ```
 
-## Objectives
-
-- Example-driven API development
-- Async requests
-- Builder pattern and sensible defaults
-- Modularity
-- Clear error messages
-- Thorough test suite
-- Comprehensive documentation
-
 ## Crates
-
-`algonaut` has a modular structure and is composed of multiple crates.
 
 - `algonaut_client` contains clients for `algod`, `kmd`, and `indexer` RPC APIs.
 - `algonaut_core` defines core structures for Algorand like: `Address`, `Round`, `MicroAlgos`, etc.
@@ -68,16 +56,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 - `algonaut_encoding` implements encoding utility functions such as `serde` visitors.
 - `algonaut_transaction` support developers in building all kinds of Algorand transactions.
 
-Planned:
+## Integration examples
 
-- `algonaut_teal` will add validators, templates, and dryrun helpers.
-
-## Integrations
-
-- [My Algo signing example](https://github.com/i-schuetz/algonaut-myalgo-yew-template)
-- [Transaction prompt Yew component](https://github.com/i-schuetz/algo-prompt)
-- [Yew example](https://github.com/i-schuetz/algorand-yew-example)
-- [iOS example (experimental)](https://github.com/i-schuetz/algonaut_ios)
+- [My Algo signing with Yew / WASM](https://github.com/i-schuetz/algonaut-myalgo-yew-template)
+- [Payment prompt with Yew / WASM](https://github.com/i-schuetz/algo-prompt)
+- [Basic Yew / WASM](https://github.com/i-schuetz/algorand-yew-example)
+- [iOS app](https://github.com/i-schuetz/algonaut_ios)
 
 ## Changelog
 

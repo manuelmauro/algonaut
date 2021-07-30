@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2021-07-30
+
+### Added
+
+- Add examples: logic sig (contract account, delegated sig, delegated
+  multisig), key registration, atomic swap, asset transfer, asset opt-in, asset
+  clawback, app create, app opt-in, app call, app update, app delete, app close out, app
+  clear state
+- Port official Java SDK's Unit tests for account, client, address, logic sig
+- Add extra_pages application call parameter
+- Add builders for all application call types
+- Add verification functions to logic and multisig signatures
+- Set fee to max(fee, min_fee) in builders (from API's suggested params)
+- Add convenience to initialize transaction builders with suggested transaction params
+- Support asset removal
+- Support transaction URL scheme (payment prompts)
+- Add convenience to parse Address strings
+- Add convenience to submit signed transaction structs to algod
+- Support WASM
+- Support transactions groups
+- Support logic signatures: contract account, delegated and multi signature
+- Add abstraction layer for user interface
+
+### Changed
+
+- Fix deserialization of pending transactions for application calls using local state
+- Fix application calls
+- Improve user interface to compile TEAL
+- Make genesis id optional
+- Rewrite transaction builders to represent better use cases and verify mandatory fields at compile time
+- Move transaction sender field to transaction types, to allow to document/name differently
+- Fix asset opt-in transaction
+- Fix asset transfer transaction
+- Replace KMD signing with direct signing in non KMD specific tests and examples
+- Fix key registration transaction
+- Migrate to async API
+- Improve transaction debug representation
+- Improve indexer queries ergonomics
+- Fix direct account signing
+- Separate domain and API transaction representation
+- Fix indexer queries
+- Display error messages returned by clients in error
+
 ## [0.2.0] - 2021-04-23
 
 ### Added
