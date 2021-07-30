@@ -154,6 +154,7 @@ async fn test_append_multisig_transaction() -> Result<(), Box<dyn Error>> {
 // Java SDK test significantly changed: starting with transaction instead of signed transaction,
 // in Java the signed transaction signatures are empty. It's not possible to create a signed transaction with this state.
 #[test]
+#[ignore] // temporarily disabled, see https://github.com/manuelmauro/algonaut/issues/84
 async fn test_sign_multisig_key_reg_transaction() -> Result<(), Box<dyn Error>> {
     let addr = make_test_msig_addr()?;
     let enc_key_reg_tx = BASE64.decode(b"jKNmZWUAomZ2zQU/o2dlbqh0bjUwZS12MaJnaMQgb8FCXLbTzbIQLtZBNGJg6vNd8Uzvghi5wKZgnnnZWwiibHbNCSemc2Vsa2V5xCADez7ZuAqVsb2ohoDjAmyusmXyZUobNOn+HqAYTJmYCKNzbmTEII2StImQAXOgTfpDWaNmamr86ixCoF3Zwfc+66VHgDfppHR5cGWma2V5cmVnp3ZvdGVmc3TNBT+mdm90ZWtkzScQp3ZvdGVrZXnEICoC+altY7RwEG9ZUDSCrqhwag1l0Zm+xk5gTfdmv7Dkp3ZvdGVsc3TOAC3L/w==")?;
@@ -173,6 +174,7 @@ async fn test_sign_multisig_key_reg_transaction() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
+#[ignore] // temporarily disabled, see https://github.com/manuelmauro/algonaut/issues/84
 async fn test_append_multisig_key_reg_transaction() -> Result<(), Box<dyn Error>> {
     let addr = make_test_msig_addr()?;
     // The base64 str from the Java SDK was replaced because it represents an invalid signed transaction (empty signatures and no genesis hash) and this fails deserialization.
