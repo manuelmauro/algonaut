@@ -1,6 +1,7 @@
 use algonaut_core::{CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
+use algonaut_transaction::SignedTransaction;
 use data_encoding::BASE64;
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -500,10 +501,6 @@ pub struct GenesisBlock {
     pub addr: Option<String>,
 }
 
-/// A transaction.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Transaction {}
-
 /// A potentially truncated list of transactions currently in the node's transaction pool.
 /// You can compute whether or not the list is truncated if the number of elements in the
 /// top-transactions array is fewer than total-transactions.
@@ -511,7 +508,7 @@ pub struct Transaction {}
 pub struct PendingTransactions {
     /// An array of signed transaction objects.
     #[serde(rename = "top-transactions")]
-    pub top_transactions: Vec<Transaction>,
+    pub top_transactions: Vec<SignedTransaction>,
 
     /// Total number of transactions in the pool.
     #[serde(rename = "total-transactions")]
@@ -566,7 +563,7 @@ pub struct PendingTransaction {
     pub sender_rewards: Option<u64>,
 
     /// The raw signed transaction.
-    pub txn: Transaction,
+    pub txn: SignedTransaction,
 }
 
 /// Information about the status of a node

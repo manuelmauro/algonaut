@@ -223,7 +223,6 @@ impl CompiledTeal {
     }
 }
 
-// TODO rename
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum LogicSignature {
     ContractAccount,
