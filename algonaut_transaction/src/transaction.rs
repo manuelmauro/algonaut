@@ -115,7 +115,9 @@ impl Transaction {
     }
 
     /// The address of the account that signs and pays the fee.
-    pub(crate) fn sender(&self) -> Address {
+    /// It can have additional responsibilities dependending on the transaction type.
+    /// We keep it in the transaction types to be able to document (and possibly name) it separately.
+    pub fn sender(&self) -> Address {
         match &self.txn_type {
             TransactionType::Payment(t) => t.sender,
             TransactionType::KeyRegistration(t) => t.sender,
