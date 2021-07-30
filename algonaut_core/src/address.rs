@@ -1,7 +1,7 @@
 use crate::Signature;
 use algonaut_crypto::Ed25519PublicKey;
-use algonaut_encoding::U8_32Visitor;
 use data_encoding::BASE32_NOPAD;
+use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use std::fmt::{self, Debug, Formatter};
@@ -93,7 +93,8 @@ impl<'de> Deserialize<'de> for Address {
     where
         D: Deserializer<'de>,
     {
-        Ok(Address(deserializer.deserialize_bytes(U8_32Visitor)?))
+        let str = String::deserialize(deserializer)?;
+        Address::decode_from_string(&str).map_err(D::Error::custom)
     }
 }
 
