@@ -31,7 +31,7 @@ impl Address {
             return Err("Input string is an invalid address. Wrong length".to_string());
         }
         let (address, checksum) = checksum_address.split_at(HASH_LEN);
-        let hashed = ChecksumAlg::digest(&address);
+        let hashed = ChecksumAlg::digest(address);
         if &hashed[(HASH_LEN - CHECKSUM_LEN)..] == checksum {
             let mut bytes = [0; HASH_LEN];
             bytes.copy_from_slice(address);
@@ -55,7 +55,7 @@ impl Address {
 
     pub fn verify_bytes(&self, message: &[u8], signature: &Signature) -> bool {
         let mut message_to_verify = b"MX".to_vec();
-        message_to_verify.extend_from_slice(&message);
+        message_to_verify.extend_from_slice(message);
         self.as_public_key().verify(&message_to_verify, signature)
     }
 }

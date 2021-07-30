@@ -68,7 +68,7 @@ impl Account {
 
     /// Sign the given bytes, and wrap in Signature.
     fn generate_raw_sig(&self, bytes: &[u8]) -> Signature {
-        let signature = self.key_pair.sign(&bytes);
+        let signature = self.key_pair.sign(bytes);
         // ring returns a signature with padding at the end to make it 105 bytes, only 64 bytes are actually used
         let stripped_signature: [u8; 64] = signature.as_ref()[..64]
             .try_into()
@@ -115,7 +115,7 @@ impl Account {
         Ok(SignedTransaction {
             transaction: transaction.clone(),
             transaction_id: transaction.id()?,
-            sig: TransactionSignature::Single(self.generate_transaction_sig(&transaction)?),
+            sig: TransactionSignature::Single(self.generate_transaction_sig(transaction)?),
         })
     }
 
@@ -145,7 +145,7 @@ impl Account {
             return Err(TransactionError::InvalidSecretKeyInMultisig);
         }
 
-        Ok(self.init_msig(from, self.generate_transaction_sig(&transaction)?))
+        Ok(self.init_msig(from, self.generate_transaction_sig(transaction)?))
     }
 
     /// Creates logic multi signature corresponding to multisign addresses, inserting own signature
