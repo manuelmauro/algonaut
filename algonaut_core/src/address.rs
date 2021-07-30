@@ -194,7 +194,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // temporarily disabled, see https://github.com/manuelmauro/algonaut/issues/84
     fn serializes_deserializes() {
         let addr = Address(OsRng.gen());
         // arbitrary serde serializer
