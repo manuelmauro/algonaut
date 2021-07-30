@@ -8,17 +8,16 @@ impl<'de> Visitor<'de> for SignatureVisitor {
     type Value = [u8; 64];
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("a base64 encoded 64 byte array")
+        formatter.write_str("a 64 byte array")
     }
 
     fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        let decoded = &BASE64.decode(v).map_err(E::custom)?;
-        if decoded.len() == 64 {
+        if v.len() == 64 {
             let mut bytes = [0; 64];
-            bytes.copy_from_slice(decoded);
+            bytes.copy_from_slice(v);
             Ok(bytes)
         } else {
             Err(E::custom(format!("Invalid signature length: {}", v.len())))
@@ -42,30 +41,6 @@ impl<'de> Visitor<'de> for U8_32Visitor {
         if v.len() == 32 {
             let mut bytes = [0; 32];
             bytes.copy_from_slice(v);
-            Ok(bytes)
-        } else {
-            Err(E::custom(format!("Invalid byte array length: {}", v.len())))
-        }
-    }
-}
-
-pub struct U8_32Base64Visitor;
-
-impl<'de> Visitor<'de> for U8_32Base64Visitor {
-    type Value = [u8; 32];
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("a base64 encoded 32 byte array")
-    }
-
-    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        let decoded = &BASE64.decode(v).map_err(E::custom)?;
-        if decoded.len() == 32 {
-            let mut bytes = [0; 32];
-            bytes.copy_from_slice(decoded);
             Ok(bytes)
         } else {
             Err(E::custom(format!("Invalid byte array length: {}", v.len())))
