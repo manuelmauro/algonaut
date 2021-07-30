@@ -1,6 +1,6 @@
 use std::fmt::{self, Formatter};
 
-use algonaut_encoding::{deserialize_bytes32, SignatureVisitor, U8_32Base64Visitor, U8_32Visitor};
+use algonaut_encoding::{deserialize_bytes32, SignatureVisitor, U8_32Visitor};
 use data_encoding::{BASE32_NOPAD, BASE64};
 use fmt::Debug;
 use ring::signature::UnparsedPublicKey;
@@ -77,9 +77,7 @@ impl<'de> Deserialize<'de> for HashDigest {
     where
         D: Deserializer<'de>,
     {
-        Ok(HashDigest(
-            deserializer.deserialize_bytes(U8_32Base64Visitor)?,
-        ))
+        Ok(HashDigest(deserializer.deserialize_bytes(U8_32Visitor)?))
     }
 }
 

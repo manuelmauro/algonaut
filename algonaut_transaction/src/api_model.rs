@@ -22,7 +22,7 @@ use crate::{
 
 // Important:
 // - Fields have to be sorted alphabetically.
-// - Keys must not be included in serialized output if they've no value.
+// - Keys must be excluded if they've no value.
 // The signature validation fails otherwise.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApiTransaction {
@@ -307,7 +307,7 @@ impl TryFrom<ApiTransaction> for Transaction {
             "acfg" => {
                 TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
                     sender: api_t.sender,
-                    params: api_t.asset_params.map(|a| a.into()),
+                    params: None, // TODO
                     config_asset: api_t.config_asset,
                 })
             }
@@ -329,20 +329,17 @@ impl TryFrom<ApiTransaction> for Transaction {
                 app_id: api_t.app_id,
                 on_complete: match api_t.on_complete {
                     Some(oc) => int_to_application_call_on_complete(oc)?,
-                    // The API omits keys for zero values: we interpret as zero value based on context.
-                    None => int_to_application_call_on_complete(0)?,
+                    None => return Err(TransactionError::Deserialization("TODO confirm that receiving non existent on_complete key from API means 0/NoOp OnComplete".to_owned())),
                 },
                 accounts: api_t.accounts,
                 approval_program: api_t.approval_program.map(CompiledTeal),
-                app_arguments: api_t
-                    .app_arguments
-                    .map(|args| args.into_iter().map(|a| a.0).collect()),
+                app_arguments: api_t.app_arguments.map(|args| args.into_iter().map(|a| a.0).collect()),
                 clear_state_program: api_t.clear_state_program.map(CompiledTeal),
                 foreign_apps: api_t.foreign_apps,
                 foreign_assets: api_t.foreign_assets,
                 global_state_schema: api_t.global_state_schema.map(|s| s.into()),
                 local_state_schema: api_t.local_state_schema.map(|s| s.into()),
-                extra_pages: api_t.extra_pages,
+                extra_pages: api_t.extra_pages
             }),
             unsupported_type => {
                 return Err(TransactionError::Deserialization(format!(
