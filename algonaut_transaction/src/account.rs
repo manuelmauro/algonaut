@@ -261,9 +261,6 @@ mod tests {
         assert_eq!(Address(public_key_bytes), address);
     }
 
-    // Tests that account is generated correctly 100x.
-    // Ported from JavaSDK.
-    // Likely not needed here, but these tests should be 1:1 (unless proven that it's not needed).
     #[test]
     fn test_key_gen() {
         for _ in 0..100 {
