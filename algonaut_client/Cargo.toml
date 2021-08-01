@@ -1,7 +1,6 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
 description = "API clients for the Algorand blockchain."
-documentation = "https://docs.rs/algonaut_client"
 edition = "2018"
 keywords = ["Algorand", "sdk"]
 license = "MIT"

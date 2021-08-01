@@ -1,7 +1,6 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
 description = "Crypto utilities for the Algorand blockchain."
-documentation = "https://docs.rs/algonaut_crypto"
 edition = "2018"
 keywords = ["Algorand", "sdk"]
 license = "MIT"
