@@ -1,6 +1,14 @@
-use crate::error::{RequestError, RequestErrorDetails};
+use std::str::FromStr;
+
+use crate::{
+    error::{ClientError, RequestError, RequestErrorDetails},
+    Headers,
+};
 use async_trait::async_trait;
-use reqwest::Response;
+use reqwest::{
+    header::{HeaderMap, HeaderName, HeaderValue},
+    Response,
+};
 use serde::Deserialize;
 
 // reqwest::Response has thread unsafe contents with the WASM target,
@@ -48,4 +56,12 @@ async fn parse_error_message_or_empty_string(response: Response) -> String {
 #[derive(Deserialize)]
 struct HttpErrorPayload {
     message: String,
+}
+
+pub fn to_header_map(headers: Headers) -> Result<HeaderMap, ClientError> {
+    let mut map = HeaderMap::new();
+    for h in &headers {
+        map.insert(HeaderName::from_str(h.0)?, HeaderValue::from_str(h.1)?);
+    }
+    Ok(map)
 }

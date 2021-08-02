@@ -1,6 +1,6 @@
 use crate::error::ClientError;
-use crate::extensions::reqwest::ResponseExt;
-use crate::token::ApiToken;
+use crate::extensions::reqwest::{to_header_map, ResponseExt};
+use crate::Headers;
 use algonaut_core::{Address, Round};
 use algonaut_model::algod::v2::{
     Account, Application, Block, Catchup, CompiledTealWithHash, DryrunRequest, DryrunResponse,
@@ -10,22 +10,18 @@ use algonaut_model::algod::v2::{
 use reqwest::header::HeaderMap;
 use reqwest::Url;
 
-const AUTH_HEADER: &str = "X-Algo-API-Token";
-
 /// Client for interacting with the Algorand protocol daemon
 pub struct Client {
     url: String,
-    token: String,
     headers: HeaderMap,
     http_client: reqwest::Client,
 }
 
 impl Client {
-    pub fn new(url: &str, token: &str) -> Result<Client, ClientError> {
+    pub fn new(url: &str, headers: Headers) -> Result<Client, ClientError> {
         Ok(Client {
             url: Url::parse(url)?.as_ref().into(),
-            token: ApiToken::parse(token)?.to_string(),
-            headers: HeaderMap::new(),
+            headers: to_header_map(headers)?,
             http_client: reqwest::Client::new(),
         })
     }
@@ -63,7 +59,6 @@ impl Client {
             .http_client
             .get(&format!("{}metrics", self.url))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -79,7 +74,6 @@ impl Client {
             .http_client
             .get(&format!("{}v2/accounts/{}", self.url, address))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -101,7 +95,6 @@ impl Client {
                 "{}v2/accounts/{}/transactions/pending",
                 self.url, address,
             ))
-            .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&[("max", max.to_string())])
             .send()
@@ -118,7 +111,6 @@ impl Client {
             .http_client
             .get(&format!("{}v2/applications/{}", self.url, id))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -134,7 +126,6 @@ impl Client {
             .http_client
             .get(&format!("{}v2/asset/{}", self.url, id))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -150,7 +141,6 @@ impl Client {
             .http_client
             .get(&format!("{}v2/blocks/{}", self.url, round))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -166,7 +156,6 @@ impl Client {
             .http_client
             .post(&format!("{}v2/catchup/{}", self.url, catchpoint))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -182,7 +171,6 @@ impl Client {
             .http_client
             .delete(&format!("{}v2/catchup/{}", self.url, catchpoint))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -198,7 +186,6 @@ impl Client {
             .http_client
             .get(&format!("{}v2/ledger/supply", self.url))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
@@ -221,7 +208,6 @@ impl Client {
                 self.url,
                 address.to_string()
             ))
-            .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&params)
             .send()
@@ -238,7 +224,6 @@ impl Client {
         self.http_client
             .post(&format!("{}v2/shutdown", self.url))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .query(&[("timeout", timeout.to_string())])
             .send()
             .await?
@@ -254,7 +239,6 @@ impl Client {
         let response = self
             .http_client
             .get(&format!("{}v2/status", self.url))
-            .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()
             .await?
@@ -273,7 +257,6 @@ impl Client {
                 "{}v2/status/wait-for-block-after/{}",
                 self.url, round.0
             ))
-            .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()
             .await?
@@ -290,7 +273,6 @@ impl Client {
             .http_client
             .post(&format!("{}v2/teal/compile", self.url))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .header("Content-Type", "application/x-binary")
             .body(teal)
             .send()
@@ -308,7 +290,6 @@ impl Client {
             .http_client
             .post(&format!("{}v2/teal/dryrun", self.url))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .header("Content-Type", "application/json")
             .json(req)
             .send()
@@ -329,7 +310,6 @@ impl Client {
             .http_client
             .post(&format!("{}v2/transactions", self.url))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .header("Content-Type", "application/x-binary")
             .body(rawtxn.to_vec())
             .send()
@@ -346,7 +326,6 @@ impl Client {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/params", self.url))
-            .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()
             .await?
@@ -362,7 +341,6 @@ impl Client {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/pending", self.url))
-            .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .query(&[("max", max.to_string())])
             .send()
@@ -382,7 +360,6 @@ impl Client {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/pending/{}", self.url, txid))
-            .header(AUTH_HEADER, &self.token)
             .headers(self.headers.clone())
             .send()
             .await?
@@ -399,7 +376,6 @@ impl Client {
             .http_client
             .get(&format!("{}versions", self.url))
             .headers(self.headers.clone())
-            .header(AUTH_HEADER, &self.token)
             .send()
             .await?
             .http_error_for_status()
