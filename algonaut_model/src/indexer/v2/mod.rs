@@ -892,7 +892,7 @@ pub struct AssetParams {
     pub unit_name: String,
 
     /// `au` URL where more information about the asset can be retrieved.
-    pub url: String,
+    pub url: Option<String>,
 }
 
 /// Block information.
