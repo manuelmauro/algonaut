@@ -1,6 +1,6 @@
-use crate::error::ClientError;
 use crate::extensions::reqwest::ResponseExt;
-use crate::token::ApiToken;
+use crate::Headers;
+use crate::{error::ClientError, extensions::reqwest::to_header_map};
 use algonaut_core::MultisigSignature;
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_model::kmd::v1::{
@@ -16,23 +16,22 @@ use algonaut_model::kmd::v1::{
     SignMultisigTransactionRequest, SignMultisigTransactionResponse, SignTransactionRequest,
     SignTransactionResponse, VersionsResponse,
 };
+use reqwest::header::HeaderMap;
 use reqwest::Url;
-
-const KMD_TOKEN_HEADER: &str = "X-KMD-API-Token";
 
 /// Client for interacting with the key management daemon
 pub struct Client {
     pub(super) address: String,
-    pub(super) token: String,
     pub(super) http_client: reqwest::Client,
+    pub(super) headers: HeaderMap,
 }
 
 impl Client {
-    pub fn new(address: &str, token: &str) -> Result<Client, ClientError> {
+    pub fn new(address: &str, headers: Headers) -> Result<Client, ClientError> {
         Ok(Client {
             address: Url::parse(address)?.as_ref().into(),
-            token: ApiToken::parse(token)?.to_string(),
             http_client: reqwest::Client::new(),
+            headers: to_header_map(headers)?,
         })
     }
 
@@ -40,8 +39,8 @@ impl Client {
         let response = self
             .http_client
             .get(&format!("{}versions", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .send()
             .await?
             .http_error_for_status()
@@ -55,8 +54,8 @@ impl Client {
         let response = self
             .http_client
             .get(&format!("{}v1/wallets", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .send()
             .await?
             .http_error_for_status()
@@ -83,8 +82,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/wallet", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -107,8 +106,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/wallet/init", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -129,8 +128,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/wallet/release", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -151,8 +150,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/wallet/renew", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -177,8 +176,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/wallet/rename", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -199,8 +198,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/wallet/info", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -223,8 +222,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/master-key/export", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -247,8 +246,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/key/import", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -273,8 +272,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/key/export", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -296,8 +295,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/key", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -322,8 +321,8 @@ impl Client {
         let response = self
             .http_client
             .delete(&format!("{}v1/key", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -341,8 +340,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/key/list", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -367,8 +366,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/transaction/sign", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -389,8 +388,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/multisig/list", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -417,8 +416,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/multisig/import", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -441,8 +440,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/multisig/export", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -467,8 +466,8 @@ impl Client {
         let response = self
             .http_client
             .delete(&format!("{}v1/multisig", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?
@@ -497,8 +496,8 @@ impl Client {
         let response = self
             .http_client
             .post(&format!("{}v1/multisig/sign", self.address))
-            .header(KMD_TOKEN_HEADER, &self.token)
             .header("Accept", "application/json")
+            .headers(self.headers.clone())
             .json(&req)
             .send()
             .await?

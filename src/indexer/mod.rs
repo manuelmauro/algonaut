@@ -1,5 +1,5 @@
 use crate::error::AlgonautError;
-use algonaut_client::indexer::v2::Client;
+use algonaut_client::{indexer::v2::Client, Headers};
 
 pub mod v2;
 
@@ -25,7 +25,7 @@ impl<'a> IndexerBuilder<'a> {
     /// Returns an error if url is not set or has an invalid format.
     pub fn build_v2(self) -> Result<v2::Indexer, AlgonautError> {
         match self.url {
-            Some(url) => Ok(v2::Indexer::new(Client::new(url)?)),
+            Some(url) => Ok(v2::Indexer::new(Client::new(url, vec![])?)),
             None => Err(AlgonautError::UnitializedUrl),
         }
     }
@@ -34,6 +34,49 @@ impl<'a> IndexerBuilder<'a> {
 impl<'a> Default for IndexerBuilder<'a> {
     fn default() -> Self {
         IndexerBuilder { url: None }
+    }
+}
+
+pub struct IndexerCustomEndpointBuilder<'a> {
+    url: Option<&'a str>,
+    headers: Headers<'a>,
+}
+
+impl<'a> IndexerCustomEndpointBuilder<'a> {
+    /// Start the creation of a client.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Bind to a URL.
+    pub fn bind(mut self, url: &'a str) -> Self {
+        self.url = Some(url);
+        self
+    }
+
+    /// Add custom headers to requests.
+    pub fn headers(mut self, headers: Headers<'a>) -> Self {
+        self.headers = headers;
+        self
+    }
+
+    /// Build a v2 client for Algorand's indexer.
+    ///
+    /// Returns an error if url is not set or has an invalid format.
+    pub fn build_v2(self) -> Result<v2::Indexer, AlgonautError> {
+        match self.url {
+            Some(url) => Ok(v2::Indexer::new(Client::new(url, self.headers)?)),
+            None => Err(AlgonautError::UnitializedUrl),
+        }
+    }
+}
+
+impl<'a> Default for IndexerCustomEndpointBuilder<'a> {
+    fn default() -> Self {
+        IndexerCustomEndpointBuilder {
+            url: None,
+            headers: vec![],
+        }
     }
 }
 

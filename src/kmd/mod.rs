@@ -1,5 +1,5 @@
 use crate::error::AlgonautError;
-use algonaut_client::kmd::v1::Client;
+use algonaut_client::{kmd::v1::Client, token::ApiToken, Headers};
 
 pub mod v1;
 
@@ -22,6 +22,7 @@ pub mod v1;
 pub struct KmdBuilder<'a> {
     url: Option<&'a str>,
     token: Option<&'a str>,
+    headers: Headers<'a>,
 }
 
 impl<'a> KmdBuilder<'a> {
@@ -42,12 +43,21 @@ impl<'a> KmdBuilder<'a> {
         self
     }
 
+    /// Add custom headers to requests.
+    pub fn headers(mut self, headers: Headers<'a>) -> Self {
+        self.headers = headers;
+        self
+    }
+
     /// Build a v1 client for Algorand protocol daemon.
     ///
     /// Returns an error if url or token is not set or has an invalid format.
     pub fn build_v1(self) -> Result<v1::Kmd, AlgonautError> {
         match (self.url, self.token) {
-            (Some(url), Some(token)) => Ok(v1::Kmd::new(Client::new(url, token)?)),
+            (Some(url), Some(token)) => Ok(v1::Kmd::new(Client::new(
+                url,
+                vec![("X-KMD-API-Token", &ApiToken::parse(token)?.to_string())],
+            )?)),
             (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
             (Some(_), None) => Err(AlgonautError::UnitializedToken),
             (None, None) => Err(AlgonautError::UnitializedUrl),
@@ -60,6 +70,50 @@ impl<'a> Default for KmdBuilder<'a> {
         KmdBuilder {
             url: None,
             token: None,
+            headers: vec![],
+        }
+    }
+}
+
+pub struct KmdCustomEndpointBuilder<'a> {
+    url: Option<&'a str>,
+    headers: Headers<'a>,
+}
+
+impl<'a> KmdCustomEndpointBuilder<'a> {
+    /// Start the creation of a client.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Bind to a URL.
+    pub fn bind(mut self, url: &'a str) -> Self {
+        self.url = Some(url);
+        self
+    }
+
+    /// Add custom headers to requests.
+    pub fn headers(mut self, headers: Headers<'a>) -> Self {
+        self.headers = headers;
+        self
+    }
+
+    /// Build a v1 client for Algorand protocol daemon.
+    ///
+    /// Returns an error if url or token is not set or has an invalid format.
+    pub fn build_v1(self) -> Result<v1::Kmd, AlgonautError> {
+        match self.url {
+            Some(url) => Ok(v1::Kmd::new(Client::new(url, self.headers)?)),
+            None => Err(AlgonautError::UnitializedUrl),
+        }
+    }
+}
+
+impl<'a> Default for KmdCustomEndpointBuilder<'a> {
+    fn default() -> Self {
+        KmdCustomEndpointBuilder {
+            url: None,
+            headers: vec![],
         }
     }
 }

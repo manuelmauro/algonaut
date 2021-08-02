@@ -1,14 +1,19 @@
+use reqwest::header::{InvalidHeaderName, InvalidHeaderValue};
 use std::fmt::Debug;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ClientError {
     /// URL parse error.
-    #[error("Url parsing error.")]
+    #[error("Url parsing error: {0}")]
     BadUrl(String),
     /// Token parse error.
     #[error("Token parsing error.")]
     BadToken,
+    /// Invalid characters in headers, e.g. "\n"
+    /// Can only happen with custom endpoints
+    #[error("Header parsing error: {0}")]
+    BadHeader(String),
     /// HTTP calls.
     #[error("http error: {0}")]
     Request(#[from] RequestError),
@@ -68,5 +73,17 @@ impl From<reqwest::Error> for ClientError {
             )
         };
         ClientError::Request(request_error)
+    }
+}
+
+impl From<InvalidHeaderName> for ClientError {
+    fn from(error: InvalidHeaderName) -> Self {
+        ClientError::BadHeader(error.to_string())
+    }
+}
+
+impl From<InvalidHeaderValue> for ClientError {
+    fn from(error: InvalidHeaderValue) -> Self {
+        ClientError::BadHeader(error.to_string())
     }
 }

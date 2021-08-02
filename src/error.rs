@@ -9,6 +9,9 @@ pub enum AlgonautError {
     /// Token parse error.
     #[error("Token parsing error.")]
     BadToken,
+    /// Header parse error.
+    #[error("Headers parsing error.")]
+    BadHeader(String),
     /// Missing the base URL of the REST API server.
     #[error("Set an URL before calling build.")]
     UnitializedUrl,
@@ -54,6 +57,7 @@ impl From<algonaut_client::error::ClientError> for AlgonautError {
         match error {
             algonaut_client::error::ClientError::BadUrl(msg) => AlgonautError::BadUrl(msg),
             algonaut_client::error::ClientError::BadToken => AlgonautError::BadToken,
+            algonaut_client::error::ClientError::BadHeader(msg) => AlgonautError::BadHeader(msg),
             algonaut_client::error::ClientError::Request(e) => AlgonautError::Request(e.into()),
         }
     }

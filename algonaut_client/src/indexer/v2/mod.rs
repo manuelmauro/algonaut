@@ -1,5 +1,6 @@
 use crate::error::ClientError;
-use crate::extensions::reqwest::ResponseExt;
+use crate::extensions::reqwest::{to_header_map, ResponseExt};
+use crate::Headers;
 use algonaut_core::Round;
 use algonaut_model::indexer::v2::{
     AccountInfoResponse, AccountResponse, AccountTransactionResponse, ApplicationInfoResponse,
@@ -19,10 +20,10 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(url: &str) -> Result<Client, ClientError> {
+    pub fn new(url: &str, headers: Headers) -> Result<Client, ClientError> {
         Ok(Client {
             url: Url::parse(url)?.as_ref().into(),
-            headers: HeaderMap::new(),
+            headers: to_header_map(headers)?,
             http_client: reqwest::Client::new(),
         })
     }

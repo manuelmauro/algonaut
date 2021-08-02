@@ -1,3 +1,5 @@
+use algonaut_client::{token::ApiToken, Headers};
+
 use crate::error::AlgonautError;
 
 pub mod v1;
@@ -48,7 +50,7 @@ impl<'a> AlgodBuilder<'a> {
     pub fn build_v1(self) -> Result<v1::Algod, AlgonautError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Algod::new(
-                algonaut_client::algod::v1::Client::new(url, token)?,
+                algonaut_client::algod::v1::Client::new(url, &ApiToken::parse(token)?.to_string())?,
             )),
             (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
             (Some(_), None) => Err(AlgonautError::UnitializedToken),
@@ -61,9 +63,12 @@ impl<'a> AlgodBuilder<'a> {
     /// Returns an error if url or token is not set or has an invalid format.
     pub fn build_v2(self) -> Result<v2::Algod, AlgonautError> {
         match (self.url, self.token) {
-            (Some(url), Some(token)) => Ok(v2::Algod::new(
-                algonaut_client::algod::v2::Client::new(url, token)?,
-            )),
+            (Some(url), Some(token)) => {
+                Ok(v2::Algod::new(algonaut_client::algod::v2::Client::new(
+                    url,
+                    vec![("X-Algo-API-Token", &ApiToken::parse(token)?.to_string())],
+                )?))
+            }
             (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
             (Some(_), None) => Err(AlgonautError::UnitializedToken),
             (None, None) => Err(AlgonautError::UnitializedUrl),
@@ -76,6 +81,52 @@ impl<'a> Default for AlgodBuilder<'a> {
         AlgodBuilder {
             url: None,
             token: None,
+        }
+    }
+}
+
+pub struct AlgodCustomEndpointBuilder<'a> {
+    url: Option<&'a str>,
+    headers: Headers<'a>,
+}
+
+impl<'a> AlgodCustomEndpointBuilder<'a> {
+    /// Start the creation of a client.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Bind to a URL.
+    pub fn bind(mut self, url: &'a str) -> Self {
+        self.url = Some(url);
+        self
+    }
+
+    /// Add custom headers to requests.
+    pub fn headers(mut self, headers: Headers<'a>) -> Self {
+        self.headers = headers;
+        self
+    }
+
+    /// Build a v2 client for Algorand protocol daemon.
+    ///
+    /// Returns an error if url or token is not set or has an invalid format.
+    pub fn build_v2(self) -> Result<v2::Algod, AlgonautError> {
+        match self.url {
+            Some(url) => Ok(v2::Algod::new(algonaut_client::algod::v2::Client::new(
+                url,
+                self.headers,
+            )?)),
+            None => Err(AlgonautError::UnitializedUrl),
+        }
+    }
+}
+
+impl<'a> Default for AlgodCustomEndpointBuilder<'a> {
+    fn default() -> Self {
+        AlgodCustomEndpointBuilder {
+            url: None,
+            headers: vec![],
         }
     }
 }
