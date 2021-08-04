@@ -58,6 +58,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 ## Integration examples
 
+- [Basic React JS / WASM](https://github.com/ivanschuetz/algonaut-react)
 - [My Algo signing with Yew / WASM](https://github.com/i-schuetz/algonaut-myalgo-yew-template)
 - [Payment prompt with Yew / WASM](https://github.com/i-schuetz/algo-prompt)
 - [Basic Yew / WASM](https://github.com/i-schuetz/algorand-yew-example)
