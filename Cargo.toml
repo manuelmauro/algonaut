@@ -29,8 +29,6 @@ thiserror = "1.0.23"
 rmp-serde = "0.15.5"
 
 [dev-dependencies]
-chrono = "0.4.9"
-dirs = "3.0"
 dotenv = "0.15.0"
 tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
 rand = "0.8.3"
