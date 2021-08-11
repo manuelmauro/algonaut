@@ -470,7 +470,7 @@ pub struct ApiAssetParams {
     #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
     pub clawback: Option<Address>,
 
-    #[serde(rename = "dc")]
+    #[serde(rename = "dc", skip_serializing_if = "Option::is_none")]
     pub decimals: Option<u32>,
 
     #[serde(rename = "df", skip_serializing)]
@@ -485,7 +485,7 @@ pub struct ApiAssetParams {
     #[serde(rename = "r", skip_serializing_if = "Option::is_none")]
     pub reserve: Option<Address>,
 
-    #[serde(rename = "t")]
+    #[serde(rename = "t", skip_serializing_if = "Option::is_none")]
     pub total: Option<u64>,
 
     #[serde(rename = "un", skip_serializing_if = "Option::is_none")]
