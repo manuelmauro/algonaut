@@ -578,11 +578,11 @@ impl From<SignedTransaction> for ApiSignedTransaction {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ApiStateSchema {
-    #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
-    pub number_ints: Option<u64>,
-
     #[serde(rename = "nbs", skip_serializing_if = "Option::is_none")]
     pub number_byteslices: Option<u64>,
+
+    #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
+    pub number_ints: Option<u64>,
 }
 
 impl From<StateSchema> for Option<ApiStateSchema> {
