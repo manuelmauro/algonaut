@@ -106,7 +106,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn application_information(&self, id: usize) -> Result<Application, ClientError> {
+    pub async fn application_information(&self, id: u64) -> Result<Application, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/applications/{}", self.url, id))
@@ -121,7 +121,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn asset_information(&self, id: usize) -> Result<Application, ClientError> {
+    pub async fn asset_information(&self, id: u64) -> Result<Application, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/asset/{}", self.url, id))

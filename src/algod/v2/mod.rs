@@ -61,7 +61,7 @@ impl Algod {
     ///
     /// Given a application id, it returns application information including creator,
     /// approval and clear programs, global and local schemas, and global state.
-    pub async fn application_information(&self, id: usize) -> Result<Application, AlgonautError> {
+    pub async fn application_information(&self, id: u64) -> Result<Application, AlgonautError> {
         Ok(self.client.application_information(id).await?)
     }
 
@@ -69,7 +69,7 @@ impl Algod {
     ///
     /// Given a asset id, it returns asset information including creator, name,
     /// total supply and special addresses.
-    pub async fn asset_information(&self, id: usize) -> Result<Application, AlgonautError> {
+    pub async fn asset_information(&self, id: u64) -> Result<Application, AlgonautError> {
         Ok(self.client.asset_information(id).await?)
     }
 
