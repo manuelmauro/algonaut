@@ -437,7 +437,7 @@ pub struct EvalDelta {
     pub bytes: Option<String>,
 
     /// `ui` uint value.
-    pub uint: u64,
+    pub uint: Option<u64>,
 }
 
 /// Key-value pairs for StateDelta.
