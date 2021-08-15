@@ -33,14 +33,13 @@ byte 0xFF
         )
         .await?;
 
-    let from_address = program.hash.parse()?;
     let receiver = "DN7MBMCL5JQ3PFUQS7TMX5AH4EEKOBJVDUF4TCV6WERATKFLQF4MQUPZTA".parse()?;
 
     let params = algod.suggested_transaction_params().await?;
 
     let t = TxnBuilder::with(
         params,
-        Pay::new(from_address, receiver, MicroAlgos(123_456)).build(),
+        Pay::new(program.address, receiver, MicroAlgos(123_456)).build(),
     )
     .build();
 

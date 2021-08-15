@@ -1,7 +1,7 @@
 use algonaut_client::algod::v2::Client;
 use algonaut_core::{Address, Round, SuggestedTransactionParams, ToMsgPack};
 use algonaut_model::algod::v2::{
-    Account, Application, Block, Catchup, CompiledTealWithHash, DryrunRequest, DryrunResponse,
+    Account, Application, Block, Catchup, CompiledTealWithAddress, DryrunRequest, DryrunResponse,
     GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
     TransactionParams, TransactionResponse, Version,
 };
@@ -133,7 +133,10 @@ impl Algod {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
     /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
     /// a node's configuration file sets EnableDeveloperAPI to true.
-    pub async fn compile_teal(&self, teal: &[u8]) -> Result<CompiledTealWithHash, AlgonautError> {
+    pub async fn compile_teal(
+        &self,
+        teal: &[u8],
+    ) -> Result<CompiledTealWithAddress, AlgonautError> {
         Ok(self.client.compile_teal(teal.to_vec()).await?)
     }
 

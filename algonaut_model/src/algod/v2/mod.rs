@@ -1,4 +1,4 @@
-use algonaut_core::{CompiledTeal, MicroAlgos, Round};
+use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
 use data_encoding::BASE64;
@@ -725,22 +725,22 @@ pub struct ApiCompiledTealWithHash {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct CompiledTealWithHash {
-    /// base32 SHA512_256 of program bytes (Address style)
-    pub hash: String,
+pub struct CompiledTealWithAddress {
+    /// Program hash
+    pub address: Address,
 
     // Program bytes
     pub program: CompiledTeal,
 }
 
-impl<'de> Deserialize<'de> for CompiledTealWithHash {
+impl<'de> Deserialize<'de> for CompiledTealWithAddress {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let api_obj = ApiCompiledTealWithHash::deserialize(deserializer)?;
-        Ok(CompiledTealWithHash {
-            hash: api_obj.hash.clone(),
+        Ok(CompiledTealWithAddress {
+            address: api_obj.hash.parse().map_err(serde::de::Error::custom)?,
             program: CompiledTeal(
                 BASE64
                     .decode(api_obj.result.as_bytes())
