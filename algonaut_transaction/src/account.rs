@@ -119,19 +119,6 @@ impl Account {
         })
     }
 
-    /// Sign transaction and generate a multi signature SignedTransaction
-    pub fn sign_multisig_transaction(
-        &self,
-        from: &MultisigAddress,
-        transaction: &Transaction,
-    ) -> Result<SignedTransaction, TransactionError> {
-        Ok(SignedTransaction {
-            transaction: transaction.clone(),
-            transaction_id: transaction.id()?,
-            sig: TransactionSignature::Multi(self.init_transaction_msig(transaction, from)?),
-        })
-    }
-
     /// Creates transaction multi signature corresponding to multisign addresses, inserting own signature
     pub fn init_transaction_msig(
         &self,
