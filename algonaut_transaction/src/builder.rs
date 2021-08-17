@@ -561,8 +561,8 @@ pub struct CreateApplication {
     approval_program: Option<CompiledTeal>,
     app_arguments: Option<Vec<Vec<u8>>>,
     clear_state_program: Option<CompiledTeal>,
-    foreign_apps: Option<Address>,
-    foreign_assets: Option<Address>,
+    foreign_apps: Option<Vec<u64>>,
+    foreign_assets: Option<Vec<u64>>,
     global_state_schema: Option<StateSchema>,
     local_state_schema: Option<StateSchema>,
     extra_pages: u64,
@@ -600,12 +600,12 @@ impl CreateApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -641,8 +641,8 @@ pub struct UpdateApplication {
     approval_program: Option<CompiledTeal>,
     app_arguments: Option<Vec<Vec<u8>>>,
     clear_state_program: Option<CompiledTeal>,
-    foreign_apps: Option<Address>,
-    foreign_assets: Option<Address>,
+    foreign_apps: Option<Vec<u64>>,
+    foreign_assets: Option<Vec<u64>>,
 }
 
 impl UpdateApplication {
@@ -674,12 +674,12 @@ impl UpdateApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -708,8 +708,8 @@ pub struct CallApplication {
     app_id: u64,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Address>,
-    foreign_assets: Option<Address>,
+    foreign_apps: Option<Vec<u64>>,
+    foreign_assets: Option<Vec<u64>>,
 }
 
 impl CallApplication {
@@ -734,12 +734,12 @@ impl CallApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -768,8 +768,8 @@ pub struct ClearApplication {
     app_id: u64,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Address>,
-    foreign_assets: Option<Address>,
+    foreign_apps: Option<Vec<u64>>,
+    foreign_assets: Option<Vec<u64>>,
 }
 
 impl ClearApplication {
@@ -794,12 +794,12 @@ impl ClearApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -828,8 +828,8 @@ pub struct CloseApplication {
     app_id: u64,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Address>,
-    foreign_assets: Option<Address>,
+    foreign_apps: Option<Vec<u64>>,
+    foreign_assets: Option<Vec<u64>>,
 }
 
 impl CloseApplication {
@@ -854,12 +854,12 @@ impl CloseApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -888,8 +888,8 @@ pub struct DeleteApplication {
     app_id: u64,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Address>,
-    foreign_assets: Option<Address>,
+    foreign_apps: Option<Vec<u64>>,
+    foreign_assets: Option<Vec<u64>>,
 }
 
 impl DeleteApplication {
@@ -914,12 +914,12 @@ impl DeleteApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -948,8 +948,8 @@ pub struct OptInApplication {
     app_id: u64,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Address>,
-    foreign_assets: Option<Address>,
+    foreign_apps: Option<Vec<u64>>,
+    foreign_assets: Option<Vec<u64>>,
 }
 
 impl OptInApplication {
@@ -974,12 +974,12 @@ impl OptInApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Address) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Address) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }

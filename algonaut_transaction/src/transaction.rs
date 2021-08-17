@@ -341,11 +341,11 @@ pub struct ApplicationCallTransaction {
 
     /// Lists the applications in addition to the application-id whose global states may be accessed
     /// by this application's approval-program and clear-state-program. The access is read-only.
-    pub foreign_apps: Option<Address>,
+    pub foreign_apps: Option<Vec<u64>>,
 
     /// Lists the assets whose AssetParams may be accessed by this application's approval-program and
     /// clear-state-program. The access is read-only.
-    pub foreign_assets: Option<Address>,
+    pub foreign_assets: Option<Vec<u64>>,
 
     /// Holds the maximum number of global state values defined within a StateSchema object.
     pub global_state_schema: Option<StateSchema>,
