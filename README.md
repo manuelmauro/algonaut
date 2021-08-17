@@ -56,6 +56,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 - `algonaut_encoding` implements encoding utility functions such as `serde` visitors.
 - `algonaut_transaction` support developers in building all kinds of Algorand transactions.
 
+## External utilities
+
+- [tealdbg_launcher](https://github.com/ivanschuetz/tealdbg_launcher) Start TEAL debugging sessions from Rust.
+
 ## Integration examples
 
 - [React Js / My Algo signing / WASM / atomic swaps](https://github.com/ivanschuetz/swaplink)
