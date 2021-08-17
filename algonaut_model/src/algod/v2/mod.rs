@@ -155,10 +155,10 @@ pub struct ApplicationLocalState {
 
     /// `tkv` storage.
     #[serde(rename = "key-value")]
-    pub key_value: TealKeyValueStore,
+    pub key_value: Option<TealKeyValueStore>,
 
     /// `hsch` schema.
-    #[serde(rename = "key-value")]
+    #[serde(rename = "schema")]
     pub schema: ApplicationStateSchema,
 }
 
@@ -191,16 +191,16 @@ pub struct ApplicationParams {
 
     /// `gs` global schema
     #[serde(rename = "global-state")]
-    pub global_state: TealKeyValueStore,
+    pub global_state: Option<TealKeyValueStore>,
 
     /// `lsch` global schema
     #[serde(rename = "global-state-schema")]
-    pub global_state_schema: ApplicationStateSchema,
+    pub global_state_schema: Option<ApplicationStateSchema>,
 
     /// `lsch` local schema
 
     #[serde(rename = "local-state-schema")]
-    pub local_state_schema: ApplicationStateSchema,
+    pub local_state_schema: Option<ApplicationStateSchema>,
 }
 
 /// Specifies maximums on the number of each type that may be stored.
