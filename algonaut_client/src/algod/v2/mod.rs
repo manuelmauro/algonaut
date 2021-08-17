@@ -3,7 +3,7 @@ use crate::extensions::reqwest::{to_header_map, ResponseExt};
 use crate::Headers;
 use algonaut_core::{Address, Round};
 use algonaut_model::algod::v2::{
-    Account, Application, Block, Catchup, CompiledTealWithHash, DryrunRequest, DryrunResponse,
+    Account, Application, Block, Catchup, CompiledTealWithAddress, DryrunRequest, DryrunResponse,
     GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
     TransactionParams, TransactionResponse, Version,
 };
@@ -106,7 +106,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn application_information(&self, id: usize) -> Result<Application, ClientError> {
+    pub async fn application_information(&self, id: u64) -> Result<Application, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/applications/{}", self.url, id))
@@ -121,7 +121,7 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn asset_information(&self, id: usize) -> Result<Application, ClientError> {
+    pub async fn asset_information(&self, id: u64) -> Result<Application, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/asset/{}", self.url, id))
@@ -268,7 +268,10 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn compile_teal(&self, teal: Vec<u8>) -> Result<CompiledTealWithHash, ClientError> {
+    pub async fn compile_teal(
+        &self,
+        teal: Vec<u8>,
+    ) -> Result<CompiledTealWithAddress, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/compile", self.url))

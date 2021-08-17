@@ -124,16 +124,18 @@ async fn test_sign_multisig_transaction() -> Result<(), Box<dyn Error>> {
     .build();
 
     let account = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
-    let signed_tx = account.sign_multisig_transaction(&addr, &tx)?;
+
+    let msig = account.init_transaction_msig(&tx, &addr)?;
+    let signed_tx = SignedTransaction {
+        transaction: tx,
+        transaction_id: "".to_owned(),
+        sig: TransactionSignature::Multi(msig),
+    };
+
     let enc = rmp_serde::to_vec_named(&signed_tx)?;
 
     // check the bytes convenience function is correct
-    assert_eq!(
-        account
-            .sign_multisig_transaction(&addr, &tx)?
-            .to_msg_pack()?,
-        enc
-    );
+    assert_eq!(signed_tx.to_msg_pack()?, enc);
 
     // check main signature is correct
     // Note: Different reference strings than Java SDK. HashDigest can't be initialized with an empty array here.

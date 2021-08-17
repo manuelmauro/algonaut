@@ -23,6 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let sender = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
 
+    // To read teal from file: fs::read("my_program.teal")
     let approval_program = r#"
 #pragma version 4
 txna ApplicationArgs 0

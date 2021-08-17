@@ -1,4 +1,4 @@
-use algonaut_core::{CompiledTeal, MicroAlgos, Round};
+use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
 use data_encoding::BASE64;
@@ -155,10 +155,10 @@ pub struct ApplicationLocalState {
 
     /// `tkv` storage.
     #[serde(rename = "key-value")]
-    pub key_value: TealKeyValueStore,
+    pub key_value: Option<TealKeyValueStore>,
 
     /// `hsch` schema.
-    #[serde(rename = "key-value")]
+    #[serde(rename = "schema")]
     pub schema: ApplicationStateSchema,
 }
 
@@ -191,16 +191,16 @@ pub struct ApplicationParams {
 
     /// `gs` global schema
     #[serde(rename = "global-state")]
-    pub global_state: TealKeyValueStore,
+    pub global_state: Option<TealKeyValueStore>,
 
     /// `lsch` global schema
     #[serde(rename = "global-state-schema")]
-    pub global_state_schema: ApplicationStateSchema,
+    pub global_state_schema: Option<ApplicationStateSchema>,
 
     /// `lsch` local schema
 
     #[serde(rename = "local-state-schema")]
-    pub local_state_schema: ApplicationStateSchema,
+    pub local_state_schema: Option<ApplicationStateSchema>,
 }
 
 /// Specifies maximums on the number of each type that may be stored.
@@ -437,7 +437,7 @@ pub struct EvalDelta {
     pub bytes: Option<String>,
 
     /// `ui` uint value.
-    pub uint: u64,
+    pub uint: Option<u64>,
 }
 
 /// Key-value pairs for StateDelta.
@@ -716,31 +716,31 @@ pub struct SourceTeal {
 
 /// Compiled TEAL program.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ApiCompiledTealWithHash {
+struct ApiCompiledTealWithHash {
     /// base32 SHA512_256 of program bytes (Address style)
-    pub hash: String,
+    hash: String,
 
     /// base64 encoded program bytes.
-    pub result: String,
+    result: String,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct CompiledTealWithHash {
-    /// base32 SHA512_256 of program bytes (Address style)
-    pub hash: String,
+pub struct CompiledTealWithAddress {
+    /// Program address
+    pub address: Address,
 
     // Program bytes
     pub program: CompiledTeal,
 }
 
-impl<'de> Deserialize<'de> for CompiledTealWithHash {
+impl<'de> Deserialize<'de> for CompiledTealWithAddress {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         let api_obj = ApiCompiledTealWithHash::deserialize(deserializer)?;
-        Ok(CompiledTealWithHash {
-            hash: api_obj.hash.clone(),
+        Ok(CompiledTealWithAddress {
+            address: api_obj.hash.parse().map_err(serde::de::Error::custom)?,
             program: CompiledTeal(
                 BASE64
                     .decode(api_obj.result.as_bytes())

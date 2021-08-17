@@ -65,7 +65,7 @@ pub struct ApiTransaction {
     pub asset_params: Option<ApiAssetParams>,
 
     #[serde(rename = "apas", skip_serializing_if = "Option::is_none")]
-    pub foreign_assets: Option<Address>,
+    pub foreign_assets: Option<Vec<u64>>,
 
     #[serde(rename = "apat", skip_serializing_if = "Option::is_none")]
     pub accounts: Option<Vec<Address>>,
@@ -74,7 +74,7 @@ pub struct ApiTransaction {
     pub extra_pages: Option<u64>,
 
     #[serde(rename = "apfa", skip_serializing_if = "Option::is_none")]
-    pub foreign_apps: Option<Address>,
+    pub foreign_apps: Option<Vec<u64>>,
 
     #[serde(rename = "apgs", skip_serializing_if = "Option::is_none")]
     pub global_state_schema: Option<ApiStateSchema>,
@@ -285,8 +285,8 @@ impl From<Transaction> for ApiTransaction {
                     .to_owned()
                     .map(|c| c.0)
                     .and_then(vec_as_api_option);
-                api_t.foreign_apps = call.foreign_apps;
-                api_t.foreign_assets = call.foreign_assets;
+                api_t.foreign_apps = call.foreign_apps.clone().and_then(vec_as_api_option);
+                api_t.foreign_assets = call.foreign_assets.clone().and_then(vec_as_api_option);
                 api_t.global_state_schema =
                     call.to_owned().global_state_schema.and_then(|s| s.into());
                 api_t.local_state_schema =
@@ -578,11 +578,11 @@ impl From<SignedTransaction> for ApiSignedTransaction {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ApiStateSchema {
-    #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
-    pub number_ints: Option<u64>,
-
     #[serde(rename = "nbs", skip_serializing_if = "Option::is_none")]
     pub number_byteslices: Option<u64>,
+
+    #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
+    pub number_ints: Option<u64>,
 }
 
 impl From<StateSchema> for Option<ApiStateSchema> {
