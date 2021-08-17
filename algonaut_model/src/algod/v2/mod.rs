@@ -716,17 +716,17 @@ pub struct SourceTeal {
 
 /// Compiled TEAL program.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ApiCompiledTealWithHash {
+struct ApiCompiledTealWithHash {
     /// base32 SHA512_256 of program bytes (Address style)
-    pub hash: String,
+    hash: String,
 
     /// base64 encoded program bytes.
-    pub result: String,
+    result: String,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct CompiledTealWithAddress {
-    /// Program hash
+    /// Program address
     pub address: Address,
 
     // Program bytes
