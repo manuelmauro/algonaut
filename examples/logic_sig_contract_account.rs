@@ -1,8 +1,8 @@
 use algonaut::algod::AlgodBuilder;
-use algonaut_core::{LogicSignature, MicroAlgos, SignedLogic};
-use algonaut_transaction::transaction::TransactionSignature;
+use algonaut_core::MicroAlgos;
+use algonaut_transaction::account::ContractAccountSigner;
+use algonaut_transaction::Pay;
 use algonaut_transaction::TxnBuilder;
-use algonaut_transaction::{Pay, SignedTransaction};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -43,15 +43,7 @@ byte 0xFF
     )
     .build();
 
-    let signed_t = SignedTransaction {
-        transaction: t,
-        transaction_id: "".to_owned(),
-        sig: TransactionSignature::Logic(SignedLogic {
-            logic: program.program,
-            args: vec![vec![1, 0], vec![255]],
-            sig: LogicSignature::ContractAccount,
-        }),
-    };
+    let signed_t = program.program.sign(&t, vec![vec![1, 0], vec![255]])?;
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await;
     println!("response {:?}", send_response);

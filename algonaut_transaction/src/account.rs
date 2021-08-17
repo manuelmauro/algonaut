@@ -4,7 +4,8 @@ use crate::auction::{Bid, SignedBid};
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
-    Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
+    Address, CompiledTeal, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig,
+    SignedLogic, ToMsgPack,
 };
 use algonaut_crypto::{mnemonic, Signature};
 use rand::rngs::OsRng;
@@ -223,6 +224,33 @@ impl Account {
             })
             .collect();
         Ok(MultisigSignature { subsigs, ..msig })
+    }
+}
+
+pub trait ContractAccountSigner {
+    /// Convenience to generate contract account lsig SignedTransaction
+    fn sign(
+        &self,
+        transaction: &Transaction,
+        args: Vec<Vec<u8>>,
+    ) -> Result<SignedTransaction, TransactionError>;
+}
+
+impl ContractAccountSigner for CompiledTeal {
+    fn sign(
+        &self,
+        transaction: &Transaction,
+        args: Vec<Vec<u8>>,
+    ) -> Result<SignedTransaction, TransactionError> {
+        Ok(SignedTransaction {
+            transaction: transaction.clone(),
+            transaction_id: transaction.id()?,
+            sig: TransactionSignature::Logic(SignedLogic {
+                logic: self.clone(),
+                args,
+                sig: LogicSignature::ContractAccount,
+            }),
+        })
     }
 }
 
