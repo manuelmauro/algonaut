@@ -20,8 +20,12 @@ pub struct Account {
     pub amount_without_pending_rewards: u64,
 
     /// `appl` applications local data stored in this account.
-    #[serde(rename = "apps-local-state")]
-    pub apps_local_state: Option<Vec<ApplicationLocalState>>,
+    #[serde(
+        default,
+        rename = "apps-local-state",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub apps_local_state: Vec<ApplicationLocalState>,
 
     /// `tsch` stores the sum of all of the local schemas and global schemas in this account.
     ///
@@ -31,7 +35,8 @@ pub struct Account {
 
     /// `asset` assets held by this account.
     /// Note the raw object uses map(int) -> AssetHolding for this type.
-    pub assets: Option<Vec<AssetHolding>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub assets: Vec<AssetHolding>,
 
     /// `spend` the address against which signing should be checked. If empty, the address of the
     /// current account is used. This field can be updated in any transaction by setting the
@@ -43,14 +48,22 @@ pub struct Account {
     /// `appp` parameters of applications created by this account including app global data.
     ///
     /// Note: the raw account uses map(int) -> AppParams for this type.
-    #[serde(rename = "created-apps")]
-    pub created_apps: Option<Vec<Application>>,
+    #[serde(
+        default,
+        rename = "created-apps",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub created_apps: Vec<Application>,
 
     /// `apar` parameters of assets created by this account.
     ///
     /// Note: the raw account uses map(int) -> Asset for this type.
-    #[serde(rename = "created-assets")]
-    pub created_assets: Option<Vec<Asset>>,
+    #[serde(
+        default,
+        rename = "created-assets",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub created_assets: Vec<Asset>,
 
     ///
     pub participation: Option<AccountParticipation>,
@@ -283,7 +296,7 @@ pub struct AssetParams {
 
     /// `df` Whether holdings of this asset are frozen by default.
     #[serde(rename = "default-frozen")]
-    pub default_frozen: bool,
+    pub default_frozen: Option<bool>,
 
     /// `f` Address of account used to freeze holdings of this asset. If empty, freezing is not
     /// permitted.
@@ -300,15 +313,15 @@ pub struct AssetParams {
     /// to the application.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     #[serde(
-        rename = "metadata-hash",
         default,
-        skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "deserialize_bytes"
+        rename = "metadata-hash",
+        with = "serde_bytes",
+        skip_serializing_if = "Option::is_none"
     )]
-    pub metadata_hash: Vec<u8>,
+    pub metadata_hash: Option<Vec<u8>>,
 
     /// `an` Name of this asset, as supplied by the creator.
-    pub name: String,
+    pub name: Option<String>,
 
     /// `r` Address of account holding reserve (non-minted) units of this asset.
     #[serde(default)]
@@ -320,10 +333,10 @@ pub struct AssetParams {
 
     /// `un` Name of a unit of this asset, as supplied by the creator.
     #[serde(rename = "unit-name")]
-    pub unit_name: String,
+    pub unit_name: Option<String>,
 
     /// `au` URL where more information about the asset can be retrieved.
-    pub url: String,
+    pub url: Option<String>,
 }
 
 /// BuildVersion
@@ -448,7 +461,7 @@ pub struct ErrorResponse<T> {
 }
 
 /// Represents a TEAL value delta.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EvalDelta {
     /// `at` delta action.
     pub action: u64,
@@ -461,7 +474,7 @@ pub struct EvalDelta {
 }
 
 /// Key-value pairs for StateDelta.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EvalDeltaKeyValue {
     pub key: String,
     pub value: EvalDelta,
@@ -471,7 +484,7 @@ pub struct EvalDeltaKeyValue {
 pub type StateDelta = Vec<EvalDeltaKeyValue>;
 
 /// Represents a key-value pair in an application store.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TealKeyValue {
     pub key: String,
     pub value: TealValue,
@@ -481,7 +494,7 @@ pub struct TealKeyValue {
 pub type TealKeyValueStore = Vec<TealKeyValue>;
 
 /// Represents a TEAL value.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TealValue {
     /// `tb` bytes value.
     #[serde(
