@@ -1,7 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 
 use algonaut_core::{
-    Address, CompiledTeal, LogicSignature, MicroAlgos, MultisigSignature, Round, SignedLogic,
+    Address, CompiledTealBytes, LogicSignature, MicroAlgos, MultisigSignature, Round, SignedLogic,
     ToMsgPack, VotePk, VrfPk,
 };
 use algonaut_crypto::{HashDigest, Signature};
@@ -346,11 +346,11 @@ impl TryFrom<ApiTransaction> for Transaction {
                     api_t.on_complete,
                 ))?,
                 accounts: api_t.accounts,
-                approval_program: api_t.approval_program.map(CompiledTeal),
+                approval_program: api_t.approval_program.map(CompiledTealBytes),
                 app_arguments: api_t
                     .app_arguments
                     .map(|args| args.into_iter().map(|a| a.0).collect()),
-                clear_state_program: api_t.clear_state_program.map(CompiledTeal),
+                clear_state_program: api_t.clear_state_program.map(CompiledTealBytes),
                 foreign_apps: api_t.foreign_apps,
                 foreign_assets: api_t.foreign_assets,
 
@@ -706,7 +706,7 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
             }
         };
         Ok(SignedLogic {
-            logic: CompiledTeal(s.logic),
+            logic: CompiledTealBytes(s.logic),
             args: s.args.into_iter().map(|a| a.0).collect(),
             sig,
         })
@@ -793,7 +793,7 @@ mod tests {
 
     #[test]
     fn test_serialize_signed_logic_contract_account() {
-        let program = CompiledTeal(vec![
+        let program = CompiledTealBytes(vec![
             0x01, 0x20, 0x01, 0x01, 0x22, // int 1
         ]);
         let args = vec![vec![1, 2, 3], vec![4, 5, 6]];
@@ -815,7 +815,7 @@ mod tests {
 
     #[test]
     fn test_serialize_signed_logic_contract_account_no_args() {
-        let program = CompiledTeal(vec![
+        let program = CompiledTealBytes(vec![
             0x01, 0x20, 0x01, 0x01, 0x22, // int 1
         ]);
         let args = vec![];

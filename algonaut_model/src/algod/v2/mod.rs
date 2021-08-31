@@ -1,4 +1,4 @@
-use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round};
+use algonaut_core::{Address, CompiledTealBytes, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
 use data_encoding::BASE64;
@@ -749,7 +749,7 @@ pub struct SourceTeal {
 
 /// Compiled TEAL program.
 #[derive(Debug, Serialize, Deserialize)]
-struct ApiCompiledTealWithHash {
+struct ApiCompiledTeal {
     /// base32 SHA512_256 of program bytes (Address style)
     hash: String,
 
@@ -757,24 +757,40 @@ struct ApiCompiledTealWithHash {
     result: String,
 }
 
+/// base32 SHA512_256 of program bytes (Address style)
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct CompiledTealWithAddress {
-    /// Program address
-    pub address: Address,
+pub struct CompiledTealHash(
+    pub String,
+    /* cached for non-failable conversion */ Address,
+);
 
-    // Program bytes
-    pub program: CompiledTeal,
+impl CompiledTealHash {
+    fn new(hash: String) -> Result<CompiledTealHash, String> {
+        // Hash is expected to always parse to a valid address, so verification here.
+        // Address is not meaningful for all smart contracts, so "conversion" on demand.
+        Ok(CompiledTealHash(hash.clone(), hash.parse()?))
+    }
+
+    pub fn as_address(&self) -> Address {
+        self.1
+    }
 }
 
-impl<'de> Deserialize<'de> for CompiledTealWithAddress {
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct CompiledTeal {
+    pub hash: CompiledTealHash,
+    pub program: CompiledTealBytes,
+}
+
+impl<'de> Deserialize<'de> for CompiledTeal {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let api_obj = ApiCompiledTealWithHash::deserialize(deserializer)?;
-        Ok(CompiledTealWithAddress {
-            address: api_obj.hash.parse().map_err(serde::de::Error::custom)?,
-            program: CompiledTeal(
+        let api_obj = ApiCompiledTeal::deserialize(deserializer)?;
+        Ok(CompiledTeal {
+            hash: CompiledTealHash::new(api_obj.hash).map_err(serde::de::Error::custom)?,
+            program: CompiledTealBytes(
                 BASE64
                     .decode(api_obj.result.as_bytes())
                     .map_err(serde::de::Error::custom)?,
