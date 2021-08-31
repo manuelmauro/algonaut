@@ -20,8 +20,12 @@ pub struct Account {
     pub amount_without_pending_rewards: u64,
 
     /// `appl` applications local data stored in this account.
-    #[serde(rename = "apps-local-state")]
-    pub apps_local_state: Option<Vec<ApplicationLocalState>>,
+    #[serde(
+        default,
+        rename = "apps-local-state",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub apps_local_state: Vec<ApplicationLocalState>,
 
     /// `tsch` stores the sum of all of the local schemas and global schemas in this account.
     ///
@@ -31,7 +35,8 @@ pub struct Account {
 
     /// `asset` assets held by this account.
     /// Note the raw object uses map(int) -> AssetHolding for this type.
-    pub assets: Option<Vec<AssetHolding>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub assets: Vec<AssetHolding>,
 
     /// `spend` the address against which signing should be checked. If empty, the address of the
     /// current account is used. This field can be updated in any transaction by setting the
@@ -43,14 +48,22 @@ pub struct Account {
     /// `appp` parameters of applications created by this account including app global data.
     ///
     /// Note: the raw account uses map(int) -> AppParams for this type.
-    #[serde(rename = "created-apps")]
-    pub created_apps: Option<Vec<Application>>,
+    #[serde(
+        default,
+        rename = "created-apps",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub created_apps: Vec<Application>,
 
     /// `apar` parameters of assets created by this account.
     ///
     /// Note: the raw account uses map(int) -> Asset for this type.
-    #[serde(rename = "created-assets")]
-    pub created_assets: Option<Vec<Asset>>,
+    #[serde(
+        default,
+        rename = "created-assets",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub created_assets: Vec<Asset>,
 
     ///
     pub participation: Option<AccountParticipation>,
