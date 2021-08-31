@@ -4,7 +4,7 @@ use algonaut_encoding::U8_32Visitor;
 use data_encoding::BASE32_NOPAD;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
-use std::fmt::{self, Debug, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::str::FromStr;
 
 type ChecksumAlg = sha2::Sha512Trunc256;
@@ -67,13 +67,13 @@ impl FromStr for Address {
     }
 }
 
-impl ToString for Address {
-    fn to_string(&self) -> String {
-        self.encode_as_string()
+impl Debug for Address {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.encode_as_string())
     }
 }
 
-impl Debug for Address {
+impl Display for Address {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.encode_as_string())
     }
