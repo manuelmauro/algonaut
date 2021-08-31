@@ -3,11 +3,14 @@ use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
 use data_encoding::BASE64;
 use serde::{Deserialize, Deserializer, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Account {
     /// The account public key
-    pub address: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub address: Address,
 
     /// The total number of MicroAlgos in the account
     pub amount: MicroAlgos,
@@ -33,8 +36,9 @@ pub struct Account {
     /// `spend` the address against which signing should be checked. If empty, the address of the
     /// current account is used. This field can be updated in any transaction by setting the
     /// RekeyTo field.
-    #[serde(rename = "auth-addr")]
-    pub auth_addr: Option<String>,
+    #[serde(default, rename = "auth-addr")]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub auth_addr: Option<Address>,
 
     /// `appp` parameters of applications created by this account including app global data.
     ///
@@ -128,10 +132,12 @@ pub struct AccountParticipation {
 }
 
 /// Application state delta.
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccountStateDelta {
     /// Address
-    pub address: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub address: Address,
 
     /// Delta
     pub delta: StateDelta,
@@ -163,6 +169,7 @@ pub struct ApplicationLocalState {
 }
 
 /// Stores the global information associated with an application.
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApplicationParams {
     /// `approv` approval program.
@@ -187,7 +194,8 @@ pub struct ApplicationParams {
 
     /// The address that created this application. This is the address where the parameters and
     /// global state for this application can be found.
-    pub creator: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub creator: Address,
 
     /// `gs` global schema
     #[serde(rename = "global-state")]
@@ -227,6 +235,7 @@ pub struct Asset {
 
 /// Describes an asset held by an account.
 /// Definition: data/basics/userBalance.go : AssetHolding
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetHolding {
     /// `a` number of units held.
@@ -238,7 +247,8 @@ pub struct AssetHolding {
 
     /// Address that created this asset. This is the address where the parameters for this asset can
     /// be found, and also the address where unwanted asset units can be sent in the worst case.
-    pub creator: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub creator: Address,
 
     /// `f` whether or not the holding is frozen.
     #[serde(rename = "is-frozen")]
@@ -248,16 +258,20 @@ pub struct AssetHolding {
 /// AssetParams specifies the parameters for an asset.
 /// `apar` when part of an AssetConfig transaction.
 /// Definition: data/transactions/asset.go : AssetParams
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetParams {
     /// `c` Address of account used to clawback holdings of this asset. If empty, clawback is not
     /// permitted.
-    pub clawback: String,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub clawback: Option<Address>,
 
     /// The address that created this asset. This is the address where the parameters for this
     /// asset can be found, and also the address where unwanted asset units can be sent in the worst
     /// case.
-    pub creator: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub creator: Address,
 
     /// `dc` The number of digits to use after the decimal point when displaying this asset.
     /// If 0, the asset is not divisible. If 1, the base unit of the asset is in tenths.
@@ -273,10 +287,14 @@ pub struct AssetParams {
 
     /// `f` Address of account used to freeze holdings of this asset. If empty, freezing is not
     /// permitted.
-    pub freeze: String,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub freeze: Option<Address>,
 
     /// `m` Address of account used to manage the keys of this asset and to destroy it.
-    pub manager: String,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub manager: Option<Address>,
 
     /// `am` A commitment to some unspecified asset metadata. The format of this metadata is up
     /// to the application.
@@ -293,7 +311,9 @@ pub struct AssetParams {
     pub name: String,
 
     /// `r` Address of account holding reserve (non-minted) units of this asset.
-    pub reserve: String,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub reserve: Option<Address>,
 
     /// `t` The total number of units of this asset.
     pub total: u64,
