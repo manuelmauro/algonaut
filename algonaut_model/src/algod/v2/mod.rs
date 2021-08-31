@@ -283,7 +283,7 @@ pub struct AssetParams {
 
     /// `df` Whether holdings of this asset are frozen by default.
     #[serde(rename = "default-frozen")]
-    pub default_frozen: bool,
+    pub default_frozen: Option<bool>,
 
     /// `f` Address of account used to freeze holdings of this asset. If empty, freezing is not
     /// permitted.
@@ -300,15 +300,15 @@ pub struct AssetParams {
     /// to the application.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
     #[serde(
-        rename = "metadata-hash",
         default,
-        skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "deserialize_bytes"
+        rename = "metadata-hash",
+        with = "serde_bytes",
+        skip_serializing_if = "Option::is_none"
     )]
-    pub metadata_hash: Vec<u8>,
+    pub metadata_hash: Option<Vec<u8>>,
 
     /// `an` Name of this asset, as supplied by the creator.
-    pub name: String,
+    pub name: Option<String>,
 
     /// `r` Address of account holding reserve (non-minted) units of this asset.
     #[serde(default)]
@@ -320,10 +320,10 @@ pub struct AssetParams {
 
     /// `un` Name of a unit of this asset, as supplied by the creator.
     #[serde(rename = "unit-name")]
-    pub unit_name: String,
+    pub unit_name: Option<String>,
 
     /// `au` URL where more information about the asset can be retrieved.
-    pub url: String,
+    pub url: Option<String>,
 }
 
 /// BuildVersion
