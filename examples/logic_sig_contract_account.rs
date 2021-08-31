@@ -1,6 +1,6 @@
 use algonaut::algod::AlgodBuilder;
 use algonaut_core::MicroAlgos;
-use algonaut_transaction::account::ContractAccountSigner;
+use algonaut_transaction::account::ContractAccount;
 use algonaut_transaction::Pay;
 use algonaut_transaction::TxnBuilder;
 use dotenv::dotenv;
@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .auth(env::var("ALGOD_TOKEN")?.as_ref())
         .build_v2()?;
 
-    let program = algod
+    let compiled_teal = algod
         .compile_teal(
             r#"
 #pragma version 4
@@ -32,6 +32,7 @@ byte 0xFF
             .as_bytes(),
         )
         .await?;
+    let contract_account = ContractAccount::new(compiled_teal);
 
     let receiver = "DN7MBMCL5JQ3PFUQS7TMX5AH4EEKOBJVDUF4TCV6WERATKFLQF4MQUPZTA".parse()?;
 
@@ -39,11 +40,11 @@ byte 0xFF
 
     let t = TxnBuilder::with(
         params,
-        Pay::new(program.address, receiver, MicroAlgos(123_456)).build(),
+        Pay::new(contract_account.address, receiver, MicroAlgos(123_456)).build(),
     )
     .build();
 
-    let signed_t = program.program.sign(&t, vec![vec![1, 0], vec![255]])?;
+    let signed_t = contract_account.sign(&t, vec![vec![1, 0], vec![255]])?;
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await;
     println!("response {:?}", send_response);

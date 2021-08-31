@@ -174,7 +174,7 @@ impl VrfPk {
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct SignedLogic {
-    pub logic: CompiledTeal,
+    pub logic: CompiledTealBytes,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
 }
@@ -213,9 +213,9 @@ impl Debug for SignedLogic {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub struct CompiledTeal(pub Vec<u8>);
+pub struct CompiledTealBytes(pub Vec<u8>);
 
-impl CompiledTeal {
+impl CompiledTealBytes {
     pub fn bytes_to_sign(&self) -> Vec<u8> {
         let mut prefix_encoded_tx = b"Program".to_vec();
         prefix_encoded_tx.extend_from_slice(&self.0);
