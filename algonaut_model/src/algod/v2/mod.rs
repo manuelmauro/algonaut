@@ -448,7 +448,7 @@ pub struct ErrorResponse<T> {
 }
 
 /// Represents a TEAL value delta.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EvalDelta {
     /// `at` delta action.
     pub action: u64,
@@ -461,7 +461,7 @@ pub struct EvalDelta {
 }
 
 /// Key-value pairs for StateDelta.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EvalDeltaKeyValue {
     pub key: String,
     pub value: EvalDelta,
@@ -471,7 +471,7 @@ pub struct EvalDeltaKeyValue {
 pub type StateDelta = Vec<EvalDeltaKeyValue>;
 
 /// Represents a key-value pair in an application store.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TealKeyValue {
     pub key: String,
     pub value: TealValue,
@@ -481,7 +481,7 @@ pub struct TealKeyValue {
 pub type TealKeyValueStore = Vec<TealKeyValue>;
 
 /// Represents a TEAL value.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TealValue {
     /// `tb` bytes value.
     #[serde(
