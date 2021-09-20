@@ -4,6 +4,7 @@ use algonaut_client::{indexer::v2::Client, Headers};
 pub mod v2;
 
 /// Indexer is the entry point to the creation of a client for the Algorand's indexer
+#[derive(Default)]
 pub struct IndexerBuilder<'a> {
     url: Option<&'a str>,
 }
@@ -31,12 +32,7 @@ impl<'a> IndexerBuilder<'a> {
     }
 }
 
-impl<'a> Default for IndexerBuilder<'a> {
-    fn default() -> Self {
-        IndexerBuilder { url: None }
-    }
-}
-
+#[derive(Default)]
 pub struct IndexerCustomEndpointBuilder<'a> {
     url: Option<&'a str>,
     headers: Headers<'a>,
@@ -67,15 +63,6 @@ impl<'a> IndexerCustomEndpointBuilder<'a> {
         match self.url {
             Some(url) => Ok(v2::Indexer::new(Client::new(url, self.headers)?)),
             None => Err(AlgonautError::UnitializedUrl),
-        }
-    }
-}
-
-impl<'a> Default for IndexerCustomEndpointBuilder<'a> {
-    fn default() -> Self {
-        IndexerCustomEndpointBuilder {
-            url: None,
-            headers: vec![],
         }
     }
 }

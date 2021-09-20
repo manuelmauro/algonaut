@@ -19,6 +19,7 @@ pub mod v1;
 ///     Ok(())
 /// }
 /// ```
+#[derive(Default)]
 pub struct KmdBuilder<'a> {
     url: Option<&'a str>,
     token: Option<&'a str>,
@@ -65,16 +66,7 @@ impl<'a> KmdBuilder<'a> {
     }
 }
 
-impl<'a> Default for KmdBuilder<'a> {
-    fn default() -> Self {
-        KmdBuilder {
-            url: None,
-            token: None,
-            headers: vec![],
-        }
-    }
-}
-
+#[derive(Default)]
 pub struct KmdCustomEndpointBuilder<'a> {
     url: Option<&'a str>,
     headers: Headers<'a>,
@@ -105,15 +97,6 @@ impl<'a> KmdCustomEndpointBuilder<'a> {
         match self.url {
             Some(url) => Ok(v1::Kmd::new(Client::new(url, self.headers)?)),
             None => Err(AlgonautError::UnitializedUrl),
-        }
-    }
-}
-
-impl<'a> Default for KmdCustomEndpointBuilder<'a> {
-    fn default() -> Self {
-        KmdCustomEndpointBuilder {
-            url: None,
-            headers: vec![],
         }
     }
 }
