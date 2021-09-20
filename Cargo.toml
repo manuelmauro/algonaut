@@ -19,7 +19,7 @@ members = [
 ]
 
 [dependencies]
-algonaut_client = {path = "algonaut_client", version = "0.3.0"}
+algonaut_client = {path = "algonaut_client", version = "0.3.0", default-features = false}
 algonaut_model = {path = "algonaut_model", version = "0.3.0"}
 algonaut_core = {path = "algonaut_core", version = "0.3.0"}
 algonaut_crypto = {path = "algonaut_crypto", version = "0.3.0"}
@@ -34,3 +34,8 @@ tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
 rand = "0.8.3"
 getrandom = { version = "0.2.2", features = ["js"] }
 data-encoding = "2.3.1"
+
+[features]
+default = ["native"]
+native = ["algonaut_client/native"]
+rustls = ["algonaut_client/rustls"]
