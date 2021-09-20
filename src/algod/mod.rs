@@ -21,6 +21,7 @@ pub mod v2;
 ///     Ok(())
 /// }
 /// ```
+#[derive(Default)]
 pub struct AlgodBuilder<'a> {
     url: Option<&'a str>,
     token: Option<&'a str>,
@@ -76,15 +77,7 @@ impl<'a> AlgodBuilder<'a> {
     }
 }
 
-impl<'a> Default for AlgodBuilder<'a> {
-    fn default() -> Self {
-        AlgodBuilder {
-            url: None,
-            token: None,
-        }
-    }
-}
-
+#[derive(Default)]
 pub struct AlgodCustomEndpointBuilder<'a> {
     url: Option<&'a str>,
     headers: Headers<'a>,
@@ -118,15 +111,6 @@ impl<'a> AlgodCustomEndpointBuilder<'a> {
                 self.headers,
             )?)),
             None => Err(AlgonautError::UnitializedUrl),
-        }
-    }
-}
-
-impl<'a> Default for AlgodCustomEndpointBuilder<'a> {
-    fn default() -> Self {
-        AlgodCustomEndpointBuilder {
-            url: None,
-            headers: vec![],
         }
     }
 }
