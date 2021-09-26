@@ -7,6 +7,7 @@ pub mod v2;
 #[derive(Default)]
 pub struct IndexerBuilder<'a> {
     url: Option<&'a str>,
+    additional_headers: Headers<'a>,
 }
 
 impl<'a> IndexerBuilder<'a> {
@@ -21,12 +22,18 @@ impl<'a> IndexerBuilder<'a> {
         self
     }
 
+    /// Add an extra header to the client.
+    pub fn header(mut self, header_name: &'a str, header_data: &'a str) -> Self {
+        self.additional_headers.push((header_name, header_data));
+        self
+    }
+
     /// Build a v2 client for Algorand's indexer.
     ///
     /// Returns an error if url is not set or has an invalid format.
     pub fn build_v2(self) -> Result<v2::Indexer, AlgonautError> {
         match self.url {
-            Some(url) => Ok(v2::Indexer::new(Client::new(url, vec![])?)),
+            Some(url) => Ok(v2::Indexer::new(Client::new(url, self.additional_headers)?)),
             None => Err(AlgonautError::UnitializedUrl),
         }
     }

@@ -14,6 +14,7 @@ pub mod v2;
 ///     let algod = AlgodBuilder::new()
 ///         .bind("http://localhost:4001")
 ///         .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+///         .header("HeaderName", "HeaderData")
 ///         .build_v2()?;
 ///
 ///     println!("Algod versions: {:?}", algod.versions().await?.versions);
@@ -25,6 +26,7 @@ pub mod v2;
 pub struct AlgodBuilder<'a> {
     url: Option<&'a str>,
     token: Option<&'a str>,
+    additional_headers: Headers<'a>,
 }
 
 impl<'a> AlgodBuilder<'a> {
@@ -45,13 +47,23 @@ impl<'a> AlgodBuilder<'a> {
         self
     }
 
+    /// Add an extra header to the client.
+    pub fn header(mut self, header_name: &'a str, header_data: &'a str) -> Self {
+        self.additional_headers.push((header_name, header_data));
+        self
+    }
+
     /// Build a v1 client for Algorand protocol daemon.
     ///
     /// Returns an error if url or token is not set or has an invalid format.
     pub fn build_v1(self) -> Result<v1::Algod, AlgonautError> {
         match (self.url, self.token) {
             (Some(url), Some(token)) => Ok(v1::Algod::new(
-                algonaut_client::algod::v1::Client::new(url, &ApiToken::parse(token)?.to_string())?,
+                algonaut_client::algod::v1::Client::new_with_header(
+                    url,
+                    &ApiToken::parse(token)?.to_string(),
+                    self.additional_headers,
+                )?,
             )),
             (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
             (Some(_), None) => Err(AlgonautError::UnitializedToken),
@@ -63,16 +75,18 @@ impl<'a> AlgodBuilder<'a> {
     ///
     /// Returns an error if url or token is not set or has an invalid format.
     pub fn build_v2(self) -> Result<v2::Algod, AlgonautError> {
-        match (self.url, self.token) {
-            (Some(url), Some(token)) => {
+        match (self.url, self.token, self.additional_headers) {
+            (Some(url), Some(token), mut headers) => {
+                let token = ApiToken::parse(token)?.to_string();
+                headers.push(("X-Algo-API-Token", token.as_str()));
                 Ok(v2::Algod::new(algonaut_client::algod::v2::Client::new(
                     url,
-                    vec![("X-Algo-API-Token", &ApiToken::parse(token)?.to_string())],
+                    headers,
                 )?))
             }
-            (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
-            (Some(_), None) => Err(AlgonautError::UnitializedToken),
-            (None, None) => Err(AlgonautError::UnitializedUrl),
+            (None, Some(_), _) => Err(AlgonautError::UnitializedUrl),
+            (Some(_), None, _) => Err(AlgonautError::UnitializedToken),
+            (None, None, _) => Err(AlgonautError::UnitializedUrl),
         }
     }
 }

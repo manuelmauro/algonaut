@@ -1,6 +1,7 @@
 use crate::error::ClientError;
-use crate::extensions::reqwest::ResponseExt;
+use crate::extensions::reqwest::{to_header_map, ResponseExt};
 use crate::token::ApiToken;
+use crate::Headers;
 use algonaut_core::Round;
 use algonaut_model::algod::v1::{
     Account, Block, NodeStatus, PendingTransactions, QueryAccountTransactions, Supply, Transaction,
@@ -23,10 +24,14 @@ pub struct Client {
 
 impl Client {
     pub fn new(url: &str, token: &str) -> Result<Client, ClientError> {
+        Self::new_with_header(url, token, vec![])
+    }
+
+    pub fn new_with_header(url: &str, token: &str, headers: Headers) -> Result<Client, ClientError> {
         Ok(Client {
             url: Url::parse(url)?.as_ref().into(),
             token: ApiToken::parse(token)?.to_string(),
-            headers: HeaderMap::new(),
+            headers: to_header_map(headers)?,
             http_client: reqwest::Client::new(),
         })
     }
