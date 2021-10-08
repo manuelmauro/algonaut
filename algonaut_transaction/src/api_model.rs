@@ -291,7 +291,7 @@ impl From<Transaction> for ApiTransaction {
                     call.to_owned().global_state_schema.and_then(|s| s.into());
                 api_t.local_state_schema =
                     call.to_owned().local_state_schema.and_then(|s| s.into());
-                api_t.extra_pages = call.extra_pages.and_then(num_as_api_option);
+                api_t.extra_pages = num_as_api_option(call.extra_pages);
             }
         }
         api_t
@@ -323,12 +323,12 @@ impl TryFrom<ApiTransaction> for Transaction {
             "acfg" => {
                 TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
                     sender: api_t.sender,
-                    params: None, // TODO
+                    params: api_t.asset_params.map(|p| p.into()),
                     // None is not mapped to "zero value": the possible "zero value" (asset creation) is represented as None in the domain.
                     config_asset: api_t.config_asset,
                 })
             }
-            "axfer" => parse_asset_transfer_transaction(&api_t),
+            "axfer" => parse_asset_transfer_transaction(&api_t)?,
             "afrz" => TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
                 sender: api_t.sender,
                 freeze_account: api_t.freeze_account.ok_or_else(|| {
@@ -339,39 +339,37 @@ impl TryFrom<ApiTransaction> for Transaction {
                 })?,
                 frozen: bool_from_api_option(api_t.frozen),
             }),
-            "appl" => TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
-                sender: api_t.sender,
-                app_id: api_t.app_id,
-                on_complete: int_to_application_call_on_complete(num_from_api_option(
-                    api_t.on_complete,
-                ))?,
-                accounts: api_t.accounts,
-                approval_program: api_t.approval_program.map(CompiledTealBytes),
-                app_arguments: api_t
-                    .app_arguments
-                    .map(|args| args.into_iter().map(|a| a.0).collect()),
-                clear_state_program: api_t.clear_state_program.map(CompiledTealBytes),
-                foreign_apps: api_t.foreign_apps,
-                foreign_assets: api_t.foreign_assets,
+            "appl" => {
+                let on_complete =
+                    int_to_application_call_on_complete(num_from_api_option(api_t.on_complete))?;
+                TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+                    sender: api_t.sender,
+                    app_id: api_t.app_id,
+                    on_complete: on_complete.clone(),
+                    accounts: api_t.accounts,
+                    approval_program: api_t.approval_program.map(CompiledTealBytes),
+                    app_arguments: api_t
+                        .app_arguments
+                        .map(|args| args.into_iter().map(|a| a.0).collect()),
+                    clear_state_program: api_t.clear_state_program.map(CompiledTealBytes),
+                    foreign_apps: api_t.foreign_apps,
+                    foreign_assets: api_t.foreign_assets,
 
-                // https://github.com/manuelmauro/algonaut/issues/96
-                global_state_schema: Some(api_t.global_state_schema.map(|s| s.into()).ok_or_else(
-                    || {
-                        TransactionError::Deserialization(
-                            "ERROR: TODO confirm global schema zero value semantics".to_owned(),
-                        )
-                    },
-                )?),
-                local_state_schema: Some(api_t.local_state_schema.map(|s| s.into()).ok_or_else(
-                    || {
-                        TransactionError::Deserialization(
-                            "ERROR: TODO confirm local schema zero value semantics".to_owned(),
-                        )
-                    },
-                )?),
+                    global_state_schema: parse_state_schema(
+                        on_complete.clone(),
+                        api_t.app_id,
+                        api_t.global_state_schema,
+                    ),
+                    local_state_schema: parse_state_schema(
+                        on_complete,
+                        api_t.app_id,
+                        api_t.local_state_schema,
+                    ),
 
-                extra_pages: Some(num_from_api_option(api_t.extra_pages)),
-            }),
+                    extra_pages: num_from_api_option(api_t.extra_pages),
+                })
+            }
+
             unsupported_type => {
                 return Err(TransactionError::Deserialization(format!(
                     "Not supported transaction type: {}",
@@ -394,14 +392,38 @@ impl TryFrom<ApiTransaction> for Transaction {
     }
 }
 
-fn parse_asset_transfer_transaction(api_t: &ApiTransaction) -> TransactionType {
+fn parse_state_schema(
+    on_complete: ApplicationCallOnComplete,
+    app_id: Option<u64>,
+    api_state_schema: Option<ApiStateSchema>,
+) -> Option<StateSchema> {
+    match (on_complete, app_id) {
+        // App creation (has schema)
+        (ApplicationCallOnComplete::NoOp, None) => Some(
+            api_state_schema
+                .map(|s| s.into())
+                // on creation we know that there's a schema, so we map None to schema with 0 values.
+                // The API sends None because struct with 0s is considered a "zero value" and skipped.
+                .unwrap_or_else(|| StateSchema {
+                    number_ints: 0,
+                    number_byteslices: 0,
+                }),
+        ),
+        // Not app creation (has no schema)
+        _ => None,
+    }
+}
+
+fn parse_asset_transfer_transaction(
+    api_t: &ApiTransaction,
+) -> Result<TransactionType, TransactionError> {
     match (
         api_t.xfer,
         api_t.asset_sender,
         api_t.asset_receiver,
         api_t.asset_amount,
     ) {
-        (Some(xfer), Some(asset_sender), Some(asset_receiver), Some(asset_amount)) => {
+        (Some(xfer), Some(asset_sender), Some(asset_receiver), Some(asset_amount)) => Ok(
             TransactionType::AssetClawbackTransaction(AssetClawbackTransaction {
                 sender: api_t.sender,
                 xfer,
@@ -409,24 +431,28 @@ fn parse_asset_transfer_transaction(api_t: &ApiTransaction) -> TransactionType {
                 asset_sender,
                 asset_receiver,
                 asset_close_to: api_t.asset_close_to,
-            })
-        }
-        (Some(xfer), None, Some(asset_receiver), Some(asset_amount)) => {
+            }),
+        ),
+        (Some(xfer), None, Some(asset_receiver), Some(asset_amount)) => Ok(
             TransactionType::AssetTransferTransaction(AssetTransferTransaction {
                 sender: api_t.sender,
                 xfer,
                 amount: asset_amount,
                 receiver: asset_receiver,
                 close_to: api_t.asset_close_to,
-            })
-        }
-        (Some(xfer), None, None, None) => {
-            TransactionType::AssetAcceptTransaction(AssetAcceptTransaction {
+            }),
+        ),
+        // On opt-in the asset receiver is the tx sender, so we ignore it
+        (Some(xfer), None, Some(_), None) => Ok(TransactionType::AssetAcceptTransaction(
+            AssetAcceptTransaction {
                 sender: api_t.sender,
                 xfer,
-            })
-        }
-        _ => panic!(),
+            },
+        )),
+        _ => Err(TransactionError::Deserialization(format!(
+            "Invalid api asset transfer transaction: {:?}",
+            api_t
+        ))),
     }
 }
 

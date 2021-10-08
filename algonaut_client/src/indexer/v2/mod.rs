@@ -1,7 +1,7 @@
 use crate::error::ClientError;
 use crate::extensions::reqwest::{to_header_map, ResponseExt};
 use crate::Headers;
-use algonaut_core::Round;
+use algonaut_core::{Address, Round};
 use algonaut_model::indexer::v2::{
     AccountInfoResponse, AccountResponse, AccountTransactionResponse, ApplicationInfoResponse,
     ApplicationResponse, AssetResponse, AssetTransactionResponse, AssetsInfoResponse,
@@ -61,12 +61,12 @@ impl Client {
     /// Lookup account information.
     pub async fn account_info(
         &self,
-        id: &str,
+        address: &Address,
         query: &QueryAccountInfo,
     ) -> Result<AccountInfoResponse, ClientError> {
         let response = self
             .http_client
-            .get(&format!("{}v2/accounts/{}", self.url, id))
+            .get(&format!("{}v2/accounts/{}", self.url, address.to_string()))
             .headers(self.headers.clone())
             .query(query)
             .send()
@@ -82,12 +82,16 @@ impl Client {
     /// Lookup account transactions.
     pub async fn account_transactions(
         &self,
-        id: &str,
+        address: &Address,
         query: &QueryAccountTransaction,
     ) -> Result<AccountTransactionResponse, ClientError> {
         let response = self
             .http_client
-            .get(&format!("{}v2/accounts/{}/transactions", self.url, id))
+            .get(&format!(
+                "{}v2/accounts/{}/transactions",
+                self.url,
+                address.to_string()
+            ))
             .headers(self.headers.clone())
             .query(query)
             .send()
@@ -123,7 +127,7 @@ impl Client {
     /// Lookup application.
     pub async fn application_info(
         &self,
-        id: &str,
+        id: u64,
         query: &QueryApplicationInfo,
     ) -> Result<ApplicationInfoResponse, ClientError> {
         let response = self
@@ -161,7 +165,7 @@ impl Client {
     /// Lookup asset information.
     pub async fn assets_info(
         &self,
-        id: &str,
+        id: u64,
         query: &QueryAssetsInfo,
     ) -> Result<AssetsInfoResponse, ClientError> {
         let response = self
@@ -182,7 +186,7 @@ impl Client {
     /// Lookup the list of accounts who hold this asset.
     pub async fn asset_balances(
         &self,
-        id: &str,
+        id: u64,
         query: &QueryBalances,
     ) -> Result<BalancesResponse, ClientError> {
         let response = self
@@ -203,7 +207,7 @@ impl Client {
     /// Lookup transactions for an asset.
     pub async fn asset_transactions(
         &self,
-        id: &str,
+        id: u64,
         query: &QueryAssetTransaction,
     ) -> Result<AssetTransactionResponse, ClientError> {
         let response = self

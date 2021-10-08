@@ -1,7 +1,7 @@
 use algonaut_client::algod::v2::Client;
 use algonaut_core::{Address, Round, SuggestedTransactionParams, ToMsgPack};
 use algonaut_model::algod::v2::{
-    Account, Application, Block, Catchup, CompiledTeal, DryrunRequest, DryrunResponse,
+    Account, Application, Asset, Block, Catchup, CompiledTeal, DryrunRequest, DryrunResponse,
     GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
     TransactionParams, TransactionResponse, Version,
 };
@@ -69,7 +69,7 @@ impl Algod {
     ///
     /// Given a asset id, it returns asset information including creator, name,
     /// total supply and special addresses.
-    pub async fn asset_information(&self, id: u64) -> Result<Application, AlgonautError> {
+    pub async fn asset_information(&self, id: u64) -> Result<Asset, AlgonautError> {
         Ok(self.client.asset_information(id).await?)
     }
 

@@ -12,6 +12,7 @@ use algonaut_model::algod::v2::CompiledTeal;
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
+use serde::{Deserialize, Serialize};
 
 pub struct Account {
     seed: [u8; 32],
@@ -228,10 +229,12 @@ impl Account {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Convenience CompiledTeal "view", used to sign as contract account.
+/// The program hash is interpreted as an address.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContractAccount {
     pub address: Address,
-    program: CompiledTealBytes,
+    pub program: CompiledTealBytes,
 }
 
 impl ContractAccount {

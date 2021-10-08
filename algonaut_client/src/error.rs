@@ -2,7 +2,7 @@ use reqwest::header::{InvalidHeaderName, InvalidHeaderValue};
 use std::fmt::Debug;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum ClientError {
     /// URL parse error.
     #[error("Url parsing error: {0}")]
@@ -19,7 +19,7 @@ pub enum ClientError {
     Request(#[from] RequestError),
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 #[error("{:?}, {}", url, details)]
 pub struct RequestError {
     pub url: Option<String>,
