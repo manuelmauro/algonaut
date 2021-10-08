@@ -339,39 +339,37 @@ impl TryFrom<ApiTransaction> for Transaction {
                 })?,
                 frozen: bool_from_api_option(api_t.frozen),
             }),
-            "appl" => TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
-                sender: api_t.sender,
-                app_id: api_t.app_id,
-                on_complete: int_to_application_call_on_complete(num_from_api_option(
-                    api_t.on_complete,
-                ))?,
-                accounts: api_t.accounts,
-                approval_program: api_t.approval_program.map(CompiledTealBytes),
-                app_arguments: api_t
-                    .app_arguments
-                    .map(|args| args.into_iter().map(|a| a.0).collect()),
-                clear_state_program: api_t.clear_state_program.map(CompiledTealBytes),
-                foreign_apps: api_t.foreign_apps,
-                foreign_assets: api_t.foreign_assets,
+            "appl" => {
+                let on_complete =
+                    int_to_application_call_on_complete(num_from_api_option(api_t.on_complete))?;
+                TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+                    sender: api_t.sender,
+                    app_id: api_t.app_id,
+                    on_complete: on_complete.clone(),
+                    accounts: api_t.accounts,
+                    approval_program: api_t.approval_program.map(CompiledTealBytes),
+                    app_arguments: api_t
+                        .app_arguments
+                        .map(|args| args.into_iter().map(|a| a.0).collect()),
+                    clear_state_program: api_t.clear_state_program.map(CompiledTealBytes),
+                    foreign_apps: api_t.foreign_apps,
+                    foreign_assets: api_t.foreign_assets,
 
-                // https://github.com/manuelmauro/algonaut/issues/96
-                global_state_schema: Some(api_t.global_state_schema.map(|s| s.into()).ok_or_else(
-                    || {
-                        TransactionError::Deserialization(
-                            "ERROR: TODO confirm global schema zero value semantics".to_owned(),
-                        )
-                    },
-                )?),
-                local_state_schema: Some(api_t.local_state_schema.map(|s| s.into()).ok_or_else(
-                    || {
-                        TransactionError::Deserialization(
-                            "ERROR: TODO confirm local schema zero value semantics".to_owned(),
-                        )
-                    },
-                )?),
+                    global_state_schema: parse_state_schema(
+                        on_complete.clone(),
+                        api_t.app_id,
+                        api_t.global_state_schema,
+                    ),
+                    local_state_schema: parse_state_schema(
+                        on_complete,
+                        api_t.app_id,
+                        api_t.local_state_schema,
+                    ),
 
-                extra_pages: Some(num_from_api_option(api_t.extra_pages)),
-            }),
+                    extra_pages: num_from_api_option(api_t.extra_pages),
+                })
+            }
+
             unsupported_type => {
                 return Err(TransactionError::Deserialization(format!(
                     "Not supported transaction type: {}",
@@ -391,6 +389,28 @@ impl TryFrom<ApiTransaction> for Transaction {
             rekey_to: api_t.rekey_to,
             txn_type,
         })
+    }
+}
+
+fn parse_state_schema(
+    on_complete: ApplicationCallOnComplete,
+    app_id: Option<u64>,
+    api_state_schema: Option<ApiStateSchema>,
+) -> Option<StateSchema> {
+    match (on_complete, app_id) {
+        // App creation (has schema)
+        (ApplicationCallOnComplete::NoOp, None) => Some(
+            api_state_schema
+                .map(|s| s.into())
+                // on creation we know that there's a schema, so we map None to schema with 0 values.
+                // The API sends None because struct with 0s is considered a "zero value" and skipped.
+                .unwrap_or_else(|| StateSchema {
+                    number_ints: 0,
+                    number_byteslices: 0,
+                }),
+        ),
+        // Not app creation (has no schema)
+        _ => None,
     }
 }
 
