@@ -231,7 +231,7 @@ impl Account {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ContractAccount {
     pub address: Address,
-    program: CompiledTealBytes,
+    pub program: CompiledTealBytes,
 }
 
 impl ContractAccount {
