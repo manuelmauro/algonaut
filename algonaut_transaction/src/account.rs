@@ -229,6 +229,8 @@ impl Account {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// Convenience CompiledTeal "view", used to sign as contract account.
+/// The program hash is interpreted as an address.
 pub struct ContractAccount {
     pub address: Address,
     pub program: CompiledTealBytes,
