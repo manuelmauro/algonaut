@@ -323,7 +323,7 @@ impl TryFrom<ApiTransaction> for Transaction {
             "acfg" => {
                 TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
                     sender: api_t.sender,
-                    params: None, // TODO
+                    params: api_t.asset_params.map(|p| p.into()),
                     // None is not mapped to "zero value": the possible "zero value" (asset creation) is represented as None in the domain.
                     config_asset: api_t.config_asset,
                 })
