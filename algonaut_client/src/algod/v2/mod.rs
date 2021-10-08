@@ -3,7 +3,7 @@ use crate::extensions::reqwest::{to_header_map, ResponseExt};
 use crate::Headers;
 use algonaut_core::{Address, Round};
 use algonaut_model::algod::v2::{
-    Account, Application, Block, Catchup, CompiledTeal, DryrunRequest, DryrunResponse,
+    Account, Application, Asset, Block, Catchup, CompiledTeal, DryrunRequest, DryrunResponse,
     GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
     TransactionParams, TransactionResponse, Version,
 };
@@ -121,10 +121,10 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn asset_information(&self, id: u64) -> Result<Application, ClientError> {
+    pub async fn asset_information(&self, id: u64) -> Result<Asset, ClientError> {
         let response = self
             .http_client
-            .get(&format!("{}v2/asset/{}", self.url, id))
+            .get(&format!("{}v2/assets/{}", self.url, id))
             .headers(self.headers.clone())
             .send()
             .await?
