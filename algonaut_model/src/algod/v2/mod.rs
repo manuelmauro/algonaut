@@ -153,7 +153,8 @@ pub struct AccountStateDelta {
     pub address: Address,
 
     /// Delta
-    pub delta: StateDelta,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub delta: Vec<EvalDeltaKeyValue>,
 }
 
 /// Application index and its parameters
@@ -173,8 +174,8 @@ pub struct ApplicationLocalState {
     pub id: u64,
 
     /// `tkv` storage.
-    #[serde(rename = "key-value")]
-    pub key_value: Option<TealKeyValueStore>,
+    #[serde(default, rename = "key-value", skip_serializing_if = "Vec::is_empty")]
+    pub key_value: Vec<TealKeyValue>,
 
     /// `hsch` schema.
     #[serde(rename = "schema")]
@@ -211,15 +212,18 @@ pub struct ApplicationParams {
     pub creator: Address,
 
     /// `gs` global schema
-    #[serde(rename = "global-state")]
-    pub global_state: Option<TealKeyValueStore>,
+    #[serde(
+        default,
+        rename = "global-state",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub global_state: Vec<TealKeyValue>,
 
     /// `lsch` global schema
     #[serde(rename = "global-state-schema")]
     pub global_state_schema: Option<ApplicationStateSchema>,
 
     /// `lsch` local schema
-
     #[serde(rename = "local-state-schema")]
     pub local_state_schema: Option<ApplicationStateSchema>,
 }
@@ -427,8 +431,12 @@ pub struct DryrunTxnResult {
     /// Disassembled program line by line.
     pub disassembly: Vec<String>,
 
-    #[serde(rename = "global-delta")]
-    pub global_delta: StateDelta,
+    #[serde(
+        default,
+        rename = "global-delta",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub global_delta: Vec<EvalDeltaKeyValue>,
 
     #[serde(rename = "local-deltas")]
     pub local_deltas: Vec<AccountStateDelta>,
@@ -480,18 +488,12 @@ pub struct EvalDeltaKeyValue {
     pub value: EvalDelta,
 }
 
-/// Application state delta.
-pub type StateDelta = Vec<EvalDeltaKeyValue>;
-
 /// Represents a key-value pair in an application store.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TealKeyValue {
     pub key: String,
     pub value: TealValue,
 }
-
-/// Represents a key-value store for use in an application.
-pub type TealKeyValueStore = Vec<TealKeyValue>;
 
 /// Represents a TEAL value.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -576,13 +578,21 @@ pub struct PendingTransaction {
 
     /// `gd` Global state key/value changes for the application being executed by this
     /// transaction.
-    #[serde(rename = "global-state-delta")]
-    pub global_state_delta: Option<StateDelta>,
+    #[serde(
+        default,
+        rename = "global-state-delta",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub global_state_delta: Vec<EvalDeltaKeyValue>,
 
     /// `ld` Local state key/value changes for the application being executed by this
     /// transaction.
-    #[serde(rename = "local-state-delta")]
-    pub local_state_delta: Option<Vec<AccountStateDelta>>,
+    #[serde(
+        default,
+        rename = "local-state-delta",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub local_state_delta: Vec<AccountStateDelta>,
 
     /// Indicates that the transaction was kicked out of this node's transaction pool
     /// (and specifies why that happened). An empty string indicates the transaction
