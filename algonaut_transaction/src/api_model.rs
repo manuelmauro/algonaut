@@ -328,7 +328,7 @@ impl TryFrom<ApiTransaction> for Transaction {
                     config_asset: api_t.config_asset,
                 })
             }
-            "axfer" => parse_asset_transfer_transaction(&api_t),
+            "axfer" => parse_asset_transfer_transaction(&api_t)?,
             "afrz" => TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
                 sender: api_t.sender,
                 freeze_account: api_t.freeze_account.ok_or_else(|| {
@@ -394,14 +394,16 @@ impl TryFrom<ApiTransaction> for Transaction {
     }
 }
 
-fn parse_asset_transfer_transaction(api_t: &ApiTransaction) -> TransactionType {
+fn parse_asset_transfer_transaction(
+    api_t: &ApiTransaction,
+) -> Result<TransactionType, TransactionError> {
     match (
         api_t.xfer,
         api_t.asset_sender,
         api_t.asset_receiver,
         api_t.asset_amount,
     ) {
-        (Some(xfer), Some(asset_sender), Some(asset_receiver), Some(asset_amount)) => {
+        (Some(xfer), Some(asset_sender), Some(asset_receiver), Some(asset_amount)) => Ok(
             TransactionType::AssetClawbackTransaction(AssetClawbackTransaction {
                 sender: api_t.sender,
                 xfer,
@@ -409,24 +411,28 @@ fn parse_asset_transfer_transaction(api_t: &ApiTransaction) -> TransactionType {
                 asset_sender,
                 asset_receiver,
                 asset_close_to: api_t.asset_close_to,
-            })
-        }
-        (Some(xfer), None, Some(asset_receiver), Some(asset_amount)) => {
+            }),
+        ),
+        (Some(xfer), None, Some(asset_receiver), Some(asset_amount)) => Ok(
             TransactionType::AssetTransferTransaction(AssetTransferTransaction {
                 sender: api_t.sender,
                 xfer,
                 amount: asset_amount,
                 receiver: asset_receiver,
                 close_to: api_t.asset_close_to,
-            })
-        }
-        (Some(xfer), None, None, None) => {
-            TransactionType::AssetAcceptTransaction(AssetAcceptTransaction {
+            }),
+        ),
+        // On opt-in the asset receiver is the tx sender, so we ignore it
+        (Some(xfer), None, Some(_), None) => Ok(TransactionType::AssetAcceptTransaction(
+            AssetAcceptTransaction {
                 sender: api_t.sender,
                 xfer,
-            })
-        }
-        _ => panic!(),
+            },
+        )),
+        _ => Err(TransactionError::Deserialization(format!(
+            "Invalid api asset transfer transaction: {:?}",
+            api_t
+        ))),
     }
 }
 
