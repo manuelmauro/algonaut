@@ -291,7 +291,7 @@ impl From<Transaction> for ApiTransaction {
                     call.to_owned().global_state_schema.and_then(|s| s.into());
                 api_t.local_state_schema =
                     call.to_owned().local_state_schema.and_then(|s| s.into());
-                api_t.extra_pages = call.extra_pages.and_then(num_as_api_option);
+                api_t.extra_pages = num_as_api_option(call.extra_pages);
             }
         }
         api_t

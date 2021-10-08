@@ -354,7 +354,7 @@ pub struct ApplicationCallTransaction {
     pub local_state_schema: Option<StateSchema>,
 
     // Number of additional pages allocated to the application's approval and clear state programs. Each ExtraProgramPages is 2048 bytes. The sum of ApprovalProgram and ClearStateProgram may not exceed 2048*(1+ExtraProgramPages) bytes.
-    pub extra_pages: Option<u64>,
+    pub extra_pages: u64,
 }
 
 /// An application transaction must indicate the action to be taken following the execution of its approvalProgram or clearStateProgram. The variants below describe the available actions.

@@ -628,7 +628,7 @@ impl CreateApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: self.global_state_schema,
             local_state_schema: self.local_state_schema,
-            extra_pages: Some(self.extra_pages),
+            extra_pages: self.extra_pages,
         })
     }
 }
@@ -697,7 +697,7 @@ impl UpdateApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
-            extra_pages: None,
+            extra_pages: 0,
         })
     }
 }
@@ -757,7 +757,7 @@ impl CallApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
-            extra_pages: None,
+            extra_pages: 0,
         })
     }
 }
@@ -817,7 +817,7 @@ impl ClearApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
-            extra_pages: None,
+            extra_pages: 0,
         })
     }
 }
@@ -877,7 +877,7 @@ impl CloseApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
-            extra_pages: None,
+            extra_pages: 0,
         })
     }
 }
@@ -937,7 +937,7 @@ impl DeleteApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
-            extra_pages: None,
+            extra_pages: 0,
         })
     }
 }
@@ -997,7 +997,7 @@ impl OptInApplication {
             foreign_assets: self.foreign_assets,
             global_state_schema: None,
             local_state_schema: None,
-            extra_pages: None,
+            extra_pages: 0,
         })
     }
 }
