@@ -64,14 +64,14 @@ async fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
         .bind(env::var("INDEXER_URL")?.as_ref())
         .build_v2()?;
 
-    let account: String = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ACCOUNT")?.parse()?;
 
     let query = QueryAccountInfo {
         include_all: None,
         round: Some(Round(0)),
     };
 
-    let res = indexer.account_info(account.as_str(), &query).await;
+    let res = indexer.account_info(&address, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -106,11 +106,9 @@ async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         txid: None,
     };
 
-    let account: String = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ACCOUNT")?.parse()?;
 
-    let res = indexer
-        .account_transactions(&account.as_str(), &query)
-        .await;
+    let res = indexer.account_transactions(&address, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -153,7 +151,7 @@ async fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
 
     let query = QueryApplicationInfo { include_all: None };
 
-    let res = indexer.application_info("123", &query).await;
+    let res = indexer.application_info(123, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -199,7 +197,7 @@ async fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
 
     let query = QueryAssetsInfo { include_all: None };
 
-    let res = indexer.assets_info("123", &query).await;
+    let res = indexer.assets_info(123, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -224,7 +222,7 @@ async fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
         round: None,
     };
 
-    let res = indexer.asset_balances("123", &query).await;
+    let res = indexer.asset_balances(123, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
@@ -261,7 +259,7 @@ async fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         txid: None,
     };
 
-    let res = indexer.asset_transactions("123", &query).await;
+    let res = indexer.asset_transactions(123, &query).await;
 
     println!("{:#?}", res);
     assert!(res.is_ok());
