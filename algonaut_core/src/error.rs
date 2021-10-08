@@ -3,7 +3,7 @@ use data_encoding::DecodeError;
 use std::fmt::Debug;
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum CoreError {
     #[error("Core error: {0}")]
     General(String),

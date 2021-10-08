@@ -3,7 +3,7 @@ use derive_more::{Display, From};
 use std::fmt::Debug;
 use thiserror::Error;
 
-#[derive(Debug, Display, Error, From)]
+#[derive(Debug, Display, Error, From, Clone)]
 pub enum CryptoError {
     #[display(fmt = "Key length is invalid.")]
     InvalidKeyLength,

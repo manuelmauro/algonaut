@@ -6,7 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Account {
     /// The account public key
     #[serde_as(as = "DisplayFromStr")]
@@ -98,7 +98,7 @@ pub struct Account {
 }
 
 /// Signature types.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum SignatureType {
     #[serde(rename = "sig")]
     Sig,
@@ -109,7 +109,7 @@ pub enum SignatureType {
 }
 
 /// AccountParticipation describes the parameters used by this account in consensus protocol.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountParticipation {
     /// `sel` Selection public key (if any) currently registered for this round.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
@@ -146,7 +146,7 @@ pub struct AccountParticipation {
 
 /// Application state delta.
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountStateDelta {
     /// Address
     #[serde_as(as = "DisplayFromStr")]
@@ -158,7 +158,7 @@ pub struct AccountStateDelta {
 }
 
 /// Application index and its parameters
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Application {
     /// `appidx` application index.
     pub id: u64,
@@ -168,7 +168,7 @@ pub struct Application {
 }
 
 /// Stores local state associated with an application.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApplicationLocalState {
     /// The application which this local state is for.
     pub id: u64,
@@ -184,7 +184,7 @@ pub struct ApplicationLocalState {
 
 /// Stores the global information associated with an application.
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApplicationParams {
     /// `approv` approval program.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
@@ -229,7 +229,7 @@ pub struct ApplicationParams {
 }
 
 /// Specifies maximums on the number of each type that may be stored.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApplicationStateSchema {
     /// `nbs` num of byte slices.
     #[serde(rename = "num-byte-slice")]
@@ -241,7 +241,7 @@ pub struct ApplicationStateSchema {
 }
 
 /// Specifies both the unique identifier and the parameters for an asset
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Asset {
     /// unique asset identifier
     pub index: u64,
@@ -253,7 +253,7 @@ pub struct Asset {
 /// Describes an asset held by an account.
 /// Definition: data/basics/userBalance.go : AssetHolding
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AssetHolding {
     /// `a` number of units held.
     pub amount: u64,
@@ -276,7 +276,7 @@ pub struct AssetHolding {
 /// `apar` when part of an AssetConfig transaction.
 /// Definition: data/transactions/asset.go : AssetParams
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AssetParams {
     /// `c` Address of account used to clawback holdings of this asset. If empty, clawback is not
     /// permitted.
@@ -344,7 +344,7 @@ pub struct AssetParams {
 }
 
 /// BuildVersion
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BuildVersion {
     pub branch: String,
     pub build_number: u64,
@@ -356,7 +356,7 @@ pub struct BuildVersion {
 
 /// Request data type for dryrun endpoint. Given the Transactions and simulated ledger state
 /// upload, run TEAL scripts and return debugging information.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunRequest {
     pub accounts: Vec<Account>,
 
@@ -383,7 +383,7 @@ pub struct DryrunRequest {
 
 /// DryrunSource is TEAL source text that gets uploaded, compiled, and inserted into transactions
 /// or application state.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunSource {
     #[serde(rename = "app-index")]
     pub app_index: u64,
@@ -402,7 +402,7 @@ pub struct DryrunSource {
 }
 
 /// Stores the TEAL eval step data
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunState {
     /// Evaluation error if any
     pub error: String,
@@ -420,7 +420,7 @@ pub struct DryrunState {
 
 /// DryrunTxnResult contains any LogicSig or ApplicationCall program debug information
 /// and state updates from a dryrun.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunTxnResult {
     #[serde(rename = "app-call-messages")]
     pub app_call_messages: Vec<String>,
@@ -449,7 +449,7 @@ pub struct DryrunTxnResult {
 }
 
 /// DryrunResponse
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunResponse {
     pub error: String,
 
@@ -462,14 +462,14 @@ pub struct DryrunResponse {
 }
 
 /// An error response with optional data field.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ErrorResponse<T> {
     pub data: T,
     pub message: String,
 }
 
 /// Represents a TEAL value delta.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct EvalDelta {
     /// `at` delta action.
     pub action: u64,
@@ -482,21 +482,21 @@ pub struct EvalDelta {
 }
 
 /// Key-value pairs for StateDelta.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct EvalDeltaKeyValue {
     pub key: String,
     pub value: EvalDelta,
 }
 
 /// Represents a key-value pair in an application store.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct TealKeyValue {
     pub key: String,
     pub value: TealValue,
 }
 
 /// Represents a TEAL value.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct TealValue {
     /// `tb` bytes value.
     #[serde(
@@ -515,7 +515,7 @@ pub struct TealValue {
 }
 
 /// Version contains the current algod version.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Version {
     pub build: BuildVersion,
 
@@ -530,19 +530,19 @@ pub struct Version {
 }
 
 /// Version contains the current algod version.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GenesisBlock {
     pub addr: Option<String>,
 }
 
 /// A transaction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Transaction {}
 
 /// A potentially truncated list of transactions currently in the node's transaction pool.
 /// You can compute whether or not the list is truncated if the number of elements in the
 /// top-transactions array is fewer than total-transactions.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PendingTransactions {
     /// An array of signed transaction objects.
     #[serde(rename = "top-transactions")]
@@ -554,7 +554,7 @@ pub struct PendingTransactions {
 }
 
 /// A specific pending transaction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PendingTransaction {
     /// The application index if the transaction was found and it created an application.
     #[serde(rename = "application-index")]
@@ -613,7 +613,7 @@ pub struct PendingTransaction {
 }
 
 /// Information about the status of a node
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NodeStatus {
     /// The current catchpoint that is being caught up to
     pub catchpoint: Option<String>,
@@ -679,7 +679,7 @@ pub struct NodeStatus {
 }
 
 /// Block
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Block {
     /// Block header data.
     pub block: BlockHeader,
@@ -689,7 +689,7 @@ pub struct Block {
 }
 
 /// BlockHeader
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockHeader {
     pub earn: Option<u64>,
     pub fees: String,
@@ -708,7 +708,7 @@ pub struct BlockHeader {
 }
 
 /// Catchup
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Catchup {
     /// Catchup start response string.
     #[serde(rename = "catchup-message")]
@@ -716,7 +716,7 @@ pub struct Catchup {
 }
 
 /// Supply reported by the ledger.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Supply {
     /// Current round
     pub current_round: Round,
@@ -751,14 +751,14 @@ pub struct KeyRegistration {
 }
 
 /// TEAL source code.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SourceTeal {
     /// Source code.
     pub source: String,
 }
 
 /// Compiled TEAL program.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct ApiCompiledTeal {
     /// base32 SHA512_256 of program bytes (Address style)
     hash: String,
@@ -810,7 +810,7 @@ impl<'de> Deserialize<'de> for CompiledTeal {
 }
 
 /// TransactionParams contains the parameters that help a client construct a new transaction.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TransactionParams {
     // ConsensusVersion indicates the consensus protocol version
     // as of LastRound.
@@ -842,7 +842,7 @@ pub struct TransactionParams {
     pub min_fee: MicroAlgos,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TransactionResponse {
     #[serde(rename = "txId")]
     pub tx_id: String,
