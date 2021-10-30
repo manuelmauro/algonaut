@@ -71,7 +71,7 @@ impl<'a> AlgodBuilder<'a> {
                     url,
                     vec![("X-Algo-API-Token", &ApiToken::parse(token)?.to_string())],
                 )?))
-            },
+            }
             (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
             (Some(_), None) => Err(AlgonautError::UnitializedToken),
             (None, None) => Err(AlgonautError::UnitializedUrl),
