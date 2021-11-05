@@ -23,7 +23,6 @@ pub mod v1;
 pub struct KmdBuilder<'a> {
     url: Option<&'a str>,
     token: Option<&'a str>,
-    headers: Headers<'a>,
 }
 
 impl<'a> KmdBuilder<'a> {
@@ -41,12 +40,6 @@ impl<'a> KmdBuilder<'a> {
     /// Use a token to authenticate.
     pub fn auth(mut self, token: &'a str) -> Self {
         self.token = Some(token);
-        self
-    }
-
-    /// Add custom headers to requests.
-    pub fn headers(mut self, headers: Headers<'a>) -> Self {
-        self.headers = headers;
         self
     }
 
