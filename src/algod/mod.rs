@@ -6,6 +6,8 @@ pub mod v1;
 pub mod v2;
 
 /// AlgodBuilder is the entry point to the creation of a client for the Algorand protocol daemon.
+///
+/// For third party providers, use [`AlgodCustomEndpointBuilder`] instead.
 /// ```
 /// use algonaut::algod::AlgodBuilder;
 ///

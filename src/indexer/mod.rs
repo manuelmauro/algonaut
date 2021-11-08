@@ -4,6 +4,8 @@ use algonaut_client::{indexer::v2::Client, Headers};
 pub mod v2;
 
 /// Indexer is the entry point to the creation of a client for the Algorand's indexer
+///
+/// For third party providers, use [`IndexerCustomEndpointBuilder`] instead.
 #[derive(Default)]
 pub struct IndexerBuilder<'a> {
     url: Option<&'a str>,
