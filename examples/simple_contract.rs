@@ -1,11 +1,9 @@
-// simple smart contract based on https://developer.algorand.org/tutorials/writing-simple-smart-contract/ 
-use algonaut_client::algod::v2::Client as AlgodClient;
-use algonaut_client::indexer::v2::message::{Account, QueryAccount};
-use algonaut_client::indexer::v2::Client as IndexerClient;
-use algonaut_client::{Algod, Indexer, Kmd};
-use algonaut_core::{Address, LogicSignature, MicroAlgos};
-use algonaut_transaction::{Pay, SignedTransaction, Txn};
-use data_encoding::BASE64;
+//!
+//! Implementation of the "Writing a Simple Smart Contract" tutorial in rust using
+//! manuelmauro/algonaut
+//! https://developer.algorand.org/tutorials/writing-simple-smart-contract/
+//!
+use algonaut_client::algod::v2::Client;
 use std::env;
 use std::process::exit;
 
@@ -82,198 +80,216 @@ impl AlgodEnvironment {
     }
 }
 
-fn get_balance(client: &AlgodClient, address: &str) -> u64 {
+async fn get_balance(client: &AlgodClient, address: &str) -> u64 {
     client
         .account_information(address)
+        .await
         .unwrap()
         .amount_without_pending_rewards
 }
-
-fn main() {
+#[tokio::main]
+async fn main() {
     let algod_config: EnvironmentConfig = AlgodEnvironment::Sandbox.get_config();
     let passphrase = get_val("PASSPHRASE".to_string());
 
     // build clients
-    let algod_client: AlgodClient = Algod::new()
+    let algod_client: AlgodClient = AlgodClient::new()
+        .unwrap()
         .bind(&algod_config.algod_address)
         .auth(&algod_config.algod_token)
         .client_v2()
         .unwrap();
 
-    let indexer_client: IndexerClient = Indexer::new()
-        .bind(&algod_config.indexer_address)
-        .client_v2()
-        .unwrap();
+    // let indexer_client: IndexerClient = Indexer::new()
+    //     .bind(&algod_config.indexer_address)
+    //     .client_v2()
+    //     .unwrap();
 
-    let kmd = Kmd::new()
-        .bind(&algod_config.kmd_address)
-        .auth(&algod_config.kmd_token)
-        .client_v1()
-        .unwrap();
+    // let kmd = Kmd::new()
+    //     .bind(&algod_config.kmd_address)
+    //     .auth(&algod_config.kmd_token)
+    //     .client_v1()
+    //     .unwrap();
 
-    // compile teal program
-    let contract = algod_client.compile_teal(TEAL_PROGRAM.into()).unwrap();
+    // // compile teal program
+    // let contract = algod_client
+    //     .compile_teal(TEAL_PROGRAM.into())
+    //     .await
+    //     .unwrap();
 
-    // obtain a handle to our wallet
-    let list_response = kmd.list_wallets().unwrap();
-    let wallet_id = match list_response
-        .wallets
-        .into_iter()
-        .find(|wallet| wallet.name == "unencrypted-default-wallet")
-    {
-        Some(wallet) => wallet.id,
-        None => String::new(),
-    };
-    let init_response = kmd.init_wallet_handle(&wallet_id, "").unwrap();
-    let wallet_handle_token = init_response.wallet_handle_token;
+    // // obtain a handle to our wallet
+    // let list_response = kmd.list_wallets().await.unwrap();
+    // let wallet_id = match list_response
+    //     .wallets
+    //     .into_iter()
+    //     .find(|wallet| wallet.name == "unencrypted-default-wallet")
+    // {
+    //     Some(wallet) => wallet.id,
+    //     None => String::new(),
+    // };
+    // let init_response = kmd.init_wallet_handle(&wallet_id, "").await.unwrap();
+    // let wallet_handle_token = init_response.wallet_handle_token;
 
-    // for this example, arbitrarily choose the first 2 accounts returned using deafult network
-    // config. make sure this way of determining accounts makes sense for the environment.
-    let query: QueryAccount = QueryAccount {
-        application_id: None,
-        asset_id: None,
-        auth_addr: None,
-        currency_greater_than: None,
-        currency_less_than: None,
-        limit: None,
-        next: None,
-        round: None,
-    };
-    let accounts: Vec<Account> = indexer_client.accounts(&query).unwrap().accounts;
-    let alice: &Account = &accounts[0];
-    let bob: &Account = &accounts[1];
+    // // for this example, arbitrarily choose 2 accounts returned using deafult network
+    // // config. make sure this way of determining accounts makes sense for the environment.
+    // // IMPORTANT: using the 0th result from this response will NOT work. Confirm the addresses that
+    // // alice and bob get are in the list returned from `goal account list`
+    // let accounts: Vec<Account> = indexer_client
+    //     .accounts(&QueryAccount::default())
+    //     .await
+    //     .unwrap()
+    //     .accounts;
 
-    println!("addresses");
-    println!("alice {}", alice.address);
-    println!("bob {}", bob.address);
-    println!("contract {}\n", contract.hash);
+    // let alice: &Account = &accounts[1];
+    // let bob: &Account = &accounts[2];
 
-    println!("starting balances");
-    println!("{} alice", get_balance(&algod_client, &alice.address));
-    println!("{} bob", get_balance(&algod_client, &bob.address));
-    println!("{} contract\n", get_balance(&algod_client, &contract.hash));
+    // println!("addresses");
+    // println!("alice {}", alice.address);
+    // println!("bob {}", bob.address);
+    // println!("contract {:?}\n", contract.hash);
 
-    let params = algod_client.transaction_params().unwrap();
+    // println!("starting balances");
+    // println!("{} alice", get_balance(&algod_client, &alice.address).await);
+    // println!("{} bob", get_balance(&algod_client, &bob.address).await);
+    // println!(
+    //     "{:?} contract\n",
+    //     get_balance(&algod_client, contract.hash).await
+    // );
 
-    let t = Txn::new()
-        .sender(alice.address.parse().unwrap())
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 1000)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(10_000))
-        .payment(
-            Pay::new()
-                .amount(MicroAlgos(1_000_000))
-                .to(contract.hash.parse().unwrap())
-                .build(),
-        )
-        .build();
+    // let params = algod_client.transaction_params().await.unwrap();
 
-    // we need to sign the transaction to prove that we own the sender address
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t).unwrap();
+    // let t = Txn::new()
+    //     .sender(alice.address.parse().unwrap())
+    //     .first_valid(params.last_round)
+    //     .last_valid(params.last_round + 1000)
+    //     .genesis_id(params.genesis_id)
+    //     .genesis_hash(params.genesis_hash)
+    //     .fee(MicroAlgos(10_000))
+    //     .payment(
+    //         Pay::new()
+    //             .amount(MicroAlgos(1_000_000))
+    //             .to(contract.hash.parse().unwrap())
+    //             .build(),
+    //     )
+    //     .build();
 
-    // broadcast the transaction to the network
-    let send_response = algod_client
-        .broadcast_raw_transaction(&sign_response.signed_transaction)
-        .unwrap();
+    // // we need to sign the transaction to prove that we own the sender address
+    // let sign_response = kmd
+    //     .sign_transaction(&wallet_handle_token, "", &t)
+    //     .await
+    //     .unwrap();
 
-    println!("alice->contract transaction id: {}\n", send_response.tx_id);
+    // // broadcast the transaction to the network
+    // let send_response = algod_client
+    //     .broadcast_raw_transaction(&sign_response.signed_transaction)
+    //     .await
+    //     .unwrap();
 
-    // wait for transaction to finalize
-    loop {
-        let txn_state = algod_client
-            .pending_transaction_with_id(&send_response.tx_id)
-            .unwrap();
+    // println!("alice->contract transaction id: {}\n", send_response.tx_id);
 
-        if let Some(_) = txn_state.confirmed_round {
-            break;
-        }
+    // // wait for transaction to finalize
+    // loop {
+    //     let txn_state = algod_client
+    //         .pending_transaction_with_id(&send_response.tx_id)
+    //         .await
+    //         .unwrap();
 
-        println!(
-            "txn {}... not confirmed; sleep 2s...",
-            &send_response.tx_id[..5]
-        );
-        std::thread::sleep(std::time::Duration::from_secs(2));
-    }
+    //     if let Some(_) = txn_state.confirmed_round {
+    //         break;
+    //     }
 
-    println!("\nbalances after contract funded");
-    println!("{} alice", get_balance(&algod_client, &alice.address));
-    println!("{} bob", get_balance(&algod_client, &bob.address));
-    println!("{} contract\n", get_balance(&algod_client, &contract.hash));
+    //     println!(
+    //         "txn {}... not confirmed; sleep 2s...",
+    //         &send_response.tx_id[..5]
+    //     );
+    //     std::thread::sleep(std::time::Duration::from_secs(2));
+    // }
 
-    // Next step is to provide an argument (password) to the contract account so that it will
-    // release its funds to the `close-to` address:
-    // ${gcmd} clerk send \
-    // --amount 30000 \
-    // --from-program ./passphrase.teal \
-    // --close-to "${bob}" \
-    // --to "${bob}" \
-    // --argb64 "$(echo -n ${PASSPHRASE} | base64 -w 0)" \
-    // --out out.txn
-    println!("closing contract by providing password...");
-    let passphrase_arg = passphrase.as_bytes().to_owned();
-    let program_bytes = BASE64.decode(contract.result.as_bytes()).unwrap();
-    let lsig = LogicSignature {
-        logic: program_bytes,
-        sig: None,
-        msig: None,
-        args: vec![passphrase_arg],
-    };
+    // println!("\nbalances after contract funded");
+    // println!("{} alice", get_balance(&algod_client, &alice.address).await);
+    // println!("{} bob", get_balance(&algod_client, &bob.address).await);
+    // println!(
+    //     "{} contract\n",
+    //     get_balance(&algod_client, &contract.hash).await
+    // );
 
-    let contract_address: Address = contract.hash.parse().unwrap();
-    let bob_address: Address = bob.address.parse().unwrap();
+    // // Next step is to provide an argument (password) to the contract account so that it will
+    // // release its funds to the `close-to` address:
+    // // ${gcmd} clerk send \
+    // // --amount 30000 \
+    // // --from-program ./passphrase.teal \
+    // // --close-to "${bob}" \
+    // // --to "${bob}" \
+    // // --argb64 "$(echo -n ${PASSPHRASE} | base64 -w 0)" \
+    // // --out out.txn
+    // println!("closing contract by providing password...");
+    // let passphrase_arg = passphrase.as_bytes().to_owned();
+    // let program_bytes = BASE64.decode(contract.result.as_bytes()).unwrap();
+    // let lsig = ApiSignedLogic {
+    //     logic: program_bytes,
+    //     sig: None,
+    //     msig: None,
+    //     args: vec![passphrase_arg],
+    // };
 
-    let params = algod_client.transaction_params().unwrap();
+    // let contract_address: Address = contract.hash.parse().unwrap();
+    // let bob_address: Address = bob.address.parse().unwrap();
 
-    let t = Txn::new()
-        .sender(contract_address)
-        .first_valid(params.last_round)
-        .last_valid(params.last_round + 10)
-        .genesis_id(params.genesis_id)
-        .genesis_hash(params.genesis_hash)
-        .fee(MicroAlgos(10_000))
-        .payment(
-            Pay::new()
-                .amount(MicroAlgos(30_000))
-                .to(bob_address)
-                .close_remainder_to(bob_address)
-                .build(),
-        )
-        .build();
+    // let params = algod_client.transaction_params().await.unwrap();
 
-    let signed_transaction = SignedTransaction {
-        sig: None,
-        multisig: None,
-        logicsig: Some(lsig),
-        transaction: t,
-        transaction_id: "".to_owned(),
-    };
+    // let t = Txn::new()
+    //     .sender(contract_address)
+    //     .first_valid(params.last_round)
+    //     .last_valid(params.last_round + 10)
+    //     .genesis_id(params.genesis_id)
+    //     .genesis_hash(params.genesis_hash)
+    //     .fee(MicroAlgos(10_000))
+    //     .payment(
+    //         Pay::new()
+    //             .amount(MicroAlgos(30_000))
+    //             .to(bob_address)
+    //             .close_remainder_to(bob_address)
+    //             .build(),
+    //     )
+    //     .build();
 
-    let transaction_bytes = rmp_serde::to_vec_named(&signed_transaction).unwrap();
-    let send_response = algod_client
-        .broadcast_raw_transaction(&transaction_bytes)
-        .unwrap();
+    // let signed_transaction = ApiSignedTransaction {
+    //     sig: None,
+    //     msig: None,
+    //     lsig: Some(lsig),
+    //     transaction: ApiTransaction::from(t),
+    //     transaction_id: "".to_owned(),
+    // };
 
-    // wait for transaction to finalize
-    loop {
-        let txn_state = algod_client
-            .pending_transaction_with_id(&send_response.tx_id)
-            .unwrap();
+    // let transaction_bytes = rmp_serde::to_vec_named(&signed_transaction).unwrap();
+    // let send_response = algod_client
+    //     .broadcast_raw_transaction(&transaction_bytes)
+    //     .await
+    //     .unwrap();
 
-        if let Some(_) = txn_state.confirmed_round {
-            break;
-        }
+    // // wait for transaction to finalize
+    // loop {
+    //     let txn_state = algod_client
+    //         .pending_transaction_with_id(&send_response.tx_id)
+    //         .await
+    //         .unwrap();
 
-        println!(
-            "txn {}... not confirmed; sleep 2s...",
-            &send_response.tx_id[..5]
-        );
-        std::thread::sleep(std::time::Duration::from_secs(2));
-    }
+    //     if let Some(_) = txn_state.confirmed_round {
+    //         break;
+    //     }
 
-    println!("\nbalances after contract closed");
-    println!("{} alice", get_balance(&algod_client, &alice.address));
-    println!("{} bob", get_balance(&algod_client, &bob.address));
-    println!("{} contract", get_balance(&algod_client, &contract.hash));
+    //     println!(
+    //         "txn {}... not confirmed; sleep 2s...",
+    //         &send_response.tx_id[..5]
+    //     );
+    //     std::thread::sleep(std::time::Duration::from_secs(2));
+    // }
+
+    // println!("\nbalances after contract closed");
+    // println!("{} alice", get_balance(&algod_client, &alice.address).await);
+    // println!("{} bob", get_balance(&algod_client, &bob.address).await);
+    // println!(
+    //     "{} contract",
+    //     get_balance(&algod_client, &contract.hash).await
+    // );
 }
