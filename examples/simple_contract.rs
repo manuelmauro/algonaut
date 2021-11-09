@@ -3,9 +3,19 @@
 //! manuelmauro/algonaut
 //! https://developer.algorand.org/tutorials/writing-simple-smart-contract/
 //!
-use algonaut_client::algod::v2::Client;
+use algonaut::algod::v2::Algod;
+use algonaut::algod::AlgodBuilder;
+use algonaut::indexer::IndexerBuilder;
+use algonaut::kmd::KmdBuilder;
+use algonaut_core::{Address, MicroAlgos};
+use algonaut_model::indexer::v2::QueryAccount;
+use algonaut_transaction::account::ContractAccount;
+use algonaut_transaction::{Pay, TxnBuilder};
+use dotenv::dotenv;
 use std::env;
+use std::error::Error;
 use std::process::exit;
+use std::str::FromStr;
 
 const TEAL_PROGRAM: &str = "
 // Check if fee is reasonable
@@ -44,143 +54,105 @@ struct EnvironmentConfig {
     indexer_address: String,
 }
 
-pub enum AlgodEnvironment {
-    Sandbox,
-    PrivNet,
-    TestNet,
-    MainNet,
+async fn get_balance(client: &Algod, address: &Address) -> MicroAlgos {
+    client.account_information(address).await.unwrap().amount
 }
 
-fn get_val(key: String) -> String {
-    match env::var(&key) {
-        Ok(val) => return val,
-        Err(e) => {
-            println!("error getting env var: {} {}", key, e);
-            exit(1)
-        }
-    }
-}
-
-impl AlgodEnvironment {
-    fn get_config(&self) -> EnvironmentConfig {
-        let network: String = match self {
-            AlgodEnvironment::Sandbox => "SANDBOX".into(),
-            AlgodEnvironment::PrivNet => "PRIVNET".into(),
-            AlgodEnvironment::TestNet => "TESTNET".into(),
-            AlgodEnvironment::MainNet => "MAINNET".into(),
-        };
-
-        EnvironmentConfig {
-            algod_address: get_val(format!("{}_ALGOD_ADDRESS", network)),
-            algod_token: get_val(format!("{}_ALGOD_TOKEN", network)),
-            kmd_address: get_val(format!("{}_KMD_ADDRESS", network)),
-            kmd_token: get_val(format!("{}_KMD_TOKEN", network)),
-            indexer_address: get_val(format!("{}_INDEXER_ADDRESS", network)),
-        }
-    }
-}
-
-async fn get_balance(client: &AlgodClient, address: &str) -> u64 {
-    client
-        .account_information(address)
-        .await
-        .unwrap()
-        .amount_without_pending_rewards
-}
 #[tokio::main]
-async fn main() {
-    let algod_config: EnvironmentConfig = AlgodEnvironment::Sandbox.get_config();
-    let passphrase = get_val("PASSPHRASE".to_string());
+async fn main() -> Result<(), Box<dyn Error>> {
+    // load variables in .env
+    dotenv().ok();
 
     // build clients
-    let algod_client: AlgodClient = AlgodClient::new()
+    let algod = AlgodBuilder::new()
+        .bind(env::var("ALGOD_URL")?.as_ref())
+        .auth(env::var("ALGOD_TOKEN")?.as_ref())
+        .build_v2()?;
+
+    let indexer = IndexerBuilder::new()
+        .bind(env::var("INDEXER_URL")?.as_ref())
+        .build_v2()?;
+
+    let kmd = KmdBuilder::new()
+        .bind(env::var("KMD_URL")?.as_ref())
+        .auth(env::var("KMD_TOKEN")?.as_ref())
+        .build_v1()?;
+
+    let compiled_teal = algod
+        .compile_teal(String::from(TEAL_PROGRAM).as_bytes())
+        .await?;
+
+    let contract_account = ContractAccount::new(compiled_teal);
+
+    // for this example, arbitrarily choose 2 accounts returned using deafult network
+    // config. make sure this way of determining accounts makes sense for the environment.
+    // IMPORTANT: using the 0th result from this response will NOT work. Confirm the addresses that
+    // alice and bob get are in the list returned from `goal account list`
+    let accounts = indexer
+        .accounts(&QueryAccount::default())
+        .await
         .unwrap()
-        .bind(&algod_config.algod_address)
-        .auth(&algod_config.algod_token)
-        .client_v2()
+        .accounts;
+
+    // println!("{:#?}", accounts);
+    // exit(0);
+
+    let alice = &accounts[1];
+    let bob = &accounts[2];
+
+    println!("addresses");
+    println!("alice {}", alice.address);
+    println!("bob {}", bob.address);
+    println!("contract {:?}\n", contract_account.address);
+
+    println!("starting balances");
+    println!(
+        "{} alice",
+        get_balance(&algod, &Address::from_str(&alice.address)?).await
+    );
+    println!(
+        "{} bob",
+        get_balance(&algod, &Address::from_str(&bob.address)?).await
+    );
+    println!(
+        "{:?} contract\n",
+        get_balance(&algod, &contract_account.address).await
+    );
+
+    let params = algod.suggested_transaction_params().await.unwrap();
+
+    let t = TxnBuilder::with(
+        params,
+        Pay::new(
+            Address::from_str(&alice.address)?,
+            contract_account.address,
+            MicroAlgos(1_000_000),
+        )
+        .build(),
+    )
+    .build();
+
+    // obtain a handle to our wallet
+    let list_response = kmd.list_wallets().await?;
+    let wallet_id = match list_response
+        .wallets
+        .into_iter()
+        .find(|wallet| wallet.name == "unencrypted-default-wallet")
+    {
+        Some(wallet) => wallet.id,
+        None => String::new(),
+    };
+    let init_response = kmd.init_wallet_handle(&wallet_id, "").await?;
+    let wallet_handle_token = init_response.wallet_handle_token;
+
+    // we need to sign the transaction to prove that we own the sender address
+    let sign_response = kmd
+        .sign_transaction(&wallet_handle_token, "", &t)
+        .await
         .unwrap();
 
-    // let indexer_client: IndexerClient = Indexer::new()
-    //     .bind(&algod_config.indexer_address)
-    //     .client_v2()
-    //     .unwrap();
-
-    // let kmd = Kmd::new()
-    //     .bind(&algod_config.kmd_address)
-    //     .auth(&algod_config.kmd_token)
-    //     .client_v1()
-    //     .unwrap();
-
-    // // compile teal program
-    // let contract = algod_client
-    //     .compile_teal(TEAL_PROGRAM.into())
-    //     .await
-    //     .unwrap();
-
-    // // obtain a handle to our wallet
-    // let list_response = kmd.list_wallets().await.unwrap();
-    // let wallet_id = match list_response
-    //     .wallets
-    //     .into_iter()
-    //     .find(|wallet| wallet.name == "unencrypted-default-wallet")
-    // {
-    //     Some(wallet) => wallet.id,
-    //     None => String::new(),
-    // };
-    // let init_response = kmd.init_wallet_handle(&wallet_id, "").await.unwrap();
-    // let wallet_handle_token = init_response.wallet_handle_token;
-
-    // // for this example, arbitrarily choose 2 accounts returned using deafult network
-    // // config. make sure this way of determining accounts makes sense for the environment.
-    // // IMPORTANT: using the 0th result from this response will NOT work. Confirm the addresses that
-    // // alice and bob get are in the list returned from `goal account list`
-    // let accounts: Vec<Account> = indexer_client
-    //     .accounts(&QueryAccount::default())
-    //     .await
-    //     .unwrap()
-    //     .accounts;
-
-    // let alice: &Account = &accounts[1];
-    // let bob: &Account = &accounts[2];
-
-    // println!("addresses");
-    // println!("alice {}", alice.address);
-    // println!("bob {}", bob.address);
-    // println!("contract {:?}\n", contract.hash);
-
-    // println!("starting balances");
-    // println!("{} alice", get_balance(&algod_client, &alice.address).await);
-    // println!("{} bob", get_balance(&algod_client, &bob.address).await);
-    // println!(
-    //     "{:?} contract\n",
-    //     get_balance(&algod_client, contract.hash).await
-    // );
-
-    // let params = algod_client.transaction_params().await.unwrap();
-
-    // let t = Txn::new()
-    //     .sender(alice.address.parse().unwrap())
-    //     .first_valid(params.last_round)
-    //     .last_valid(params.last_round + 1000)
-    //     .genesis_id(params.genesis_id)
-    //     .genesis_hash(params.genesis_hash)
-    //     .fee(MicroAlgos(10_000))
-    //     .payment(
-    //         Pay::new()
-    //             .amount(MicroAlgos(1_000_000))
-    //             .to(contract.hash.parse().unwrap())
-    //             .build(),
-    //     )
-    //     .build();
-
-    // // we need to sign the transaction to prove that we own the sender address
-    // let sign_response = kmd
-    //     .sign_transaction(&wallet_handle_token, "", &t)
-    //     .await
-    //     .unwrap();
-
     // // broadcast the transaction to the network
-    // let send_response = algod_client
+    // let send_response = algod
     //     .broadcast_raw_transaction(&sign_response.signed_transaction)
     //     .await
     //     .unwrap();
@@ -189,7 +161,7 @@ async fn main() {
 
     // // wait for transaction to finalize
     // loop {
-    //     let txn_state = algod_client
+    //     let txn_state = algod
     //         .pending_transaction_with_id(&send_response.tx_id)
     //         .await
     //         .unwrap();
@@ -292,4 +264,6 @@ async fn main() {
     //     "{} contract",
     //     get_balance(&algod_client, &contract.hash).await
     // );
+
+    Ok(())
 }
