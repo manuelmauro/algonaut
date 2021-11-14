@@ -243,7 +243,7 @@ fn base64_str_to_u8_array<const N: usize>(base64_str: &str) -> Result<[u8; N], C
         .map_err(|v| CoreError::General(format!("Couldn't convert vec: {:?} into u8 array", v)))
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SuggestedTransactionParams {
     pub genesis_id: String,
     pub genesis_hash: HashDigest,
