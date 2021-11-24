@@ -2,7 +2,6 @@ use algonaut_client::{token::ApiToken, Headers};
 
 use crate::error::AlgonautError;
 
-pub mod v1;
 pub mod v2;
 
 /// AlgodBuilder is the entry point to the creation of a client for the Algorand protocol daemon.
@@ -45,20 +44,6 @@ impl<'a> AlgodBuilder<'a> {
     pub fn auth(mut self, token: &'a str) -> Self {
         self.token = Some(token);
         self
-    }
-
-    /// Build a v1 client for Algorand protocol daemon.
-    ///
-    /// Returns an error if url or token is not set or has an invalid format.
-    pub fn build_v1(self) -> Result<v1::Algod, AlgonautError> {
-        match (self.url, self.token) {
-            (Some(url), Some(token)) => Ok(v1::Algod::new(
-                algonaut_client::algod::v1::Client::new(url, &ApiToken::parse(token)?.to_string())?,
-            )),
-            (None, Some(_)) => Err(AlgonautError::UnitializedUrl),
-            (Some(_), None) => Err(AlgonautError::UnitializedToken),
-            (None, None) => Err(AlgonautError::UnitializedUrl),
-        }
     }
 
     /// Build a v2 client for Algorand protocol daemon.
