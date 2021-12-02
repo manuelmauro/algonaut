@@ -1232,8 +1232,8 @@ pub struct Transaction {
     /// `gh` Hash of genesis block.
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
-    #[serde(rename = "genesis-hash")]
-    pub genesis_hash: Option<HashDigest>,
+    #[serde(rename = "genesis-hash", deserialize_with = "deserialize_hash")]
+    pub genesis_hash: HashDigest,
 
     /// `gen` genesis block ID.
     #[serde(rename = "genesis-id")]
@@ -1308,7 +1308,7 @@ pub struct Transaction {
     pub sender_rewards: Option<u64>,
 
     /// Signature.
-    pub signature: TransactionSignature,
+    pub signature: Option<TransactionSignature>,
 
     /// `type` Indicates what type of transaction this is. Different types have different fields.
     /// Valid types, and where their fields are stored:
@@ -1539,7 +1539,7 @@ pub struct TransactionSignatureLogicsig {
     /// `sig` ed25519 signature.
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
-    pub signature: String,
+    pub signature: Option<String>,
 }
 
 /// `msig` structure holding multiple subsignatures.
