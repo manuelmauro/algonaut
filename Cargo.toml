@@ -34,8 +34,16 @@ tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
 rand = "0.8.3"
 getrandom = { version = "0.2.2", features = ["js"] }
 data-encoding = "2.3.1"
+# Using main branch because of this issue: https://github.com/cucumber-rs/cucumber/issues/173
+# TODO replace with v0.11 once released ("few days" from now, according to maintainer)
+cucumber = { git = "https://github.com/cucumber-rs/cucumber.git" }
+async-trait = "0.1.51"
 
 [features]
 default = ["native"]
 native = ["algonaut_client/native"]
 rustls = ["algonaut_client/rustls"]
+
+[[test]]
+name = "cucumber"
+harness = false # Allows Cucumber to print output instead of libtest
