@@ -23,6 +23,4 @@ docker build -t rust-sdk-testing -f tests/docker/Dockerfile "$(pwd)"
 # Start test harness environment
 ./test-harness/scripts/up.sh -p
 
-docker run -it \
-     --network host \
-     rust-sdk-testing:latest
+docker run --network host rust-sdk-testing:latest
