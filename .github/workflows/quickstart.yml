@@ -20,7 +20,7 @@ jobs:
         with:
           command: check
 
-  unit:
+  tests:
     name: Tests
     runs-on: ubuntu-latest
     steps:
@@ -34,14 +34,8 @@ jobs:
         with:
           command: test
           args: --workspace --lib --examples --test test_account --test test_logic_signature
-
-  algorand-sdks-tests:
-    name: Algorand SDKs tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
       - run: make docker-test
-
+          
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
