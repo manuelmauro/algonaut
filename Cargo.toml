@@ -45,5 +45,5 @@ native = ["algonaut_client/native"]
 rustls = ["algonaut_client/rustls"]
 
 [[test]]
-name = "cucumber"
+name = "features_runner"
 harness = false # Allows Cucumber to print output instead of libtest

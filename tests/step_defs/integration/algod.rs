@@ -60,8 +60,3 @@ async fn i_can_get_the_block_info(w: &mut World) {
     let last_round = w.last_round.unwrap();
     algod_client.block(Round(last_round)).await.unwrap();
 }
-
-#[tokio::main]
-async fn main() {
-    World::run("tests/features/integration").await;
-}
