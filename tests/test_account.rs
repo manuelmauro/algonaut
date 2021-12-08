@@ -12,6 +12,10 @@ use tokio::test;
 // Reference:
 // https://github.com/algorand/java-algorand-sdk/blob/840cf26043f475e43938c64fbda4526a874c258f/src/test/java/com/algorand/algosdk/account/TestAccount.java
 
+// TODO consider replacing base64 strings with transaction instances and decouple from JavaSDK's tests
+// base64 strings are difficult to maintain, if transactions are updated they've to be generated again + tests have too many responsibilities
+// also, it's not possible to use the same strings as the JavaSDK, as they often represent semantically invalid transactions, which can't be created here (e.g. empty address).
+
 #[test]
 async fn test_signs_transaction_e2e() -> Result<(), Box<dyn Error>> {
     // Note: Different reference strings than Java SDK. HashDigest can't be initialized with an empty array here.
