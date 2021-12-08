@@ -14,6 +14,7 @@ use rand::Rng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug)]
 pub struct Account {
     seed: [u8; 32],
     address: Address,
