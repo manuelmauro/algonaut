@@ -1,7 +1,7 @@
 use crate::extensions::reqwest::ResponseExt;
 use crate::Headers;
 use crate::{error::ClientError, extensions::reqwest::to_header_map};
-use algonaut_core::MultisigSignature;
+use algonaut_core::{Address, MultisigSignature};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_model::kmd::v1::{
     CreateWalletRequest, CreateWalletResponse, DeleteKeyRequest, DeleteKeyResponse,
@@ -19,6 +19,7 @@ use algonaut_model::kmd::v1::{
 use reqwest::header::HeaderMap;
 use reqwest::Url;
 
+#[derive(Debug)]
 /// Client for interacting with the key management daemon
 pub struct Client {
     pub(super) address: String,
@@ -262,7 +263,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<ExportKeyResponse, ClientError> {
         let req = ExportKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),

@@ -1,5 +1,5 @@
 use algonaut_client::kmd::v1::Client;
-use algonaut_core::{MultisigSignature, ToMsgPack};
+use algonaut_core::{Address, MultisigSignature, ToMsgPack};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_model::kmd::v1::{
     CreateWalletResponse, DeleteKeyResponse, DeleteMultisigResponse, ExportKeyResponse,
@@ -13,6 +13,7 @@ use algonaut_transaction::Transaction;
 
 use crate::error::AlgonautError;
 
+#[derive(Debug)]
 pub struct Kmd {
     pub(crate) client: Client,
 }
@@ -133,7 +134,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<ExportKeyResponse, AlgonautError> {
         Ok(self
             .client

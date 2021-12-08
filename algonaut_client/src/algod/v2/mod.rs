@@ -10,6 +10,7 @@ use algonaut_model::algod::v2::{
 use reqwest::header::HeaderMap;
 use reqwest::Url;
 
+#[derive(Debug)]
 /// Client for interacting with the Algorand protocol daemon
 pub struct Client {
     url: String,

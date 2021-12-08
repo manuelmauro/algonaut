@@ -269,7 +269,7 @@ impl From<Transaction> for ApiTransaction {
                 api_t.app_id = call.app_id.and_then(num_as_api_option);
                 api_t.on_complete =
                     num_as_api_option(application_call_on_complete_to_int(&call.on_complete));
-                api_t.accounts = call.accounts.to_owned();
+                api_t.accounts = call.accounts.clone().and_then(vec_as_api_option);
                 api_t.approval_program = call
                     .approval_program
                     .to_owned()

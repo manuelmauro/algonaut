@@ -9,6 +9,7 @@ use algonaut_transaction::SignedTransaction;
 
 use crate::error::AlgonautError;
 
+#[derive(Debug)]
 pub struct Algod {
     pub(crate) client: Client,
 }

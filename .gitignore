@@ -7,3 +7,7 @@ Cargo.lock
 /test.sh
 signed.tx
 **/.env
+
+# ignore cucumber test resources
+test-harness/
+tests/features/

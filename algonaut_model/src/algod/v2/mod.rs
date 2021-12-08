@@ -704,7 +704,7 @@ pub struct BlockHeader {
     pub rwd: String,
     pub seed: String,
     pub ts: u64,
-    pub txn: String,
+    pub txn: Option<String>,
 }
 
 /// Catchup

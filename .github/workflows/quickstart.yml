@@ -1,4 +1,7 @@
-on: [push, pull_request]
+on: 
+  push:
+  pull_request:
+    types: [opened]
 
 name: Continuous integration
 
@@ -17,7 +20,7 @@ jobs:
         with:
           command: check
 
-  unit:
+  tests:
     name: Tests
     runs-on: ubuntu-latest
     steps:
@@ -31,7 +34,8 @@ jobs:
         with:
           command: test
           args: --workspace --lib --examples --test test_account --test test_logic_signature
-
+      - run: make docker-test
+          
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
