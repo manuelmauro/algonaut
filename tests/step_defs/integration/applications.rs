@@ -49,7 +49,8 @@ impl cucumber::World for World {
 
 #[given(expr = "an algod client")]
 async fn an_algod_client(_: &mut World) {
-    // do nothing - we don't support v1
+    // Do nothing - we don't support v1
+    // The reference (Go) SDK doesn't use it in the definitions
 }
 
 #[given(expr = "a kmd client")]
