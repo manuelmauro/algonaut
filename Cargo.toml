@@ -27,7 +27,6 @@ algonaut_encoding = {path = "algonaut_encoding", version = "0.3.0"}
 algonaut_transaction = {path = "algonaut_transaction", version = "0.3.0"}
 thiserror = "1.0.23"
 rmp-serde = "0.15.5"
-tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
 
 [dev-dependencies]
 dotenv = "0.15.0"
