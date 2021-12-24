@@ -1,4 +1,4 @@
-use algonaut_client::kmd::v1::Client;
+use algonaut_client::{kmd::v1::Client, token::ApiToken, Headers};
 use algonaut_core::{Address, MultisigSignature, ToMsgPack};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
 use algonaut_model::kmd::v1::{
@@ -19,8 +19,24 @@ pub struct Kmd {
 }
 
 impl Kmd {
-    pub fn new(client: Client) -> Kmd {
-        Kmd { client }
+    /// Build a v1 client for the Algorand key management daemon.
+    ///
+    /// Returns an error if the url or token have an invalid format.
+    pub fn new(url: &str, token: &str) -> Result<Kmd, AlgonautError> {
+        Self::with_headers(
+            url,
+            vec![("X-KMD-API-Token", &ApiToken::parse(token)?.to_string())],
+        )
+    }
+
+    /// Build a v1 client for the Algorand key management daemon.
+    /// Use this initializer when interfacing with third party services, that require custom headers.
+    ///
+    /// Returns an error if the url or headers have an invalid format.
+    pub fn with_headers(url: &str, headers: Headers) -> Result<Kmd, AlgonautError> {
+        Ok(Kmd {
+            client: Client::new(url, headers)?,
+        })
     }
 
     /// Retrieves the current version
@@ -246,5 +262,35 @@ impl Kmd {
                 partial_multisig,
             )
             .await?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_client_creation() {
+        let kmd = Kmd::new(
+            "http://example.com",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        );
+        assert!(kmd.ok().is_some());
+    }
+
+    #[test]
+    #[should_panic(expected = "")]
+    fn test_client_creation_with_empty_token() {
+        Kmd::new("http://example.com", "").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "")]
+    fn test_client_builder_with_empty_url() {
+        Kmd::new(
+            "",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        )
+        .unwrap();
     }
 }

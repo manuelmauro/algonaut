@@ -1,4 +1,4 @@
-use algonaut::algod::AlgodBuilder;
+use algonaut::algod::v2::Algod;
 use algonaut_transaction::ClawbackAsset;
 use algonaut_transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
@@ -10,10 +10,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     // The account specified as clawback when creating the asset.
     let sender = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;

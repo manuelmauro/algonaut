@@ -8,7 +8,7 @@
 Rust **algonaut** aims at becoming a rusty SDK for [Algorand](https://www.algorand.com/). Please, be aware that this crate is a work in progress.
 
 ```rust
-use algonaut::algod::AlgodBuilder;
+use algonaut::algod::v2::Algod;
 use algonaut_core::MicroAlgos;
 use algonaut_transaction::Pay;
 use algonaut_transaction::{account::Account, TxnBuilder};
@@ -16,10 +16,7 @@ use std::error::Error;;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let algod = AlgodBuilder::new()
-        .bind("http://localhost:4001")
-        .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        .build_v2()?;
+    let algod = Algod::new("http://localhost:4001", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?;
 
     // an account with some funds
     let from_account = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;

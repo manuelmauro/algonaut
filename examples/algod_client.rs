@@ -1,4 +1,4 @@
-use algonaut::algod::AlgodBuilder;
+use algonaut::algod::v2::Algod;
 use algonaut::core::Round;
 use dotenv::dotenv;
 use std::env;
@@ -9,10 +9,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     // print algod status
     let node_status = algod.status().await?;

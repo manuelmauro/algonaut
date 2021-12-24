@@ -1,4 +1,4 @@
-use algonaut::algod::AlgodBuilder;
+use algonaut::algod::v2::Algod;
 use algonaut_core::{LogicSignature, MicroAlgos, MultisigAddress, SignedLogic};
 use algonaut_transaction::transaction::TransactionSignature;
 use algonaut_transaction::{account::Account, TxnBuilder};
@@ -12,10 +12,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let program = algod
         .compile_teal(

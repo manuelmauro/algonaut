@@ -1,4 +1,4 @@
-use algonaut_client::algod::v2::Client;
+use algonaut_client::{algod::v2::Client, token::ApiToken, Headers};
 use algonaut_core::{Address, Round, SuggestedTransactionParams, ToMsgPack};
 use algonaut_model::algod::v2::{
     Account, Application, Asset, Block, Catchup, CompiledTeal, DryrunRequest, DryrunResponse,
@@ -15,8 +15,24 @@ pub struct Algod {
 }
 
 impl Algod {
-    pub fn new(client: Client) -> Algod {
-        Algod { client }
+    /// Build a v2 client for Algorand protocol daemon.
+    ///
+    /// Returns an error if the url or token have an invalid format.
+    pub fn new(url: &str, token: &str) -> Result<Algod, AlgonautError> {
+        Self::with_headers(
+            url,
+            vec![("X-Algo-API-Token", &ApiToken::parse(token)?.to_string())],
+        )
+    }
+
+    /// Build a v2 client for Algorand protocol daemon.
+    /// Use this initializer when interfacing with third party services, that require custom headers.
+    ///
+    /// Returns an error if the url or headers have an invalid format.
+    pub fn with_headers(url: &str, headers: Headers) -> Result<Algod, AlgonautError> {
+        Ok(Algod {
+            client: Client::new(url, headers)?,
+        })
     }
 
     /// Returns the entire genesis file in json.
@@ -236,5 +252,56 @@ impl Algod {
     /// Retrieves the current version
     pub async fn versions(&self) -> Result<Version, AlgonautError> {
         Ok(self.client.versions().await?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_client_builder() {
+        let res = Algod::new(
+            "http://example.com",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        );
+        assert!(res.ok().is_some());
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_url() {
+        let res = Algod::new(
+            "asfdsdfs",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        );
+        assert!(res.is_err());
+        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_url_no_scheme() {
+        let res = Algod::new(
+            "example.com",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        );
+        assert!(res.is_err());
+        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+    }
+
+    #[test]
+    fn test_client_builder_with_invalid_token() {
+        let res = Algod::new(
+            "http://example.com",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        );
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::BadToken);
+    }
+
+    #[test]
+    fn test_client_builder_with_empty_token() {
+        let res = Algod::new("http://example.com", "");
+        assert!(res.is_err());
+        assert!(res.err().unwrap() == AlgonautError::BadToken);
     }
 }

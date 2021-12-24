@@ -1,4 +1,4 @@
-use algonaut::algod::AlgodBuilder;
+use algonaut::algod::v2::Algod;
 use algonaut_core::Address;
 use algonaut_transaction::account::Account;
 use algonaut_transaction::transaction::StateSchema;
@@ -14,10 +14,7 @@ async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     println!("{:?}", algod.pending_transactions(0).await);
     assert!(algod.pending_transactions(0).await.is_ok());
@@ -30,10 +27,7 @@ async fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     println!("{:?}", algod.transaction_params().await);
     assert!(algod.transaction_params().await.is_ok());
@@ -47,10 +41,7 @@ async fn test_app_call_parameters() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let sender = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
     dbg!(algod.account_information(&sender.address()).await?);

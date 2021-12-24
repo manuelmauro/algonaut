@@ -1,4 +1,4 @@
-use algonaut::algod::AlgodBuilder;
+use algonaut::algod::v2::Algod;
 use algonaut_core::{VotePk, VrfPk};
 use algonaut_transaction::RegisterKey;
 use algonaut_transaction::{account::Account, TxnBuilder};
@@ -11,10 +11,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let account = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
 

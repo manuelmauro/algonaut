@@ -1,4 +1,4 @@
-use algonaut::indexer::IndexerBuilder;
+use algonaut::indexer::v2::Indexer;
 use algonaut_model::indexer::v2::QueryAccount;
 use dotenv::dotenv;
 use std::env;
@@ -9,9 +9,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let indexer = IndexerBuilder::new()
-        .bind(env::var("INDEXER_URL")?.as_ref())
-        .build_v2()?;
+    let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
 
     // query accounts using default query parameters (all None).
     let accounts = indexer.accounts(&QueryAccount::default()).await?.accounts;
