@@ -1,4 +1,4 @@
-use algonaut::algod::AlgodBuilder;
+use algonaut::algod::v2::Algod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -14,10 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut raw_transaction = Vec::new();
     let _ = f.read_to_end(&mut raw_transaction)?;
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let send_response = algod.broadcast_raw_transaction(&raw_transaction).await?;
     println!("Transaction ID: {}", send_response.tx_id);

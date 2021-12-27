@@ -2,8 +2,6 @@ use crate::step_defs::util::{
     account_from_kmd_response, parse_app_args, split_addresses, split_uint64,
     wait_for_pending_transaction,
 };
-use algonaut::algod::AlgodBuilder;
-use algonaut::kmd::KmdBuilder;
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
 use algonaut_core::{Address, CompiledTealBytes, MicroAlgos};
 use algonaut_model::algod::v2::{Application, ApplicationLocalState};
@@ -55,11 +53,11 @@ async fn an_algod_client(_: &mut World) {
 
 #[given(expr = "a kmd client")]
 async fn a_kmd_client(w: &mut World) {
-    let kmd = KmdBuilder::new()
-        .bind("http://localhost:60001")
-        .auth("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        .build_v1()
-        .unwrap();
+    let kmd = Kmd::new(
+        "http://localhost:60001",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    )
+    .unwrap();
     w.kmd = Some(kmd)
 }
 
@@ -97,12 +95,7 @@ async fn wallet_information(w: &mut World) -> Result<(), Box<dyn Error>> {
 
 #[given(regex = r#"^an algod v2 client connected to "([^"]*)" port (\d+) with token "([^"]*)"$"#)]
 async fn an_algod_v2_client_connected_to(w: &mut World, host: String, port: String, token: String) {
-    let algod = AlgodBuilder::new()
-        .bind(&format!("http://{}:{}", host, port))
-        .auth(&token)
-        .build_v2()
-        .unwrap();
-
+    let algod = Algod::new(&format!("http://{}:{}", host, port), &token).unwrap();
     w.algod = Some(algod)
 }
 

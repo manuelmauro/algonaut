@@ -1,4 +1,4 @@
-use algonaut_client::indexer::v2::Client;
+use algonaut_client::{indexer::v2::Client, Headers};
 use algonaut_core::{Address, Round};
 use algonaut_model::indexer::v2::{
     AccountInfoResponse, AccountResponse, AccountTransactionResponse, ApplicationInfoResponse,
@@ -16,8 +16,21 @@ pub struct Indexer {
 }
 
 impl Indexer {
-    pub fn new(client: Client) -> Indexer {
-        Indexer { client }
+    /// Build a v2 client for Algorand's indexer.
+    ///
+    /// Returns an error if the url has an invalid format.
+    pub fn new(url: &str) -> Result<Indexer, AlgonautError> {
+        Self::with_headers(url, vec![])
+    }
+
+    /// Build a v2 client for Algorand's indexer.
+    /// Use this initializer when interfacing with third party services, that require custom headers.
+    ///
+    /// Returns an error if the url or the headers have an invalid format.
+    pub fn with_headers(url: &str, headers: Headers) -> Result<Indexer, AlgonautError> {
+        Ok(Indexer {
+            client: Client::new(url, headers)?,
+        })
     }
 
     /// Returns Ok if healthy
@@ -113,5 +126,22 @@ impl Indexer {
     /// Search for transactions.
     pub async fn transaction_info(&self, id: &str) -> Result<TransactionResponse, AlgonautError> {
         Ok(self.client.transaction_info(id).await?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_with_valid_url() {
+        let indexer = Indexer::new("http://example.com");
+        assert!(indexer.ok().is_some());
+    }
+
+    #[test]
+    #[should_panic(expected = "")]
+    fn test_create_with_empty_url() {
+        Indexer::new("").unwrap();
     }
 }

@@ -1,5 +1,4 @@
 use algonaut::algod::v2::Algod;
-use algonaut::algod::AlgodBuilder;
 use algonaut::error::AlgonautError;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
 use algonaut_model::algod::v2::PendingTransaction;
@@ -19,10 +18,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Creator: {:?}", creator.address());
 
     // algod has a convenient method that retrieves basic information for a transaction
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let params = algod.suggested_transaction_params().await?;
 

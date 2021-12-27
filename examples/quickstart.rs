@@ -1,6 +1,6 @@
-use algonaut::algod::AlgodBuilder;
-use algonaut::indexer::IndexerBuilder;
-use algonaut::kmd::KmdBuilder;
+use algonaut::algod::v2::Algod;
+use algonaut::indexer::v2::Indexer;
+use algonaut::kmd::v1::Kmd;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -10,17 +10,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
 
-    let algod = AlgodBuilder::new()
-        .bind(env::var("ALGOD_URL")?.as_ref())
-        .auth(env::var("ALGOD_TOKEN")?.as_ref())
-        .build_v2()?;
-    let kmd = KmdBuilder::new()
-        .bind(env::var("KMD_URL")?.as_ref())
-        .auth(env::var("KMD_TOKEN")?.as_ref())
-        .build_v1()?;
-    let indexer = IndexerBuilder::new()
-        .bind(env::var("INDEXER_URL")?.as_ref())
-        .build_v2()?;
+    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
+    let kmd = Kmd::new(&env::var("KMD_URL")?, &env::var("KMD_TOKEN")?)?;
+    let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
 
     println!("Algod versions: {:#?}", algod.versions().await?);
     println!("Kmd versions: {:#?}", kmd.versions().await?);
