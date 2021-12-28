@@ -1,7 +1,8 @@
-use algonaut_core::{MicroAlgos, Round};
+use algonaut_core::{Address, MicroAlgos, Round};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 
 ///
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
@@ -75,7 +76,7 @@ pub struct AccountInfoResponse {
 
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: u64,
+    pub current_round: Round,
 }
 
 /// Query account transactions.
@@ -536,17 +537,19 @@ pub struct TransactionInfoResponse {
     pub transaction: Transaction,
 }
 
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Account {
     /// The account public key.
-    pub address: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub address: Address,
 
     /// `algo` total number of MicroAlgos in the account.
-    pub amount: u64,
+    pub amount: MicroAlgos,
 
     /// specifies the amount of MicroAlgos in the account, without the pending rewards.
     #[serde(rename = "amount-without-pending-rewards")]
-    pub amount_without_pending_rewards: u64,
+    pub amount_without_pending_rewards: MicroAlgos,
 
     /// `appl` applications local data stored in this account.
     ///
@@ -568,11 +571,11 @@ pub struct Account {
     /// current account is used. This field can be updated in any transaction by setting the
     /// RekeyTo field.
     #[serde(rename = "auth-addr")]
-    pub auth_addr: Option<String>,
+    pub auth_addr: Option<Address>,
 
     /// Round during which this account was most recently closed.
     #[serde(rename = "closed-at-round")]
-    pub closed_at_round: Option<u64>,
+    pub closed_at_round: Option<Round>,
 
     /// `appp` parameters of applications created by this account including app global data.
     ///
@@ -651,7 +654,7 @@ pub struct AccountParticipation {
 
     /// `voteFst` First round for which this participation is valid.
     #[serde(rename = "vote-first-valid")]
-    pub vote_first_valid: u64,
+    pub vote_first_valid: Round,
 
     /// `voteKD` Number of subkeys in each batch of participation keys.
     #[serde(rename = "vote-key-dilution")]
@@ -659,7 +662,7 @@ pub struct AccountParticipation {
 
     /// `voteLst` Last round for which this participation is valid.
     #[serde(rename = "vote-last-valid")]
-    pub vote_last_valid: u64,
+    pub vote_last_valid: Round,
 
     /// `vote` root participation public key (if any) currently registered for this round.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
@@ -687,7 +690,7 @@ pub struct AccountStateDelta {
 pub struct Application {
     /// Round when this application was created.
     #[serde(rename = "created-at-round")]
-    pub created_at_round: Option<bool>,
+    pub created_at_round: Option<Round>,
 
     /// Whether or not this application is currently deleted.
     #[serde(rename = "deleted")]
@@ -731,6 +734,7 @@ pub struct ApplicationLocalState {
 }
 
 /// Stores the global information associated with an application.
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationParams {
     /// `approv` approval program.
@@ -755,7 +759,9 @@ pub struct ApplicationParams {
 
     /// The address that created this application. This is the address where the parameters and
     /// global state for this application can be found.
-    pub creator: String,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub creator: Option<Address>,
 
     /// `gs` global schema
     #[serde(rename = "global-state")]
@@ -837,16 +843,20 @@ pub struct AssetHolding {
 /// AssetParams specifies the parameters for an asset.
 /// `apar` when part of an AssetConfig transaction.
 /// Definition: data/transactions/asset.go : AssetParams
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AssetParams {
     /// `c` Address of account used to clawback holdings of this asset. If empty, clawback is not
     /// permitted.
-    pub clawback: Option<String>,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub clawback: Option<Address>,
 
     /// The address that created this asset. This is the address where the parameters for this
     /// asset can be found, and also the address where unwanted asset units can be sent in the worst
     /// case.
-    pub creator: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub creator: Address,
 
     /// `dc` The number of digits to use after the decimal point when displaying this asset.
     /// If 0, the asset is not divisible. If 1, the base unit of the asset is in tenths.
@@ -862,10 +872,14 @@ pub struct AssetParams {
 
     /// `f` Address of account used to freeze holdings of this asset. If empty, freezing is not
     /// permitted.
-    pub freeze: Option<String>,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub freeze: Option<Address>,
 
     /// `m` Address of account used to manage the keys of this asset and to destroy it.
-    pub manager: Option<String>,
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub manager: Option<Address>,
 
     /// `am` A commitment to some unspecified asset metadata. The format of this metadata is up
     /// to the application.
