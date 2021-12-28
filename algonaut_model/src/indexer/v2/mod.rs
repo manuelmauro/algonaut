@@ -726,7 +726,7 @@ pub struct ApplicationLocalState {
     pub opted_in_at_round: Option<Round>,
 
     /// `hsch` schema.
-    #[serde(rename = "key-value")]
+    #[serde(rename = "schema")]
     pub schema: ApplicationStateSchema,
 }
 
@@ -759,15 +759,15 @@ pub struct ApplicationParams {
 
     /// `gs` global schema
     #[serde(rename = "global-state")]
-    pub global_state: TealKeyValueStore,
+    pub global_state: Option<TealKeyValueStore>,
 
     /// `lsch` global schema
     #[serde(rename = "global-state-schema")]
-    pub global_state_schema: ApplicationStateSchema,
+    pub global_state_schema: Option<ApplicationStateSchema>,
 
     /// `lsch` local schema
     #[serde(rename = "local-state-schema")]
-    pub local_state_schema: ApplicationStateSchema,
+    pub local_state_schema: Option<ApplicationStateSchema>,
 }
 
 /// Specifies maximums on the number of each type that may be stored.
@@ -841,7 +841,7 @@ pub struct AssetHolding {
 pub struct AssetParams {
     /// `c` Address of account used to clawback holdings of this asset. If empty, clawback is not
     /// permitted.
-    pub clawback: String,
+    pub clawback: Option<String>,
 
     /// The address that created this asset. This is the address where the parameters for this
     /// asset can be found, and also the address where unwanted asset units can be sent in the worst
@@ -858,14 +858,14 @@ pub struct AssetParams {
 
     /// `df` Whether holdings of this asset are frozen by default.
     #[serde(rename = "default-frozen")]
-    pub default_frozen: bool,
+    pub default_frozen: Option<bool>,
 
     /// `f` Address of account used to freeze holdings of this asset. If empty, freezing is not
     /// permitted.
-    pub freeze: String,
+    pub freeze: Option<String>,
 
     /// `m` Address of account used to manage the keys of this asset and to destroy it.
-    pub manager: String,
+    pub manager: Option<String>,
 
     /// `am` A commitment to some unspecified asset metadata. The format of this metadata is up
     /// to the application.
@@ -879,17 +879,17 @@ pub struct AssetParams {
     pub metadata_hash: Vec<u8>,
 
     /// `an` Name of this asset, as supplied by the creator.
-    pub name: String,
+    pub name: Option<String>,
 
     /// `r` Address of account holding reserve (non-minted) units of this asset.
-    pub reserve: String,
+    pub reserve: Option<String>,
 
     /// `t` The total number of units of this asset.
     pub total: u64,
 
     /// `un` Name of a unit of this asset, as supplied by the creator.
     #[serde(rename = "unit-name")]
-    pub unit_name: String,
+    pub unit_name: Option<String>,
 
     /// `au` URL where more information about the asset can be retrieved.
     pub url: Option<String>,
