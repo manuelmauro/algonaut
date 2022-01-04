@@ -4,7 +4,7 @@ use crate::transaction::{
     AssetTransferTransaction, KeyRegistration, Payment, StateSchema, Transaction, TransactionType,
 };
 use algonaut_core::{
-    Address, CompiledTealBytes, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk,
+    Address, CompiledTeal, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk,
 };
 use algonaut_crypto::HashDigest;
 
@@ -558,9 +558,9 @@ impl FreezeAsset {
 pub struct CreateApplication {
     sender: Address,
     accounts: Option<Vec<Address>>,
-    approval_program: Option<CompiledTealBytes>,
+    approval_program: Option<CompiledTeal>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    clear_state_program: Option<CompiledTealBytes>,
+    clear_state_program: Option<CompiledTeal>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
     global_state_schema: Option<StateSchema>,
@@ -571,8 +571,8 @@ pub struct CreateApplication {
 impl CreateApplication {
     pub fn new(
         sender: Address,
-        approval_program: CompiledTealBytes,
-        clear_state_program: CompiledTealBytes,
+        approval_program: CompiledTeal,
+        clear_state_program: CompiledTeal,
         global_state_schema: StateSchema,
         local_state_schema: StateSchema,
     ) -> Self {
@@ -638,9 +638,9 @@ pub struct UpdateApplication {
     sender: Address,
     app_id: u64,
     accounts: Option<Vec<Address>>,
-    approval_program: Option<CompiledTealBytes>,
+    approval_program: Option<CompiledTeal>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    clear_state_program: Option<CompiledTealBytes>,
+    clear_state_program: Option<CompiledTeal>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
 }
@@ -649,8 +649,8 @@ impl UpdateApplication {
     pub fn new(
         sender: Address,
         app_id: u64,
-        approval_program: CompiledTealBytes,
-        clear_state_program: CompiledTealBytes,
+        approval_program: CompiledTeal,
+        clear_state_program: CompiledTeal,
     ) -> Self {
         UpdateApplication {
             sender,

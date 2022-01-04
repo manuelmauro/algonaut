@@ -3,7 +3,7 @@ use crate::step_defs::util::{
     wait_for_pending_transaction,
 };
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
-use algonaut_core::{Address, CompiledTealBytes, MicroAlgos};
+use algonaut_core::{Address, CompiledTeal, MicroAlgos};
 use algonaut_model::algod::v2::{Application, ApplicationLocalState};
 use algonaut_transaction::account::Account;
 use algonaut_transaction::builder::{
@@ -188,8 +188,8 @@ async fn i_build_an_application_transaction(
 
             CreateApplication::new(
                 transient_account.address(),
-                CompiledTealBytes(approval_program),
-                CompiledTealBytes(clear_program),
+                CompiledTeal(approval_program),
+                CompiledTeal(clear_program),
                 global_schema,
                 local_schema,
             )
@@ -209,8 +209,8 @@ async fn i_build_an_application_transaction(
             UpdateApplication::new(
                 transient_account.address(),
                 app_id,
-                CompiledTealBytes(approval_program),
-                CompiledTealBytes(clear_program),
+                CompiledTeal(approval_program),
+                CompiledTeal(clear_program),
             )
             .foreign_assets(foreign_assets)
             .foreign_apps(foreign_apps)

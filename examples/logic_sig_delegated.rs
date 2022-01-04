@@ -35,13 +35,13 @@ int 1
     )
     .build();
 
-    let signature = from.generate_program_sig(&program.program);
+    let signature = from.generate_program_sig(&program);
 
     let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program.program,
+            logic: program,
             args: vec![],
             sig: LogicSignature::DelegatedSig(signature),
         }),

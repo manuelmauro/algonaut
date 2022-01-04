@@ -4,11 +4,10 @@ use crate::auction::{Bid, SignedBid};
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
-    Address, CompiledTealBytes, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig,
+    Address, CompiledTeal, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig,
     SignedLogic, ToMsgPack,
 };
 use algonaut_crypto::{mnemonic, Signature};
-use algonaut_model::algod::v2::CompiledTeal;
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
@@ -88,8 +87,8 @@ impl Account {
         self.generate_raw_sig(&bytes_sign_prefix)
     }
 
-    pub fn generate_program_sig(&self, program: &CompiledTealBytes) -> Signature {
-        self.generate_raw_sig(&["Program".as_bytes(), &program.0].concat())
+    pub fn generate_program_sig(&self, program: &CompiledTeal) -> Signature {
+        self.generate_raw_sig(&program.bytes_to_sign())
     }
 
     fn generate_transaction_sig(
@@ -142,7 +141,7 @@ impl Account {
     /// Creates logic multi signature corresponding to multisign addresses, inserting own signature
     pub fn init_logic_msig(
         &self,
-        program: &CompiledTealBytes,
+        program: &CompiledTeal,
         ma: &MultisigAddress,
     ) -> Result<MultisigSignature, TransactionError> {
         if !ma.contains(&self.address) {
@@ -154,7 +153,7 @@ impl Account {
 
     pub fn append_to_logic_msig(
         &self,
-        program: &CompiledTealBytes,
+        program: &CompiledTeal,
         msig: MultisigSignature,
     ) -> Result<MultisigSignature, TransactionError> {
         self.append_sig_to_msig(self.generate_program_sig(program), msig)
@@ -235,14 +234,15 @@ impl Account {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContractAccount {
     pub address: Address,
-    pub program: CompiledTealBytes,
+    pub program: CompiledTeal,
 }
 
 impl ContractAccount {
     pub fn new(compiled_teal: CompiledTeal) -> ContractAccount {
+        let program = compiled_teal;
         ContractAccount {
-            address: compiled_teal.hash.as_address(),
-            program: compiled_teal.program,
+            address: program.hash().into(),
+            program,
         }
     }
 

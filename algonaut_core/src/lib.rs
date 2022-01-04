@@ -174,7 +174,7 @@ impl VrfPk {
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct SignedLogic {
-    pub logic: CompiledTealBytes,
+    pub logic: CompiledTeal,
     pub args: Vec<Vec<u8>>,
     pub sig: LogicSignature,
 }
@@ -213,13 +213,23 @@ impl Debug for SignedLogic {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
-pub struct CompiledTealBytes(pub Vec<u8>);
+pub struct CompiledTeal(pub Vec<u8>);
 
-impl CompiledTealBytes {
+impl CompiledTeal {
     pub fn bytes_to_sign(&self) -> Vec<u8> {
         let mut prefix_encoded_tx = b"Program".to_vec();
         prefix_encoded_tx.extend_from_slice(&self.0);
         prefix_encoded_tx
+    }
+
+    pub fn hash(&self) -> HashDigest {
+        HashDigest(sha2::Sha512Trunc256::digest(&self.bytes_to_sign()).into())
+    }
+}
+
+impl From<HashDigest> for Address {
+    fn from(digest: HashDigest) -> Self {
+        Address(digest.0)
     }
 }
 
@@ -252,4 +262,35 @@ pub struct SuggestedTransactionParams {
     pub min_fee: MicroAlgos,
     pub first_valid: Round,
     pub last_valid: Round,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn computes_program_address_correctly() {
+        let program = CompiledTeal(vec![
+            4, 54, 26, 0, 128, 3, 1, 0, 255, 18, 54, 26, 1, 23, 129, 255, 255, 255, 255, 255, 255,
+            255, 255, 255, 1, 18, 16, 54, 26, 2, 128, 32, 98, 162, 25, 173, 185, 140, 183, 76, 228,
+            114, 235, 172, 245, 191, 248, 121, 232, 54, 170, 229, 161, 91, 215, 180, 73, 219, 245,
+            120, 155, 252, 59, 92, 18, 16,
+        ]);
+
+        let digest = program.hash();
+
+        assert_eq!(
+            HashDigest([
+                45, 117, 175, 55, 21, 23, 57, 110, 158, 143, 60, 222, 234, 143, 168, 69, 75, 239,
+                131, 112, 96, 73, 79, 174, 120, 245, 181, 40, 236, 158, 233, 234,
+            ]),
+            digest
+        );
+
+        // Note that this address is also the "address style hash" string we get from the API in ApiCompiledTeal
+        assert_eq!(
+            "FV226NYVC44W5HUPHTPOVD5IIVF67A3QMBEU7LTY6W2SR3E65HVOQ7JV44",
+            Address::new(digest.0).to_string()
+        );
+    }
 }

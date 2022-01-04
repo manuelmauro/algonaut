@@ -48,8 +48,8 @@ int 1
         UpdateApplication::new(
             sender.address(),
             5,
-            compiled_approval_program.program,
-            compiled_clear_program.program,
+            compiled_approval_program,
+            compiled_clear_program,
         )
         .app_arguments(vec![vec![1, 0], vec![255]]) // for the program being upgraded
         .build(),

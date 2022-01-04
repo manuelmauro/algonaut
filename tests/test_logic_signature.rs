@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use algonaut_core::{CompiledTealBytes, LogicSignature, MultisigAddress, SignedLogic};
+use algonaut_core::{CompiledTeal, LogicSignature, MultisigAddress, SignedLogic};
 
 use algonaut_transaction::{account::Account, error::TransactionError};
 use tokio::test;
@@ -10,7 +10,7 @@ use tokio::test;
 
 #[test]
 async fn test_logic_sig_creation() -> Result<(), Box<dyn Error>> {
-    let program = CompiledTealBytes(vec![
+    let program = CompiledTeal(vec![
         0x01, 0x20, 0x01, 0x01, 0x22, // int 1
     ]);
     let args = vec![];
@@ -63,7 +63,7 @@ async fn test_logic_sig_invalid_program_creation() {
 
 #[test]
 async fn test_logic_sig_signature() -> Result<(), Box<dyn Error>> {
-    let program = CompiledTealBytes(vec![
+    let program = CompiledTeal(vec![
         0x01, 0x20, 0x01, 0x01, 0x22, // int 1
     ]);
     let account = Account::generate();
@@ -85,7 +85,7 @@ async fn test_logic_sig_signature() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_logic_sig_multisig_signature() -> Result<(), Box<dyn Error>> {
-    let program = CompiledTealBytes(vec![
+    let program = CompiledTeal(vec![
         0x01, 0x20, 0x01, 0x01, 0x22, // int 1
     ]);
 

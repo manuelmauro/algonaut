@@ -84,3 +84,7 @@ where
 {
     serializer.serialize_str(&BASE64.encode(bytes))
 }
+
+pub fn decode_base64(bytes: &[u8]) -> Result<Vec<u8>, String> {
+    BASE64.decode(bytes).map_err(|e| e.to_string())
+}
