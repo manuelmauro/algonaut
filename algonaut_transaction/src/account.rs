@@ -4,14 +4,12 @@ use crate::auction::{Bid, SignedBid};
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
-    Address, CompiledTeal, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig,
-    SignedLogic, ToMsgPack,
+    Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
 };
 use algonaut_crypto::{mnemonic, Signature};
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct Account {
@@ -226,40 +224,6 @@ impl Account {
             })
             .collect();
         Ok(MultisigSignature { subsigs, ..msig })
-    }
-}
-
-/// Convenience CompiledTeal "view", used to sign as contract account.
-/// The program hash is interpreted as an address.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ContractAccount {
-    pub address: Address,
-    pub program: CompiledTeal,
-}
-
-impl ContractAccount {
-    pub fn new(compiled_teal: CompiledTeal) -> ContractAccount {
-        let program = compiled_teal;
-        ContractAccount {
-            address: program.hash().into(),
-            program,
-        }
-    }
-
-    pub fn sign(
-        &self,
-        transaction: &Transaction,
-        args: Vec<Vec<u8>>,
-    ) -> Result<SignedTransaction, TransactionError> {
-        Ok(SignedTransaction {
-            transaction: transaction.clone(),
-            transaction_id: transaction.id()?,
-            sig: TransactionSignature::Logic(SignedLogic {
-                logic: self.program.clone(),
-                args,
-                sig: LogicSignature::ContractAccount,
-            }),
-        })
     }
 }
 
