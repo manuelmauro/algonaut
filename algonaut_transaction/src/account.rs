@@ -4,15 +4,12 @@ use crate::auction::{Bid, SignedBid};
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
-    Address, CompiledTealBytes, LogicSignature, MultisigAddress, MultisigSignature, MultisigSubsig,
-    SignedLogic, ToMsgPack,
+    Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
 };
 use algonaut_crypto::{mnemonic, Signature};
-use algonaut_model::algod::v2::CompiledTeal;
 use rand::rngs::OsRng;
 use rand::Rng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub struct Account {
@@ -88,8 +85,8 @@ impl Account {
         self.generate_raw_sig(&bytes_sign_prefix)
     }
 
-    pub fn generate_program_sig(&self, program: &CompiledTealBytes) -> Signature {
-        self.generate_raw_sig(&["Program".as_bytes(), &program.0].concat())
+    pub fn generate_program_sig(&self, program: &CompiledTeal) -> Signature {
+        self.generate_raw_sig(&program.bytes_to_sign())
     }
 
     fn generate_transaction_sig(
@@ -142,7 +139,7 @@ impl Account {
     /// Creates logic multi signature corresponding to multisign addresses, inserting own signature
     pub fn init_logic_msig(
         &self,
-        program: &CompiledTealBytes,
+        program: &CompiledTeal,
         ma: &MultisigAddress,
     ) -> Result<MultisigSignature, TransactionError> {
         if !ma.contains(&self.address) {
@@ -154,7 +151,7 @@ impl Account {
 
     pub fn append_to_logic_msig(
         &self,
-        program: &CompiledTealBytes,
+        program: &CompiledTeal,
         msig: MultisigSignature,
     ) -> Result<MultisigSignature, TransactionError> {
         self.append_sig_to_msig(self.generate_program_sig(program), msig)
@@ -227,39 +224,6 @@ impl Account {
             })
             .collect();
         Ok(MultisigSignature { subsigs, ..msig })
-    }
-}
-
-/// Convenience CompiledTeal "view", used to sign as contract account.
-/// The program hash is interpreted as an address.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ContractAccount {
-    pub address: Address,
-    pub program: CompiledTealBytes,
-}
-
-impl ContractAccount {
-    pub fn new(compiled_teal: CompiledTeal) -> ContractAccount {
-        ContractAccount {
-            address: compiled_teal.hash.as_address(),
-            program: compiled_teal.program,
-        }
-    }
-
-    pub fn sign(
-        &self,
-        transaction: &Transaction,
-        args: Vec<Vec<u8>>,
-    ) -> Result<SignedTransaction, TransactionError> {
-        Ok(SignedTransaction {
-            transaction: transaction.clone(),
-            transaction_id: transaction.id()?,
-            sig: TransactionSignature::Logic(SignedLogic {
-                logic: self.program.clone(),
-                args,
-                sig: LogicSignature::ContractAccount,
-            }),
-        })
     }
 }
 

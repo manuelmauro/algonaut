@@ -38,11 +38,11 @@ int 1
     )
     .build();
 
-    let msig = account1.init_logic_msig(&program.program, &multisig_address)?;
-    let msig = account2.append_to_logic_msig(&program.program, msig)?;
+    let msig = account1.init_logic_msig(&program, &multisig_address)?;
+    let msig = account2.append_to_logic_msig(&program, msig)?;
 
     let sig = TransactionSignature::Logic(SignedLogic {
-        logic: program.program,
+        logic: program,
         args: vec![],
         sig: LogicSignature::DelegatedMultiSig(msig),
     });

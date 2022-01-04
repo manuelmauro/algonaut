@@ -1,8 +1,9 @@
 use algonaut_client::{algod::v2::Client, token::ApiToken, Headers};
-use algonaut_core::{Address, Round, SuggestedTransactionParams, ToMsgPack};
+use algonaut_core::{Address, CompiledTeal, Round, SuggestedTransactionParams, ToMsgPack};
+use algonaut_encoding::decode_base64;
 use algonaut_model::algod::v2::{
-    Account, Application, Asset, Block, Catchup, CompiledTeal, DryrunRequest, DryrunResponse,
-    GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
+    Account, Application, Asset, Block, Catchup, DryrunRequest, DryrunResponse, GenesisBlock,
+    KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
     TransactionParams, TransactionResponse, Version,
 };
 use algonaut_transaction::SignedTransaction;
@@ -147,11 +148,17 @@ impl Algod {
 
     /// Compile TEAL source code to binary, produce its hash.
     ///
-    /// Given TEAL source code in plain text, return base64 encoded program bytes and base32
-    /// SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when
-    /// a node's configuration file sets EnableDeveloperAPI to true.
+    /// Given TEAL source code in plain text, return compiled program bytes.
+    /// This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
     pub async fn compile_teal(&self, teal: &[u8]) -> Result<CompiledTeal, AlgonautError> {
-        Ok(self.client.compile_teal(teal.to_vec()).await?)
+        let api_compiled_teal = self.client.compile_teal(teal.to_vec()).await?;
+        // The api result (program + hash) is mapped to the domain program struct, which computes the hash on demand.
+        // The hash here is redundant and we want to allow to generate it with the SDK too (e.g. for when loading programs from a DB).
+        // At the moment it seems not warranted to add a cache (so it's initialized with the API hash or lazily), but this can be re-evaluated.
+        // Note that for contract accounts, there's [ContractAccount](algonaut_transaction::account::ContractAccount), which caches it (as address).
+        Ok(CompiledTeal(decode_base64(
+            api_compiled_teal.result.as_bytes(),
+        )?))
     }
 
     /// Provide debugging information for a transaction (or group).

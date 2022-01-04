@@ -1,6 +1,6 @@
 use algonaut::algod::v2::Algod;
 use algonaut_core::MicroAlgos;
-use algonaut_transaction::account::ContractAccount;
+use algonaut_transaction::contract_account::ContractAccount;
 use algonaut_transaction::Pay;
 use algonaut_transaction::TxnBuilder;
 use dotenv::dotenv;
@@ -37,7 +37,7 @@ byte 0xFF
 
     let t = TxnBuilder::with(
         params,
-        Pay::new(contract_account.address, receiver, MicroAlgos(123_456)).build(),
+        Pay::new(*contract_account.address(), receiver, MicroAlgos(123_456)).build(),
     )
     .build();
 

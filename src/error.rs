@@ -88,3 +88,9 @@ impl From<rmp_serde::encode::Error> for AlgonautError {
         AlgonautError::Internal(error.to_string())
     }
 }
+
+impl From<String> for AlgonautError {
+    fn from(error: String) -> Self {
+        AlgonautError::Internal(error)
+    }
+}

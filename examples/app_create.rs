@@ -46,8 +46,8 @@ int 1
         params,
         CreateApplication::new(
             sender.address(),
-            compiled_approval_program.clone().program,
-            compiled_clear_program.program,
+            compiled_approval_program.clone(),
+            compiled_clear_program,
             StateSchema {
                 number_ints: 0,
                 number_byteslices: 0,
