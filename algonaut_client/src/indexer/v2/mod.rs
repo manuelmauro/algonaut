@@ -7,7 +7,7 @@ use algonaut_model::indexer::v2::{
     ApplicationResponse, AssetResponse, AssetTransactionResponse, AssetsInfoResponse,
     BalancesResponse, Block, QueryAccount, QueryAccountInfo, QueryAccountTransaction,
     QueryApplicationInfo, QueryApplications, QueryAssetTransaction, QueryAssets, QueryAssetsInfo,
-    QueryBalances, QueryTransaction, TransactionResponse,
+    QueryBalances, QueryTransaction, TransactionInfoResponse, TransactionResponse,
 };
 use reqwest::header::HeaderMap;
 use reqwest::Url;
@@ -263,7 +263,7 @@ impl Client {
     }
 
     /// Search for transactions.
-    pub async fn transaction_info(&self, id: &str) -> Result<TransactionResponse, ClientError> {
+    pub async fn transaction_info(&self, id: &str) -> Result<TransactionInfoResponse, ClientError> {
         let response = self
             .http_client
             .get(&format!("{}v2/transactions/{}", self.url, id))

@@ -5,7 +5,7 @@ use algonaut_model::indexer::v2::{
     ApplicationResponse, AssetResponse, AssetTransactionResponse, AssetsInfoResponse,
     BalancesResponse, Block, QueryAccount, QueryAccountInfo, QueryAccountTransaction,
     QueryApplicationInfo, QueryApplications, QueryAssetTransaction, QueryAssets, QueryAssetsInfo,
-    QueryBalances, QueryTransaction, TransactionResponse,
+    QueryBalances, QueryTransaction, TransactionInfoResponse, TransactionResponse,
 };
 
 use crate::error::AlgonautError;
@@ -124,7 +124,10 @@ impl Indexer {
     }
 
     /// Search for transactions.
-    pub async fn transaction_info(&self, id: &str) -> Result<TransactionResponse, AlgonautError> {
+    pub async fn transaction_info(
+        &self,
+        id: &str,
+    ) -> Result<TransactionInfoResponse, AlgonautError> {
         Ok(self.client.transaction_info(id).await?)
     }
 }
