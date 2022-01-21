@@ -1,8 +1,8 @@
 use algonaut::algod::v2::Algod;
-use algonaut_core::MicroAlgos;
-use algonaut_transaction::contract_account::ContractAccount;
-use algonaut_transaction::Pay;
-use algonaut_transaction::TxnBuilder;
+use algonaut::core::MicroAlgos;
+use algonaut::transaction::contract_account::ContractAccount;
+use algonaut::transaction::Pay;
+use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
