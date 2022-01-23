@@ -11,3 +11,7 @@ signed.tx
 # ignore cucumber test resources
 test-harness/
 tests/features/
+
+# editor
+*.code-workspace
+.devcontainer/

@@ -1,5 +1,8 @@
 [package]
-authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
+authors = [
+  "Manuel Mauro <manuel.mauro@protonmail.com>",
+  "Ivan Schuetz <ivanhp978@gmail.com>",
+]
 description = "A Rusty sdk for the Algorand blockchain."
 edition = "2018"
 keywords = ["Algorand", "sdk"]
@@ -19,12 +22,12 @@ members = [
 ]
 
 [dependencies]
-algonaut_client = {path = "algonaut_client", version = "0.3.0", default-features = false}
-algonaut_model = {path = "algonaut_model", version = "0.3.0"}
-algonaut_core = {path = "algonaut_core", version = "0.3.0"}
-algonaut_crypto = {path = "algonaut_crypto", version = "0.3.0"}
-algonaut_encoding = {path = "algonaut_encoding", version = "0.3.0"}
-algonaut_transaction = {path = "algonaut_transaction", version = "0.3.0"}
+algonaut_client = { path = "algonaut_client", version = "0.3.0", default-features = false }
+algonaut_model = { path = "algonaut_model", version = "0.3.0" }
+algonaut_core = { path = "algonaut_core", version = "0.3.0" }
+algonaut_crypto = { path = "algonaut_crypto", version = "0.3.0" }
+algonaut_encoding = { path = "algonaut_encoding", version = "0.3.0" }
+algonaut_transaction = { path = "algonaut_transaction", version = "0.3.0" }
 thiserror = "1.0.23"
 rmp-serde = "0.15.5"
 
@@ -34,9 +37,7 @@ tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
 rand = "0.8.3"
 getrandom = { version = "0.2.2", features = ["js"] }
 data-encoding = "2.3.1"
-# Using main branch because of this issue: https://github.com/cucumber-rs/cucumber/issues/173
-# TODO replace with v0.11 once released ("few days" from now, according to maintainer)
-cucumber = { git = "https://github.com/cucumber-rs/cucumber.git" }
+cucumber = "0.11.2"
 async-trait = "0.1.51"
 
 [features]
@@ -46,4 +47,5 @@ rustls = ["algonaut_client/rustls"]
 
 [[test]]
 name = "features_runner"
-harness = false # Allows Cucumber to print output instead of libtest
+# Allows Cucumber to print output instead of libtest
+harness = false          
