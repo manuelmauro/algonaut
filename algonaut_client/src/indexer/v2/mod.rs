@@ -67,7 +67,7 @@ impl Client {
     ) -> Result<AccountInfoResponse, ClientError> {
         let response = self
             .http_client
-            .get(&format!("{}v2/accounts/{}", self.url, address.to_string()))
+            .get(&format!("{}v2/accounts/{}", self.url, address))
             .headers(self.headers.clone())
             .query(query)
             .send()
@@ -88,11 +88,7 @@ impl Client {
     ) -> Result<AccountTransactionResponse, ClientError> {
         let response = self
             .http_client
-            .get(&format!(
-                "{}v2/accounts/{}/transactions",
-                self.url,
-                address.to_string()
-            ))
+            .get(&format!("{}v2/accounts/{}/transactions", self.url, address))
             .headers(self.headers.clone())
             .query(query)
             .send()

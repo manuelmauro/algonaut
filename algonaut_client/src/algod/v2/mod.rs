@@ -206,8 +206,7 @@ impl Client {
             .http_client
             .post(&format!(
                 "{}v2/register-participation-keys/{}",
-                self.url,
-                address.to_string()
+                self.url, address
             ))
             .headers(self.headers.clone())
             .query(&params)

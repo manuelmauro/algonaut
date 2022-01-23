@@ -69,12 +69,9 @@ impl LinkableTransaction {
             .map(|(k, v)| (k, encode(&v).into_owned()))
             .collect::<Vec<(String, String)>>();
 
-        Url::parse_with_params(
-            &format!("algorand://{}?", self.receiver.to_string()),
-            encoded_params,
-        )
-        // unwrap: we're responsible for ensuring that the URL is valid
-        .unwrap()
+        Url::parse_with_params(&format!("algorand://{}?", self.receiver), encoded_params)
+            // unwrap: we're responsible for ensuring that the URL is valid
+            .unwrap()
     }
 
     fn params(&self) -> Vec<(String, String)> {
