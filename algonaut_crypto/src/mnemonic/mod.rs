@@ -12,7 +12,7 @@ const MNEM_LEN_WORDS: usize = 25; // includes checksum word
 #[allow(dead_code)]
 const PADDING_ZEROS: usize = BITS_PER_WORD - ((KEY_LEN_BYTES * 8) % BITS_PER_WORD);
 const MNEMONIC_DELIM: &str = " ";
-type ChecksumAlg = sha2::Sha512Trunc256;
+type ChecksumAlg = sha2::Sha512_256;
 
 const_assert_eq!(
     MNEM_LEN_WORDS * BITS_PER_WORD - (CHECKSUM_LEN_WORDS * BITS_PER_WORD),

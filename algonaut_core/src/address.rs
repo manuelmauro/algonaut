@@ -7,7 +7,7 @@ use sha2::Digest;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::str::FromStr;
 
-type ChecksumAlg = sha2::Sha512Trunc256;
+type ChecksumAlg = sha2::Sha512_256;
 
 const CHECKSUM_LEN: usize = 4;
 const HASH_LEN: usize = 32;

@@ -181,7 +181,7 @@ pub struct SignedLogic {
 
 impl SignedLogic {
     pub fn as_address(&self) -> Address {
-        Address(sha2::Sha512Trunc256::digest(&self.logic.bytes_to_sign()).into())
+        Address(sha2::Sha512_256::digest(&self.logic.bytes_to_sign()).into())
     }
 
     /// Performs signature verification against the sender address, and general consistency checks.
@@ -223,7 +223,7 @@ impl CompiledTeal {
     }
 
     pub fn hash(&self) -> HashDigest {
-        HashDigest(sha2::Sha512Trunc256::digest(&self.bytes_to_sign()).into())
+        HashDigest(sha2::Sha512_256::digest(&self.bytes_to_sign()).into())
     }
 }
 
