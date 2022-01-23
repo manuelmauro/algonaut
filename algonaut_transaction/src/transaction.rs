@@ -95,7 +95,7 @@ impl Transaction {
     }
 
     pub fn raw_id(&self) -> Result<HashDigest, TransactionError> {
-        let hashed = sha2::Sha512Trunc256::digest(&self.bytes_to_sign()?);
+        let hashed = sha2::Sha512_256::digest(&self.bytes_to_sign()?);
         Ok(HashDigest(hashed.into()))
     }
 
