@@ -1,5 +1,5 @@
 use algonaut::indexer::v2::Indexer;
-use algonaut_model::indexer::v2::QueryAccount;
+use algonaut::model::indexer::v2::QueryAccount;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

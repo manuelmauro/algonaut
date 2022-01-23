@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
+use algonaut::transaction::account::Account;
+use algonaut::transaction::builder::CloseApplication;
 use algonaut::transaction::TxnBuilder;
-use algonaut_transaction::account::Account;
-use algonaut_transaction::builder::CloseApplication;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
