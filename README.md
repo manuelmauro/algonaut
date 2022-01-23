@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="assets/rocket-solid.png">
+</p>
+
 # Rust `algonaut`
 
 [![Crate](https://img.shields.io/crates/v/algonaut.svg)](https://crates.io/crates/algonaut)
@@ -80,9 +84,9 @@ This crate is based on the work of [@mraof](https://github.com/mraof/rust-algora
 
 ## License
 
-[![Ferris Algonaut](assets/logo/rustacean-flat-algonaut.svg)](https://crates.io/crates/algonaut)
+[![Ferris Algonaut](assets/ferris-algonaut.svg)](https://crates.io/crates/algonaut)
 
 Licensed under MIT license.
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this crate by you, shall be licensed as above, without any additional terms or conditions.
 
-[Ferris Algonaut](assets/logo/rustacean-flat-algonaut.svg) is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+[Ferris Algonaut](assets/ferris-algonaut.svg) is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
