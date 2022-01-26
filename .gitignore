@@ -15,3 +15,4 @@ tests/features/
 # editor
 *.code-workspace
 .devcontainer/
+.vscode
