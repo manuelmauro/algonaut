@@ -37,7 +37,7 @@ tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
 rand = "0.8.3"
 getrandom = { version = "0.2.2", features = ["js"] }
 data-encoding = "2.3.1"
-cucumber = "0.11.2"
+cucumber = "0.12.0"
 async-trait = "0.1.51"
 
 [features]
