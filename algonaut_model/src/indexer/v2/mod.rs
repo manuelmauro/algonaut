@@ -159,7 +159,7 @@ pub struct AccountTransactionResponse {
     pub current_round: u64,
 
     /// Used for pagination, when making another request provide this token with the next parameter.
-    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "next-token")]
     pub next_token: Option<String>,
 
     /// Transaction list.
@@ -194,7 +194,7 @@ pub struct ApplicationResponse {
     pub current_round: i32,
 
     /// Used for pagination, when making another request provide this token with the next parameter.
-    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "next-token")]
     pub next_token: Option<String>,
 }
 
@@ -209,7 +209,7 @@ pub struct QueryApplicationInfo {
 /// Response for applications/id endpoint.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ApplicationInfoResponse {
-    #[serde(rename = "application", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "application")]
     pub application: Option<Box<Application>>,
 
     /// Round at which the results were computed.
@@ -256,7 +256,7 @@ pub struct AssetResponse {
     pub current_round: i32,
 
     /// Used for pagination, when making another request provide this token with the next parameter.
-    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "next-token")]
     pub next_token: Option<String>,
 }
 
@@ -319,7 +319,7 @@ pub struct BalancesResponse {
     pub current_round: i32,
 
     /// Used for pagination, when making another request provide this token with the next parameter.
-    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "next-token")]
     pub next_token: Option<String>,
 }
 
@@ -413,7 +413,7 @@ pub struct AssetTransactionResponse {
     pub current_round: u64,
 
     /// Used for pagination, when making another request provide this token with the next parameter.
-    #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "next-token")]
     pub next_token: Option<String>,
 
     /// Transaction list.
@@ -648,7 +648,6 @@ pub struct AccountParticipation {
     #[serde(
         rename = "selection-participation-key",
         default,
-        skip_serializing_if = "Vec::is_empty",
         deserialize_with = "deserialize_bytes"
     )]
     pub selection_participation_key: Vec<u8>,
@@ -670,7 +669,6 @@ pub struct AccountParticipation {
     #[serde(
         rename = "vote-participation-key",
         default,
-        skip_serializing_if = "Vec::is_empty",
         deserialize_with = "deserialize_bytes"
     )]
     pub vote_participation_key: Vec<u8>,
@@ -743,7 +741,6 @@ pub struct ApplicationParams {
     #[serde(
         rename = "approval-program",
         default,
-        skip_serializing_if = "Vec::is_empty",
         deserialize_with = "deserialize_bytes"
     )]
     pub approval_program: Vec<u8>,
@@ -753,7 +750,6 @@ pub struct ApplicationParams {
     #[serde(
         rename = "clear-state-program",
         default,
-        skip_serializing_if = "Vec::is_empty",
         deserialize_with = "deserialize_bytes"
     )]
     pub clear_state_program: Vec<u8>,
@@ -888,7 +884,6 @@ pub struct AssetParams {
     #[serde(
         rename = "metadata-hash",
         default,
-        skip_serializing_if = "Vec::is_empty",
         deserialize_with = "deserialize_bytes"
     )]
     pub metadata_hash: Vec<u8>,
@@ -1175,11 +1170,7 @@ pub struct TealKeyValue {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TealValue {
     /// `tb` bytes value.
-    #[serde(
-        default,
-        skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "deserialize_bytes"
-    )]
+    #[serde(default, deserialize_with = "deserialize_bytes")]
     pub bytes: Vec<u8>,
 
     /// `tt` value type.
