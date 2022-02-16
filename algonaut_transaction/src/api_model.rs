@@ -433,22 +433,21 @@ fn parse_asset_transfer_transaction(
                 asset_close_to: api_t.asset_close_to,
             }),
         ),
-        (Some(xfer), None, Some(asset_receiver), Some(asset_amount)) => Ok(
+        (Some(xfer), None, Some(asset_receiver), None) if asset_receiver == api_t.sender => Ok(
+            TransactionType::AssetAcceptTransaction(AssetAcceptTransaction {
+                sender: api_t.sender,
+                xfer,
+            }),
+        ),
+        (Some(xfer), None, Some(asset_receiver), asset_amount) => Ok(
             TransactionType::AssetTransferTransaction(AssetTransferTransaction {
                 sender: api_t.sender,
                 xfer,
-                amount: asset_amount,
+                amount: num_from_api_option(asset_amount),
                 receiver: asset_receiver,
                 close_to: api_t.asset_close_to,
             }),
         ),
-        // On opt-in the asset receiver is the tx sender, so we ignore it
-        (Some(xfer), None, Some(_), None) => Ok(TransactionType::AssetAcceptTransaction(
-            AssetAcceptTransaction {
-                sender: api_t.sender,
-                xfer,
-            },
-        )),
         _ => Err(TransactionError::Deserialization(format!(
             "Invalid api asset transfer transaction: {:?}",
             api_t
