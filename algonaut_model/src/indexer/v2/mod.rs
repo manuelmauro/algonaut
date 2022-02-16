@@ -554,8 +554,8 @@ pub struct Account {
     /// `appl` applications local data stored in this account.
     ///
     /// Note the raw object uses map(int) -> AppLocalState for this type.
-    #[serde(rename = "apps-local-state")]
-    pub apps_local_state: Option<Vec<ApplicationLocalState>>,
+    #[serde(default, rename = "apps-local-state")]
+    pub apps_local_state: Vec<ApplicationLocalState>,
 
     /// `tsch` stores the sum of all of the local schemas and global schemas in this account.
     ///
@@ -565,7 +565,8 @@ pub struct Account {
 
     /// `asset` assets held by this account.
     /// Note the raw object uses map(int) -> AssetHolding for this type.
-    pub assets: Option<Vec<AssetHolding>>,
+    #[serde(default)]
+    pub assets: Vec<AssetHolding>,
 
     /// `spend` the address against which signing should be checked. If empty, the address of the
     /// current account is used. This field can be updated in any transaction by setting the
@@ -580,14 +581,14 @@ pub struct Account {
     /// `appp` parameters of applications created by this account including app global data.
     ///
     /// Note: the raw account uses map(int) -> AppParams for this type.
-    #[serde(rename = "created-apps")]
-    pub created_apps: Option<Vec<Application>>,
+    #[serde(default, rename = "created-apps")]
+    pub created_apps: Vec<Application>,
 
     /// `apar` parameters of assets created by this account.
     ///
     /// Note: the raw account uses map(int) -> Asset for this type.
-    #[serde(rename = "created-assets")]
-    pub created_assets: Option<Vec<Asset>>,
+    #[serde(default, rename = "created-assets")]
+    pub created_assets: Vec<Asset>,
 
     /// Round during which this account first appeared in a transaction.
     #[serde(rename = "created-at-round")]
@@ -721,8 +722,8 @@ pub struct ApplicationLocalState {
     pub id: u64,
 
     /// `tkv` storage.
-    #[serde(rename = "key-value")]
-    pub key_value: TealKeyValueStore,
+    #[serde(default, rename = "key-value")]
+    pub key_value: Vec<TealKeyValue>,
 
     /// Round when the account opted into the application.
     #[serde(rename = "opted-in-at-round")]
@@ -764,8 +765,8 @@ pub struct ApplicationParams {
     pub creator: Option<Address>,
 
     /// `gs` global schema
-    #[serde(rename = "global-state")]
-    pub global_state: Option<TealKeyValueStore>,
+    #[serde(default, rename = "global-state")]
+    pub global_state: Vec<TealKeyValue>,
 
     /// `lsch` global schema
     #[serde(rename = "global-state-schema")]
@@ -943,7 +944,8 @@ pub struct Block {
     pub timestamp: u64,
 
     /// `txns` list of transactions corresponding to a given round.
-    pub transactions: Option<Vec<Transaction>>,
+    #[serde(default)]
+    pub transactions: Vec<Transaction>,
 
     /// `txn` TransactionsRoot authenticates the set of transactions appearing in the block.
     /// More specifically, it's the root of a merkle tree whose leaves are the block's Txids,
@@ -1169,9 +1171,6 @@ pub struct TealKeyValue {
     pub value: TealValue,
 }
 
-/// Represents a key-value store for use in an application.
-pub type TealKeyValueStore = Vec<TealKeyValue>;
-
 /// Represents a TEAL value.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TealValue {
@@ -1289,8 +1288,8 @@ pub struct Transaction {
     pub lease: Option<HashDigest>,
 
     /// `ld` Local state key/value changes for the application being executed by this transaction.
-    #[serde(rename = "local-state-delta")]
-    pub local_state_delta: Option<Vec<AccountStateDelta>>,
+    #[serde(default, rename = "local-state-delta")]
+    pub local_state_delta: Vec<AccountStateDelta>,
 
     /// `note` Free form data.
     ///
@@ -1358,12 +1357,13 @@ pub enum TransactionType {
 pub struct TransactionApplication {
     /// `apat` List of accounts in addition to the sender that may be accessed from the application's
     /// approval-program and clear-state-program.
-    pub accounts: Option<Vec<String>>,
+    #[serde(default)]
+    pub accounts: Vec<Account>,
 
     /// `apaa` transaction specific arguments accessed from the application's approval-program and
     /// clear-state-program.
-    #[serde(rename = "application-args")]
-    pub application_args: Option<Vec<String>>,
+    #[serde(default, rename = "application-args")]
+    pub application_args: Vec<String>,
 
     /// `apid` ID of the application being configured or empty if creating.
     #[serde(rename = "application-id")]
@@ -1387,13 +1387,13 @@ pub struct TransactionApplication {
 
     /// `apfa` Lists the applications in addition to the application-id whose global states may be
     /// accessed by this application's approval-program and clear-state-program. The access is read-only.
-    #[serde(rename = "foreign-apps")]
-    pub foreign_apps: Option<Vec<u64>>,
+    #[serde(default, rename = "foreign-apps")]
+    pub foreign_apps: Vec<u64>,
 
     /// `apas` lists the assets whose parameters may be accessed by this application's ApprovalProgram
     /// and ClearStateProgram. The access is read-only.
-    #[serde(rename = "foreign-assets")]
-    pub foreign_assets: Option<Vec<u64>>,
+    #[serde(default, rename = "foreign-assets")]
+    pub foreign_assets: Vec<u64>,
 
     /// Global state schema.
     #[serde(rename = "global-state-schema")]
@@ -1538,7 +1538,8 @@ pub struct TransactionSignature {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionSignatureLogicsig {
     /// `arg` Logic arguments, base64 encoded.
-    pub args: Option<Vec<String>>,
+    #[serde(default)]
+    pub args: Vec<String>,
 
     /// `l` Program signed by a signature or multi signature, or hashed to be the address of an
     /// account. Base64 encoded TEAL program.
@@ -1560,7 +1561,8 @@ pub struct TransactionSignatureLogicsig {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionSignatureMultisig {
     /// `subsig` holds pairs of public key and signatures.
-    pub subsignature: Option<Vec<TransactionSignatureMultisigSubsignature>>,
+    #[serde(default)]
+    pub subsignature: Vec<TransactionSignatureMultisigSubsignature>,
 
     /// `thr`
     pub threshold: Option<u64>,
