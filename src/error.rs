@@ -146,12 +146,21 @@ fn check_404() {
         RequestErrorDetails::Http {
             status: 400,
             message: "bad request".to_owned(),
-        }
+        },
     ));
 
     let unrelated_error = AlgonautError::UnitializedToken;
 
-    assert!(not_found_error.is_404(), "a 404 request error is saying that it is not a 404 error");
-    assert!(!bad_request_error.is_404(), "a 400 request error is saying that it is a 404 error");
-    assert!(!unrelated_error.is_404(), "an unrelated request error is saying that it is a 404 error");
+    assert!(
+        not_found_error.is_404(),
+        "a 404 request error is saying that it is not a 404 error"
+    );
+    assert!(
+        !bad_request_error.is_404(),
+        "a 400 request error is saying that it is a 404 error"
+    );
+    assert!(
+        !unrelated_error.is_404(),
+        "an unrelated request error is saying that it is a 404 error"
+    );
 }
