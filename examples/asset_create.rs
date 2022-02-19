@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
 
     let t = TxnBuilder::with(
-        params,
+        &params,
         CreateAsset::new(creator.address(), 10, 2, false)
             .unit_name("EIRI".to_owned())
             .asset_name("Naki".to_owned())

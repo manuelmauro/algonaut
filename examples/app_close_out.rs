@@ -18,7 +18,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
     // to test this, create an application that sets local state and opt-in, for/with the account sending this transaction.
     // the approval program has to return success for the local state to be cleared.
-    let t = TxnBuilder::with(params, CloseApplication::new(sender.address(), 5).build()).build()?;
+    let t =
+        TxnBuilder::with(&params, CloseApplication::new(sender.address(), 5).build()).build()?;
 
     let signed_t = sender.sign_transaction(&t)?;
 

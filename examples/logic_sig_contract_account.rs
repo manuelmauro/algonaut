@@ -36,7 +36,7 @@ byte 0xFF
     let params = algod.suggested_transaction_params().await?;
 
     let t = TxnBuilder::with(
-        params,
+        &params,
         Pay::new(*contract_account.address(), receiver, MicroAlgos(123_456)).build(),
     )
     .build()?;

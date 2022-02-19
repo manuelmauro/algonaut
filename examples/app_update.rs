@@ -44,7 +44,7 @@ int 1
     // #pragma version 4
     // int 1
     let t = TxnBuilder::with(
-        params,
+        &params,
         UpdateApplication::new(
             sender.address(),
             5,

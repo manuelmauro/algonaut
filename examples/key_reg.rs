@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
 
     let t = TxnBuilder::with(
-        params.clone(),
+        &params,
         RegisterKey::online(
             account.address(),
             VotePk::from_base64_str(vote_pk_str)?,

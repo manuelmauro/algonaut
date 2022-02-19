@@ -98,7 +98,7 @@ int 1
 
     let params = algod.suggested_transaction_params().await?;
     let t = TxnBuilder::with(
-        params,
+        &params,
         CreateApplication::new(
             sender.address(),
             compiled_approval_program.clone(),

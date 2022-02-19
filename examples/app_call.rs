@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // #pragma version 4
     // int 1
     let t = TxnBuilder::with(
-        params,
+        &params,
         CallApplication::new(sender.address(), 5)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),

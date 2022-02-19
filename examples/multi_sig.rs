@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
 
     let t = TxnBuilder::with(
-        params,
+        &params,
         Pay::new(
             multisig_address.address(),
             account2.address(),

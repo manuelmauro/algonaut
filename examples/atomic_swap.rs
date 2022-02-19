@@ -24,13 +24,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Normally you'll want to submit e.g. a payment and asset transfer or asset transfers for different assets.
 
     let t1 = &mut TxnBuilder::with(
-        params.clone(),
+        &params,
         Pay::new(account1.address(), account2.address(), MicroAlgos(1_000)).build(),
     )
     .build()?;
 
     let t2 = &mut TxnBuilder::with(
-        params,
+        &params,
         Pay::new(account2.address(), account1.address(), MicroAlgos(3_000)).build(),
     )
     .build()?;
