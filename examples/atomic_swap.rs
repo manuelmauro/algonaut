@@ -27,13 +27,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         params.clone(),
         Pay::new(account1.address(), account2.address(), MicroAlgos(1_000)).build(),
     )
-    .build();
+    .build()?;
 
     let t2 = &mut TxnBuilder::with(
         params,
         Pay::new(account2.address(), account1.address(), MicroAlgos(3_000)).build(),
     )
-    .build();
+    .build()?;
 
     TxGroup::assign_group_id(vec![t1, t2])?;
 

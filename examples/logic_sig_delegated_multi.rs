@@ -36,7 +36,7 @@ int 1
         params,
         Pay::new(multisig_address.address(), receiver, MicroAlgos(123_456)).build(),
     )
-    .build();
+    .build()?;
 
     let msig = account1.init_logic_msig(&program, &multisig_address)?;
     let msig = account2.append_to_logic_msig(&program, msig)?;

@@ -33,7 +33,7 @@ int 1
         params,
         Pay::new(from.address(), to.address(), MicroAlgos(123_456)).build(),
     )
-    .build();
+    .build()?;
 
     let signature = from.generate_program_sig(&program);
 

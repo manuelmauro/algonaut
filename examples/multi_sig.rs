@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         )
         .build(),
     )
-    .build();
+    .build()?;
 
     let msig = account1.init_transaction_msig(&t, &multisig_address)?;
     let msig = account2.append_to_transaction_msig(&t, msig)?;

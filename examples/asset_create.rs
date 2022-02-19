@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .url("example.com".to_owned())
             .build(),
     )
-    .build();
+    .build()?;
 
     // we need to sign the transaction to prove that we own the sender address
     let signed_t = creator.sign_transaction(&t)?;

@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         params,
         TransferAsset::new(from.address(), 4, 3, to.address()).build(),
     )
-    .build();
+    .build()?;
 
     let sign_response = from.sign_transaction(&t)?;
 

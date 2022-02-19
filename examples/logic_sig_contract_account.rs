@@ -39,7 +39,7 @@ byte 0xFF
         params,
         Pay::new(*contract_account.address(), receiver, MicroAlgos(123_456)).build(),
     )
-    .build();
+    .build()?;
 
     let signed_t = contract_account.sign(&t, vec![vec![1, 0], vec![255]])?;
 

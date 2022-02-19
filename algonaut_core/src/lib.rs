@@ -258,7 +258,7 @@ pub struct SuggestedTransactionParams {
     pub genesis_id: String,
     pub genesis_hash: HashDigest,
     pub consensus_version: String,
-    pub fee: MicroAlgos,
+    pub fee_per_byte: MicroAlgos,
     pub min_fee: MicroAlgos,
     pub first_valid: Round,
     pub last_valid: Round,

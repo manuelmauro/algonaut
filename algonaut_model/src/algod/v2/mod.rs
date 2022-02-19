@@ -778,7 +778,8 @@ pub struct TransactionParams {
     /// Fee is in units of micro-Algos per byte.
     /// Fee may fall to zero but transactions must still have a fee of
     /// at least MinTxnFee for the current network protocol.
-    pub fee: MicroAlgos,
+    #[serde(rename = "fee")]
+    pub fee_per_byte: MicroAlgos,
 
     /// GenesisHash is the hash of the genesis block.
     // Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
