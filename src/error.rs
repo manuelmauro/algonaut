@@ -26,6 +26,25 @@ pub enum AlgonautError {
     Internal(String),
 }
 
+impl AlgonautError {
+    /// Returns if the error is a `RequestError` that failed with a status code of 404.
+    pub fn is_404(&self) -> bool {
+        if let Some(e) = self.as_request_error() {
+            e.is_404()
+        } else {
+            false
+        }
+    }
+
+    /// Gets the details of a request error, or none otherwise.
+    fn as_request_error(&self) -> Option<&RequestError> {
+        match self {
+            Self::Request(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Error, Debug, PartialEq, Eq)]
 #[error("{:?}, {}", url, details)]
 pub struct RequestError {
@@ -36,6 +55,11 @@ pub struct RequestError {
 impl RequestError {
     pub fn new(url: Option<String>, details: RequestErrorDetails) -> RequestError {
         RequestError { url, details }
+    }
+
+    /// Returns if the cause of the error is a 404 response from the client.
+    fn is_404(&self) -> bool {
+        self.details.status() == Some(404)
     }
 }
 
@@ -50,6 +74,18 @@ pub enum RequestErrorDetails {
     /// Client generated errors (while e.g. building request or decoding response)
     #[error("Client error: {}", description)]
     Client { description: String },
+}
+
+impl RequestErrorDetails {
+    /// Gets the status code of the request.
+    ///
+    /// Returns `None` if the request did not receive a response.
+    fn status(&self) -> Option<u16> {
+        match self {
+            Self::Http { status, .. } => Some(*status),
+            _ => None,
+        }
+    }
 }
 
 impl From<algonaut_client::error::ClientError> for AlgonautError {
@@ -93,4 +129,38 @@ impl From<String> for AlgonautError {
     fn from(error: String) -> Self {
         AlgonautError::Internal(error)
     }
+}
+
+#[test]
+fn check_404() {
+    let not_found_error = AlgonautError::Request(RequestError::new(
+        Some("testing".to_owned()),
+        RequestErrorDetails::Http {
+            status: 404,
+            message: "not found".to_owned(),
+        },
+    ));
+
+    let bad_request_error = AlgonautError::Request(RequestError::new(
+        None,
+        RequestErrorDetails::Http {
+            status: 400,
+            message: "bad request".to_owned(),
+        },
+    ));
+
+    let unrelated_error = AlgonautError::UnitializedToken;
+
+    assert!(
+        not_found_error.is_404(),
+        "a 404 request error is saying that it is not a 404 error"
+    );
+    assert!(
+        !bad_request_error.is_404(),
+        "a 400 request error is saying that it is a 404 error"
+    );
+    assert!(
+        !unrelated_error.is_404(),
+        "an unrelated request error is saying that it is a 404 error"
+    );
 }
