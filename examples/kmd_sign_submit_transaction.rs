@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         params,
         Pay::new(from_address, to_address, MicroAlgos(123_456)).build(),
     )
-    .build();
+    .build()?;
 
     // we need to sign the transaction to prove that we own the sender address
     let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t).await?;

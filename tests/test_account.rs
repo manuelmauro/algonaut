@@ -2,6 +2,7 @@ use algonaut_core::{Address, CompiledTeal, LogicSignature, MicroAlgos, Round, Si
 use algonaut_core::{MultisigAddress, ToMsgPack};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::account::Account;
+use algonaut_transaction::builder::TxnFee;
 use algonaut_transaction::transaction::TransactionSignature;
 use algonaut_transaction::{Pay, SignedTransaction, TxnBuilder};
 use data_encoding::{BASE64, HEXLOWER};
@@ -29,14 +30,14 @@ async fn test_signs_transaction_e2e() -> Result<(), Box<dyn Error>> {
 
     // build unsigned transaction
     let tx = TxnBuilder::new(
-        MicroAlgos(1000),
+        TxnFee::Fixed(MicroAlgos(1000)),
         Round(106575),
         Round(107575),
         // non 0 array for easier comparison with (modified) Java SDK test. Java SDK doesn't serialize 0 value array.
         HashDigest([1; 32]),
         Pay::new(from_addr, to_addr, MicroAlgos(1234)).build(),
     )
-    .build();
+    .build()?;
 
     let account = Account::from_mnemonic(from_sk)?;
 
@@ -74,14 +75,14 @@ async fn test_signs_transaction_zero_val_e2e() -> Result<(), Box<dyn Error>> {
 
     // build unsigned transaction
     let tx = TxnBuilder::new(
-        MicroAlgos(1000),
+        TxnFee::Fixed(MicroAlgos(1000)),
         // Java SDK 0 replaced with non zero value (see comment on test)
         Round(106575),
         Round(107575),
         HashDigest([1; 32]),
         Pay::new(from_addr, to_addr, MicroAlgos(1234)).build(),
     )
-    .build();
+    .build()?;
 
     let account = Account::from_mnemonic(from_sk)?;
 
@@ -111,7 +112,7 @@ async fn test_sign_multisig_transaction() -> Result<(), Box<dyn Error>> {
 
     // build unsigned transaction
     let tx = TxnBuilder::new(
-        MicroAlgos(217000),
+        TxnFee::Fixed(MicroAlgos(217000)),
         Round(972508),
         Round(973508),
         // non 0 array for easier comparison with (modified) Java SDK test. Java SDK doesn't serialize 0 value array.
@@ -125,7 +126,7 @@ async fn test_sign_multisig_transaction() -> Result<(), Box<dyn Error>> {
     )
     .genesis_id("testnet-v31.0".to_owned())
     .note(BASE64.decode(b"tFF5Ofz60nE=")?)
-    .build();
+    .build()?;
 
     let account = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
 
@@ -221,7 +222,7 @@ async fn test_logic_sig_transaction() -> Result<(), Box<dyn Error>> {
 
     // build unsigned transaction
     let tx = TxnBuilder::new(
-        MicroAlgos(1000),
+        TxnFee::Fixed(MicroAlgos(1000)),
         Round(2063137),
         Round(2063137 + 1000),
         HashDigest(
@@ -235,7 +236,7 @@ async fn test_logic_sig_transaction() -> Result<(), Box<dyn Error>> {
     )
     .genesis_id("devnet-v1.0".to_owned())
     .note(BASE64.decode(b"8xMCTuLQ810=")?)
-    .build();
+    .build()?;
 
     let program = CompiledTeal(vec![
         0x01, 0x20, 0x01, 0x01, 0x22, // int 1

@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::with(params, AcceptAsset::new(account.address(), 4).build()).build();
+    let t = TxnBuilder::with(params, AcceptAsset::new(account.address(), 4).build()).build()?;
 
     let sign_response = account.sign_transaction(&t)?;
 

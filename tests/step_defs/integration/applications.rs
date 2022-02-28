@@ -126,7 +126,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
         )
         .build(),
     )
-    .build();
+    .build()?;
 
     let s_tx = sender_account.sign_transaction(&tx)?;
 
@@ -268,7 +268,7 @@ async fn i_build_an_application_transaction(
         _ => Err(format!("Invalid str: {}", operation))?,
     };
 
-    w.tx = Some(TxnBuilder::with(params, tx_type).build());
+    w.tx = Some(TxnBuilder::with(params, tx_type).build()?);
 
     Ok(())
 }

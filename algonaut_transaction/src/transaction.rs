@@ -2,6 +2,7 @@ use crate::account::Account;
 use crate::error::TransactionError;
 use algonaut_core::CompiledTeal;
 use algonaut_core::SignedLogic;
+use algonaut_core::SuggestedTransactionParams;
 use algonaut_core::ToMsgPack;
 use algonaut_core::{Address, MultisigSignature};
 use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
@@ -9,8 +10,6 @@ use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
 use data_encoding::BASE32_NOPAD;
 use sha2::Digest;
-
-const MIN_TXN_FEE: MicroAlgos = MicroAlgos(1000);
 
 /// Enum containing the types of transactions and their specific fields
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -78,15 +77,6 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    /// Creates a new transaction with a fee calculated based on `fee_per_byte`.
-    pub fn fee_per_byte(
-        mut self,
-        fee_per_byte: MicroAlgos,
-    ) -> Result<Transaction, TransactionError> {
-        self.fee = MIN_TXN_FEE.max(fee_per_byte * self.estimate_size()?);
-        Ok(self)
-    }
-
     pub fn bytes_to_sign(&self) -> Result<Vec<u8>, TransactionError> {
         let encoded_tx = self.to_owned().to_msg_pack()?;
         let mut prefix_encoded_tx = b"TX".to_vec();
@@ -108,10 +98,26 @@ impl Transaction {
     }
 
     // Estimates the size of the encoded transaction, used in calculating the fee
-    fn estimate_size(&self) -> Result<u64, TransactionError> {
+    pub fn estimate_size(&self) -> Result<u64, TransactionError> {
         let account = Account::generate();
         let signed_transaction = account.sign_transaction(self)?;
         Ok(signed_transaction.to_msg_pack()?.len() as u64)
+    }
+
+    pub fn estimate_fee(
+        &self,
+        fee_per_byte: MicroAlgos,
+        min_fee: MicroAlgos,
+    ) -> Result<MicroAlgos, TransactionError> {
+        let total_fee = fee_per_byte * self.estimate_size()?;
+        Ok(min_fee.max(total_fee))
+    }
+
+    pub fn estimate_fee_with_params(
+        &self,
+        params: &SuggestedTransactionParams,
+    ) -> Result<MicroAlgos, TransactionError> {
+        self.estimate_fee(params.fee_per_byte, params.min_fee)
     }
 
     /// The address of the account that signs and pays the fee.

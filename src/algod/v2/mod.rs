@@ -221,7 +221,7 @@ impl Algod {
             genesis_id: params.genesis_id,
             genesis_hash: params.genesis_hash,
             consensus_version: params.consensus_version,
-            fee: params.fee,
+            fee_per_byte: params.fee_per_byte,
             min_fee: params.min_fee,
             first_valid: params.last_round,
             last_valid: params.last_round + 1000,

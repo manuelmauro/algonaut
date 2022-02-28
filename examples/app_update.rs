@@ -54,7 +54,7 @@ int 1
         .app_arguments(vec![vec![1, 0], vec![255]]) // for the program being upgraded
         .build(),
     )
-    .build();
+    .build()?;
 
     let signed_t = sender.sign_transaction(&t)?;
 

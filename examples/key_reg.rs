@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         )
         .build(),
     )
-    .build();
+    .build()?;
 
     let sign_response = account.sign_transaction(&t)?;
 

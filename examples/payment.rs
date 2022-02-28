@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         params,
         Pay::new(from.address(), to.address(), MicroAlgos(123_456)).build(),
     )
-    .build();
+    .build()?;
 
     let sign_response = from.sign_transaction(&t)?;
 

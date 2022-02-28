@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         )
         .build(),
     )
-    .build();
+    .build()?;
 
     // sign the transaction
     let signed_transaction = account.sign_transaction(&t)?;

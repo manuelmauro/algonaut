@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         )
         .build(),
     )
-    .build();
+    .build()?;
 
     let sign_response = sender.sign_transaction(&t)?;
 

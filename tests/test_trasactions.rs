@@ -129,7 +129,7 @@ int 1
         .foreign_assets(vec![1234])
         .build(),
     )
-    .build();
+    .build()?;
 
     let signed_t = sender.sign_transaction(&t)?;
 
