@@ -118,7 +118,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
 
     let params = algod.suggested_transaction_params().await?;
     let tx = TxnBuilder::with(
-        params,
+        &params,
         Pay::new(
             accounts[1],
             sender_account.address(),
@@ -268,7 +268,7 @@ async fn i_build_an_application_transaction(
         _ => Err(format!("Invalid str: {}", operation))?,
     };
 
-    w.tx = Some(TxnBuilder::with(params, tx_type).build()?);
+    w.tx = Some(TxnBuilder::with(&params, tx_type).build()?);
 
     Ok(())
 }

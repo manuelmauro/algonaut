@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
 
     let t = TxnBuilder::with(
-        params,
+        &params,
         Pay::new(from_address, to_address, MicroAlgos(123_456)).build(),
     )
     .build()?;

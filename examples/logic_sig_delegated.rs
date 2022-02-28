@@ -30,7 +30,7 @@ int 1
     let params = algod.suggested_transaction_params().await?;
 
     let t = TxnBuilder::with(
-        params,
+        &params,
         Pay::new(from.address(), to.address(), MicroAlgos(123_456)).build(),
     )
     .build()?;

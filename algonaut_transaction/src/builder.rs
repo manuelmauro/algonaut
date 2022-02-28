@@ -47,9 +47,9 @@ pub struct TxnBuilder {
 impl TxnBuilder {
     /// Convenience to initialize builder with suggested transaction params
     /// The txn fee is estimated, based on params. To set the fee manually, use [with_fee](Self::with_fee) or [new](Self::new).
-    pub fn with(params: SuggestedTransactionParams, txn_type: TransactionType) -> Self {
+    pub fn with(params: &SuggestedTransactionParams, txn_type: TransactionType) -> Self {
         Self::with_fee(
-            params.clone(),
+            params,
             TxnFee::Estimated {
                 fee_per_byte: params.fee_per_byte,
                 min_fee: params.min_fee,
@@ -61,7 +61,7 @@ impl TxnBuilder {
     /// Convenience to initialize builder with suggested transaction params, and set the fee manually (ignoring the fee fields in params).
     /// Useful e.g. in txns groups where one txn pays the fee for others.
     pub fn with_fee(
-        params: SuggestedTransactionParams,
+        params: &SuggestedTransactionParams,
         fee: TxnFee,
         txn_type: TransactionType,
     ) -> Self {
@@ -72,7 +72,7 @@ impl TxnBuilder {
             params.genesis_hash,
             txn_type,
         )
-        .genesis_id(params.genesis_id)
+        .genesis_id(params.genesis_id.clone())
     }
 
     pub fn new(
