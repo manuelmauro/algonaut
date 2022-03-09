@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .build()?;
 
-    TxGroup::assign_group_id(vec![t1, t2])?;
+    TxGroup::assign_group_id(&mut [t1, t2])?;
 
     let signed_t1 = account1.sign_transaction(&t1)?;
     let signed_t2 = account2.sign_transaction(&t2)?;
