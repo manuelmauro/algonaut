@@ -18,8 +18,8 @@ impl TxGroup {
         TxGroup { tx_group_hashes }
     }
 
-    pub fn assign_group_id(txns: Vec<&mut Transaction>) -> Result<(), TransactionError> {
-        let gid = TxGroup::compute_group_id(&txns)?;
+    pub fn assign_group_id(txns: &mut [&mut Transaction]) -> Result<(), TransactionError> {
+        let gid = TxGroup::compute_group_id(txns)?;
         for tx in txns {
             tx.assign_group_id(gid);
         }
