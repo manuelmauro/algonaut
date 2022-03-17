@@ -113,10 +113,11 @@ impl Account {
         &self,
         transaction: Transaction,
     ) -> Result<SignedTransaction, TransactionError> {
+        let transaction_id = transaction.id()?;
         let sig = TransactionSignature::Single(self.generate_transaction_sig(&transaction)?);
         Ok(SignedTransaction {
             transaction,
-            transaction_id: transaction.id()?,
+            transaction_id,
             sig,
         })
     }

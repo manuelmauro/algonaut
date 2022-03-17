@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .build()?;
 
-    let sign_response = account.sign_transaction(&t)?;
+    let sign_response = account.sign_transaction(t)?;
 
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens

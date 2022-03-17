@@ -46,7 +46,7 @@ async fn test_signs_transaction_e2e() -> Result<(), Box<dyn Error>> {
     assert_eq!(account.address(), from_addr);
 
     // sign the transaction
-    let signed_tx = account.sign_transaction(&tx)?;
+    let signed_tx = account.sign_transaction(tx)?;
     let signed_tx_bytes = signed_tx.to_msg_pack()?;
     let signed_tx_hex = HEXLOWER.encode(&signed_tx_bytes);
     assert_eq!(signed_tx_hex, ref_sig_txn);
@@ -91,7 +91,7 @@ async fn test_signs_transaction_zero_val_e2e() -> Result<(), Box<dyn Error>> {
     assert_eq!(account.address(), from_addr);
 
     // sign the transaction
-    let signed_tx = account.sign_transaction(&tx)?;
+    let signed_tx = account.sign_transaction(tx)?;
     let signed_tx_bytes = signed_tx.to_msg_pack()?;
     let signed_tx_hex = HEXLOWER.encode(&signed_tx_bytes);
     assert_eq!(signed_tx_hex, ref_sig_txn);

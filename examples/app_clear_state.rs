@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let t =
         TxnBuilder::with(&params, ClearApplication::new(sender.address(), 5).build()).build()?;
 
-    let signed_t = sender.sign_transaction(&t)?;
+    let signed_t = sender.sign_transaction(t)?;
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
     println!("response: {:?}", send_response);

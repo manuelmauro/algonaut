@@ -137,7 +137,7 @@ impl TxnBuilder {
         min_fee: MicroAlgos,
     ) -> Result<Transaction, TransactionError> {
         let mut txn = self.build_tx(MicroAlgos(0));
-        txn.fee = txn.estimate_fee(fee_per_byte, min_fee)?;
+        txn.fee = txn.clone().estimate_fee(fee_per_byte, min_fee)?;
         Ok(txn)
     }
 

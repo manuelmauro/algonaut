@@ -97,10 +97,11 @@ impl Transaction {
         self.group = Some(group_id)
     }
 
-    // Estimates the size of the encoded transaction, used in calculating the fee
+    /// Estimates the size of the encoded transaction, used in calculating the fee.
+    // TODO Consider calculating this in a way that doesn't cause a `clone` to be necessary.
     pub fn estimate_size(&self) -> Result<u64, TransactionError> {
         let account = Account::generate();
-        let signed_transaction = account.sign_transaction(self)?;
+        let signed_transaction = account.sign_transaction(self.clone())?;
         Ok(signed_transaction.to_msg_pack()?.len() as u64)
     }
 
