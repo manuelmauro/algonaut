@@ -1,10 +1,10 @@
-use std::fmt::{self, Formatter};
-
 use algonaut_encoding::{deserialize_bytes32, SignatureVisitor, U8_32Visitor};
 use data_encoding::{BASE32_NOPAD, BASE64};
 use fmt::Debug;
 use ring::signature::UnparsedPublicKey;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt::{self, Display, Formatter};
+use std::str::FromStr;
 
 /// Support for turning 32 byte keys into human-readable mnemonics and back
 pub mod mnemonic;
@@ -15,6 +15,25 @@ pub mod error;
 /// A SHA512_256 hash
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct HashDigest(pub [u8; 32]);
+
+impl FromStr for HashDigest {
+    type Err = String;
+    fn from_str(string: &str) -> Result<Self, Self::Err> {
+        let mut decoded = [0; 32];
+        decoded.copy_from_slice(
+            &BASE64
+                .decode(string.as_bytes())
+                .map_err(|e| e.to_string())?,
+        );
+        Ok(HashDigest(decoded))
+    }
+}
+
+impl Display for HashDigest {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", BASE64.encode(&self.0))
+    }
+}
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Ed25519PublicKey(pub [u8; 32]);
