@@ -1378,13 +1378,15 @@ pub enum TransactionType {
     ApplicationTransaction,
 }
 
+#[serde_as]
 /// Fields for application transactions.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionApplication {
     /// `apat` List of accounts in addition to the sender that may be accessed from the application's
     /// approval-program and clear-state-program.
+    #[serde_as(as = "Vec<DisplayFromStr>")]
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub accounts: Vec<Account>,
+    pub accounts: Vec<Address>,
 
     /// `apaa` transaction specific arguments accessed from the application's approval-program and
     /// clear-state-program.
