@@ -1,5 +1,5 @@
 use algonaut_core::{Address, MicroAlgos, Round};
-use algonaut_crypto::{deserialize_hash, HashDigest};
+use algonaut_crypto::HashDigest;
 use algonaut_encoding::deserialize_bytes;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -927,12 +927,14 @@ pub struct AssetParams {
 }
 
 /// Block information.
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Block {
     /// `gh` hash to which this block belongs.
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
-    #[serde(rename = "genesis-hash", deserialize_with = "deserialize_hash")]
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "genesis-hash")]
     pub genesis_hash: HashDigest,
 
     /// `gen` ID to which this block belongs.
@@ -1208,6 +1210,7 @@ pub struct TealValue {
 
 /// Contains all fields common to all transactions and serves as an envelope to all transactions
 /// type..
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Transaction {
     /// Application transaction.
@@ -1261,7 +1264,8 @@ pub struct Transaction {
     /// `gh` Hash of genesis block.
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
-    #[serde(rename = "genesis-hash", deserialize_with = "deserialize_hash")]
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "genesis-hash")]
     pub genesis_hash: HashDigest,
 
     /// `gen` genesis block ID.
@@ -1301,6 +1305,8 @@ pub struct Transaction {
     /// be confirmed.
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
+    #[serde(default)]
+    #[serde_as(as = "Option<DisplayFromStr>")]
     pub lease: Option<HashDigest>,
 
     /// `ld` Local state key/value changes for the application being executed by this transaction.
