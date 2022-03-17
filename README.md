@@ -16,11 +16,14 @@ use algonaut::algod::v2::Algod;
 use algonaut_core::MicroAlgos;
 use algonaut_transaction::Pay;
 use algonaut_transaction::{account::Account, TxnBuilder};
-use std::error::Error;;
+use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let algod = Algod::new("http://localhost:4001", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")?;
+    let algod = Algod::new(
+        "http://localhost:4001",
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    )?;
 
     // an account with some funds
     let from_account = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
@@ -32,13 +35,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // we are ready to build the transaction
     let t = TxnBuilder::with(
-        params,
+        &params,
         Pay::new(from_account.address(), to_address, MicroAlgos(123_456)).build(),
     )
-    .build();
+    .build()?;
 
     // we need to sign the transaction to prove that we own the sender address
-    let signed_t = from_account.sign_transaction(&t)?;
+    let signed_t = from_account.sign_transaction(t)?;
 
     // broadcast the transaction to the network
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
