@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build()?;
 
     // sign the transaction
-    let signed_transaction = account.sign_transaction(&t)?;
+    let signed_transaction = account.sign_transaction(t)?;
     let bytes = signed_transaction.to_msg_pack()?;
 
     let filename = "./signed.tx";

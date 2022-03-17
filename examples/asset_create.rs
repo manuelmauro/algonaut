@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build()?;
 
     // we need to sign the transaction to prove that we own the sender address
-    let signed_t = creator.sign_transaction(&t)?;
+    let signed_t = creator.sign_transaction(t)?;
 
     // broadcast the transaction to the network
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;

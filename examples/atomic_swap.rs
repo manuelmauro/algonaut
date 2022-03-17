@@ -23,22 +23,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // To keep the example short and as self-contained as possible, both transactions send Algos.
     // Normally you'll want to submit e.g. a payment and asset transfer or asset transfers for different assets.
 
-    let t1 = &mut TxnBuilder::with(
+    let mut t1 = TxnBuilder::with(
         &params,
         Pay::new(account1.address(), account2.address(), MicroAlgos(1_000)).build(),
     )
     .build()?;
 
-    let t2 = &mut TxnBuilder::with(
+    let mut t2 = TxnBuilder::with(
         &params,
         Pay::new(account2.address(), account1.address(), MicroAlgos(3_000)).build(),
     )
     .build()?;
 
-    TxGroup::assign_group_id(&mut [t1, t2])?;
+    TxGroup::assign_group_id(&mut [&mut t1, &mut t2])?;
 
-    let signed_t1 = account1.sign_transaction(&t1)?;
-    let signed_t2 = account2.sign_transaction(&t2)?;
+    let signed_t1 = account1.sign_transaction(t1)?;
+    let signed_t2 = account2.sign_transaction(t2)?;
 
     let send_response = algod
         .broadcast_signed_transactions(&[signed_t1, signed_t2])

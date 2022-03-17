@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .build()?;
 
-    let sign_response = from.sign_transaction(&t)?;
+    let sign_response = from.sign_transaction(t)?;
 
     let send_response = algod.broadcast_signed_transaction(&sign_response).await;
     println!("response: {:?}", send_response);

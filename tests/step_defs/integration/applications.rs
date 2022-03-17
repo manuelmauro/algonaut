@@ -128,7 +128,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     )
     .build()?;
 
-    let s_tx = sender_account.sign_transaction(&tx)?;
+    let s_tx = sender_account.sign_transaction(tx)?;
 
     let send_response = algod.broadcast_signed_transaction(&s_tx).await?;
     let _ = wait_for_pending_transaction(&algod, &send_response.tx_id);
@@ -287,7 +287,7 @@ async fn i_sign_and_submit_the_transaction_saving_the_tx_id_if_there_is_an_error
     let transient_account = w.transient_account.as_ref().unwrap();
     let tx = w.tx.as_ref().unwrap();
 
-    let s_tx = transient_account.sign_transaction(&tx).unwrap();
+    let s_tx = transient_account.sign_transaction(tx.clone()).unwrap();
 
     match algod.broadcast_signed_transaction(&s_tx).await {
         Ok(response) => {

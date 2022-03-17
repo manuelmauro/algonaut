@@ -62,7 +62,7 @@ int 1
     )
     .build()?;
 
-    let signed_t = sender.sign_transaction(&t)?;
+    let signed_t = sender.sign_transaction(t)?;
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
 
