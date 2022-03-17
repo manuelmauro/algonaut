@@ -111,12 +111,13 @@ impl Account {
     /// Sign transaction and generate a single signature SignedTransaction
     pub fn sign_transaction(
         &self,
-        transaction: &Transaction,
+        transaction: Transaction,
     ) -> Result<SignedTransaction, TransactionError> {
+        let sig = TransactionSignature::Single(self.generate_transaction_sig(&transaction)?);
         Ok(SignedTransaction {
-            transaction: transaction.clone(),
+            transaction,
             transaction_id: transaction.id()?,
-            sig: TransactionSignature::Single(self.generate_transaction_sig(transaction)?),
+            sig,
         })
     }
 
