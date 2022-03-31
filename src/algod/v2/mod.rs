@@ -8,7 +8,7 @@ use algonaut_model::algod::v2::{
 };
 use algonaut_transaction::SignedTransaction;
 
-use crate::error::AlgonautError;
+use crate::error::ServiceError;
 
 #[derive(Debug)]
 pub struct Algod {
@@ -19,7 +19,7 @@ impl Algod {
     /// Build a v2 client for Algorand protocol daemon.
     ///
     /// Returns an error if the url or token have an invalid format.
-    pub fn new(url: &str, token: &str) -> Result<Algod, AlgonautError> {
+    pub fn new(url: &str, token: &str) -> Result<Algod, ServiceError> {
         Self::with_headers(
             url,
             vec![("X-Algo-API-Token", &ApiToken::parse(token)?.to_string())],
@@ -30,31 +30,31 @@ impl Algod {
     /// Use this initializer when interfacing with third party services, that require custom headers.
     ///
     /// Returns an error if the url or headers have an invalid format.
-    pub fn with_headers(url: &str, headers: Headers) -> Result<Algod, AlgonautError> {
+    pub fn with_headers(url: &str, headers: Headers) -> Result<Algod, ServiceError> {
         Ok(Algod {
             client: Client::new(url, headers)?,
         })
     }
 
     /// Returns the entire genesis file in json.
-    pub async fn genesis(&self) -> Result<GenesisBlock, AlgonautError> {
+    pub async fn genesis(&self) -> Result<GenesisBlock, ServiceError> {
         Ok(self.client.genesis().await?)
     }
 
     /// Returns Ok if healthy
-    pub async fn health(&self) -> Result<(), AlgonautError> {
+    pub async fn health(&self) -> Result<(), ServiceError> {
         Ok(self.client.health().await?)
     }
 
     /// Return metrics about algod functioning.
-    pub async fn metrics(&self) -> Result<String, AlgonautError> {
+    pub async fn metrics(&self) -> Result<String, ServiceError> {
         Ok(self.client.metrics().await?)
     }
 
     /// Get account information.
     /// Description Given a specific account public key, this call returns the accounts status,
     /// balance and spendable amounts
-    pub async fn account_information(&self, address: &Address) -> Result<Account, AlgonautError> {
+    pub async fn account_information(&self, address: &Address) -> Result<Account, ServiceError> {
         Ok(self
             .client
             .account_information(&address.to_string())
@@ -68,7 +68,7 @@ impl Algod {
         &self,
         address: &Address,
         max: u64,
-    ) -> Result<PendingTransactions, AlgonautError> {
+    ) -> Result<PendingTransactions, ServiceError> {
         Ok(self
             .client
             .pending_transactions_for(&address.to_string(), max)
@@ -79,7 +79,7 @@ impl Algod {
     ///
     /// Given a application id, it returns application information including creator,
     /// approval and clear programs, global and local schemas, and global state.
-    pub async fn application_information(&self, id: u64) -> Result<Application, AlgonautError> {
+    pub async fn application_information(&self, id: u64) -> Result<Application, ServiceError> {
         Ok(self.client.application_information(id).await?)
     }
 
@@ -87,27 +87,27 @@ impl Algod {
     ///
     /// Given a asset id, it returns asset information including creator, name,
     /// total supply and special addresses.
-    pub async fn asset_information(&self, id: u64) -> Result<Asset, AlgonautError> {
+    pub async fn asset_information(&self, id: u64) -> Result<Asset, ServiceError> {
         Ok(self.client.asset_information(id).await?)
     }
 
     /// Get the block for the given round.
-    pub async fn block(&self, round: Round) -> Result<Block, AlgonautError> {
+    pub async fn block(&self, round: Round) -> Result<Block, ServiceError> {
         Ok(self.client.block(round).await?)
     }
 
     /// Starts a catchpoint catchup.
-    pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgonautError> {
+    pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, ServiceError> {
         Ok(self.client.start_catchup(catchpoint).await?)
     }
 
     /// Aborts a catchpoint catchup.
-    pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, AlgonautError> {
+    pub async fn abort_catchup(&self, catchpoint: &str) -> Result<Catchup, ServiceError> {
         Ok(self.client.abort_catchup(catchpoint).await?)
     }
 
     /// Get the current supply reported by the ledger.
-    pub async fn ledger_supply(&self) -> Result<Supply, AlgonautError> {
+    pub async fn ledger_supply(&self) -> Result<Supply, ServiceError> {
         Ok(self.client.ledger_supply().await?)
     }
 
@@ -123,7 +123,7 @@ impl Algod {
         &self,
         address: &Address,
         params: &KeyRegistration,
-    ) -> Result<String, AlgonautError> {
+    ) -> Result<String, ServiceError> {
         Ok(self
             .client
             .register_participation_keys(address, params)
@@ -132,17 +132,17 @@ impl Algod {
 
     /// Special management endpoint to shutdown the node. Optionally provide a timeout parameter
     /// to indicate that the node should begin shutting down after a number of seconds.
-    pub async fn shutdown(&self, timeout: usize) -> Result<(), AlgonautError> {
+    pub async fn shutdown(&self, timeout: usize) -> Result<(), ServiceError> {
         Ok(self.client.shutdown(timeout).await?)
     }
 
     /// Gets the current node status.
-    pub async fn status(&self) -> Result<NodeStatus, AlgonautError> {
+    pub async fn status(&self) -> Result<NodeStatus, ServiceError> {
         Ok(self.client.status().await?)
     }
 
     /// Gets the node status after waiting for the given round.
-    pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, AlgonautError> {
+    pub async fn status_after_round(&self, round: Round) -> Result<NodeStatus, ServiceError> {
         Ok(self.client.status_after_round(round).await?)
     }
 
@@ -150,7 +150,7 @@ impl Algod {
     ///
     /// Given TEAL source code in plain text, return compiled program bytes.
     /// This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
-    pub async fn compile_teal(&self, teal: &[u8]) -> Result<CompiledTeal, AlgonautError> {
+    pub async fn compile_teal(&self, teal: &[u8]) -> Result<CompiledTeal, ServiceError> {
         let api_compiled_teal = self.client.compile_teal(teal.to_vec()).await?;
         // The api result (program + hash) is mapped to the domain program struct, which computes the hash on demand.
         // The hash here is redundant and we want to allow to generate it with the SDK too (e.g. for when loading programs from a DB).
@@ -166,7 +166,7 @@ impl Algod {
     /// Executes TEAL program(s) in context and returns debugging information about the execution.
     /// This endpoint is only enabled when a node's configureation file sets EnableDeveloperAPI
     /// to true.
-    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, AlgonautError> {
+    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, ServiceError> {
         Ok(self.client.dryrun_teal(req).await?)
     }
 
@@ -174,7 +174,7 @@ impl Algod {
     pub async fn broadcast_signed_transaction(
         &self,
         txn: &SignedTransaction,
-    ) -> Result<TransactionResponse, AlgonautError> {
+    ) -> Result<TransactionResponse, ServiceError> {
         Ok(self.broadcast_raw_transaction(&txn.to_msg_pack()?).await?)
     }
 
@@ -184,7 +184,7 @@ impl Algod {
     pub async fn broadcast_signed_transactions(
         &self,
         txns: &[SignedTransaction],
-    ) -> Result<TransactionResponse, AlgonautError> {
+    ) -> Result<TransactionResponse, ServiceError> {
         let mut bytes = vec![];
         for t in txns {
             bytes.push(t.to_msg_pack()?);
@@ -203,19 +203,19 @@ impl Algod {
     pub async fn broadcast_raw_transaction(
         &self,
         rawtxn: &[u8],
-    ) -> Result<TransactionResponse, AlgonautError> {
+    ) -> Result<TransactionResponse, ServiceError> {
         Ok(self.client.broadcast_raw_transaction(rawtxn).await?)
     }
 
     /// Get parameters for constructing a new transaction.
-    pub async fn transaction_params(&self) -> Result<TransactionParams, AlgonautError> {
+    pub async fn transaction_params(&self) -> Result<TransactionParams, ServiceError> {
         Ok(self.client.transaction_params().await?)
     }
 
     /// Get suggested parameters for constructing a new transaction.
     pub async fn suggested_transaction_params(
         &self,
-    ) -> Result<SuggestedTransactionParams, AlgonautError> {
+    ) -> Result<SuggestedTransactionParams, ServiceError> {
         let params = self.client.transaction_params().await?;
         Ok(SuggestedTransactionParams {
             genesis_id: params.genesis_id,
@@ -235,7 +235,7 @@ impl Algod {
     pub async fn pending_transactions(
         &self,
         max: u64,
-    ) -> Result<PendingTransactions, AlgonautError> {
+    ) -> Result<PendingTransactions, ServiceError> {
         Ok(self.client.pending_transactions(max).await?)
     }
 
@@ -252,12 +252,12 @@ impl Algod {
     pub async fn pending_transaction_with_id(
         &self,
         txid: &str,
-    ) -> Result<PendingTransaction, AlgonautError> {
+    ) -> Result<PendingTransaction, ServiceError> {
         Ok(self.client.pending_transaction_with_id(txid).await?)
     }
 
     /// Retrieves the current version
-    pub async fn versions(&self) -> Result<Version, AlgonautError> {
+    pub async fn versions(&self) -> Result<Version, ServiceError> {
         Ok(self.client.versions().await?)
     }
 }
@@ -282,7 +282,7 @@ mod tests {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         );
         assert!(res.is_err());
-        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+        assert!(matches!(res.err().unwrap(), ServiceError::BadUrl(_)));
     }
 
     #[test]
@@ -292,7 +292,7 @@ mod tests {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         );
         assert!(res.is_err());
-        assert!(matches!(res.err().unwrap(), AlgonautError::BadUrl(_)));
+        assert!(matches!(res.err().unwrap(), ServiceError::BadUrl(_)));
     }
 
     #[test]
@@ -302,13 +302,13 @@ mod tests {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         );
         assert!(res.is_err());
-        assert!(res.err().unwrap() == AlgonautError::BadToken);
+        assert!(res.err().unwrap() == ServiceError::BadToken);
     }
 
     #[test]
     fn test_client_builder_with_empty_token() {
         let res = Algod::new("http://example.com", "");
         assert!(res.is_err());
-        assert!(res.err().unwrap() == AlgonautError::BadToken);
+        assert!(res.err().unwrap() == ServiceError::BadToken);
     }
 }
