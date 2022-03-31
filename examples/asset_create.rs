@@ -1,5 +1,5 @@
 use algonaut::algod::v2::Algod;
-use algonaut::error::AlgonautError;
+use algonaut::error::ServiceError;
 use algonaut::model::algod::v2::PendingTransaction;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 async fn wait_for_pending_transaction(
     algod: &Algod,
     txid: &str,
-) -> Result<Option<PendingTransaction>, AlgonautError> {
+) -> Result<Option<PendingTransaction>, ServiceError> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {

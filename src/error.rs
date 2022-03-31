@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq, Eq)]
-pub enum AlgonautError {
+pub enum ServiceError {
     /// URL parse error.
     #[error("Url parsing error.")]
     BadUrl(String),
@@ -26,7 +26,7 @@ pub enum AlgonautError {
     Internal(String),
 }
 
-impl AlgonautError {
+impl ServiceError {
     /// Returns if the error is a `RequestError` that failed with a status code of 404.
     pub fn is_404(&self) -> bool {
         if let Some(e) = self.as_request_error() {
@@ -88,13 +88,13 @@ impl RequestErrorDetails {
     }
 }
 
-impl From<algonaut_client::error::ClientError> for AlgonautError {
+impl From<algonaut_client::error::ClientError> for ServiceError {
     fn from(error: algonaut_client::error::ClientError) -> Self {
         match error {
-            algonaut_client::error::ClientError::BadUrl(msg) => AlgonautError::BadUrl(msg),
-            algonaut_client::error::ClientError::BadToken => AlgonautError::BadToken,
-            algonaut_client::error::ClientError::BadHeader(msg) => AlgonautError::BadHeader(msg),
-            algonaut_client::error::ClientError::Request(e) => AlgonautError::Request(e.into()),
+            algonaut_client::error::ClientError::BadUrl(msg) => ServiceError::BadUrl(msg),
+            algonaut_client::error::ClientError::BadToken => ServiceError::BadToken,
+            algonaut_client::error::ClientError::BadHeader(msg) => ServiceError::BadHeader(msg),
+            algonaut_client::error::ClientError::Request(e) => ServiceError::Request(e.into()),
         }
     }
 }
@@ -119,21 +119,21 @@ impl From<algonaut_client::error::RequestErrorDetails> for RequestErrorDetails {
     }
 }
 
-impl From<rmp_serde::encode::Error> for AlgonautError {
+impl From<rmp_serde::encode::Error> for ServiceError {
     fn from(error: rmp_serde::encode::Error) -> Self {
-        AlgonautError::Internal(error.to_string())
+        ServiceError::Internal(error.to_string())
     }
 }
 
-impl From<String> for AlgonautError {
+impl From<String> for ServiceError {
     fn from(error: String) -> Self {
-        AlgonautError::Internal(error)
+        ServiceError::Internal(error)
     }
 }
 
 #[test]
 fn check_404() {
-    let not_found_error = AlgonautError::Request(RequestError::new(
+    let not_found_error = ServiceError::Request(RequestError::new(
         Some("testing".to_owned()),
         RequestErrorDetails::Http {
             status: 404,
@@ -141,7 +141,7 @@ fn check_404() {
         },
     ));
 
-    let bad_request_error = AlgonautError::Request(RequestError::new(
+    let bad_request_error = ServiceError::Request(RequestError::new(
         None,
         RequestErrorDetails::Http {
             status: 400,
@@ -149,7 +149,7 @@ fn check_404() {
         },
     ));
 
-    let unrelated_error = AlgonautError::UnitializedToken;
+    let unrelated_error = ServiceError::UnitializedToken;
 
     assert!(
         not_found_error.is_404(),

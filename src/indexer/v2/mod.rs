@@ -8,7 +8,7 @@ use algonaut_model::indexer::v2::{
     QueryBalances, QueryTransaction, TransactionInfoResponse, TransactionResponse,
 };
 
-use crate::error::AlgonautError;
+use crate::error::ServiceError;
 
 #[derive(Debug)]
 pub struct Indexer {
@@ -19,7 +19,7 @@ impl Indexer {
     /// Build a v2 client for Algorand's indexer.
     ///
     /// Returns an error if the url has an invalid format.
-    pub fn new(url: &str) -> Result<Indexer, AlgonautError> {
+    pub fn new(url: &str) -> Result<Indexer, ServiceError> {
         Self::with_headers(url, vec![])
     }
 
@@ -27,19 +27,19 @@ impl Indexer {
     /// Use this initializer when interfacing with third party services, that require custom headers.
     ///
     /// Returns an error if the url or the headers have an invalid format.
-    pub fn with_headers(url: &str, headers: Headers) -> Result<Indexer, AlgonautError> {
+    pub fn with_headers(url: &str, headers: Headers) -> Result<Indexer, ServiceError> {
         Ok(Indexer {
             client: Client::new(url, headers)?,
         })
     }
 
     /// Returns Ok if healthy
-    pub async fn health(&self) -> Result<(), AlgonautError> {
+    pub async fn health(&self) -> Result<(), ServiceError> {
         Ok(self.client.health().await?)
     }
 
     /// Search for accounts.
-    pub async fn accounts(&self, query: &QueryAccount) -> Result<AccountResponse, AlgonautError> {
+    pub async fn accounts(&self, query: &QueryAccount) -> Result<AccountResponse, ServiceError> {
         Ok(self.client.accounts(query).await?)
     }
 
@@ -48,7 +48,7 @@ impl Indexer {
         &self,
         address: &Address,
         query: &QueryAccountInfo,
-    ) -> Result<AccountInfoResponse, AlgonautError> {
+    ) -> Result<AccountInfoResponse, ServiceError> {
         Ok(self.client.account_info(address, query).await?)
     }
 
@@ -57,7 +57,7 @@ impl Indexer {
         &self,
         address: &Address,
         query: &QueryAccountTransaction,
-    ) -> Result<AccountTransactionResponse, AlgonautError> {
+    ) -> Result<AccountTransactionResponse, ServiceError> {
         Ok(self.client.account_transactions(address, query).await?)
     }
 
@@ -65,7 +65,7 @@ impl Indexer {
     pub async fn applications(
         &self,
         query: &QueryApplications,
-    ) -> Result<ApplicationResponse, AlgonautError> {
+    ) -> Result<ApplicationResponse, ServiceError> {
         Ok(self.client.applications(query).await?)
     }
 
@@ -74,12 +74,12 @@ impl Indexer {
         &self,
         id: u64,
         query: &QueryApplicationInfo,
-    ) -> Result<ApplicationInfoResponse, AlgonautError> {
+    ) -> Result<ApplicationInfoResponse, ServiceError> {
         Ok(self.client.application_info(id, query).await?)
     }
 
     /// Search for assets.
-    pub async fn assets(&self, query: &QueryAssets) -> Result<AssetResponse, AlgonautError> {
+    pub async fn assets(&self, query: &QueryAssets) -> Result<AssetResponse, ServiceError> {
         Ok(self.client.assets(query).await?)
     }
 
@@ -88,7 +88,7 @@ impl Indexer {
         &self,
         id: u64,
         query: &QueryAssetsInfo,
-    ) -> Result<AssetsInfoResponse, AlgonautError> {
+    ) -> Result<AssetsInfoResponse, ServiceError> {
         Ok(self.client.assets_info(id, query).await?)
     }
 
@@ -97,7 +97,7 @@ impl Indexer {
         &self,
         id: u64,
         query: &QueryBalances,
-    ) -> Result<BalancesResponse, AlgonautError> {
+    ) -> Result<BalancesResponse, ServiceError> {
         Ok(self.client.asset_balances(id, query).await?)
     }
 
@@ -106,12 +106,12 @@ impl Indexer {
         &self,
         id: u64,
         query: &QueryAssetTransaction,
-    ) -> Result<AssetTransactionResponse, AlgonautError> {
+    ) -> Result<AssetTransactionResponse, ServiceError> {
         Ok(self.client.asset_transactions(id, query).await?)
     }
 
     /// Lookup block.
-    pub async fn block(&self, round: Round) -> Result<Block, AlgonautError> {
+    pub async fn block(&self, round: Round) -> Result<Block, ServiceError> {
         Ok(self.client.block(round).await?)
     }
 
@@ -119,7 +119,7 @@ impl Indexer {
     pub async fn transactions(
         &self,
         query: &QueryTransaction,
-    ) -> Result<TransactionResponse, AlgonautError> {
+    ) -> Result<TransactionResponse, ServiceError> {
         Ok(self.client.transactions(query).await?)
     }
 
@@ -127,7 +127,7 @@ impl Indexer {
     pub async fn transaction_info(
         &self,
         id: &str,
-    ) -> Result<TransactionInfoResponse, AlgonautError> {
+    ) -> Result<TransactionInfoResponse, ServiceError> {
         Ok(self.client.transaction_info(id).await?)
     }
 }
