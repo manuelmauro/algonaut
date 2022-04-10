@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Clone, Debug, PartialEq, Eq)]
 pub enum ServiceError {
     /// URL parse error.
     #[error("Url parsing error.")]
@@ -45,7 +45,7 @@ impl ServiceError {
     }
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Clone, Debug, PartialEq, Eq)]
 #[error("{:?}, {}", url, details)]
 pub struct RequestError {
     pub url: Option<String>,
@@ -63,7 +63,7 @@ impl RequestError {
     }
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Clone, Debug, PartialEq, Eq)]
 pub enum RequestErrorDetails {
     /// Http call error with optional message (returned by remote API)
     #[error("Http error: {}, {}", status, message)]

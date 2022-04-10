@@ -59,6 +59,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 - `algonaut_crypto` contains crypto utilities such as: `ed25519` and `mnemonics`.
 - `algonaut_encoding` implements encoding utility functions such as `serde` visitors.
 - `algonaut_transaction` support developers in building all kinds of Algorand transactions.
+- `algonaut_abi` Application Binary Interface (ABI) to invoke smart contract methods with a standarized interface.
 
 ## External utilities
 

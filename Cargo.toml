@@ -19,6 +19,7 @@ members = [
   "algonaut_crypto",
   "algonaut_encoding",
   "algonaut_transaction",
+  "algonaut_abi",
 ]
 
 [dependencies]
@@ -28,6 +29,7 @@ algonaut_core = { path = "algonaut_core", version = "0.3.0" }
 algonaut_crypto = { path = "algonaut_crypto", version = "0.3.0" }
 algonaut_encoding = { path = "algonaut_encoding", version = "0.3.0" }
 algonaut_transaction = { path = "algonaut_transaction", version = "0.3.0" }
+algonaut_abi = { path = "algonaut_abi", version = "0.3.0" }
 thiserror = "1.0.23"
 rmp-serde = "1.0.0"
 

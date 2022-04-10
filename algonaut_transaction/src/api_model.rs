@@ -2,7 +2,7 @@ use std::convert::{TryFrom, TryInto};
 
 use algonaut_core::{
     Address, CompiledTeal, LogicSignature, MicroAlgos, MultisigSignature, Round, SignedLogic,
-    ToMsgPack, VotePk, VrfPk,
+    ToMsgPack, TransactionTypeEnum, VotePk, VrfPk,
 };
 use algonaut_crypto::{HashDigest, Signature};
 use num_traits::Num;
@@ -191,7 +191,7 @@ impl From<Transaction> for ApiTransaction {
             note: t.note.clone().and_then(vec_as_api_option),
             rekey_to: t.rekey_to,
             sender: t.sender(),
-            type_: to_api_transaction_type(&t.txn_type).to_owned(),
+            type_: to_tx_type_enum(&t.txn_type).to_api_str().to_owned(),
             ///////////////
             asset_amount: None,
             asset_close_to: None,
@@ -553,16 +553,18 @@ impl From<ApiAssetParams> for AssetParams {
     }
 }
 
-fn to_api_transaction_type<'a>(type_: &TransactionType) -> &'a str {
+pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
     match type_ {
-        TransactionType::Payment(_) => "pay",
-        TransactionType::KeyRegistration(_) => "keyreg",
-        TransactionType::AssetConfigurationTransaction(_) => "acfg",
-        TransactionType::AssetTransferTransaction(_) => "axfer",
-        TransactionType::AssetAcceptTransaction(_) => "axfer",
-        TransactionType::AssetClawbackTransaction(_) => "axfer",
-        TransactionType::AssetFreezeTransaction(_) => "afrz",
-        TransactionType::ApplicationCallTransaction(_) => "appl",
+        TransactionType::Payment(_) => TransactionTypeEnum::Payment,
+        TransactionType::KeyRegistration(_) => TransactionTypeEnum::KeyRegistration,
+        TransactionType::AssetConfigurationTransaction(_) => {
+            TransactionTypeEnum::AssetConfiguration
+        }
+        TransactionType::AssetTransferTransaction(_)
+        | TransactionType::AssetAcceptTransaction(_)
+        | TransactionType::AssetClawbackTransaction(_) => TransactionTypeEnum::AssetTransfer,
+        TransactionType::AssetFreezeTransaction(_) => TransactionTypeEnum::AssetFreeze,
+        TransactionType::ApplicationCallTransaction(_) => TransactionTypeEnum::ApplicationCall,
     }
 }
 

@@ -17,7 +17,7 @@ pub use multisig::MultisigSignature;
 pub use multisig::MultisigSubsig;
 
 mod address;
-mod error;
+pub mod error;
 mod multisig;
 
 pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
@@ -252,6 +252,43 @@ pub struct SuggestedTransactionParams {
     pub min_fee: MicroAlgos,
     pub first_valid: Round,
     pub last_valid: Round,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum TransactionTypeEnum {
+    Payment,
+    KeyRegistration,
+    AssetConfiguration,
+    AssetTransfer,
+    AssetFreeze,
+    ApplicationCall,
+}
+
+impl TransactionTypeEnum {
+    pub fn to_api_str(&self) -> &str {
+        match self {
+            TransactionTypeEnum::Payment => "pay",
+            TransactionTypeEnum::KeyRegistration => "keyreg",
+            TransactionTypeEnum::AssetConfiguration => "acfg",
+            TransactionTypeEnum::AssetTransfer => "axfer",
+            TransactionTypeEnum::AssetFreeze => "afrz",
+            TransactionTypeEnum::ApplicationCall => "appl",
+        }
+    }
+
+    pub fn from_api_str(s: &str) -> Result<Self, CoreError> {
+        match s {
+            "pay" => Ok(TransactionTypeEnum::Payment),
+            "keyreg" => Ok(TransactionTypeEnum::KeyRegistration),
+            "acfg" => Ok(TransactionTypeEnum::AssetConfiguration),
+            "axfer" => Ok(TransactionTypeEnum::AssetTransfer),
+            "afrz" => Ok(TransactionTypeEnum::AssetFreeze),
+            "appl" => Ok(TransactionTypeEnum::ApplicationCall),
+            _ => Err(CoreError::General(format!(
+                "Couldn't convert tx type str: `{s}` to tx type"
+            ))),
+        }
+    }
 }
 
 #[cfg(test)]
