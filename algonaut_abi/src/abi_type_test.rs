@@ -6,14 +6,7 @@ mod test {
         type_testpool: Vec<AbiType>,
         tuple_testpool: Vec<AbiType>,
     }
-    use crate::{
-        abi_encode::find_bool_lr,
-        abi_type::{
-            make_address_type, make_bool_type, make_byte_type, make_dynamic_array_type,
-            make_static_array_type, make_string_type, make_tuple_type, make_ufixed_type,
-            make_uint_type, AbiType,
-        },
-    };
+    use crate::{abi_encode::find_bool_lr, abi_type::AbiType};
 
     fn generate_random_tuple_type(
         type_testpool: &mut [AbiType],
@@ -32,31 +25,31 @@ mod test {
                 tuple_elems.push(type_testpool[rng.gen_range(0..type_testpool.len())].clone());
             }
         }
-        make_tuple_type(tuple_elems).unwrap()
+        AbiType::tuple(tuple_elems).unwrap()
     }
 
     fn setup() -> SetupRes {
         let mut type_testpool = vec![
-            make_bool_type(),
-            make_address_type(),
-            make_string_type(),
-            make_byte_type(),
+            AbiType::bool(),
+            AbiType::address(),
+            AbiType::string(),
+            AbiType::byte(),
         ];
 
         for i in (8..512).step_by(8) {
-            type_testpool.push(make_uint_type(i).unwrap());
+            type_testpool.push(AbiType::uint(i).unwrap());
         }
 
         for i in (8..512).step_by(8) {
             for j in 1..=160 {
-                type_testpool.push(make_ufixed_type(i, j).unwrap());
+                type_testpool.push(AbiType::ufixed(i, j).unwrap());
             }
         }
 
         for i in 0..type_testpool.len() {
-            type_testpool.push(make_dynamic_array_type(type_testpool[i].clone()));
-            type_testpool.push(make_static_array_type(type_testpool[i].clone(), 10));
-            type_testpool.push(make_static_array_type(type_testpool[i].clone(), 20));
+            type_testpool.push(AbiType::dynamic_array(type_testpool[i].clone()));
+            type_testpool.push(AbiType::static_array(type_testpool[i].clone(), 10));
+            type_testpool.push(AbiType::static_array(type_testpool[i].clone(), 20));
         }
 
         let mut tuple_testpool = vec![];
@@ -75,8 +68,8 @@ mod test {
     #[test]
     fn test_uint_valid() {
         for i in (8..512).step_by(8) {
-            let type_ = make_uint_type(i).unwrap();
-            assert_eq!(type_.string().unwrap(), format!("uint{}", i))
+            let type_ = AbiType::uint(i).unwrap();
+            assert_eq!(type_.to_string(), format!("uint{}", i))
         }
     }
 
@@ -92,7 +85,7 @@ mod test {
             }
 
             let final_size_rand = size_rand;
-            assert!(make_uint_type(final_size_rand).is_err())
+            assert!(AbiType::uint(final_size_rand).is_err())
         }
     }
 
@@ -100,8 +93,8 @@ mod test {
     fn test_ufixed_valid() {
         for i in (8..512).step_by(8) {
             for j in 1..160 {
-                let type_ = make_ufixed_type(i, j).unwrap();
-                assert_eq!(type_.string().unwrap(), format!("ufixed{}x{}", i, j))
+                let type_ = AbiType::ufixed(i, j).unwrap();
+                assert_eq!(type_.to_string(), format!("ufixed{}x{}", i, j))
             }
         }
     }
@@ -124,68 +117,59 @@ mod test {
 
             let final_rand_precision = precision_rand;
             let final_size_rand = size_rand;
-            assert!(make_ufixed_type(final_size_rand, final_rand_precision).is_err())
+            assert!(AbiType::ufixed(final_size_rand, final_rand_precision).is_err())
         }
     }
 
     #[test]
     fn test_simple_types_valid() {
-        assert_eq!(&make_byte_type().string().unwrap(), "byte");
-        assert_eq!(&make_string_type().string().unwrap(), "string");
-        assert_eq!(&make_address_type().string().unwrap(), "address");
-        assert_eq!(&make_bool_type().string().unwrap(), "bool");
+        assert_eq!(&AbiType::byte().to_string(), "byte");
+        assert_eq!(&AbiType::string().to_string(), "string");
+        assert_eq!(&AbiType::address().to_string(), "address");
+        assert_eq!(&AbiType::bool().to_string(), "bool");
     }
 
     #[test]
     fn test_type_to_string_valid() {
         assert_eq!(
-            &make_dynamic_array_type(make_uint_type(32).unwrap())
-                .string()
-                .unwrap(),
+            &AbiType::dynamic_array(AbiType::uint(32).unwrap()).to_string(),
             "uint32[]"
         );
         assert_eq!(
-            &make_dynamic_array_type(make_dynamic_array_type(make_byte_type()))
-                .string()
-                .unwrap(),
+            &AbiType::dynamic_array(AbiType::dynamic_array(AbiType::byte())).to_string(),
             "byte[][]"
         );
         assert_eq!(
-            &make_static_array_type(make_ufixed_type(128, 10).unwrap(), 100)
-                .string()
-                .unwrap(),
+            &AbiType::static_array(AbiType::ufixed(128, 10).unwrap(), 100).to_string(),
             "ufixed128x10[100]"
         );
         assert_eq!(
-            &make_static_array_type(make_static_array_type(make_bool_type(), 128), 256)
-                .string()
-                .unwrap(),
+            &AbiType::static_array(AbiType::static_array(AbiType::bool(), 128), 256).to_string(),
             "bool[128][256]"
         );
         assert_eq!(
-            &make_tuple_type(vec![
-                make_uint_type(32).unwrap(),
-                make_tuple_type(vec![
-                    make_address_type(),
-                    make_byte_type(),
-                    make_static_array_type(make_bool_type(), 10),
-                    make_dynamic_array_type(make_ufixed_type(256, 10).unwrap()),
+            &AbiType::tuple(vec![
+                AbiType::uint(32).unwrap(),
+                AbiType::tuple(vec![
+                    AbiType::address(),
+                    AbiType::byte(),
+                    AbiType::static_array(AbiType::bool(), 10),
+                    AbiType::dynamic_array(AbiType::ufixed(256, 10).unwrap()),
                 ])
                 .unwrap()
             ])
             .unwrap()
-            .string()
-            .unwrap(),
+            .to_string(),
             "(uint32,(address,byte,bool[10],ufixed256x10[]))"
         );
-        assert_eq!(&make_tuple_type(vec![]).unwrap().string().unwrap(), "()");
+        assert_eq!(&AbiType::tuple(vec![]).unwrap().to_string(), "()");
     }
 
     #[test]
     fn test_uint_from_string_valid() {
         for i in (8..512).step_by(8) {
             let encoded = format!("uint{}", i);
-            let uint_type = make_uint_type(i).unwrap();
+            let uint_type = AbiType::uint(i).unwrap();
             assert_eq!(encoded.parse::<AbiType>().unwrap(), uint_type)
         }
     }
@@ -211,7 +195,7 @@ mod test {
         for i in (8..512).step_by(8) {
             for j in 1..160 {
                 let encoded = format!("ufixed{}x{}", i, j);
-                let ufixed_t = make_ufixed_type(i, j).unwrap();
+                let ufixed_t = AbiType::ufixed(i, j).unwrap();
                 assert_eq!(encoded.parse::<AbiType>().unwrap(), ufixed_t);
             }
         }
@@ -240,54 +224,54 @@ mod test {
 
     #[test]
     fn test_simple_type_from_string_valid() {
-        assert_eq!("address".parse::<AbiType>().unwrap(), make_address_type());
-        assert_eq!("byte".parse::<AbiType>().unwrap(), make_byte_type());
-        assert_eq!("bool".parse::<AbiType>().unwrap(), make_bool_type());
-        assert_eq!("string".parse::<AbiType>().unwrap(), make_string_type());
+        assert_eq!("address".parse::<AbiType>().unwrap(), AbiType::address());
+        assert_eq!("byte".parse::<AbiType>().unwrap(), AbiType::byte());
+        assert_eq!("bool".parse::<AbiType>().unwrap(), AbiType::bool());
+        assert_eq!("string".parse::<AbiType>().unwrap(), AbiType::string());
     }
 
     #[test]
     fn test_type_from_string_valid() {
         assert_eq!(
             "uint256[]".parse::<AbiType>().unwrap(),
-            make_dynamic_array_type(make_uint_type(256).unwrap())
+            AbiType::dynamic_array(AbiType::uint(256).unwrap())
         );
         assert_eq!(
             "ufixed256x64[]".parse::<AbiType>().unwrap(),
-            make_dynamic_array_type(make_ufixed_type(256, 64).unwrap())
+            AbiType::dynamic_array(AbiType::ufixed(256, 64).unwrap())
         );
         assert_eq!(
             "byte[][][][]".parse::<AbiType>().unwrap(),
-            make_dynamic_array_type(make_dynamic_array_type(make_dynamic_array_type(
-                make_dynamic_array_type(make_byte_type())
+            AbiType::dynamic_array(AbiType::dynamic_array(AbiType::dynamic_array(
+                AbiType::dynamic_array(AbiType::byte())
             )))
         );
         assert_eq!(
             "address[100]".parse::<AbiType>().unwrap(),
-            make_static_array_type(make_address_type(), 100)
+            AbiType::static_array(AbiType::address(), 100)
         );
         assert_eq!(
             "uint64[][100]".parse::<AbiType>().unwrap(),
-            make_static_array_type(make_dynamic_array_type(make_uint_type(64).unwrap()), 100)
+            AbiType::static_array(AbiType::dynamic_array(AbiType::uint(64).unwrap()), 100)
         );
         assert_eq!(
             "()".parse::<AbiType>().unwrap(),
-            make_tuple_type(vec![]).unwrap()
+            AbiType::tuple(vec![]).unwrap()
         );
         assert_eq!(
             "(uint32,(address,byte,bool[10],ufixed256x10[]),byte[])"
                 .parse::<AbiType>()
                 .unwrap(),
-            make_tuple_type(vec![
-                make_uint_type(32).unwrap(),
-                make_tuple_type(vec![
-                    make_address_type(),
-                    make_byte_type(),
-                    make_static_array_type(make_bool_type(), 10),
-                    make_dynamic_array_type(make_ufixed_type(256, 10).unwrap())
+            AbiType::tuple(vec![
+                AbiType::uint(32).unwrap(),
+                AbiType::tuple(vec![
+                    AbiType::address(),
+                    AbiType::byte(),
+                    AbiType::static_array(AbiType::bool(), 10),
+                    AbiType::dynamic_array(AbiType::ufixed(256, 10).unwrap())
                 ])
                 .unwrap(),
-                make_dynamic_array_type(make_byte_type())
+                AbiType::dynamic_array(AbiType::byte())
             ])
             .unwrap()
         );
@@ -295,14 +279,14 @@ mod test {
             "(uint32,(address,byte,bool[10],(ufixed256x10[])))"
                 .parse::<AbiType>()
                 .unwrap(),
-            make_tuple_type(vec![
-                make_uint_type(32).unwrap(),
-                make_tuple_type(vec![
-                    make_address_type(),
-                    make_byte_type(),
-                    make_static_array_type(make_bool_type(), 10),
-                    make_tuple_type(vec![make_dynamic_array_type(
-                        make_ufixed_type(256, 10).unwrap()
+            AbiType::tuple(vec![
+                AbiType::uint(32).unwrap(),
+                AbiType::tuple(vec![
+                    AbiType::address(),
+                    AbiType::byte(),
+                    AbiType::static_array(AbiType::bool(), 10),
+                    AbiType::tuple(vec![AbiType::dynamic_array(
+                        AbiType::ufixed(256, 10).unwrap()
                     )])
                     .unwrap()
                 ])
@@ -314,14 +298,14 @@ mod test {
             "((uint32),(address,(byte,bool[10],ufixed256x10[])))"
                 .parse::<AbiType>()
                 .unwrap(),
-            make_tuple_type(vec![
-                make_tuple_type(vec![make_uint_type(32).unwrap()]).unwrap(),
-                make_tuple_type(vec![
-                    make_address_type(),
-                    make_tuple_type(vec![
-                        make_byte_type(),
-                        make_static_array_type(make_bool_type(), 10),
-                        make_dynamic_array_type(make_ufixed_type(256, 10).unwrap())
+            AbiType::tuple(vec![
+                AbiType::tuple(vec![AbiType::uint(32).unwrap()]).unwrap(),
+                AbiType::tuple(vec![
+                    AbiType::address(),
+                    AbiType::tuple(vec![
+                        AbiType::byte(),
+                        AbiType::static_array(AbiType::bool(), 10),
+                        AbiType::dynamic_array(AbiType::ufixed(256, 10).unwrap())
                     ])
                     .unwrap()
                 ])
@@ -382,7 +366,7 @@ mod test {
     fn test_tuple_roundtrip() {
         let tuple_testpool = setup().tuple_testpool;
         for t in tuple_testpool {
-            let encoded = t.string().unwrap();
+            let encoded = t.to_string();
             let decoded = encoded.parse::<AbiType>().unwrap();
             assert_eq!(decoded, t.clone());
         }
@@ -409,8 +393,7 @@ mod test {
             let index0 = rng.gen_range(0..type_testpool.len());
             let mut index1 = rng.gen_range(0..type_testpool.len());
 
-            while type_testpool[index0].string().unwrap() == type_testpool[index1].string().unwrap()
-            {
+            while type_testpool[index0].to_string() == type_testpool[index1].to_string() {
                 index1 = rng.gen_range(0..type_testpool.len());
             }
 
@@ -421,9 +404,7 @@ mod test {
             let index0 = rng.gen_range(0..tuple_testpool.len());
             let mut index1 = rng.gen_range(0..tuple_testpool.len());
 
-            while tuple_testpool[index0].string().unwrap()
-                == tuple_testpool[index1].string().unwrap()
-            {
+            while tuple_testpool[index0].to_string() == tuple_testpool[index1].to_string() {
                 index1 = rng.gen_range(0..tuple_testpool.len());
             }
 
@@ -439,13 +420,13 @@ mod test {
         } = setup();
 
         for t in &type_testpool {
-            let encoded = t.string().unwrap();
+            let encoded = t.to_string();
             let infer_from_string = encoded.contains("[]") || encoded.contains("string");
             assert_eq!(infer_from_string, t.is_dynamic());
         }
 
         for t in &tuple_testpool {
-            let encoded = t.string().unwrap();
+            let encoded = t.to_string();
             let infer_from_string = encoded.contains("[]") || encoded.contains("string");
             assert_eq!(infer_from_string, t.is_dynamic());
         }
@@ -458,8 +439,8 @@ mod test {
             tuple_testpool,
         } = setup();
 
-        assert_eq!(make_address_type().byte_len().unwrap(), 32);
-        assert_eq!(make_byte_type().byte_len().unwrap(), 1);
+        assert_eq!(AbiType::address().byte_len().unwrap(), 32);
+        assert_eq!(AbiType::byte().byte_len().unwrap(), 1);
 
         for t in type_testpool {
             if t.is_dynamic() {

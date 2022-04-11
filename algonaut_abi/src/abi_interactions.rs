@@ -77,7 +77,7 @@ pub struct AbiMethodArg {
     /// The type of the argument as a string.
     /// See [get_type_object](get_type_object) to obtain the ABI type object
     #[serde(rename = "type")]
-    pub type_: String,
+    pub(crate) type_: String,
 
     /// User-friendly description for the argument
     #[serde(rename = "desc", skip_serializing_if = "Option::is_none")]
@@ -85,7 +85,14 @@ pub struct AbiMethodArg {
 
     /// Cache that holds the parsed type object
     #[serde(skip)]
-    pub parsed: Option<AbiType>,
+    pub(crate) parsed: Option<AbiType>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AbiArgType {
+    Tx(TransactionArgType),
+    Ref(ReferenceArgType),
+    AbiObj(AbiType),
 }
 
 impl PartialEq for AbiMethodArg {
@@ -99,46 +106,38 @@ impl PartialEq for AbiMethodArg {
 impl Eq for AbiMethodArg {}
 
 impl AbiMethodArg {
-    pub fn is_transaction_arg(&self) -> bool {
+    pub fn type_(&mut self) -> Result<AbiArgType, AbiError> {
+        Ok(if let Some(tx_arg) = self.transaction_arg() {
+            AbiArgType::Tx(tx_arg)
+        } else if let Some(ref_arg) = self.reference_arg() {
+            AbiArgType::Ref(ref_arg)
+        } else {
+            let type_ = self.type_.parse::<AbiType>()?;
+            self.parsed = Some(type_.clone());
+            AbiArgType::AbiObj(type_)
+        })
+    }
+
+    pub fn abi_obj_or_err(&mut self) -> Result<AbiType, AbiError> {
+        let type_ = self.type_()?;
+        match type_ {
+            AbiArgType::AbiObj(obj) => Ok(obj),
+            _ => Err(AbiError::Msg(format!(
+                "The arg: {type_:?} is not an ABI object."
+            ))),
+        }
+    }
+
+    fn is_transaction_arg(&self) -> bool {
         self.transaction_arg().is_some()
     }
 
-    pub fn transaction_arg(&self) -> Option<TransactionArgType> {
+    fn transaction_arg(&self) -> Option<TransactionArgType> {
         TransactionArgType::from_api_str(&self.type_).ok()
     }
 
-    pub fn is_reference_arg(&self) -> bool {
-        self.reference_arg().is_some()
-    }
-
-    pub fn reference_arg(&self) -> Option<ReferenceArgType> {
+    fn reference_arg(&self) -> Option<ReferenceArgType> {
         ReferenceArgType::from_api_str(&self.type_).ok()
-    }
-
-    /// parses and returns the ABI type object for this argument's
-    /// type. An error will be returned if this argument's type is a transaction or
-    /// reference type
-    pub fn get_type_object(&mut self) -> Result<AbiType, AbiError> {
-        if self.is_transaction_arg() {
-            return Err(AbiError::Msg(format!(
-                "Invalid operation on transaction type: {}",
-                self.type_
-            )));
-        }
-        if self.is_reference_arg() {
-            return Err(AbiError::Msg(format!(
-                "Invalid operation on reference type: {}",
-                self.type_
-            )));
-        }
-        if let Some(parsed) = &self.parsed {
-            return Ok(parsed.clone());
-        }
-
-        let type_obj = self.type_.parse::<AbiType>()?;
-        self.parsed = Some(type_obj.clone());
-
-        Ok(type_obj)
     }
 }
 
@@ -148,7 +147,7 @@ pub struct AbiReturn {
     /// The type of the argument as a string. See the [get_type_object](get_type_object) to
     /// obtain the ABI type object
     #[serde(rename = "type")]
-    pub type_: String,
+    pub(crate) type_: String,
 
     /// User-friendly description for the argument
     #[serde(rename = "desc", skip_serializing_if = "Option::is_none")]
@@ -156,7 +155,7 @@ pub struct AbiReturn {
 
     /// Cache that holds the parsed type object
     #[serde(skip)]
-    pub parsed: Option<AbiType>,
+    pub(crate) parsed: Option<AbiType>,
 }
 
 impl PartialEq for AbiReturn {
@@ -168,25 +167,34 @@ impl PartialEq for AbiReturn {
 impl Eq for AbiReturn {}
 
 impl AbiReturn {
-    fn is_void(&self) -> bool {
-        self.type_ == "void"
+    pub fn is_void(&self) -> bool {
+        Self::is_void_str(&self.type_)
     }
 
-    fn get_type_object(&mut self) -> Result<AbiType, AbiError> {
+    pub fn is_void_str(s: &str) -> bool {
+        s == "void"
+    }
+
+    pub fn type_(&mut self) -> Result<AbiReturnType, AbiError> {
         if self.is_void() {
-            return Err(AbiError::Msg(
-                "Invalid operation on void return type".to_owned(),
-            ));
-        }
-        if let Some(parsed) = &self.parsed {
-            return Ok(parsed.clone());
-        }
+            Ok(AbiReturnType::Void)
+        } else {
+            if let Some(parsed) = &self.parsed {
+                return Ok(AbiReturnType::Some(parsed.clone()));
+            }
 
-        let type_obj = self.type_.parse::<AbiType>()?;
-        self.parsed = Some(type_obj.clone());
+            let type_obj = self.type_.parse::<AbiType>()?;
+            self.parsed = Some(type_obj.clone());
 
-        Ok(type_obj)
+            Ok(AbiReturnType::Some(type_obj))
+        }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum AbiReturnType {
+    Some(AbiType),
+    Void,
 }
 
 /// Represents an ABI method return value
@@ -259,10 +267,8 @@ impl AbiMethod {
             parsed: None,
         };
 
-        if !return_type.is_void() {
-            // fill type object cache
-            return_type.get_type_object()?;
-        }
+        // fill type object cache
+        return_type.type_()?;
 
         let mut args: Vec<AbiMethodArg> = Vec::with_capacity(arg_types.len());
 
@@ -282,7 +288,7 @@ impl AbiMethod {
             }
 
             // fill type object cache
-            args[i].get_type_object()?;
+            args[i].type_()?;
         }
 
         Ok(AbiMethod {

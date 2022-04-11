@@ -27,7 +27,7 @@ pub fn make_tuple_type(argument_types: &[AbiType]) -> Result<AbiType, AbiError> 
 
     let mut strs = vec![];
     for arg in argument_types {
-        strs.push(arg.string()?)
+        strs.push(arg.to_string())
     }
 
     let str_tuple = format!("({})", strs.join(","));

@@ -26,7 +26,9 @@ impl TxGroup {
         Ok(())
     }
 
-    fn compute_group_id(txns: &[&mut Transaction]) -> Result<HashDigest, TransactionError> {
+    pub(crate) fn compute_group_id(
+        txns: &[&mut Transaction],
+    ) -> Result<HashDigest, TransactionError> {
         if txns.is_empty() {
             return Err(TransactionError::EmptyTransactionListError);
         }

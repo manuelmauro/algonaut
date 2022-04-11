@@ -98,7 +98,7 @@ impl<'de> Deserialize<'de> for Address {
 }
 
 /// Convenience struct for handling multisig public identities
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MultisigAddress {
     /// the version of this multisig
     pub version: u8,

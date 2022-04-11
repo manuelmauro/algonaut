@@ -41,7 +41,7 @@ byte 0xFF
     )
     .build()?;
 
-    let signed_t = contract_account.sign(&t, vec![vec![1, 0], vec![255]])?;
+    let signed_t = contract_account.sign(t, vec![vec![1, 0], vec![255]])?;
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await;
     println!("response {:?}", send_response);

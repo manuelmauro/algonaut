@@ -26,4 +26,8 @@ pub enum TransactionError {
     MnemonicError(#[from] algonaut_crypto::error::CryptoError),
     #[error("Deserialization error: {0}")]
     Deserialization(String),
+    #[error("No accounts to sign the transaction.")]
+    NoAccountsToSign,
+    #[error("{}", 0)]
+    Msg(String),
 }

@@ -1,9 +1,6 @@
 use crate::{
     abi_error::AbiError,
-    abi_type::{
-        make_byte_type, make_tuple_type, AbiType, AbiValue, ADDRESS_BYTE_SIZE,
-        LENGTH_ENCODE_BYTE_SIZE, SINGLE_BYTE_SIZE,
-    },
+    abi_type::{AbiType, AbiValue, ADDRESS_BYTE_SIZE, LENGTH_ENCODE_BYTE_SIZE, SINGLE_BYTE_SIZE},
     biguint_ext::BigUintExt,
 };
 use algonaut_core::Address;
@@ -298,7 +295,7 @@ impl AbiType {
             AbiType::Address => {
                 let mut child_types = Vec::with_capacity(ADDRESS_BYTE_SIZE);
                 for _ in 0..ADDRESS_BYTE_SIZE {
-                    child_types.push(make_byte_type())
+                    child_types.push(AbiType::byte())
                 }
                 child_types
             }
@@ -330,7 +327,7 @@ impl AbiType {
                 let mut child_types = Vec::with_capacity(tup_len[0]);
 
                 for _ in 0..tup_len[0] {
-                    child_types.push(make_byte_type())
+                    child_types.push(AbiType::byte())
                 }
                 child_types
             }
@@ -341,7 +338,7 @@ impl AbiType {
             }
         };
 
-        make_tuple_type(child_types)
+        AbiType::tuple(child_types)
     }
 
     /// ByteLen method calculates the byte length of a static ABI type.
@@ -389,7 +386,7 @@ impl AbiType {
             }
             _ => Err(AbiError::Msg(format!(
                 "Can't pre-compute byte length: {} is a dynamic type",
-                self.string()?,
+                self,
             ))),
         }
     }
@@ -524,7 +521,7 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
     Ok(values)
 }
 
-pub fn find_bool_lr(types: &[AbiType], index: usize, delta: i32) -> Result<usize, AbiError> {
+pub(crate) fn find_bool_lr(types: &[AbiType], index: usize, delta: i32) -> Result<usize, AbiError> {
     let mut until: usize = 0;
     loop {
         let current_index: usize = (index as i32 + delta * until as i32)

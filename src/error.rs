@@ -21,7 +21,12 @@ pub enum ServiceError {
     /// HTTP calls errors
     #[error("http error: {0}")]
     Request(RequestError),
-    /// Internal errors (please open an [issue](https://github.com/manuelmauro/algonaut/issues)!)
+
+    /// General text-only errors. Dedicated error variants can be created, if needed.
+    #[error("Msg: {0}")]
+    Msg(String),
+    /// Clearly SDK caused errors (please open an [issue](https://github.com/manuelmauro/algonaut/issues)!)
+    /// TODO rename in unexpected
     #[error("Internal error: {0}")]
     Internal(String),
 }

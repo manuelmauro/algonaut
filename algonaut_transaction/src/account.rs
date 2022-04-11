@@ -18,6 +18,20 @@ pub struct Account {
     key_pair: Ed25519KeyPair,
 }
 
+impl Clone for Account {
+    fn clone(&self) -> Self {
+        Self::from_seed(self.seed)
+    }
+}
+
+impl PartialEq for Account {
+    fn eq(&self, other: &Self) -> bool {
+        // TODO verify that this is correct - do we always get the same key pair for a seed? or is it otherwise still correct?
+        self.seed == other.seed && self.address == other.address
+    }
+}
+impl Eq for Account {}
+
 impl Account {
     pub fn generate() -> Account {
         let seed: [u8; 32] = OsRng.gen();

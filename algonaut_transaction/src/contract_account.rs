@@ -25,12 +25,12 @@ impl ContractAccount {
 
     pub fn sign(
         &self,
-        transaction: &Transaction,
+        transaction: Transaction,
         args: Vec<Vec<u8>>,
     ) -> Result<SignedTransaction, TransactionError> {
         Ok(SignedTransaction {
-            transaction: transaction.clone(),
             transaction_id: transaction.id()?,
+            transaction,
             sig: TransactionSignature::Logic(SignedLogic {
                 logic: self.program.clone(),
                 args,
