@@ -175,7 +175,7 @@ impl Algod {
         &self,
         txn: &SignedTransaction,
     ) -> Result<TransactionResponse, ServiceError> {
-        Ok(self.broadcast_raw_transaction(&txn.to_msg_pack()?).await?)
+        self.broadcast_raw_transaction(&txn.to_msg_pack()?).await
     }
 
     /// Broadcasts a transaction group to the network.
@@ -189,7 +189,7 @@ impl Algod {
         for t in txns {
             bytes.push(t.to_msg_pack()?);
         }
-        Ok(self.broadcast_raw_transaction(&bytes.concat()).await?)
+        self.broadcast_raw_transaction(&bytes.concat()).await
     }
 
     /// Broadcasts raw transactions to the network.
