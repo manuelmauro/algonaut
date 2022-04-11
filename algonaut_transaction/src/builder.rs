@@ -126,18 +126,18 @@ impl TxnBuilder {
             TxnFee::Estimated {
                 fee_per_byte,
                 min_fee,
-            } => self.build_tx_with_calculated_fee(fee_per_byte, min_fee)?,
+            } => self.build_tx_with_calculated_basic_sig_fee(fee_per_byte, min_fee)?,
             TxnFee::Fixed(fee) => self.build_tx(fee),
         })
     }
 
-    fn build_tx_with_calculated_fee(
+    fn build_tx_with_calculated_basic_sig_fee(
         &self,
         fee_per_byte: MicroAlgos,
         min_fee: MicroAlgos,
     ) -> Result<Transaction, TransactionError> {
         let mut txn = self.build_tx(MicroAlgos(0));
-        txn.fee = txn.estimate_fee(fee_per_byte, min_fee)?;
+        txn.fee = txn.estimate_basic_sig_fee(fee_per_byte, min_fee)?;
         Ok(txn)
     }
 
