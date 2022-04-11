@@ -1,11 +1,7 @@
 #[cfg(test)]
 mod test_encode {
     use crate::{
-        abi_type::{
-            make_address_type, make_bool_type, make_byte_type, make_dynamic_array_type,
-            make_static_array_type, make_string_type, make_ufixed_type, make_uint_type, AbiType,
-            AbiValue,
-        },
+        abi_type::{AbiType, AbiValue},
         biguint_ext::BigUintExt,
     };
     use algonaut_core::Address;
@@ -19,7 +15,7 @@ mod test_encode {
 
         for size in (8..512).step_by(8) {
             let upper_limit: BigUint = BigUint::from(1u8).shl(size);
-            let uint_type = make_uint_type(size).unwrap();
+            let uint_type = AbiType::uint(size).unwrap();
 
             for _ in 0..1000 {
                 let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
@@ -58,7 +54,7 @@ mod test_encode {
             let upper_limit: BigUint = BigUint::from(1u8).shl(size);
 
             for precision in 1..160 {
-                let ufixed_type_res = make_ufixed_type(size, precision);
+                let ufixed_type_res = AbiType::ufixed(size, precision);
                 assert!(ufixed_type_res.is_ok(), "make ufixed type fail");
                 let ufixed_type = ufixed_type_res.unwrap();
 
@@ -106,7 +102,7 @@ mod test_encode {
                 rand = rng.gen_biguint(256);
                 let addr_encode = rand.to_bytes_be_padded(32).unwrap();
                 assert_eq!(
-                    make_address_type()
+                    AbiType::address()
                         .encode(AbiValue::Address(Address(
                             addr_encode.clone().try_into().unwrap()
                         )))
@@ -115,7 +111,7 @@ mod test_encode {
                 );
             }
             assert_eq!(
-                make_address_type()
+                AbiType::address()
                     .encode(AbiValue::Address(Address(
                         upper_encoded.clone().try_into().unwrap()
                     )))
@@ -128,11 +124,11 @@ mod test_encode {
     #[test]
     fn test_encode_bool() {
         assert_eq!(
-            make_bool_type().encode(AbiValue::Bool(false)).unwrap(),
+            AbiType::bool().encode(AbiValue::Bool(false)).unwrap(),
             &[0x00]
         );
         assert_eq!(
-            make_bool_type().encode(AbiValue::Bool(true)).unwrap(),
+            AbiType::bool().encode(AbiValue::Bool(true)).unwrap(),
             &[0x80]
         );
     }
@@ -140,7 +136,7 @@ mod test_encode {
     #[test]
     fn test_encode_byte() {
         for i in 0..=u8::MAX {
-            assert_eq!(make_byte_type().encode(AbiValue::Byte(i)).unwrap(), &[i]);
+            assert_eq!(AbiType::byte().encode(AbiValue::Byte(i)).unwrap(), &[i]);
         }
     }
 
@@ -165,7 +161,7 @@ mod test_encode {
 
                 assert_eq!(
                     gen_bytes,
-                    make_string_type()
+                    AbiType::string()
                         .encode(AbiValue::String(gen_string))
                         .unwrap(),
                 );
@@ -182,7 +178,7 @@ mod test_encode {
         // assert_eq!(format!("{:b}", x), "101010");
 
         assert_eq!(
-            make_static_array_type(make_bool_type(), 5)
+            AbiType::static_array(AbiType::bool(), 5)
                 .encode(AbiValue::Array(input_values))
                 .unwrap(),
             expected
@@ -200,7 +196,7 @@ mod test_encode {
 
         assert_eq!(
             expected,
-            make_static_array_type(make_bool_type(), 11)
+            AbiType::static_array(AbiType::bool(), 11)
                 .encode(AbiValue::Array(input_values))
                 .unwrap(),
         );
@@ -217,7 +213,7 @@ mod test_encode {
 
         assert_eq!(
             expected,
-            make_dynamic_array_type(make_bool_type())
+            AbiType::dynamic_array(AbiType::bool())
                 .encode(AbiValue::Array(input_values))
                 .unwrap(),
         );
@@ -345,10 +341,7 @@ mod test_decode {
     use rand::Rng;
 
     use crate::{
-        abi_type::{
-            make_address_type, make_bool_type, make_byte_type, make_string_type, make_ufixed_type,
-            make_uint_type, AbiType, AbiValue,
-        },
+        abi_type::{AbiType, AbiValue},
         biguint_ext::BigUintExt,
     };
 
@@ -359,14 +352,14 @@ mod test_decode {
         for size in (8..512).step_by(8) {
             for _ in 0..1000 {
                 let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
-                let encoded_int = make_uint_type(size)
+                let encoded_int = AbiType::uint(size)
                     .unwrap()
                     .encode(AbiValue::Int(random_int.clone()))
                     .unwrap();
 
                 assert_eq!(
                     AbiValue::Int(random_int),
-                    make_uint_type(size).unwrap().decode(&encoded_int).unwrap(),
+                    AbiType::uint(size).unwrap().decode(&encoded_int).unwrap(),
                 );
             }
 
@@ -380,7 +373,7 @@ mod test_decode {
 
             assert_eq!(
                 AbiValue::Int(largest),
-                make_uint_type(size).unwrap().decode(&expected).unwrap(),
+                AbiType::uint(size).unwrap().decode(&expected).unwrap(),
             );
         }
     }
@@ -393,13 +386,13 @@ mod test_decode {
             for precision in 1..160 {
                 for _ in 0..20 {
                     let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
-                    let encoded_int = make_ufixed_type(size, precision)
+                    let encoded_int = AbiType::ufixed(size, precision)
                         .unwrap()
                         .encode(AbiValue::Int(random_int.clone()))
                         .unwrap();
                     assert_eq!(
                         AbiValue::Int(random_int),
-                        make_ufixed_type(size, precision)
+                        AbiType::ufixed(size, precision)
                             .unwrap()
                             .decode(&encoded_int)
                             .unwrap(),
@@ -414,7 +407,7 @@ mod test_decode {
 
                 assert_eq!(
                     AbiValue::Int(largest),
-                    make_ufixed_type(size, precision)
+                    AbiType::ufixed(size, precision)
                         .unwrap()
                         .decode(&expected)
                         .unwrap(),
@@ -439,13 +432,13 @@ mod test_decode {
 
                 assert_eq!(
                     AbiValue::Address(Address(addr_encode.clone().try_into().unwrap())),
-                    make_address_type().decode(&addr_encode).unwrap(),
+                    AbiType::address().decode(&addr_encode).unwrap(),
                 );
             }
 
             assert_eq!(
                 AbiValue::Address(Address(upper_encoded.clone().try_into().unwrap())),
-                make_address_type().decode(&upper_encoded).unwrap(),
+                AbiType::address().decode(&upper_encoded).unwrap(),
             );
         }
     }
@@ -453,12 +446,12 @@ mod test_decode {
     #[test]
     fn test_decode_bool() {
         assert_eq!(
-            make_bool_type().decode(&[0x00]).unwrap(),
+            AbiType::bool().decode(&[0x00]).unwrap(),
             AbiValue::Bool(false)
         );
 
         assert_eq!(
-            make_bool_type().decode(&[0x80]).unwrap(),
+            AbiType::bool().decode(&[0x80]).unwrap(),
             AbiValue::Bool(true)
         );
     }
@@ -466,7 +459,7 @@ mod test_decode {
     #[test]
     fn test_decode_byte() {
         for i in 0..=u8::MAX {
-            assert_eq!(make_byte_type().decode(&[i]).unwrap(), AbiValue::Byte(i));
+            assert_eq!(AbiType::byte().decode(&[i]).unwrap(), AbiValue::Byte(i));
         }
     }
 
@@ -491,7 +484,7 @@ mod test_decode {
 
                 assert_eq!(
                     AbiValue::String(gen_string),
-                    make_string_type().decode(&gen_bytes).unwrap(),
+                    AbiType::string().decode(&gen_bytes).unwrap(),
                 );
             }
         }
@@ -780,11 +773,7 @@ mod test_roundrip {
     use std::convert::TryInto;
 
     use crate::{
-        abi_type::{
-            make_address_type, make_bool_type, make_byte_type, make_dynamic_array_type,
-            make_static_array_type, make_string_type, make_tuple_type, make_ufixed_type,
-            make_uint_type, AbiType, AbiValue,
-        },
+        abi_type::{AbiType, AbiValue},
         biguint_ext::BigUintExt,
     };
     use algonaut_core::Address;
@@ -822,7 +811,7 @@ mod test_roundrip {
             }
             let type_ = test_value_pool[0][i].type_str.clone().parse().unwrap();
             test_value_pool[6].push(RawValueWithAbiType::new(
-                &make_static_array_type(type_, 20).string().unwrap(),
+                &AbiType::static_array(type_, 20).to_string(),
                 AbiValue::Array(value_arr),
             ));
         }
@@ -875,7 +864,7 @@ mod test_roundrip {
             }
             let type_ = test_value_pool[0][i].type_str.clone().parse().unwrap();
             test_value_pool[6].push(RawValueWithAbiType::new(
-                &make_dynamic_array_type(type_).string().unwrap(),
+                &AbiType::dynamic_array(type_).to_string(),
                 AbiValue::Array(value_arr),
             ));
         }
@@ -938,7 +927,7 @@ mod test_roundrip {
                 );
             }
 
-            let abi_str = make_tuple_type(tuple_types).unwrap().string().unwrap();
+            let abi_str = AbiType::tuple(tuple_types).unwrap().to_string();
             test_value_pool[8].push(RawValueWithAbiType::new(
                 &abi_str,
                 AbiValue::Array(tuple_values),
@@ -959,13 +948,13 @@ mod test_roundrip {
         for i in (8..512).step_by(8) {
             for _ in 0..200 {
                 test_value_pool[0].push(RawValueWithAbiType::new(
-                    &make_uint_type(i).unwrap().string().unwrap(),
+                    &AbiType::uint(i).unwrap().to_string(),
                     AbiValue::Int(generate_random_int(i as u64)),
                 ));
             }
             for j in 1..160 {
                 test_value_pool[1].push(RawValueWithAbiType::new(
-                    &make_ufixed_type(i, j).unwrap().string().unwrap(),
+                    &AbiType::ufixed(i, j).unwrap().to_string(),
                     AbiValue::Int(generate_random_int(i as u64)),
                 ));
             }
@@ -973,14 +962,14 @@ mod test_roundrip {
 
         for i in 0..=u8::MAX {
             test_value_pool[2].push(RawValueWithAbiType::new(
-                &make_byte_type().string().unwrap(),
+                &AbiType::byte().to_string(),
                 AbiValue::Byte(i),
             ));
         }
 
         for i in 0..2 {
             test_value_pool[3].push(RawValueWithAbiType::new(
-                &make_bool_type().string().unwrap(),
+                &AbiType::bool().to_string(),
                 AbiValue::Bool(i == 0),
             ));
         }
@@ -991,7 +980,7 @@ mod test_roundrip {
             let address = Address(address_encode.try_into().unwrap());
 
             test_value_pool[4].push(RawValueWithAbiType::new(
-                &make_address_type().string().unwrap(),
+                &AbiType::address().to_string(),
                 AbiValue::Address(address),
             ));
         }
@@ -1005,7 +994,7 @@ mod test_roundrip {
                     .collect();
 
                 test_value_pool[5].push(RawValueWithAbiType::new(
-                    &make_string_type().string().unwrap(),
+                    &AbiType::string().to_string(),
                     AbiValue::String(gen_string),
                 ));
             }

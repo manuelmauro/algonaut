@@ -71,7 +71,7 @@ pub struct ApiTransaction {
     pub accounts: Option<Vec<Address>>,
 
     #[serde(rename = "apep", skip_serializing_if = "Option::is_none")]
-    pub extra_pages: Option<u64>,
+    pub extra_pages: Option<u32>,
 
     #[serde(rename = "apfa", skip_serializing_if = "Option::is_none")]
     pub foreign_apps: Option<Vec<u64>>,
@@ -553,6 +553,7 @@ impl From<ApiAssetParams> for AssetParams {
     }
 }
 
+// TODO move this somewhere else and make api_model non pub again
 pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
     match type_ {
         TransactionType::Payment(_) => TransactionTypeEnum::Payment,

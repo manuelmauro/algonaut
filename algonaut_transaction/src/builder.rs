@@ -624,7 +624,7 @@ pub struct CreateApplication {
     foreign_assets: Option<Vec<u64>>,
     global_state_schema: Option<StateSchema>,
     local_state_schema: Option<StateSchema>,
-    extra_pages: u64,
+    extra_pages: u32,
 }
 
 impl CreateApplication {
@@ -669,7 +669,7 @@ impl CreateApplication {
         self
     }
 
-    pub fn extra_pages(mut self, extra_pages: u64) -> Self {
+    pub fn extra_pages(mut self, extra_pages: u32) -> Self {
         self.extra_pages = extra_pages;
         self
     }
@@ -769,10 +769,11 @@ pub struct CallApplication {
     app_arguments: Option<Vec<Vec<u8>>>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
+    on_complete: ApplicationCallOnComplete,
 }
 
 impl CallApplication {
-    pub fn new(sender: Address, app_id: u64) -> Self {
+    pub fn new(sender: Address, app_id: u64, on_complete: ApplicationCallOnComplete) -> Self {
         CallApplication {
             sender,
             app_id,
@@ -780,6 +781,7 @@ impl CallApplication {
             app_arguments: None,
             foreign_apps: None,
             foreign_assets: None,
+            on_complete,
         }
     }
 
@@ -807,7 +809,7 @@ impl CallApplication {
         TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
-            on_complete: ApplicationCallOnComplete::NoOp,
+            on_complete: self.on_complete,
             accounts: self.accounts,
             approval_program: None,
             app_arguments: self.app_arguments,

@@ -321,3 +321,11 @@ mod tests {
         );
     }
 }
+
+/// Returns the address corresponding to an application's escrow account.
+pub fn to_app_address(app_id: u64) -> Address {
+    let bytes = app_id.to_be_bytes();
+    let all_bytes = ["appID".as_bytes(), &bytes].concat();
+    let hash = sha2::Sha512_256::digest(all_bytes);
+    Address(hash.into())
+}

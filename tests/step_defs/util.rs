@@ -1,12 +1,13 @@
 use std::{
     convert::TryInto,
     error::Error,
+    fs,
     num::ParseIntError,
     time::{Duration, Instant},
 };
 
 use algonaut::{algod::v2::Algod, error::ServiceError};
-use algonaut_core::Address;
+use algonaut_core::{Address, CompiledTeal};
 use algonaut_model::{algod::v2::PendingTransaction, kmd::v1::ExportKeyResponse};
 use algonaut_transaction::account::Account;
 
@@ -72,4 +73,14 @@ pub fn parse_app_args(args_str: String) -> Result<Vec<Vec<u8>>, Box<dyn Error>> 
 
 pub fn account_from_kmd_response(key_res: &ExportKeyResponse) -> Result<Account, Box<dyn Error>> {
     Ok(Account::from_seed(key_res.private_key[0..32].try_into()?))
+}
+
+pub async fn read_teal(algod: &Algod, file_name: &str) -> CompiledTeal {
+    let file_bytes = fs::read(&format!("tests/features/resources/{file_name}")).unwrap();
+
+    if file_name.ends_with(".teal") {
+        algod.compile_teal(&file_bytes).await.unwrap()
+    } else {
+        CompiledTeal(file_bytes)
+    }
 }

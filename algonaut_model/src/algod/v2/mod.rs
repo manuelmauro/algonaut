@@ -536,7 +536,10 @@ pub struct GenesisBlock {
 
 /// A transaction.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Transaction {}
+pub struct Transaction {
+    // #[serde(rename = "txId")]
+// pub tx_id: String,
+}
 
 /// A potentially truncated list of transactions currently in the node's transaction pool.
 /// You can compute whether or not the list is truncated if the number of elements in the
@@ -607,6 +610,16 @@ pub struct PendingTransaction {
     #[serde(rename = "sender-rewards")]
     pub sender_rewards: Option<u64>,
 
+    /// InnerTxns inner transactions produced by application execution.
+    #[serde(default, rename = "inner-txns", skip_serializing_if = "Vec::is_empty")]
+    pub inner_txs: Vec<PendingTransaction>,
+
+    /// Logs for the application being executed by this transaction.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    // #[serde(default)]
+    // pub logs: Vec<Vec<u8>>,
+    pub logs: Vec<String>,
+    // pub logs: Option<String>,
     /// The raw signed transaction.
     pub txn: Transaction,
 }
