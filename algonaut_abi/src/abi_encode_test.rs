@@ -20,7 +20,6 @@ mod test_encode {
             for _ in 0..1000 {
                 let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
 
-                // !! problem: large number: len is 1, and big int 32 bytes!
                 let expected = BigUint::from(random_int.clone())
                     .to_bytes_be_padded(size / 8)
                     .unwrap();
@@ -175,7 +174,6 @@ mod test_encode {
         let input_values: Vec<AbiValue> = inputs.into_iter().map(|b| AbiValue::Bool(*b)).collect();
 
         let expected: &[u8] = &[0b10011000];
-        // assert_eq!(format!("{:b}", x), "101010");
 
         assert_eq!(
             AbiType::static_array(AbiType::bool(), 5)

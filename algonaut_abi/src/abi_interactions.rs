@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::{collections::HashMap, convert::TryInto};
 
-// AnyTransactionType is the ABI argument type string for a nonspecific transaction argument
+/// ABI argument type string for a nonspecific transaction argument
 pub const ANY_TRANSACTION_TYPE: &str = "txn";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransactionArgType {
-    Any, // denotes a placeholder for any of the types below
+    Any, // placeholder for any of the types below
     One(TransactionTypeEnum),
 }
 
@@ -371,7 +371,7 @@ pub struct AbiInterface {
     pub methods: Vec<AbiMethod>,
 }
 
-/// ContractNetworkInfo contains network-specific information about the contract
+/// Network-specific information about the contract
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AbiContractNetworkInfo {
     /// The application ID of the contract for this network

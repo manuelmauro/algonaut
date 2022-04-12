@@ -8,7 +8,7 @@ use num_bigint::BigUint;
 use std::{collections::HashSet, convert::TryInto};
 
 impl AbiType {
-    /// ABI type method to encode abi values into bytes following ABI encoding rules
+    /// Encodes value into bytes following ABI encoding rules
     pub fn encode(&self, value: AbiValue) -> Result<Vec<u8>, AbiError> {
         match self {
             AbiType::UInt { bit_size } | AbiType::UFixed { bit_size, .. } => {
@@ -341,7 +341,7 @@ impl AbiType {
         AbiType::tuple(child_types)
     }
 
-    /// ByteLen method calculates the byte length of a static ABI type.
+    /// Calculates the byte length of a static ABI type.
     pub fn byte_len(&self) -> Result<usize, AbiError> {
         match self {
             AbiType::Address => Ok(ADDRESS_BYTE_SIZE),
