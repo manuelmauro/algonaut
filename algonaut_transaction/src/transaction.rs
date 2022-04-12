@@ -1,4 +1,3 @@
-use crate::account::Account;
 use crate::error::TransactionError;
 use algonaut_core::CompiledTeal;
 use algonaut_core::SignedLogic;
@@ -98,27 +97,25 @@ impl Transaction {
     }
 
     /// Estimates the size of the encoded transaction, used in calculating the fee.
-    // TODO Consider calculating this in a way that doesn't cause a `clone` to be necessary.
-    pub fn estimate_size(&self) -> Result<u64, TransactionError> {
-        let account = Account::generate();
-        let signed_transaction = account.sign_transaction(self.clone())?;
-        Ok(signed_transaction.to_msg_pack()?.len() as u64)
+    pub fn estimate_basic_sig_size(&self) -> Result<u64, TransactionError> {
+        // 75 is the number of bytes added to a txn after signing it
+        Ok(self.to_msg_pack()?.len() as u64 + 75)
     }
 
-    pub fn estimate_fee(
+    pub fn estimate_basic_sig_fee(
         &self,
         fee_per_byte: MicroAlgos,
         min_fee: MicroAlgos,
     ) -> Result<MicroAlgos, TransactionError> {
-        let total_fee = fee_per_byte * self.estimate_size()?;
+        let total_fee = fee_per_byte * self.estimate_basic_sig_size()?;
         Ok(min_fee.max(total_fee))
     }
 
-    pub fn estimate_fee_with_params(
+    pub fn estimate_basic_sig_fee_with_params(
         &self,
         params: &SuggestedTransactionParams,
     ) -> Result<MicroAlgos, TransactionError> {
-        self.estimate_fee(params.fee_per_byte, params.min_fee)
+        self.estimate_basic_sig_fee(params.fee_per_byte, params.min_fee)
     }
 
     /// The address of the account that signs and pays the fee.
