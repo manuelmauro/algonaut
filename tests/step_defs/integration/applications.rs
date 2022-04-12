@@ -5,7 +5,7 @@ use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,
     UpdateApplication,
 };
-use algonaut_transaction::transaction::{ApplicationCallOnComplete, StateSchema};
+use algonaut_transaction::transaction::StateSchema;
 use algonaut_transaction::{CreateApplication, TxnBuilder};
 use cucumber::{given, then, when};
 use data_encoding::BASE64;
@@ -96,16 +96,12 @@ async fn i_build_an_application_transaction(
         }
         "call" => {
             let app_id = w.app_id.unwrap();
-            CallApplication::new(
-                transient_account.address(),
-                app_id,
-                ApplicationCallOnComplete::NoOp,
-            )
-            .foreign_assets(foreign_assets)
-            .foreign_apps(foreign_apps)
-            .accounts(accounts)
-            .app_arguments(args)
-            .build()
+            CallApplication::new(transient_account.address(), app_id)
+                .foreign_assets(foreign_assets)
+                .foreign_apps(foreign_apps)
+                .accounts(accounts)
+                .app_arguments(args)
+                .build()
         }
         "optin" => {
             let app_id = w.app_id.unwrap();

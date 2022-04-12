@@ -769,11 +769,10 @@ pub struct CallApplication {
     app_arguments: Option<Vec<Vec<u8>>>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
-    on_complete: ApplicationCallOnComplete,
 }
 
 impl CallApplication {
-    pub fn new(sender: Address, app_id: u64, on_complete: ApplicationCallOnComplete) -> Self {
+    pub fn new(sender: Address, app_id: u64) -> Self {
         CallApplication {
             sender,
             app_id,
@@ -781,7 +780,6 @@ impl CallApplication {
             app_arguments: None,
             foreign_apps: None,
             foreign_assets: None,
-            on_complete,
         }
     }
 
@@ -809,7 +807,7 @@ impl CallApplication {
         TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
-            on_complete: self.on_complete,
+            on_complete: ApplicationCallOnComplete::NoOp,
             accounts: self.accounts,
             approval_program: None,
             app_arguments: self.app_arguments,

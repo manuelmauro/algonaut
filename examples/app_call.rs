@@ -2,7 +2,6 @@ use algonaut::algod::v2::Algod;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::CallApplication;
 use algonaut::transaction::TxnBuilder;
-use algonaut_transaction::transaction::ApplicationCallOnComplete;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -31,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // int 1
     let t = TxnBuilder::with(
         &params,
-        CallApplication::new(sender.address(), 5, ApplicationCallOnComplete::NoOp)
+        CallApplication::new(sender.address(), 5)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )
