@@ -5,6 +5,7 @@ use data_encoding::BASE32_NOPAD;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use std::fmt::{self, Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 type ChecksumAlg = sha2::Sha512_256;
@@ -13,7 +14,7 @@ const CHECKSUM_LEN: usize = 4;
 const HASH_LEN: usize = 32;
 
 /// Public key address
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq)]
 pub struct Address(pub [u8; HASH_LEN]);
 
 impl Address {
@@ -57,6 +58,18 @@ impl Address {
         let mut message_to_verify = b"MX".to_vec();
         message_to_verify.extend_from_slice(message);
         self.as_public_key().verify(&message_to_verify, signature)
+    }
+}
+
+impl Hash for Address {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+
+impl PartialEq for Address {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
     }
 }
 
