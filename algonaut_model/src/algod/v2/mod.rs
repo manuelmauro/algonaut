@@ -4,6 +4,8 @@ use algonaut_encoding::deserialize_bytes;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
+use crate::transaction::ApiSignedTransaction;
+
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Account {
@@ -377,7 +379,7 @@ pub struct DryrunRequest {
 
     pub sources: Vec<DryrunSource>,
 
-    pub txns: Vec<String>,
+    pub txns: Vec<ApiSignedTransaction>,
 }
 
 /// DryrunSource is TEAL source text that gets uploaded, compiled, and inserted into transactions

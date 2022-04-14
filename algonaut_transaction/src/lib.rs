@@ -1,5 +1,5 @@
 pub mod account;
-pub mod api_model; // TODO revert pub
+mod api_model;
 pub mod auction;
 pub mod builder;
 pub mod contract_account;

@@ -1,9 +1,9 @@
-use algonaut_core::{Address, CompiledTeal, LogicSignature, MicroAlgos, Round, SignedLogic};
+use algonaut_core::{Address, CompiledTeal, LogicSignature, MicroAlgos, Round};
 use algonaut_core::{MultisigAddress, ToMsgPack};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::account::Account;
 use algonaut_transaction::builder::TxnFee;
-use algonaut_transaction::transaction::TransactionSignature;
+use algonaut_transaction::transaction::{TransactionSignature, SignedLogic};
 use algonaut_transaction::{Pay, SignedTransaction, TxnBuilder};
 use data_encoding::{BASE64, HEXLOWER};
 use std::convert::TryInto;
