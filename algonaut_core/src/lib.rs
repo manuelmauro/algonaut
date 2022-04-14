@@ -162,7 +162,6 @@ impl VrfPk {
     }
 }
 
-
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct CompiledTeal(pub Vec<u8>);
 

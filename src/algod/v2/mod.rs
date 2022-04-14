@@ -167,7 +167,8 @@ impl Algod {
     /// This endpoint is only enabled when a node's configureation file sets EnableDeveloperAPI
     /// to true.
     pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, ServiceError> {
-        Ok(self.client.dryrun_teal(req).await?)
+        let bytes = req.to_msg_pack()?;
+        Ok(self.client.dryrun_teal(bytes).await?)
     }
 
     /// Broadcasts a transaction to the network.
