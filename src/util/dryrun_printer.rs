@@ -129,6 +129,16 @@ fn to_application(app_call: &ApplicationCallTransaction, sender: &Address) -> Ap
 pub struct StackPrinterConfig {
     pub max_column_widths: MaxColumnWidths,
     pub top_of_stack_first: bool,
+    pub bytes_format: BytesFormat,
+}
+
+#[derive(Debug, Clone)]
+pub enum BytesFormat {
+    /// Displays byte values as hex
+    Hex,
+    /// Tries to decode byte values as addresses, if it fails, uses hex
+    AddressOrHex,
+}
 
 #[derive(Debug, Clone)]
 pub struct MaxColumnWidths {
@@ -152,6 +162,7 @@ impl Default for StackPrinterConfig {
         Self {
             max_column_widths: MaxColumnWidths::default(),
             top_of_stack_first: false,
+            bytes_format: BytesFormat::Hex,
         }
     }
 }
@@ -165,14 +176,11 @@ fn truncate(s: &str, max_len: usize) -> String {
     }
 }
 
-fn stack_to_str(stack: &[TealValue]) -> Result<String, ServiceError> {
+fn stack_to_str(stack: &[TealValue], bytes_format: &BytesFormat) -> Result<String, ServiceError> {
     let mut elems = vec![];
     for value in stack {
         match value.value_type {
-            1 => {
-                let hex_encoded = format!("0x{}", HEXLOWER.encode(&value.bytes));
-                elems.push(hex_encoded);
-            }
+            1 => elems.push(bytes_to_str(&value.bytes, bytes_format)),
             2 => elems.push(value.uint.to_string()),
             _ => {}
         }
@@ -181,9 +189,20 @@ fn stack_to_str(stack: &[TealValue]) -> Result<String, ServiceError> {
     Ok(format!("[{}]", elems.join(", ")))
 }
 
+fn bytes_to_str(bytes: &[u8], format: &BytesFormat) -> String {
+    match format {
+        BytesFormat::Hex => to_hex_str(bytes),
+        BytesFormat::AddressOrHex => bytes
+            .try_into()
+            .map(|array| Address(array).to_string())
+            .unwrap_or_else(|_| to_hex_str(bytes)),
+    }
+}
+
 fn scratch_to_str(
     prev_scratch: &[TealValue],
     cur_scratch: &[TealValue],
+    bytes_format: &BytesFormat,
 ) -> Result<String, ServiceError> {
     if cur_scratch.is_empty() {
         return Ok("".to_owned());
@@ -202,8 +221,8 @@ fn scratch_to_str(
     Ok(if let Some(new_index) = new_index {
         let value = &cur_scratch[new_index];
         if !value.bytes.is_empty() {
-            let new_value = address_bytes_to_hex(&value.bytes)?;
-            format!("{} = {}", new_index, new_value)
+            let str = bytes_to_str(&value.bytes, bytes_format);
+            format!("{} = {}", new_index, str)
         } else {
             format!("{} = {}", new_index, value.uint)
         }
@@ -250,7 +269,7 @@ fn trace(
             format!("{:3}", s.line.to_string()),
             truncate(&src, config.max_column_widths.source),
             truncate(
-                &scratch_to_str(&prev_scratch, cur_scratch)?,
+                &scratch_to_str(&prev_scratch, cur_scratch, &config.bytes_format)?,
                 config.max_column_widths.scratch,
             ),
             truncate(
@@ -316,13 +335,8 @@ pub fn lsig_trace_with_config(
     trace(&dryrun_res.logic_sig_trace, &dryrun_res.disassembly, config)
 }
 
-fn address_bytes_to_hex(bytes: &[u8]) -> Result<String, ServiceError> {
-    let address = Address(
-        bytes
-            .try_into()
-            .map_err(|e| ServiceError::Msg(format!("Error: {e}")))?,
-    );
-    Ok(format!("0x{}", HEXLOWER.encode(&address.0)))
+fn to_hex_str(bytes: &[u8]) -> String {
+    format!("0x{}", HEXLOWER.encode(bytes))
 }
 
 fn to_application_state_schema(schema: StateSchema) -> ApplicationStateSchema {
