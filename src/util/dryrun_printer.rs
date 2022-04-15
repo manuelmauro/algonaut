@@ -127,14 +127,30 @@ fn to_application(app_call: &ApplicationCallTransaction, sender: &Address) -> Ap
 /// printing the trace from a DryrunTxnResult.
 #[derive(Debug, Clone)]
 pub struct StackPrinterConfig {
-    pub max_value_width: usize,
+    pub max_column_widths: MaxColumnWidths,
     pub top_of_stack_first: bool,
+
+#[derive(Debug, Clone)]
+pub struct MaxColumnWidths {
+    pub source: usize,
+    pub scratch: usize,
+    pub stack: usize,
+}
+
+impl Default for MaxColumnWidths {
+    fn default() -> Self {
+        Self {
+            source: DEFAULT_MAX_WIDTH,
+            scratch: DEFAULT_MAX_WIDTH,
+            stack: DEFAULT_MAX_WIDTH,
+        }
+    }
 }
 
 impl Default for StackPrinterConfig {
     fn default() -> Self {
         Self {
-            max_value_width: DEFAULT_MAX_WIDTH,
+            max_column_widths: MaxColumnWidths::default(),
             top_of_stack_first: false,
         }
     }
@@ -232,12 +248,15 @@ fn trace(
         lines.push(vec![
             format!("{:3}", s.pc.to_string()),
             format!("{:3}", s.line.to_string()),
-            truncate(&src, config.max_value_width),
+            truncate(&src, config.max_column_widths.source),
             truncate(
                 &scratch_to_str(&prev_scratch, cur_scratch)?,
-                config.max_value_width,
+                config.max_column_widths.scratch,
             ),
-            truncate(&stack_to_str(&stack)?, config.max_value_width),
+            truncate(
+                &stack_to_str(&stack, &config.bytes_format)?,
+                config.max_column_widths.stack,
+            ),
         ]);
     }
 
