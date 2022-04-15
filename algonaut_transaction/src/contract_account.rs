@@ -1,6 +1,6 @@
 use crate::error::TransactionError;
-use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
-use algonaut_core::{Address, CompiledTeal, LogicSignature, SignedLogic};
+use crate::transaction::{SignedLogic, SignedTransaction, Transaction, TransactionSignature};
+use algonaut_core::{Address, CompiledTeal, LogicSignature};
 use serde::{Deserialize, Serialize};
 
 /// Convenience CompiledTeal "view", used to sign as contract account.

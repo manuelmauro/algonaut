@@ -4,6 +4,7 @@ use algonaut_encoding::U8_32Visitor;
 use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
 use error::CoreError;
+pub use multisig::MultisigSignature;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use sha2::Digest;
 use static_assertions::_core::ops::{Add, Sub};
@@ -13,7 +14,6 @@ use std::ops::Mul;
 
 pub use address::Address;
 pub use address::MultisigAddress;
-pub use multisig::MultisigSignature;
 pub use multisig::MultisigSubsig;
 
 mod address;
@@ -162,46 +162,6 @@ impl VrfPk {
     }
 }
 
-#[derive(Eq, PartialEq, Clone)]
-pub struct SignedLogic {
-    pub logic: CompiledTeal,
-    pub args: Vec<Vec<u8>>,
-    pub sig: LogicSignature,
-}
-
-impl SignedLogic {
-    pub fn as_address(&self) -> Address {
-        Address(sha2::Sha512_256::digest(&self.logic.bytes_to_sign()).into())
-    }
-
-    /// Performs signature verification against the sender address, and general consistency checks.
-    pub fn verify(&self, address: Address) -> bool {
-        match &self.sig {
-            LogicSignature::ContractAccount => self.as_address() == address,
-            LogicSignature::DelegatedSig(sig) => {
-                let pk = address.as_public_key();
-                pk.verify(&self.logic.bytes_to_sign(), sig)
-            }
-            LogicSignature::DelegatedMultiSig(msig) => msig.verify(&self.logic.bytes_to_sign()),
-        }
-    }
-}
-
-impl Debug for SignedLogic {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "logic: {:?}, args: {:?}, sig: {:?}",
-            BASE64.encode(&self.logic.0),
-            self.args
-                .iter()
-                .map(|a| BASE64.encode(a))
-                .collect::<Vec<String>>(),
-            self.sig
-        )
-    }
-}
-
 #[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct CompiledTeal(pub Vec<u8>);
 
@@ -291,6 +251,14 @@ impl TransactionTypeEnum {
     }
 }
 
+/// Returns the address corresponding to an application's escrow account.
+pub fn to_app_address(app_id: u64) -> Address {
+    let bytes = app_id.to_be_bytes();
+    let all_bytes = ["appID".as_bytes(), &bytes].concat();
+    let hash = sha2::Sha512_256::digest(all_bytes);
+    Address(hash.into())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -320,12 +288,4 @@ mod tests {
             Address::new(digest.0).to_string()
         );
     }
-}
-
-/// Returns the address corresponding to an application's escrow account.
-pub fn to_app_address(app_id: u64) -> Address {
-    let bytes = app_id.to_be_bytes();
-    let all_bytes = ["appID".as_bytes(), &bytes].concat();
-    let hash = sha2::Sha512_256::digest(all_bytes);
-    Address(hash.into())
 }

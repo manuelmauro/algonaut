@@ -12,10 +12,11 @@ use algonaut_core::{Address, CompiledTeal, SuggestedTransactionParams};
 use algonaut_crypto::HashDigest;
 use algonaut_model::algod::v2::PendingTransaction;
 use algonaut_transaction::{
-    api_model::to_tx_type_enum,
     builder::TxnFee,
     error::TransactionError,
-    transaction::{ApplicationCallOnComplete, ApplicationCallTransaction, StateSchema},
+    transaction::{
+        to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction, StateSchema,
+    },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType, TxnBuilder,
 };

@@ -1,8 +1,6 @@
+use algonaut_core::{CompiledTeal, LogicSignature, MultisigAddress};
+use algonaut_transaction::{account::Account, error::TransactionError, transaction::SignedLogic};
 use std::error::Error;
-
-use algonaut_core::{CompiledTeal, LogicSignature, MultisigAddress, SignedLogic};
-
-use algonaut_transaction::{account::Account, error::TransactionError};
 use tokio::test;
 
 // Reference:

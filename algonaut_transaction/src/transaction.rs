@@ -1,14 +1,21 @@
 use crate::error::TransactionError;
 use algonaut_core::CompiledTeal;
-use algonaut_core::SignedLogic;
+use algonaut_core::LogicSignature;
 use algonaut_core::SuggestedTransactionParams;
 use algonaut_core::ToMsgPack;
+use algonaut_core::TransactionTypeEnum;
 use algonaut_core::{Address, MultisigSignature};
 use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
+use algonaut_model::transaction::ApiSignedLogic;
 use data_encoding::BASE32_NOPAD;
+use data_encoding::BASE64;
 use sha2::Digest;
+use std::convert::TryFrom;
+use std::fmt;
+use std::fmt::Debug;
+use std::fmt::Formatter;
 
 /// Enum containing the types of transactions and their specific fields
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -406,4 +413,81 @@ pub enum TransactionSignature {
     Single(Signature),
     Multi(MultisigSignature),
     Logic(SignedLogic),
+}
+
+pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
+    match type_ {
+        TransactionType::Payment(_) => TransactionTypeEnum::Payment,
+        TransactionType::KeyRegistration(_) => TransactionTypeEnum::KeyRegistration,
+        TransactionType::AssetConfigurationTransaction(_) => {
+            TransactionTypeEnum::AssetConfiguration
+        }
+        TransactionType::AssetTransferTransaction(_)
+        | TransactionType::AssetAcceptTransaction(_)
+        | TransactionType::AssetClawbackTransaction(_) => TransactionTypeEnum::AssetTransfer,
+        TransactionType::AssetFreezeTransaction(_) => TransactionTypeEnum::AssetFreeze,
+        TransactionType::ApplicationCallTransaction(_) => TransactionTypeEnum::ApplicationCall,
+    }
+}
+
+#[derive(Eq, PartialEq, Clone)]
+pub struct SignedLogic {
+    pub logic: CompiledTeal,
+    pub args: Vec<Vec<u8>>,
+    pub sig: LogicSignature,
+}
+
+impl SignedLogic {
+    pub fn as_address(&self) -> Address {
+        Address(sha2::Sha512_256::digest(&self.logic.bytes_to_sign()).into())
+    }
+
+    /// Performs signature verification against the sender address, and general consistency checks.
+    pub fn verify(&self, address: Address) -> bool {
+        match &self.sig {
+            LogicSignature::ContractAccount => self.as_address() == address,
+            LogicSignature::DelegatedSig(sig) => {
+                let pk = address.as_public_key();
+                pk.verify(&self.logic.bytes_to_sign(), sig)
+            }
+            LogicSignature::DelegatedMultiSig(msig) => msig.verify(&self.logic.bytes_to_sign()),
+        }
+    }
+}
+
+impl Debug for SignedLogic {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "logic: {:?}, args: {:?}, sig: {:?}",
+            BASE64.encode(&self.logic.0),
+            self.args
+                .iter()
+                .map(|a| BASE64.encode(a))
+                .collect::<Vec<String>>(),
+            self.sig
+        )
+    }
+}
+
+impl TryFrom<ApiSignedLogic> for SignedLogic {
+    type Error = TransactionError;
+
+    fn try_from(s: ApiSignedLogic) -> Result<Self, Self::Error> {
+        let sig = match (s.sig, s.msig) {
+            (Some(sig), None) => LogicSignature::DelegatedSig(sig),
+            (None, Some(msig)) => LogicSignature::DelegatedMultiSig(msig),
+            (None, None) => LogicSignature::ContractAccount,
+            _ => {
+                return Err(TransactionError::Deserialization(
+                    "Invalid sig/msig combination".to_owned(),
+                ))
+            }
+        };
+        Ok(SignedLogic {
+            logic: CompiledTeal(s.logic),
+            args: s.args.into_iter().map(|a| a.0).collect(),
+            sig,
+        })
+    }
 }

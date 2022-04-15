@@ -3,8 +3,8 @@ use crate::extensions::reqwest::{to_header_map, ResponseExt};
 use crate::Headers;
 use algonaut_core::{Address, Round};
 use algonaut_model::algod::v2::{
-    Account, ApiCompiledTeal, Application, Asset, Block, Catchup, DryrunRequest, DryrunResponse,
-    GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
+    Account, ApiCompiledTeal, Application, Asset, Block, Catchup, DryrunResponse, GenesisBlock,
+    KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
     TransactionParams, TransactionResponse, Version,
 };
 use reqwest::header::HeaderMap;
@@ -285,13 +285,13 @@ impl Client {
         Ok(response)
     }
 
-    pub async fn dryrun_teal(&self, req: &DryrunRequest) -> Result<DryrunResponse, ClientError> {
+    pub async fn dryrun_teal(&self, req: Vec<u8>) -> Result<DryrunResponse, ClientError> {
         let response = self
             .http_client
             .post(&format!("{}v2/teal/dryrun", self.url))
             .headers(self.headers.clone())
-            .header("Content-Type", "application/json")
-            .json(req)
+            .header("Content-Type", "application/x-binary")
+            .body(req)
             .send()
             .await?
             .http_error_for_status()

@@ -1,8 +1,10 @@
-use algonaut_core::{Address, MicroAlgos, Round};
+use algonaut_core::{Address, MicroAlgos, Round, ToMsgPack};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::deserialize_bytes;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
+
+use crate::transaction::ApiSignedTransaction;
 
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -377,8 +379,10 @@ pub struct DryrunRequest {
 
     pub sources: Vec<DryrunSource>,
 
-    pub txns: Vec<String>,
+    pub txns: Vec<ApiSignedTransaction>,
 }
+
+impl ToMsgPack for DryrunRequest {}
 
 /// DryrunSource is TEAL source text that gets uploaded, compiled, and inserted into transactions
 /// or application state.
@@ -404,7 +408,7 @@ pub struct DryrunSource {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunState {
     /// Evaluation error if any
-    pub error: String,
+    pub error: Option<String>,
 
     /// Line number
     pub line: u64,
@@ -412,6 +416,7 @@ pub struct DryrunState {
     /// Program counter
     pub pc: u64,
 
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub scratch: Vec<TealValue>,
 
     pub stack: Vec<TealValue>,
@@ -421,13 +426,28 @@ pub struct DryrunState {
 /// and state updates from a dryrun.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunTxnResult {
-    #[serde(rename = "app-call-messages")]
+    #[serde(
+        default,
+        rename = "app-call-messages",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub app_call_messages: Vec<String>,
 
-    #[serde(rename = "app-call-trace")]
+    #[serde(
+        default,
+        rename = "app-call-trace",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub app_call_trace: Vec<DryrunState>,
 
     /// Disassembled program line by line.
+    /// Documented as required, but for some reason the API can send null (which is unusual, normally keys with null values are omitted)
+    /// so it has to be marked as optional.
+    // pub disassembly: Option<Vec<String>>,
+    #[serde(
+        skip_serializing_if = "Vec::is_empty",
+        deserialize_with = "deserialize_vec_opt_to_vec"
+    )]
     pub disassembly: Vec<String>,
 
     #[serde(
@@ -437,26 +457,50 @@ pub struct DryrunTxnResult {
     )]
     pub global_delta: Vec<EvalDeltaKeyValue>,
 
-    #[serde(rename = "local-deltas")]
+    #[serde(
+        default,
+        rename = "local-deltas",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub local_deltas: Vec<AccountStateDelta>,
 
-    #[serde(rename = "logic-sig-messages")]
+    #[serde(
+        default,
+        rename = "logic-sig-messages",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub logic_sig_messages: Vec<String>,
 
-    #[serde(rename = "logic-sig-trace")]
+    #[serde(
+        default,
+        rename = "logic-sig-trace",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub logic_sig_trace: Vec<DryrunState>,
+
+    /// Logs for the application being executed by this transaction.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub logs: Vec<String>,
+}
+
+fn deserialize_vec_opt_to_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: Option<Vec<String>> = Deserialize::deserialize(deserializer)?;
+    Ok(s.unwrap_or_default())
 }
 
 /// DryrunResponse
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DryrunResponse {
-    pub error: String,
+    pub error: Option<String>,
 
     /// Protocol version is the protocol version Dryrun was operated under.
     #[serde(rename = "protocol-version")]
     pub protocol_version: String,
 
-    #[serde(rename = "logic-sig-trace")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub txns: Vec<DryrunTxnResult>,
 }
 
@@ -616,10 +660,8 @@ pub struct PendingTransaction {
 
     /// Logs for the application being executed by this transaction.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    // #[serde(default)]
-    // pub logs: Vec<Vec<u8>>,
     pub logs: Vec<String>,
-    // pub logs: Option<String>,
+
     /// The raw signed transaction.
     pub txn: Transaction,
 }
