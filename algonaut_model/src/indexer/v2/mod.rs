@@ -86,6 +86,10 @@ pub struct QueryAccountTransaction {
     #[serde(rename = "after-time", skip_serializing_if = "Option::is_none")]
     pub after_time: Option<String>,
 
+    /// Application ID
+    #[serde(rename = "application-id", skip_serializing_if = "Option::is_none")]
+    pub application_id: Option<u64>,
+
     /// Asset ID
     #[serde(rename = "asset-id", skip_serializing_if = "Option::is_none")]
     pub asset_id: Option<u64>,
@@ -837,10 +841,6 @@ pub struct AssetHolding {
     #[serde(rename = "asset-id")]
     pub asset_id: u64,
 
-    /// Address that created this asset. This is the address where the parameters for this asset can
-    /// be found, and also the address where unwanted asset units can be sent in the worst case.
-    pub creator: String,
-
     /// Whether or not the asset holding is currently deleted from its account.
     pub deleted: Option<bool>,
 
@@ -1264,9 +1264,13 @@ pub struct Transaction {
     /// `gh` Hash of genesis block.
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
-    #[serde_as(as = "DisplayFromStr")]
-    #[serde(rename = "genesis-hash")]
-    pub genesis_hash: HashDigest,
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    #[serde(
+        default,
+        rename = "genesis-hash",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub genesis_hash: Option<HashDigest>,
 
     /// `gen` genesis block ID.
     #[serde(rename = "genesis-id")]
@@ -1284,7 +1288,11 @@ pub struct Transaction {
     pub group: Option<String>,
 
     /// Transaction ID
-    pub id: String,
+    pub id: Option<String>,
+
+    /// Inner transactions produced by application execution.
+    #[serde(default, rename = "inner-txns", skip_serializing_if = "Vec::is_empty")]
+    pub inner_txns: Vec<Transaction>,
 
     /// Offset into the round where this transaction was confirmed.
     #[serde(rename = "intra-round-offset")]
