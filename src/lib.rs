@@ -17,4 +17,4 @@ pub mod atomic_transaction_composer;
 pub mod error;
 pub mod indexer;
 pub mod kmd;
-mod util;
+pub mod util;
