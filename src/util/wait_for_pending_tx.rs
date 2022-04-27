@@ -1,3 +1,4 @@
+use super::sleep;
 use crate::{algod::v2::Algod, error::ServiceError, model::algod::v2::PendingTransaction};
 use instant::Instant;
 use std::time::Duration;
@@ -21,14 +22,4 @@ pub async fn wait_for_pending_transaction(
         }
         sleep(250).await;
     }
-}
-
-#[cfg(target_arch = "wasm32")]
-pub async fn sleep(ms: u32) {
-    gloo_timers::future::TimeoutFuture::new(ms).await;
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub async fn sleep(ms: u32) {
-    futures_timer::Delay::new(std::time::Duration::from_millis(ms as u64)).await;
 }
