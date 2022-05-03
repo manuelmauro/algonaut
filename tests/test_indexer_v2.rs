@@ -81,6 +81,7 @@ async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
 
     let query = QueryAccountTransaction {
+        application_id: None,
         after_time: None,
         asset_id: None,
         before_time: None,
