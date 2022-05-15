@@ -1,3 +1,4 @@
+use crate::account::auth_address;
 use crate::error::TransactionError;
 use crate::transaction::{SignedLogic, SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{Address, CompiledTeal, LogicSignature};
@@ -28,6 +29,7 @@ impl ContractAccount {
         transaction: Transaction,
         args: Vec<Vec<u8>>,
     ) -> Result<SignedTransaction, TransactionError> {
+        let auth_address = auth_address(&transaction, &self.address);
         Ok(SignedTransaction {
             transaction_id: transaction.id()?,
             transaction,
@@ -36,6 +38,7 @@ impl ContractAccount {
                 args,
                 sig: LogicSignature::ContractAccount,
             }),
+            auth_address,
         })
     }
 }

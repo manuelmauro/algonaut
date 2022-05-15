@@ -129,10 +129,12 @@ impl Account {
     ) -> Result<SignedTransaction, TransactionError> {
         let transaction_id = transaction.id()?;
         let sig = TransactionSignature::Single(self.generate_transaction_sig(&transaction)?);
+        let auth_address = auth_address(&transaction, &self.address);
         Ok(SignedTransaction {
             transaction,
             transaction_id,
             sig,
+            auth_address,
         })
     }
 
@@ -241,6 +243,13 @@ impl Account {
             .collect();
         Ok(MultisigSignature { subsigs, ..msig })
     }
+}
+
+/// Returns auth address to be set in signed transaction
+pub(crate) fn auth_address(tx: &Transaction, signing_account_address: &Address) -> Option<Address> {
+    (&tx.sender() != signing_account_address)
+        .then(|| signing_account_address)
+        .copied()
 }
 
 #[cfg(test)]
