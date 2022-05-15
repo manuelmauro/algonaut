@@ -46,6 +46,7 @@ int 1
             args: vec![],
             sig: LogicSignature::DelegatedSig(signature),
         }),
+        auth_address: None,
     };
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await;

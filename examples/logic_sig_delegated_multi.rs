@@ -52,6 +52,7 @@ int 1
         transaction: t,
         transaction_id: "".to_owned(),
         sig,
+        auth_address: None,
     };
 
     let send_response = algod.broadcast_signed_transaction(&signed_t).await;

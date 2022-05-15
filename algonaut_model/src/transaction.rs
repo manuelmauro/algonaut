@@ -185,6 +185,9 @@ pub struct ApiSignedTransaction {
     #[serde(rename = "txn")]
     pub transaction: ApiTransaction,
 
+    #[serde(rename = "sgnr")]
+    pub auth_address: Option<Address>,
+
     #[serde(skip)]
     pub transaction_id: String,
 }

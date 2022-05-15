@@ -62,6 +62,7 @@ fn sign_msig_tx(
             transaction_id: tx.id()?,
             transaction: tx,
             sig: TransactionSignature::Multi(msig),
+            auth_address: None,
         };
 
         Ok(signed_t)

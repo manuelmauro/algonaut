@@ -305,6 +305,7 @@ impl TryFrom<ApiSignedTransaction> for SignedTransaction {
             transaction: api_t.transaction.clone().try_into()?,
             transaction_id: api_t.transaction_id.clone(),
             sig: transaction_signature(&api_t)?,
+            auth_address: None,
         })
     }
 }
@@ -371,6 +372,7 @@ impl From<SignedTransaction> for ApiSignedTransaction {
             lsig: lsig.map(|l| l.into()),
             transaction: t.transaction.into(),
             transaction_id: t.transaction_id,
+            auth_address: t.auth_address,
         }
     }
 }

@@ -135,6 +135,7 @@ async fn test_sign_multisig_transaction() -> Result<(), Box<dyn Error>> {
         transaction: tx,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Multi(msig),
+        auth_address: None,
     };
 
     let enc = rmp_serde::to_vec_named(&signed_tx)?;
@@ -253,6 +254,7 @@ async fn test_logic_sig_transaction() -> Result<(), Box<dyn Error>> {
             args,
             sig: LogicSignature::DelegatedSig(signature),
         }),
+        auth_address: None,
     };
 
     let golden_tx = "gqRsc2lng6NhcmeSxAMxMjPEAzQ1NqFsxAUBIAEBIqNzaWfEQE6HXaI5K0lcq50o/y3bWOYsyw9TLi/oorZB4xaNdn1Z14351u2f6JTON478fl+JhIP4HNRRAIh/I8EWXBPpJQ2jdHhuiqNhbXTNB9CjZmVlzQPoomZ2zgAfeyGjZ2Vuq2Rldm5ldC12MS4womdoxCCwLc/t7ZJ1uookrS1uIJ0r211Klt7pd4IYp2g3OaWPQaJsds4AH38JpG5vdGXECPMTAk7i0PNdo3JjdsQge2ziT+tbrMCxZOKcIixX9fY9w4fUOQSCWEEcX+EPfAKjc25kxCDn8PhNBoEd+fMcjYeLEVX0Zx1RoYXCAJCGZ/RJWHBooaR0eXBlo3BheQ==";

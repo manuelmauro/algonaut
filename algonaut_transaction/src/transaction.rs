@@ -406,6 +406,7 @@ pub struct SignedTransaction {
     pub transaction: Transaction,
     pub transaction_id: String,
     pub sig: TransactionSignature,
+    pub auth_address: Option<Address>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
