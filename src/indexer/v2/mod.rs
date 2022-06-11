@@ -17,6 +17,8 @@ pub struct Indexer {
 
 impl Indexer {
     /// Build a v2 client for Algorand's indexer.
+    /// 
+    /// For third party providers / custom headers, use [with_headers](Self::with_headers).
     ///
     /// Returns an error if the url has an invalid format.
     pub fn new(url: &str) -> Result<Indexer, ServiceError> {
@@ -24,6 +26,7 @@ impl Indexer {
     }
 
     /// Build a v2 client for Algorand's indexer.
+    /// 
     /// Use this initializer when interfacing with third party services, that require custom headers.
     ///
     /// Returns an error if the url or the headers have an invalid format.

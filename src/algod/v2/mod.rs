@@ -17,6 +17,8 @@ pub struct Algod {
 
 impl Algod {
     /// Build a v2 client for Algorand protocol daemon.
+    /// 
+    /// For third party providers / custom headers, use [with_headers](Self::with_headers).
     ///
     /// Returns an error if the url or token have an invalid format.
     pub fn new(url: &str, token: &str) -> Result<Algod, ServiceError> {
@@ -27,6 +29,7 @@ impl Algod {
     }
 
     /// Build a v2 client for Algorand protocol daemon.
+    /// 
     /// Use this initializer when interfacing with third party services, that require custom headers.
     ///
     /// Returns an error if the url or headers have an invalid format.
