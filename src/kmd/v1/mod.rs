@@ -20,7 +20,7 @@ pub struct Kmd {
 
 impl Kmd {
     /// Build a v1 client for the Algorand key management daemon.
-    /// 
+    ///
     /// For third party providers / custom headers, use [with_headers](Self::with_headers).
     ///
     /// Returns an error if the url or token have an invalid format.
@@ -32,7 +32,7 @@ impl Kmd {
     }
 
     /// Build a v1 client for the Algorand key management daemon.
-    /// 
+    ///
     /// Use this initializer when interfacing with third party services, that require custom headers.
     ///
     /// Returns an error if the url or headers have an invalid format.

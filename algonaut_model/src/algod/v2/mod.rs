@@ -577,7 +577,7 @@ pub struct GenesisBlock {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Transaction {
     // #[serde(rename = "txId")]
-// pub tx_id: String,
+    // pub tx_id: String,
 }
 
 /// A potentially truncated list of transactions currently in the node's transaction pool.
