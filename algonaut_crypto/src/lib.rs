@@ -3,6 +3,7 @@ use data_encoding::{BASE32_NOPAD, BASE64};
 use fmt::Debug;
 use ring::signature::UnparsedPublicKey;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
@@ -82,12 +83,32 @@ impl<'de> Deserialize<'de> for Signature {
     }
 }
 
+impl AsRef<[u8]> for &HashDigest {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 impl Serialize for HashDigest {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        serializer.serialize_str(&base64::encode(self))
+    }
+}
+
+impl TryFrom<Vec<u8>> for HashDigest {
+    type Error = &'static str;
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        if value.len() != 32 {
+            return Err("Vec doesn't have correct length to convert into HashDigest");
+        }
+        let mut result = HashDigest([0; 32]);
+        for (idx, i) in value.iter().enumerate() {
+            result.0[idx] = *i;
+        }
+        Ok(result)
     }
 }
 
@@ -96,7 +117,10 @@ impl<'de> Deserialize<'de> for HashDigest {
     where
         D: Deserializer<'de>,
     {
-        Ok(HashDigest(deserializer.deserialize_bytes(U8_32Visitor)?))
+        let s = <&str>::deserialize(deserializer)?;
+        let v: Vec<u8> = base64::decode(s)
+            .map_err(|_| serde::de::Error::custom("error decoding b64 genesis"))?;
+        v.try_into().map_err(serde::de::Error::custom)
     }
 }
 
