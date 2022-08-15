@@ -195,7 +195,7 @@ pub struct ApiSignedTransaction {
 #[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct AppArgument(#[serde(with = "serde_bytes")] pub Vec<u8>);
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct ApiAssetParams {
     #[serde(rename = "am", skip_serializing_if = "Option::is_none")]
     pub meta_data_hash: Option<Vec<u8>>,

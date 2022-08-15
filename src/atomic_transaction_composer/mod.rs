@@ -660,11 +660,9 @@ fn add_to_foreign_array(
                 foreign_accounts,
                 Some(sender),
             )),
-            _ => {
-                return Err(ServiceError::Msg(format!(
-                    "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
-                )));
-            }
+            _ => Err(ServiceError::Msg(format!(
+                "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
+            ))),
         },
         ReferenceArgType::Asset => match arg_value.int() {
             Some(int) => {
@@ -674,11 +672,9 @@ fn add_to_foreign_array(
 
                 Ok(populate_foreign_array(intu64, foreign_assets, None))
             }
-            _ => {
-                return Err(ServiceError::Msg(format!(
-                    "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
-                )));
-            }
+            _ => Err(ServiceError::Msg(format!(
+                "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
+            ))),
         },
         ReferenceArgType::Application => match arg_value.int() {
             Some(int) => {
@@ -688,11 +684,9 @@ fn add_to_foreign_array(
 
                 Ok(populate_foreign_array(intu64, foreign_apps, Some(app_id)))
             }
-            _ => {
-                return Err(ServiceError::Msg(format!(
-                    "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
-                )));
-            }
+            _ => Err(ServiceError::Msg(format!(
+                "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
+            ))),
         },
     }
 }
