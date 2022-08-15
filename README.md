@@ -11,6 +11,14 @@
 
 Rust **algonaut** is a rusty SDK for [Algorand](https://www.algorand.com/). Please, be aware that this crate is a work in progress.
 
+## Installation
+
+⚠️ Use main. We're currently not maintaining releases.
+```toml
+algonaut = { git = "https://github.com/manuelmauro/algonaut", branch = "main" }
+```
+
+## Example
 ```rust
 use algonaut::algod::v2::Algod;
 use algonaut_core::MicroAlgos;
