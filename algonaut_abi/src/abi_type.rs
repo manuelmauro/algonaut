@@ -48,7 +48,7 @@ impl AbiType {
     pub fn children(&self) -> &[AbiType] {
         match self {
             AbiType::StaticArray { child_type, .. } | AbiType::DynamicArray { child_type, .. } => {
-                std::slice::from_ref(&*child_type)
+                std::slice::from_ref(child_type)
             }
             AbiType::Tuple { child_types, .. } => child_types,
             _ => &[],
@@ -110,7 +110,7 @@ impl AbiType {
     /// Makes `Uint` ABI type by taking a type bitSize argument.
     /// The range of type bitSize is [8, 512] and type bitSize % 8 == 0.
     pub fn uint(type_size: usize) -> Result<AbiType, AbiError> {
-        if type_size % 8 != 0 || type_size < 8 || type_size > 512 {
+        if type_size % 8 != 0 || !(8..=512).contains(&type_size) {
             return Err(AbiError::Msg(format!(
                 "unsupported uint type bitSize: {type_size}"
             )));

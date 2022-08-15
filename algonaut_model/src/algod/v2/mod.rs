@@ -780,7 +780,7 @@ pub struct Supply {
 }
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KeyRegistration {
     /// The fee to use when submitting key registration transactions. Defaults to the suggested fee.
     #[serde(rename = "fee")]

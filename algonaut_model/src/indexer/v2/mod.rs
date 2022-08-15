@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryAccount {
     /// Application ID.
     #[serde(rename = "application-id")]
@@ -41,7 +41,7 @@ pub struct QueryAccount {
 }
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountResponse {
     /// Accounts.
     pub accounts: Vec<Account>,
@@ -57,7 +57,7 @@ pub struct AccountResponse {
 }
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryAccountInfo {
     /// Include all items including closed accounts, deleted applications, destroyed assets,
     /// opted-out asset holdings, and closed-out application localstates.
@@ -69,7 +69,7 @@ pub struct QueryAccountInfo {
 }
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountInfoResponse {
     /// Account.
     pub account: Account,
@@ -80,7 +80,7 @@ pub struct AccountInfoResponse {
 }
 
 /// Query account transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryAccountTransaction {
     /// Include results after the given time. Must be an RFC 3339 formatted string.
     #[serde(rename = "after-time", skip_serializing_if = "Option::is_none")]
@@ -172,7 +172,7 @@ pub struct AccountTransactionResponse {
 }
 
 /// Query applications.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryApplications {
     /// Application ID.
     #[serde(rename = "application-id", skip_serializing_if = "Option::is_none")]
@@ -188,7 +188,7 @@ pub struct QueryApplications {
 }
 
 /// Response for applications/ endpoint.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ApplicationResponse {
     #[serde(rename = "applications")]
     pub applications: Vec<Application>,
@@ -202,7 +202,7 @@ pub struct ApplicationResponse {
     pub next_token: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryApplicationInfo {
     /// Include all items including closed accounts, deleted applications, destroyed assets,
     /// opted-out asset holdings, and closed-out application localstates.
@@ -211,7 +211,7 @@ pub struct QueryApplicationInfo {
 }
 
 /// Response for applications/id endpoint.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ApplicationInfoResponse {
     #[serde(rename = "application", skip_serializing_if = "Option::is_none")]
     pub application: Option<Box<Application>>,
@@ -222,7 +222,7 @@ pub struct ApplicationInfoResponse {
 }
 
 /// Query assets.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryAssets {
     /// Asset ID.
     #[serde(rename = "asset-id", skip_serializing_if = "Option::is_none")]
@@ -250,7 +250,7 @@ pub struct QueryAssets {
 }
 
 /// Assets response.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AssetResponse {
     #[serde(rename = "assets")]
     pub assets: Vec<Asset>,
@@ -264,7 +264,7 @@ pub struct AssetResponse {
     pub next_token: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryAssetsInfo {
     /// Include all items including closed accounts, deleted applications, destroyed assets,
     /// opted-out asset holdings, and closed-out application localstates.
@@ -273,7 +273,7 @@ pub struct QueryAssetsInfo {
 }
 
 /// Assets info response.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AssetsInfoResponse {
     #[serde(rename = "asset")]
     pub asset: Box<Asset>,
@@ -284,7 +284,7 @@ pub struct AssetsInfoResponse {
 }
 
 /// Query assets.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryBalances {
     /// Results should have an amount greater than this value. MicroAlgos are the default currency
     /// unless an asset-id is provided, in which case the asset will be used.
@@ -313,7 +313,7 @@ pub struct QueryBalances {
 }
 
 /// Balances response.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BalancesResponse {
     #[serde(rename = "balances")]
     pub balances: Vec<MiniAssetHolding>,
@@ -328,7 +328,7 @@ pub struct BalancesResponse {
 }
 
 /// Query assets transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryAssetTransaction {
     /// Only include transactions with this address in one of the transaction fields.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -426,7 +426,7 @@ pub struct AssetTransactionResponse {
 }
 
 /// Query transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct QueryTransaction {
     /// Only include transactions with this address in one of the transaction fields.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -542,7 +542,7 @@ pub struct TransactionInfoResponse {
 }
 
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Account {
     /// The account public key.
     #[serde_as(as = "DisplayFromStr")]
@@ -646,7 +646,7 @@ pub struct Account {
 }
 
 /// Signature types.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SignatureType {
     #[serde(rename = "sig")]
     Sig,
@@ -657,7 +657,7 @@ pub enum SignatureType {
 }
 
 /// AccountParticipation describes the parameters used by this account in consensus protocol.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountParticipation {
     /// `sel` Selection public key (if any) currently registered for this round.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
@@ -693,7 +693,7 @@ pub struct AccountParticipation {
 }
 
 /// Application state delta.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountStateDelta {
     /// Address
     pub address: String,
@@ -703,7 +703,7 @@ pub struct AccountStateDelta {
 }
 
 /// Application index and its parameters
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Application {
     /// Round when this application was created.
     #[serde(rename = "created-at-round")]
@@ -725,7 +725,7 @@ pub struct Application {
 }
 
 /// Stores local state associated with an application.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ApplicationLocalState {
     /// Round when account closed out of the application.
     #[serde(rename = "closed-out-at-round")]
@@ -752,7 +752,7 @@ pub struct ApplicationLocalState {
 
 /// Stores the global information associated with an application.
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ApplicationParams {
     /// `approv` approval program.
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
@@ -798,7 +798,7 @@ pub struct ApplicationParams {
 }
 
 /// Specifies maximums on the number of each type that may be stored.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ApplicationStateSchema {
     /// `nbs` num of byte slices.
     #[serde(rename = "num-byte-slice")]
@@ -810,7 +810,7 @@ pub struct ApplicationStateSchema {
 }
 
 /// Specifies both the unique identifier and the parameters for an asset
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Asset {
     /// Round during which this asset was created.
     #[serde(rename = "created-at-round")]
@@ -832,7 +832,7 @@ pub struct Asset {
 
 /// Describes an asset held by an account.
 /// Definition: data/basics/userBalance.go : AssetHolding
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AssetHolding {
     /// `a` number of units held.
     pub amount: u64,
@@ -861,7 +861,7 @@ pub struct AssetHolding {
 /// `apar` when part of an AssetConfig transaction.
 /// Definition: data/transactions/asset.go : AssetParams
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AssetParams {
     /// `c` Address of account used to clawback holdings of this asset. If empty, clawback is not
     /// permitted.
@@ -995,7 +995,7 @@ pub struct Block {
 }
 
 /// Fields relating to rewards.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BlockRewards {
     /// `fees` accepts transaction fees, it can only spend to the incentive pool.
     #[serde(rename = "fee-sink")]
@@ -1028,7 +1028,7 @@ pub struct BlockRewards {
 }
 
 /// Fields relating to a protocol upgrade.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BlockUpgradeState {
     /// `proto` The current protocol version.
     #[serde(rename = "current-protocol")]
@@ -1053,7 +1053,7 @@ pub struct BlockUpgradeState {
 }
 
 /// Fields relating to voting for a protocol upgrade.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BlockUpgradeVote {
     /// `upgradeyes` Indicates a yes vote for the current proposal.
     #[serde(rename = "upgrade-approve")]
@@ -1069,7 +1069,7 @@ pub struct BlockUpgradeVote {
 }
 
 /// An error response with optional data field.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ErrorResponse<T> {
     /// Error data.
     pub data: Option<T>,
@@ -1079,7 +1079,7 @@ pub struct ErrorResponse<T> {
 }
 
 /// Represents a TEAL value delta.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EvalDelta {
     /// `at` delta action.
     pub action: u64,
@@ -1092,7 +1092,7 @@ pub struct EvalDelta {
 }
 
 /// Key-value pairs for StateDelta.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EvalDeltaKeyValue {
     pub key: String,
 
@@ -1100,7 +1100,7 @@ pub struct EvalDeltaKeyValue {
 }
 
 /// A health check response.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HealthCheck<T> {
     pub data: Option<T>,
 
@@ -1116,7 +1116,7 @@ pub struct HealthCheck<T> {
 }
 
 /// A simplified version of AssetHolding
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MiniAssetHolding {
     ///
     pub address: String,
@@ -1149,7 +1149,7 @@ pub struct MiniAssetHolding {
 ///   * clear
 ///   * update
 ///   * delete
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OnCompletion {
     #[serde(rename = "noop")]
     Noop,
@@ -1171,7 +1171,7 @@ pub type StateDelta = Vec<EvalDeltaKeyValue>;
 /// Represents a `apls` local-state or `apgs` global-state schema. These schemas determine how
 /// much storage may be used in a local-state or global-state for an application. The more space
 /// used, the larger minimum balance must be maintained in the account holding the data.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StateSchema {
     /// Maximum number of TEAL byte slices that may be stored in the key/value store.
     #[serde(rename = "num-byte-slice")]
@@ -1183,14 +1183,14 @@ pub struct StateSchema {
 }
 
 /// Represents a key-value pair in an application store.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TealKeyValue {
     pub key: String,
     pub value: TealValue,
 }
 
 /// Represents a TEAL value.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TealValue {
     /// `tb` bytes value.
     #[serde(
@@ -1370,7 +1370,7 @@ pub struct Transaction {
 }
 
 /// All the possible types of transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TransactionType {
     #[serde(rename = "pay")]
     Payment,
@@ -1388,7 +1388,7 @@ pub enum TransactionType {
 
 #[serde_as]
 /// Fields for application transactions.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionApplication {
     /// `apat` List of accounts in addition to the sender that may be accessed from the application's
     /// approval-program and clear-state-program.
@@ -1460,7 +1460,7 @@ pub struct TransactionApplication {
 ///
 /// A zero value for asset-id indicates asset creation. A zero value for the params indicates asset
 /// destruction.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionAssetConfig {
     /// `xaid` ID of the asset being configured or empty if creating.
     #[serde(rename = "asset-id")]
@@ -1471,7 +1471,7 @@ pub struct TransactionAssetConfig {
 }
 
 /// Fields for an asset freeze transaction.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionAssetFreeze {
     /// `fadd` Address of the account whose asset is being frozen or thawed.
     pub address: String,
@@ -1486,7 +1486,7 @@ pub struct TransactionAssetFreeze {
 }
 
 /// Fields for an asset transfer transaction.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionAssetTransfer {
     /// `aamt` Amount of asset to transfer. A zero amount transferred to self allocates that asset
     /// in the account's Assets map.
@@ -1515,7 +1515,7 @@ pub struct TransactionAssetTransfer {
 }
 
 /// Fields for a keyreg transaction.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionKeyreg {
     /// `nonpart` Mark the account as participating or non-participating.
     #[serde(rename = "non-participation")]
@@ -1548,7 +1548,7 @@ pub struct TransactionKeyreg {
 }
 
 /// Fields for a payment transaction.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionPayment {
     /// `amt` number of MicroAlgos intended to be transferred.
     pub amount: MicroAlgos,
@@ -1568,7 +1568,7 @@ pub struct TransactionPayment {
 }
 
 /// Validation signature associated with some data. Only one of the signatures should be provided.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionSignature {
     /// Logic signature.
     pub logicsig: Option<TransactionSignatureLogicsig>,
@@ -1583,7 +1583,7 @@ pub struct TransactionSignature {
 }
 
 /// `lsig` Programatic transaction signature.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionSignatureLogicsig {
     /// `arg` Logic arguments, base64 encoded.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -1606,7 +1606,7 @@ pub struct TransactionSignatureLogicsig {
 }
 
 /// `msig` structure holding multiple subsignatures.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionSignatureMultisig {
     /// `subsig` holds pairs of public key and signatures.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -1620,7 +1620,7 @@ pub struct TransactionSignatureMultisig {
 }
 
 ///
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransactionSignatureMultisigSubsignature {
     /// `pk`
     ///
@@ -1635,7 +1635,7 @@ pub struct TransactionSignatureMultisigSubsignature {
 }
 
 /// Role types.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Role {
     #[serde(rename = "sender")]
     Sender,
