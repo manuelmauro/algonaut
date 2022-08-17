@@ -1380,7 +1380,7 @@ pub enum TransactionType {
     AssetConfigurationTransaction,
     #[serde(rename = "axfer")]
     AssetTransferTransaction,
-    #[serde(rename = "axfrz")]
+    #[serde(rename = "afrz")]
     AssetFreezeTransaction,
     #[serde(rename = "appl")]
     ApplicationTransaction,
