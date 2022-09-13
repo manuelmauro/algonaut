@@ -3,9 +3,9 @@ use crate::extensions::reqwest::{to_header_map, ResponseExt};
 use crate::Headers;
 use algonaut_core::{Address, Round};
 use algonaut_model::algod::v2::{
-    Account, ApiCompiledTeal, Application, Asset, Block, Catchup, DryrunResponse, GenesisBlock,
-    KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
-    TransactionParams, TransactionResponse, Version,
+    Account, ApiCompiledTeal, Application, Asset, Block, BlockWithCertificate, Catchup,
+    DryrunResponse, GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction,
+    PendingTransactions, Supply, TransactionParams, TransactionResponse, Version,
 };
 use reqwest::header::HeaderMap;
 use reqwest::Url;
@@ -150,6 +150,24 @@ impl Client {
             .await?;
 
         Ok(response)
+    }
+
+    pub async fn block_with_certificate(
+        &self,
+        round: Round,
+    ) -> Result<BlockWithCertificate, ClientError> {
+        let response_bytes = self
+            .http_client
+            .get(&format!("{}v2/blocks/{}?format=msgpack", self.url, round))
+            .headers(self.headers.clone())
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .bytes()
+            .await?;
+
+        Ok(rmp_serde::from_slice(&response_bytes)?)
     }
 
     pub async fn start_catchup(&self, catchpoint: &str) -> Result<Catchup, ClientError> {

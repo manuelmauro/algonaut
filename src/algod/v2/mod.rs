@@ -2,9 +2,9 @@ use algonaut_client::{algod::v2::Client, token::ApiToken, Headers};
 use algonaut_core::{Address, CompiledTeal, Round, SuggestedTransactionParams, ToMsgPack};
 use algonaut_encoding::decode_base64;
 use algonaut_model::algod::v2::{
-    Account, Application, Asset, Block, Catchup, DryrunRequest, DryrunResponse, GenesisBlock,
-    KeyRegistration, NodeStatus, PendingTransaction, PendingTransactions, Supply,
-    TransactionParams, TransactionResponse, Version,
+    Account, Application, Asset, Block, BlockWithCertificate, Catchup, DryrunRequest,
+    DryrunResponse, GenesisBlock, KeyRegistration, NodeStatus, PendingTransaction,
+    PendingTransactions, Supply, TransactionParams, TransactionResponse, Version,
 };
 use algonaut_transaction::SignedTransaction;
 
@@ -97,6 +97,13 @@ impl Algod {
     /// Get the block for the given round.
     pub async fn block(&self, round: Round) -> Result<Block, ServiceError> {
         Ok(self.client.block(round).await?)
+    }
+
+    pub async fn block_with_certificate(
+        &self,
+        round: Round,
+    ) -> Result<BlockWithCertificate, ServiceError> {
+        Ok(self.client.block_with_certificate(round).await?)
     }
 
     /// Starts a catchpoint catchup.

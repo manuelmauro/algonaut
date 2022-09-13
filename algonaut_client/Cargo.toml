@@ -21,6 +21,7 @@ serde_json = "1.0.40"
 thiserror = "1.0.23"
 url = "2.2.0"
 async-trait = "0.1.50"
+rmp-serde = "1.0.0"
 
 [dev-dependencies]
 dotenv = "0.15.0"
