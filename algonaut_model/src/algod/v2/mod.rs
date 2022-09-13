@@ -781,19 +781,33 @@ pub struct BlockCertificateProp {
 ///
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockHeader {
+    #[serde(default)]
     pub earn: Option<u64>,
+    #[serde(default)]
     pub fees: Option<String>,
+    #[serde(default)]
     pub frac: Option<u64>,
+    #[serde(default)]
     pub gen: Option<String>,
+    #[serde(default)]
     pub gh: Option<String>,
+    #[serde(default)]
     pub prev: Option<String>,
+    #[serde(default)]
     pub proto: Option<String>,
+    #[serde(default)]
     pub rate: Option<u64>,
+    #[serde(default)]
     pub rnd: Option<u64>,
+    #[serde(default)]
     pub rwcalr: Option<u64>,
+    #[serde(default)]
     pub rwd: Option<String>,
+    #[serde(default)]
     pub seed: Option<String>,
+    #[serde(default)]
     pub ts: Option<u64>,
+    #[serde(default)]
     pub txn256: Option<String>,
 }
 
@@ -806,23 +820,33 @@ pub struct BlockHeader {
 ///
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockHeaderMsgPack {
+    #[serde(default)]
     pub earn: Option<u64>,
-    #[serde(deserialize_with = "deserialize_byte32_arr_opt")]
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
     pub fees: Option<[u8; 32]>,
+    #[serde(default)]
     pub frac: Option<u64>,
+    #[serde(default)]
     pub gen: Option<String>,
+    #[serde(default)]
     pub gh: Option<HashDigest>,
+    #[serde(default)]
     pub prev: Option<HashDigest>,
+    #[serde(default)]
     pub proto: Option<String>,
+    #[serde(default)]
     pub rate: Option<u64>,
+    #[serde(default)]
     pub rnd: Option<u64>,
+    #[serde(default)]
     pub rwcalr: Option<u64>,
-    #[serde(deserialize_with = "deserialize_byte32_arr_opt")]
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
     pub rwd: Option<[u8; 32]>,
-    #[serde(deserialize_with = "deserialize_byte32_arr_opt")]
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
     pub seed: Option<[u8; 32]>,
+    #[serde(default)]
     pub ts: Option<u64>,
-    #[serde(deserialize_with = "deserialize_byte32_arr_opt")]
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
     pub txn256: Option<[u8; 32]>,
 }
 
