@@ -352,6 +352,12 @@ pub struct BuildVersion {
     pub minor: u64,
 }
 
+impl BuildVersion {
+    pub fn semver(&self) -> String {
+        format!("{}{}{}", self.major, self.minor, self.build_number)
+    }
+}
+
 /// Request data type for dryrun endpoint. Given the Transactions and simulated ledger state
 /// upload, run TEAL scripts and return debugging information.
 #[derive(Debug, Serialize, Deserialize, Clone)]
