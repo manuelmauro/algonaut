@@ -944,8 +944,9 @@ pub struct Block {
     /// `prev` Previous block hash.
     ///
     /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
+    #[serde_as(as = "DisplayFromStr")]
     #[serde(rename = "previous-block-hash")]
-    pub previous_block_hash: String,
+    pub previous_block_hash: HashDigest,
 
     /// Block rewards.
     pub rewards: Option<BlockRewards>,
