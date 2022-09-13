@@ -112,5 +112,5 @@ fn slice_to_byte32_arr<'de, D>(slice: &[u8]) -> Result<[u8; 32], D::Error>
 where
     D: Deserializer<'de>,
 {
-    Ok(slice.try_into().map_err(D::Error::custom)?)
+    slice.try_into().map_err(D::Error::custom)
 }

@@ -248,7 +248,7 @@ impl Account {
 /// Returns auth address to be set in signed transaction
 pub(crate) fn auth_address(tx: &Transaction, signing_account_address: &Address) -> Option<Address> {
     (&tx.sender() != signing_account_address)
-        .then(|| signing_account_address)
+        .then_some(signing_account_address)
         .copied()
 }
 
