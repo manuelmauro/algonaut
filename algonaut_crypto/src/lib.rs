@@ -106,6 +106,12 @@ impl Debug for HashDigest {
     }
 }
 
+impl AsRef<[u8]> for HashDigest {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 impl Serialize for Ed25519PublicKey {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where

@@ -1,6 +1,8 @@
 use data_encoding::BASE64;
+use serde::de::Error;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serializer};
+use std::convert::TryInto;
 
 pub struct SignatureVisitor;
 
@@ -62,7 +64,6 @@ pub fn deserialize_bytes64<'de, D>(deserializer: D) -> Result<[u8; 64], D::Error
 where
     D: Deserializer<'de>,
 {
-    use serde::de::Error;
     let s = <&str>::deserialize(deserializer)?;
     let mut decoded = [0; 64];
     let bytes = BASE64.decode(s.as_bytes()).map_err(D::Error::custom)?;
@@ -87,4 +88,29 @@ where
 
 pub fn decode_base64(bytes: &[u8]) -> Result<Vec<u8>, String> {
     BASE64.decode(bytes).map_err(|e| e.to_string())
+}
+
+pub fn deserialize_byte32_arr<'de, D>(deserializer: D) -> Result<[u8; 32], D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let slice = <&[u8]>::deserialize(deserializer)?;
+    slice_to_byte32_arr::<D>(slice)
+}
+
+pub fn deserialize_byte32_arr_opt<'de, D>(deserializer: D) -> Result<Option<[u8; 32]>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(match <Option<&[u8]>>::deserialize(deserializer)? {
+        Some(slice) => Some(slice_to_byte32_arr::<D>(slice)?),
+        None => None,
+    })
+}
+
+fn slice_to_byte32_arr<'de, D>(slice: &[u8]) -> Result<[u8; 32], D::Error>
+where
+    D: Deserializer<'de>,
+{
+    slice.try_into().map_err(D::Error::custom)
 }

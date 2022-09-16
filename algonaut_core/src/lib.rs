@@ -86,6 +86,12 @@ impl Mul<u64> for Round {
     }
 }
 
+impl From<u64> for Round {
+    fn from(u: u64) -> Self {
+        Self(u)
+    }
+}
+
 /// Participation public key used in key registration transactions
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct VotePk(pub [u8; 32]);

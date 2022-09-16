@@ -1,8 +1,10 @@
 use algonaut_core::{Address, MicroAlgos, Round, ToMsgPack};
 use algonaut_crypto::{deserialize_hash, HashDigest};
-use algonaut_encoding::deserialize_bytes;
+use algonaut_encoding::{deserialize_byte32_arr_opt, deserialize_bytes};
+use fmt::Debug;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
+use std::fmt;
 
 use crate::transaction::ApiSignedTransaction;
 
@@ -348,6 +350,12 @@ pub struct BuildVersion {
     pub commit_hash: String,
     pub major: u64,
     pub minor: u64,
+}
+
+impl BuildVersion {
+    pub fn semver(&self) -> String {
+        format!("{}{}{}", self.major, self.minor, self.build_number)
+    }
 }
 
 /// Request data type for dryrun endpoint. Given the Transactions and simulated ledger state
@@ -732,28 +740,114 @@ pub struct NodeStatus {
 pub struct Block {
     /// Block header data.
     pub block: BlockHeader,
-    /// Optional certificate object. This is only included when the format is set to message pack.
-    #[serde(rename = "cert", skip_serializing_if = "Option::is_none")]
-    pub cert: Option<serde_json::Value>,
+}
+
+/// Block with certificate
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BlockWithCertificate {
+    /// Block header data
+    pub block: BlockHeaderMsgPack,
+    /// Certificate
+    pub cert: BlockCertificate,
+}
+
+impl BlockWithCertificate {
+    pub fn hash(&self) -> HashDigest {
+        self.cert.prop.hash
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BlockCertificate {
+    pub prop: BlockCertificateProp,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BlockCertificateProp {
+    #[serde(rename = "dig")]
+    pub hash: HashDigest,
 }
 
 /// BlockHeader
+///
+/// Note: fields seem to be managed as untyped map and currently not documented ([docs](https://developer.algorand.org/docs/rest-apis/algod/v2/#getblock-response-200)),
+/// so everything optional. Some may be outdated or missing.
+///
+/// For now, also, byte array representations as strings,
+/// different encodings and prefixes are used, hindering a standarized deserialization.
+///
+/// It probably makes sense to deserialize this and [BlockHeaderMsgPack]
+/// to the same struct, but above makes it currently not possible.
+///
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockHeader {
+    #[serde(default)]
     pub earn: Option<u64>,
-    pub fees: String,
-    pub frac: u64,
-    pub gen: String,
-    pub gh: String,
-    pub prev: String,
-    pub proto: String,
-    pub rate: u64,
-    pub rnd: u64,
-    pub rwcalr: u64,
-    pub rwd: String,
-    pub seed: String,
-    pub ts: u64,
-    pub txn: Option<String>,
+    #[serde(default)]
+    pub fees: Option<String>,
+    #[serde(default)]
+    pub frac: Option<u64>,
+    #[serde(default)]
+    pub gen: Option<String>,
+    #[serde(default)]
+    pub gh: Option<String>,
+    #[serde(default)]
+    pub prev: Option<String>,
+    #[serde(default)]
+    pub proto: Option<String>,
+    #[serde(default)]
+    pub rate: Option<u64>,
+    #[serde(default)]
+    pub rnd: Option<u64>,
+    #[serde(default)]
+    pub rwcalr: Option<u64>,
+    #[serde(default)]
+    pub rwd: Option<String>,
+    #[serde(default)]
+    pub seed: Option<String>,
+    #[serde(default)]
+    pub ts: Option<u64>,
+    #[serde(default)]
+    pub txn256: Option<String>,
+}
+
+/// BlockHeader
+///
+/// Deserialized from MessagePack format
+///
+/// Same underlaying content (byte arrays) as [BlockHeader]
+/// See [BlockHeader] documentation for more details.
+///
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BlockHeaderMsgPack {
+    #[serde(default)]
+    pub earn: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
+    pub fees: Option<[u8; 32]>,
+    #[serde(default)]
+    pub frac: Option<u64>,
+    #[serde(default)]
+    pub gen: Option<String>,
+    #[serde(default)]
+    pub gh: Option<HashDigest>,
+    #[serde(default)]
+    pub prev: Option<HashDigest>,
+    #[serde(default)]
+    pub proto: Option<String>,
+    #[serde(default)]
+    pub rate: Option<u64>,
+    #[serde(default)]
+    pub rnd: Option<u64>,
+    #[serde(default)]
+    pub rwcalr: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
+    pub rwd: Option<[u8; 32]>,
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
+    pub seed: Option<[u8; 32]>,
+    #[serde(default)]
+    pub ts: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_byte32_arr_opt")]
+    pub txn256: Option<[u8; 32]>,
 }
 
 /// Catchup
