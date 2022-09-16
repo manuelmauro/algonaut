@@ -9,7 +9,7 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.3.0"
+version = "0.4.0"
 
 [workspace]
 members = [
@@ -23,13 +23,13 @@ members = [
 ]
 
 [dependencies]
-algonaut_client = { path = "algonaut_client", version = "0.3.0", default-features = false }
-algonaut_model = { path = "algonaut_model", version = "0.3.0" }
-algonaut_core = { path = "algonaut_core", version = "0.3.0" }
-algonaut_crypto = { path = "algonaut_crypto", version = "0.3.0" }
-algonaut_encoding = { path = "algonaut_encoding", version = "0.3.0" }
-algonaut_transaction = { path = "algonaut_transaction", version = "0.3.0" }
-algonaut_abi = { path = "algonaut_abi", version = "0.3.0" }
+algonaut_client = { path = "algonaut_client", version = "0.4.0", default-features = false }
+algonaut_model = { path = "algonaut_model", version = "0.4.0" }
+algonaut_core = { path = "algonaut_core", version = "0.4.0" }
+algonaut_crypto = { path = "algonaut_crypto", version = "0.4.0" }
+algonaut_encoding = { path = "algonaut_encoding", version = "0.4.0" }
+algonaut_transaction = { path = "algonaut_transaction", version = "0.4.0" }
+algonaut_abi = { path = "algonaut_abi", version = "0.4.0" }
 thiserror = "1.0.23"
 rmp-serde = "1.0.0"
 num-traits = "0.2.14"
