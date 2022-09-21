@@ -354,7 +354,7 @@ pub struct BuildVersion {
 
 impl BuildVersion {
     pub fn semver(&self) -> String {
-        format!("{}{}{}", self.major, self.minor, self.build_number)
+        format!("{}.{}.{}", self.major, self.minor, self.build_number)
     }
 }
 
