@@ -1303,6 +1303,10 @@ pub struct Transaction {
     #[serde(rename = "keyreg-transaction")]
     pub keyreg_transaction: Option<TransactionKeyreg>,
 
+    /// StateProof transaction.
+    #[serde(rename = "state-proof-transaction")]
+    pub stateproof_transaction: Option<TransactionStateProof>,
+
     /// `lv` Last valid round for this transaction.
     #[serde(rename = "last-valid")]
     pub last_valid: Round,
@@ -1702,6 +1706,18 @@ pub struct Proofs {
 
     #[serde(rename = "tree-depth")]
     pub tree_depth: u64,
+}
+
+/// Fields for a stateproof transaction.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TransactionStateProof {
+    pub message: StateProofMessage,
+
+    #[serde(rename = "state-proof")]
+    pub state_proof: StateProof,
+
+    #[serde(rename = "state-proof-type")]
+    pub state_proof_type: u64,
 }
 
 /// Reveal
