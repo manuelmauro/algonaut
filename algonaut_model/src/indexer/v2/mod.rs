@@ -1764,7 +1764,7 @@ pub struct Signature {
     pub verifying_key: String,
 }
 
-/// Signature
+/// HashFactory
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HashFactory {
     #[serde(rename = "hash-type")]
