@@ -1303,6 +1303,10 @@ pub struct Transaction {
     #[serde(rename = "keyreg-transaction")]
     pub keyreg_transaction: Option<TransactionKeyreg>,
 
+    /// StateProof transaction.
+    #[serde(rename = "state-proof-transaction")]
+    pub stateproof_transaction: Option<TransactionStateProof>,
+
     /// `lv` Last valid round for this transaction.
     #[serde(rename = "last-valid")]
     pub last_valid: Round,
@@ -1366,6 +1370,7 @@ pub struct Transaction {
     ///   * `axfer` asset-transfer-transaction
     ///   * `afrz` asset-freeze-transaction
     ///   * `appl` application-transaction
+    ///   * `stpf` state-proof-transaction
     #[serde(rename = "tx-type")]
     pub tx_type: TransactionType,
 }
@@ -1385,6 +1390,8 @@ pub enum TransactionType {
     AssetFreezeTransaction,
     #[serde(rename = "appl")]
     ApplicationTransaction,
+    #[serde(rename = "stpf")]
+    StateProofTransaction,
 }
 
 #[serde_as]
@@ -1644,4 +1651,122 @@ pub enum Role {
     Receiver,
     #[serde(rename = "freeze-target")]
     FreezeTarget,
+}
+
+/// StateProof type
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StateProof {
+    #[serde(rename = "part-proofs")]
+    pub part_proofs: Proofs,
+
+    #[serde(rename = "positions-to-reveal")]
+    pub positions_to_reaveal: Vec<u16>,
+
+    pub reveals: Vec<Reveal>,
+
+    #[serde(rename = "salt-version")]
+    pub salt_version: u64,
+
+    #[serde(rename = "sig-commit")]
+    pub sig_commit: String,
+
+    #[serde(rename = "sig-proofs")]
+    pub sig_proofs: Proofs,
+
+    #[serde(rename = "signed-weight")]
+    pub signed_weight: u64,
+}
+
+/// StateProofMessage
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StateProofMessage {
+    #[serde(rename = "block-headers-commitment")]
+    pub block_headers_commitment: String,
+
+    #[serde(rename = "first-attested-round")]
+    pub first_attested_round: u64,
+
+    #[serde(rename = "latest-attested-round")]
+    pub latest_attested_round: u64,
+
+    #[serde(rename = "ln-proven-weight")]
+    pub ln_proven_weight: u64,
+
+    #[serde(rename = "voters-commitment")]
+    pub voters_commitment: String,
+}
+
+/// Proofs information
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Proofs {
+    #[serde(rename = "hash-factory")]
+    pub hash_factory: HashFactory,
+
+    pub path: Vec<String>,
+
+    #[serde(rename = "tree-depth")]
+    pub tree_depth: u64,
+}
+
+/// Fields for a stateproof transaction.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TransactionStateProof {
+    pub message: StateProofMessage,
+
+    #[serde(rename = "state-proof")]
+    pub state_proof: StateProof,
+
+    #[serde(rename = "state-proof-type")]
+    pub state_proof_type: u64,
+}
+
+/// Reveal
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Reveal {
+    pub participant: Participant,
+    pub position: u16,
+    #[serde(rename = "sig-slot")]
+    pub sig_slot: SigSlot,
+}
+
+/// Participant
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Participant {
+    pub verifier: Verifier,
+    pub weight: u64,
+}
+
+/// Verifier
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Verifier {
+    pub commitment: String,
+    #[serde(rename = "key-lifetime")]
+    pub key_lifetime: u16,
+}
+
+/// SigSlot
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SigSlot {
+    #[serde(rename = "lower-sig-weight")]
+    pub lower_sig_weight: u64,
+    pub signature: Signature,
+}
+
+/// Signature
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Signature {
+    #[serde(rename = "falcon-signature")]
+    pub falcon_signature: String,
+    #[serde(rename = "merkle-array-index")]
+    pub merkle_array_index: u64,
+    pub proof: Proofs,
+    #[serde(rename = "verifying-key")]
+    pub verifying_key: String,
+}
+
+/// HashFactory
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HashFactory {
+    #[serde(rename = "hash-type")]
+    pub hash_type: u64,
 }
