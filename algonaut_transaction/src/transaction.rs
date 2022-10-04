@@ -28,6 +28,7 @@ pub enum TransactionType {
     AssetClawbackTransaction(AssetClawbackTransaction),
     AssetFreezeTransaction(AssetFreezeTransaction),
     ApplicationCallTransaction(ApplicationCallTransaction),
+    StateProofTransaction(StateProofTransaction),
 }
 
 /// A transaction that can appear in a block
@@ -138,6 +139,7 @@ impl Transaction {
             TransactionType::AssetClawbackTransaction(t) => t.sender,
             TransactionType::AssetFreezeTransaction(t) => t.sender,
             TransactionType::ApplicationCallTransaction(t) => t.sender,
+            TransactionType::StateProofTransaction(t) => t.sender,
         }
     }
 }
@@ -368,6 +370,16 @@ pub struct ApplicationCallTransaction {
     pub extra_pages: u32,
 }
 
+///
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StateProofTransaction {
+    /// The address of the account that signs and pays the fee.
+    pub sender: Address,
+    pub state_proof_type: StateProofType, 
+    pub state_proof: StateProof,
+    pub message: StateProofMessage, 
+}
+
 /// An application transaction must indicate the action to be taken following the execution of its approvalProgram or clearStateProgram. The variants below describe the available actions.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ApplicationCallOnComplete {
@@ -384,6 +396,7 @@ pub enum ApplicationCallOnComplete {
     /// After executing the ApprovalProgram, delete the application parameters from the account data of the application's creator.
     DeleteApplication,
 }
+
 
 /// Storage state schema. The StateSchema object is only required for the create application call
 /// transaction. The StateSchema object must be fully populated for both the GlobalStateSchema and
@@ -428,7 +441,31 @@ pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
         | TransactionType::AssetClawbackTransaction(_) => TransactionTypeEnum::AssetTransfer,
         TransactionType::AssetFreezeTransaction(_) => TransactionTypeEnum::AssetFreeze,
         TransactionType::ApplicationCallTransaction(_) => TransactionTypeEnum::ApplicationCall,
+        TransactionType::StateProofTransaction(_) => TransactionTypeEnum::StateProof,
     }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StateProofType {
+    // StateProofBasic is our initial state proof setup. 
+    // using falcon keys and subset-sum hash
+	StateProofBasic,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StateProof {
+    // StateProofBasic is our initial state proof setup. 
+    // using falcon keys and subset-sum hash
+	StateProofBasic,
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StateProofMessage {
+	// BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
+	pub block_headers_commitment: Vec<u8>,
+    pub voters_commitment: Vec<u8>,
+    pub ln_proven_weight: u64,
+    pub first_attested_round: u64,
+    pub last_attested_round: u64,
 }
 
 #[derive(Eq, PartialEq, Clone)]

@@ -1,5 +1,5 @@
 use algonaut_core::{Address, MicroAlgos, MultisigSignature, Round, ToMsgPack, VotePk, VrfPk};
-use algonaut_crypto::{HashDigest, Signature};
+use algonaut_crypto::{HashDigest, Signature, HashFactory};
 use serde::{Deserialize, Serialize};
 
 /// IMPORTANT:
@@ -154,6 +154,15 @@ pub struct ApiTransaction {
 
     #[serde(rename = "xaid", skip_serializing_if = "Option::is_none")]
     pub xfer: Option<u64>,
+
+    #[serde(rename = "sptype", skip_serializing_if = "Option::is_none")]
+    pub state_proof_type: Optional<StateProofType>,
+
+    #[serde(rename = "sp", skip_serializing_if = "Option::is_none")]
+    pub state_proof: Optional<StateProof>,
+
+    #[serde(rename = "spmsg", skip_serializing_if = "Option::is_none")]
+    pub state_proof_message: Optional<StateProofMessage>,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
@@ -238,6 +247,49 @@ pub struct ApiStateSchema {
 
     #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
     pub number_ints: Option<u64>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct StateProof {
+
+    #[serde(rename = "c")]
+	pub sig_commit: HashDigest,
+
+    #[serde(rename = "w")]
+	pub signed_weight: u64, 
+
+    #[serde(rename = "S")]
+	pub sig_proofs: u32, // TODO:    merklearray.Proof    `codec:"S"`
+
+    #[serde(rename = "P")]
+	pub part_proofs: u32,  // TODO:  merklearray.Proof    `codec:"P"`
+
+    #[serde(rename = "v")]
+	pub merkle_signature_salt_version: u8,
+
+	// Reveals is a sparse map from the position being revealed
+	// to the corresponding elements from the sigs and participants
+	// arrays.
+    #[serde(rename = "r")]
+	pub reveals:           u32, // map[uint64]Reveal `codec:"r,allocbound=MaxReveals"`
+
+    #[serde(rename = "pr")]
+	pub positions_to_reveal:  Vec<u64>, // []uint64          `codec:"pr,allocbound=MaxReveals"`
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct MerkleArrayProof {
+	// Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
+	// given the distribution of the elt positions and the depth of the tree,
+	// the path length can increase up to 2^MaxEncodedTreeDepth / 2
+    #[serde(rename="pth")]
+	pub path:         Vec<HashDigest>,
+    #[serde(rename="hsh")]
+	pub hash_factory: HashFactory,
+	// TreeDepth represents the depth of the tree that is being proven.
+	// It is the number of edges from the root to a leaf.
+    #[serde(rename="td")]
+	pub tree_depth: u8,
 }
 
 impl ToMsgPack for ApiTransaction {}

@@ -12,6 +12,16 @@ pub mod mnemonic;
 ///
 pub mod error;
 
+pub enum HashType {
+    Sha512_256,
+	Sumhash,
+	Sha256,
+}
+
+pub struct HashFactory {
+    pub hash_type: HashType 
+}
+
 /// A SHA512_256 hash
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct HashDigest(pub [u8; 32]);
