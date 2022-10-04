@@ -458,15 +458,6 @@ pub enum StateProof {
     // using falcon keys and subset-sum hash
 	StateProofBasic,
 }
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct StateProofMessage {
-	// BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
-	pub block_headers_commitment: Vec<u8>,
-    pub voters_commitment: Vec<u8>,
-    pub ln_proven_weight: u64,
-    pub first_attested_round: u64,
-    pub last_attested_round: u64,
-}
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct SignedLogic {

@@ -148,8 +148,10 @@ impl From<Transaction> for ApiTransaction {
                 };
                 api_t.state_proof = {
                     1;
-                }
-                api_t.state_proof_message = {}
+                };
+                api_t.state_proof_message = {
+
+                };
             },
             
         }

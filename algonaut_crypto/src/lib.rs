@@ -12,12 +12,13 @@ pub mod mnemonic;
 ///
 pub mod error;
 
+#[derive(Copy, Clone, Eq, Debug, PartialEq)]
 pub enum HashType {
     Sha512_256,
 	Sumhash,
 	Sha256,
 }
-
+#[derive(Copy, Clone, Eq, Debug, PartialEq)]
 pub struct HashFactory {
     pub hash_type: HashType 
 }

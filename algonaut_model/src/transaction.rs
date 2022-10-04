@@ -156,13 +156,13 @@ pub struct ApiTransaction {
     pub xfer: Option<u64>,
 
     #[serde(rename = "sptype", skip_serializing_if = "Option::is_none")]
-    pub state_proof_type: Optional<StateProofType>,
+    pub state_proof_type: Option<u8>,
 
     #[serde(rename = "sp", skip_serializing_if = "Option::is_none")]
-    pub state_proof: Optional<StateProof>,
+    pub state_proof: Option<StateProof>,
 
     #[serde(rename = "spmsg", skip_serializing_if = "Option::is_none")]
-    pub state_proof_message: Optional<StateProofMessage>,
+    pub state_proof_message: Option<StateProofMessage>,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
@@ -259,10 +259,10 @@ pub struct StateProof {
 	pub signed_weight: u64, 
 
     #[serde(rename = "S")]
-	pub sig_proofs: u32, // TODO:    merklearray.Proof    `codec:"S"`
+	pub sig_proofs: MerkleArrayProof,
 
     #[serde(rename = "P")]
-	pub part_proofs: u32,  // TODO:  merklearray.Proof    `codec:"P"`
+	pub part_proofs: MerkleArrayProof,
 
     #[serde(rename = "v")]
 	pub merkle_signature_salt_version: u8,
@@ -271,10 +271,10 @@ pub struct StateProof {
 	// to the corresponding elements from the sigs and participants
 	// arrays.
     #[serde(rename = "r")]
-	pub reveals:           u32, // map[uint64]Reveal `codec:"r,allocbound=MaxReveals"`
+	pub reveals:           u32, // TODO: define hashmap? map[uint64]Reveal `codec:"r,allocbound=MaxReveals"`
 
     #[serde(rename = "pr")]
-	pub positions_to_reveal:  Vec<u64>, // []uint64          `codec:"pr,allocbound=MaxReveals"`
+	pub positions_to_reveal:  Vec<u64>, 
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -284,12 +284,34 @@ pub struct MerkleArrayProof {
 	// the path length can increase up to 2^MaxEncodedTreeDepth / 2
     #[serde(rename="pth")]
 	pub path:         Vec<HashDigest>,
+
     #[serde(rename="hsh")]
 	pub hash_factory: HashFactory,
+
 	// TreeDepth represents the depth of the tree that is being proven.
 	// It is the number of edges from the root to a leaf.
     #[serde(rename="td")]
 	pub tree_depth: u8,
+}
+
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct StateProofMessage {
+	// BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
+    #[serde(rename="b")]
+	pub block_headers_commitment: Vec<u8>,
+
+    #[serde(rename="v")]
+    pub voters_commitment: Vec<u8>,
+
+    #[serde(rename="P")]
+    pub ln_proven_weight: u64,
+
+    #[serde(rename="f")]
+    pub first_attested_round: u64,
+
+    #[serde(rename="l")]
+    pub last_attested_round: u64,
 }
 
 impl ToMsgPack for ApiTransaction {}
