@@ -9,6 +9,8 @@ use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
 use algonaut_model::transaction::ApiSignedLogic;
+use algonaut_model::transaction::StateProofMessage;
+use algonaut_model::transaction::StateProof;
 use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
 use sha2::Digest;
@@ -447,13 +449,6 @@ pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StateProofType {
-    // StateProofBasic is our initial state proof setup. 
-    // using falcon keys and subset-sum hash
-	StateProofBasic,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum StateProof {
     // StateProofBasic is our initial state proof setup. 
     // using falcon keys and subset-sum hash
 	StateProofBasic,

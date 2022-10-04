@@ -6,7 +6,7 @@ use crate::{
         to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction,
         AssetAcceptTransaction, AssetClawbackTransaction, AssetConfigurationTransaction,
         AssetFreezeTransaction, AssetParams, AssetTransferTransaction, KeyRegistration, Payment,
-        SignedLogic, StateSchema, TransactionSignature, StateProofMessage, StateProofType, StateProof
+        SignedLogic, StateSchema, TransactionSignature, StateProofType, StateProofTransaction
     },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
@@ -143,15 +143,15 @@ impl From<Transaction> for ApiTransaction {
                 api_t.state_proof_type = {
                     let stpf = stpf.state_proof_type;
                     match stpf {
-                        StateProofType::StateProofBasic => 0,
+                        StateProofType::StateProofBasic => Some(0),
                     } 
                 };
-                api_t.state_proof = {
-                    1;
-                };
-                api_t.state_proof_message = {
+                //api_t.state_proof = {
+                //    1;
+                //};
+                //api_t.state_proof_message = {
 
-                };
+                //};
             },
             
         }
@@ -233,9 +233,9 @@ impl TryFrom<ApiTransaction> for Transaction {
             "stpf"=>{
                 TransactionType::StateProofTransaction(StateProofTransaction {
                     sender: api_t.sender,
-                    state_proof_type: api_t.state_proof_type,
-                    state_proof: api_t.state_proof,
-                    message: api_t.state_proof_message,   
+                    state_proof_type: StateProofType::StateProofBasic,
+                    //state_proof: api_t.state_proof,
+                    //message: api_t.state_proof_message,   
                 })
             }
 

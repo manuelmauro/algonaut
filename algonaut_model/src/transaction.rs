@@ -1,5 +1,5 @@
 use algonaut_core::{Address, MicroAlgos, MultisigSignature, Round, ToMsgPack, VotePk, VrfPk};
-use algonaut_crypto::{HashDigest, Signature, HashFactory};
+use algonaut_crypto::{HashDigest, Signature, HashType};
 use serde::{Deserialize, Serialize};
 
 /// IMPORTANT:
@@ -294,6 +294,11 @@ pub struct MerkleArrayProof {
 	pub tree_depth: u8,
 }
 
+#[derive(Copy, Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]
+pub struct HashFactory {
+    #[serde(rename="t")]
+    pub hash_type: HashType 
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct StateProofMessage {
