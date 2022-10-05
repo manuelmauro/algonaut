@@ -138,6 +138,7 @@ impl From<Transaction> for ApiTransaction {
                     call.to_owned().local_state_schema.and_then(|s| s.into());
                 api_t.extra_pages = num_as_api_option(call.extra_pages);
             }
+            TransactionType::StateProofTransaction(_) => todo!(),
         }
         api_t
     }
@@ -263,16 +264,16 @@ fn parse_state_proof_transaction(
     api_t: &ApiTransaction,
 ) -> Result<TransactionType, TransactionError> {
     match (
-        api_t.state_proof_type,
-        api_t.state_proof,
-        api_t.state_proof_message,
+        &api_t.state_proof_type,
+        &api_t.state_proof,
+        &api_t.state_proof_message,
     ) {
         (Some(state_proof_type), Some(state_proof), Some(state_proof_message)) => Ok(
             TransactionType::StateProofTransaction(StateProofTransaction {
                 sender: api_t.sender,
-                state_proof_type,
-                state_proof,
-                message: state_proof_message,
+                state_proof_type: state_proof_type.clone(),
+                state_proof: state_proof.clone(),
+                message: state_proof_message.clone(),
             }),
         ),
         _ => Err(TransactionError::Deserialization(format!(
