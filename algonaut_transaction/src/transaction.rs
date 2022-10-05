@@ -9,8 +9,8 @@ use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
 use algonaut_model::transaction::ApiSignedLogic;
-use algonaut_model::transaction::StateProofMessage;
 use algonaut_model::transaction::StateProof;
+use algonaut_model::transaction::StateProofMessage;
 use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
 use sha2::Digest;
@@ -377,9 +377,9 @@ pub struct ApplicationCallTransaction {
 pub struct StateProofTransaction {
     /// The address of the account that signs and pays the fee.
     pub sender: Address,
-    pub state_proof_type: StateProofType, 
+    pub state_proof_type: StateProofType,
     pub state_proof: StateProof,
-    pub message: StateProofMessage, 
+    pub message: StateProofMessage,
 }
 
 /// An application transaction must indicate the action to be taken following the execution of its approvalProgram or clearStateProgram. The variants below describe the available actions.
@@ -398,7 +398,6 @@ pub enum ApplicationCallOnComplete {
     /// After executing the ApprovalProgram, delete the application parameters from the account data of the application's creator.
     DeleteApplication,
 }
-
 
 /// Storage state schema. The StateSchema object is only required for the create application call
 /// transaction. The StateSchema object must be fully populated for both the GlobalStateSchema and
@@ -449,9 +448,9 @@ pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StateProofType {
-    // StateProofBasic is our initial state proof setup. 
+    // StateProofBasic is our initial state proof setup.
     // using falcon keys and subset-sum hash
-	StateProofBasic,
+    StateProofBasic,
 }
 
 #[derive(Eq, PartialEq, Clone)]

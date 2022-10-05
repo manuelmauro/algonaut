@@ -1,5 +1,5 @@
 use algonaut_core::{Address, MicroAlgos, MultisigSignature, Round, ToMsgPack, VotePk, VrfPk};
-use algonaut_crypto::{HashDigest, Signature, HashType};
+use algonaut_crypto::{HashDigest, HashType, Signature};
 use serde::{Deserialize, Serialize};
 
 /// IMPORTANT:
@@ -251,71 +251,70 @@ pub struct ApiStateSchema {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct StateProof {
-
     #[serde(rename = "c")]
-	pub sig_commit: HashDigest,
+    pub sig_commit: HashDigest,
 
     #[serde(rename = "w")]
-	pub signed_weight: u64, 
+    pub signed_weight: u64,
 
     #[serde(rename = "S")]
-	pub sig_proofs: MerkleArrayProof,
+    pub sig_proofs: MerkleArrayProof,
 
     #[serde(rename = "P")]
-	pub part_proofs: MerkleArrayProof,
+    pub part_proofs: MerkleArrayProof,
 
     #[serde(rename = "v")]
-	pub merkle_signature_salt_version: u8,
+    pub merkle_signature_salt_version: u8,
 
-	// Reveals is a sparse map from the position being revealed
-	// to the corresponding elements from the sigs and participants
-	// arrays.
+    // Reveals is a sparse map from the position being revealed
+    // to the corresponding elements from the sigs and participants
+    // arrays.
     #[serde(rename = "r")]
-	pub reveals:           u32, // TODO: define hashmap? map[uint64]Reveal `codec:"r,allocbound=MaxReveals"`
+    pub reveals: u32, // TODO: define hashmap? map[uint64]Reveal `codec:"r,allocbound=MaxReveals"`
 
     #[serde(rename = "pr")]
-	pub positions_to_reveal:  Vec<u64>, 
+    pub positions_to_reveal: Vec<u64>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MerkleArrayProof {
-	// Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
-	// given the distribution of the elt positions and the depth of the tree,
-	// the path length can increase up to 2^MaxEncodedTreeDepth / 2
-    #[serde(rename="pth")]
-	pub path:         Vec<HashDigest>,
+    // Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
+    // given the distribution of the elt positions and the depth of the tree,
+    // the path length can increase up to 2^MaxEncodedTreeDepth / 2
+    #[serde(rename = "pth")]
+    pub path: Vec<HashDigest>,
 
-    #[serde(rename="hsh")]
-	pub hash_factory: HashFactory,
+    #[serde(rename = "hsh")]
+    pub hash_factory: HashFactory,
 
-	// TreeDepth represents the depth of the tree that is being proven.
-	// It is the number of edges from the root to a leaf.
-    #[serde(rename="td")]
-	pub tree_depth: u8,
+    // TreeDepth represents the depth of the tree that is being proven.
+    // It is the number of edges from the root to a leaf.
+    #[serde(rename = "td")]
+    pub tree_depth: u8,
 }
 
 #[derive(Copy, Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]
 pub struct HashFactory {
-    #[serde(rename="t")]
-    pub hash_type: HashType 
+    #[serde(rename = "t")]
+    pub hash_type: HashType,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct StateProofMessage {
-	// BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
-    #[serde(rename="b")]
-	pub block_headers_commitment: Vec<u8>,
+    // BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
+    #[serde(rename = "b")]
+    pub block_headers_commitment: Vec<u8>,
 
-    #[serde(rename="v")]
+    #[serde(rename = "v")]
     pub voters_commitment: Vec<u8>,
 
-    #[serde(rename="P")]
+    #[serde(rename = "P")]
     pub ln_proven_weight: u64,
 
-    #[serde(rename="f")]
+    #[serde(rename = "f")]
     pub first_attested_round: u64,
 
-    #[serde(rename="l")]
+    #[serde(rename = "l")]
     pub last_attested_round: u64,
 }
 

@@ -15,10 +15,9 @@ pub mod error;
 #[derive(Copy, Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]
 pub enum HashType {
     Sha512_256,
-	Sumhash,
-	Sha256,
+    Sumhash,
+    Sha256,
 }
-
 
 /// A SHA512_256 hash
 #[derive(Copy, Clone, Eq, PartialEq)]
