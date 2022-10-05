@@ -277,6 +277,46 @@ pub struct StateProof {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct SigSlotCommit {
+    // Sig is a signature by the participant on the expected message.
+    #[serde(rename = "s")]
+    pub sig: Signature,
+
+    // l is the total weight of signatures in lower-numbered slots.
+    // This is initialized once the builder has collected a sufficient
+    // number of signatures.
+    #[serde(rename = "l")]
+    pub l: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Verifier {
+    #[serde(rename = "cmt")]
+    pub commitment: [u8; 64],
+
+    #[serde(rename = "lf")]
+    pub key_lifetime: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Participant {
+    // PK is the identifier used to verify the signature for a specific participant
+    #[serde(rename = "p")]
+    pub pk: Verifier,
+
+    // Weight is AccountData.MicroAlgos.
+    #[serde(rename = "w")]
+    pub weight: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Reveal {
+    #[serde(rename = "s")]
+    pub sig_slot: SigSlotCommit,
+    pub part: Participant,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MerkleArrayProof {
     // Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
     // given the distribution of the elt positions and the depth of the tree,
