@@ -6,7 +6,7 @@ use crate::{
         to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction,
         AssetAcceptTransaction, AssetClawbackTransaction, AssetConfigurationTransaction,
         AssetFreezeTransaction, AssetParams, AssetTransferTransaction, KeyRegistration, Payment,
-        SignedLogic, StateProofTransaction, StateProofType, StateSchema, TransactionSignature,
+        SignedLogic, StateProofTransaction, StateSchema, TransactionSignature,
     },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
@@ -65,7 +65,6 @@ impl From<Transaction> for ApiTransaction {
             xfer: None,
             nonparticipating: None,
             extra_pages: None,
-
             state_proof_type: None,
             state_proof: None,
             state_proof_message: None,
@@ -138,20 +137,6 @@ impl From<Transaction> for ApiTransaction {
                 api_t.local_state_schema =
                     call.to_owned().local_state_schema.and_then(|s| s.into());
                 api_t.extra_pages = num_as_api_option(call.extra_pages);
-            }
-            TransactionType::StateProofTransaction(stpf) => {
-                api_t.state_proof_type = {
-                    let stpf = stpf.state_proof_type;
-                    match stpf {
-                        StateProofType::StateProofBasic => Some(0),
-                    }
-                };
-                //api_t.state_proof = {
-                //    1;
-                //};
-                //api_t.state_proof_message = {
-
-                //};
             }
         }
         api_t
@@ -229,15 +214,7 @@ impl TryFrom<ApiTransaction> for Transaction {
                     extra_pages: num_from_api_option(api_t.extra_pages),
                 })
             }
-            "stpf" => {
-                TransactionType::StateProofTransaction(StateProofTransaction {
-                    sender: api_t.sender,
-                    state_proof_type: StateProofType::StateProofBasic,
-                    //state_proof: api_t.state_proof,
-                    //message: api_t.state_proof_message,
-                })
-            }
-
+            "stpf" => parse_state_proof_transaction(&api_t)?,
             unsupported_type => {
                 return Err(TransactionError::Deserialization(format!(
                     "Not supported transaction type: {}",
@@ -279,6 +256,29 @@ fn parse_state_schema(
         ),
         // Not app creation (has no schema)
         _ => None,
+    }
+}
+
+fn parse_state_proof_transaction(
+    api_t: &ApiTransaction,
+) -> Result<TransactionType, TransactionError> {
+    match (
+        api_t.state_proof_type,
+        api_t.state_proof,
+        api_t.state_proof_message,
+    ) {
+        (Some(state_proof_type), Some(state_proof), Some(state_proof_message)) => Ok(
+            TransactionType::StateProofTransaction(StateProofTransaction {
+                sender: api_t.sender,
+                state_proof_type,
+                state_proof,
+                message: state_proof_message,
+            }),
+        ),
+        _ => Err(TransactionError::Deserialization(format!(
+            "Invalid api state proof  transaction: {:?}",
+            api_t
+        ))),
     }
 }
 
@@ -546,12 +546,6 @@ fn application_call_on_complete_to_int(call: &ApplicationCallOnComplete) -> u32 
         ApplicationCallOnComplete::ClearState => 3,
         ApplicationCallOnComplete::UpdateApplication => 4,
         ApplicationCallOnComplete::DeleteApplication => 5,
-    }
-}
-
-fn state_proof_type_to_int(stpf: &StateProofType) -> u8 {
-    match stpf {
-        StateProofType::StateProofBasic => 0,
     }
 }
 

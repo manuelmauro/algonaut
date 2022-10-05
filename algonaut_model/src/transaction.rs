@@ -156,7 +156,7 @@ pub struct ApiTransaction {
     pub xfer: Option<u64>,
 
     #[serde(rename = "sptype", skip_serializing_if = "Option::is_none")]
-    pub state_proof_type: Option<u8>,
+    pub state_proof_type: Option<StateProofType>,
 
     #[serde(rename = "sp", skip_serializing_if = "Option::is_none")]
     pub state_proof: Option<StateProof>,
@@ -293,7 +293,7 @@ pub struct MerkleArrayProof {
     pub tree_depth: u8,
 }
 
-#[derive(Copy, Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]
 pub struct HashFactory {
     #[serde(rename = "t")]
     pub hash_type: HashType,
@@ -316,6 +316,13 @@ pub struct StateProofMessage {
 
     #[serde(rename = "l")]
     pub last_attested_round: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub enum StateProofType {
+    // StateProofBasic is our initial state proof setup.
+    // using falcon keys and subset-sum hash
+    StateProofBasic,
 }
 
 impl ToMsgPack for ApiTransaction {}

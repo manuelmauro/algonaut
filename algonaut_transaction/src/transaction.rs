@@ -11,6 +11,7 @@ use algonaut_crypto::Signature;
 use algonaut_model::transaction::ApiSignedLogic;
 use algonaut_model::transaction::StateProof;
 use algonaut_model::transaction::StateProofMessage;
+use algonaut_model::transaction::StateProofType;
 use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
 use sha2::Digest;
@@ -444,13 +445,6 @@ pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
         TransactionType::ApplicationCallTransaction(_) => TransactionTypeEnum::ApplicationCall,
         TransactionType::StateProofTransaction(_) => TransactionTypeEnum::StateProof,
     }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum StateProofType {
-    // StateProofBasic is our initial state proof setup.
-    // using falcon keys and subset-sum hash
-    StateProofBasic,
 }
 
 #[derive(Eq, PartialEq, Clone)]
