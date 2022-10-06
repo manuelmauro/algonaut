@@ -267,9 +267,9 @@ pub struct StateProof {
     #[serde(rename = "v")]
     pub merkle_signature_salt_version: u8,
 
-    // Reveals is a sparse map from the position being revealed
-    // to the corresponding elements from the sigs and participants
-    // arrays.
+    /// Reveals is a sparse map from the position being revealed
+    /// to the corresponding elements from the sigs and participants
+    /// arrays.
     #[serde(rename = "r")]
     pub reveals: u32, // TODO: define hashmap? map[uint64]Reveal `codec:"r,allocbound=MaxReveals"`
 
@@ -279,13 +279,13 @@ pub struct StateProof {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SigSlotCommit {
-    // Sig is a signature by the participant on the expected message.
+    /// Sig is a signature by the participant on the expected message.
     #[serde(rename = "s")]
     pub sig: Signature,
 
-    // l is the total weight of signatures in lower-numbered slots.
-    // This is initialized once the builder has collected a sufficient
-    // number of signatures.
+    /// l is the total weight of signatures in lower-numbered slots.
+    /// This is initialized once the builder has collected a sufficient
+    /// number of signatures.
     #[serde(rename = "l")]
     pub l: u64,
 }
@@ -305,11 +305,11 @@ pub struct Verifier {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Participant {
-    // PK is the identifier used to verify the signature for a specific participant
+    /// PK is the identifier used to verify the signature for a specific participant
     #[serde(rename = "p")]
     pub pk: Verifier,
 
-    // Weight is AccountData.MicroAlgos.
+    /// Weight is AccountData.MicroAlgos.
     #[serde(rename = "w")]
     pub weight: u64,
 }
@@ -323,17 +323,17 @@ pub struct Reveal {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct MerkleArrayProof {
-    // Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
-    // given the distribution of the elt positions and the depth of the tree,
-    // the path length can increase up to 2^MaxEncodedTreeDepth / 2
+    /// Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
+    /// given the distribution of the elt positions and the depth of the tree,
+    /// the path length can increase up to 2^MaxEncodedTreeDepth / 2
     #[serde(rename = "pth")]
     pub path: Vec<HashDigest>,
 
     #[serde(rename = "hsh")]
     pub hash_factory: HashFactory,
 
-    // TreeDepth represents the depth of the tree that is being proven.
-    // It is the number of edges from the root to a leaf.
+    /// TreeDepth represents the depth of the tree that is being proven.
+    /// It is the number of edges from the root to a leaf.
     #[serde(rename = "td")]
     pub tree_depth: u8,
 }
@@ -346,7 +346,7 @@ pub struct HashFactory {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct StateProofMessage {
-    // BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
+    /// BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
     #[serde(rename = "b")]
     pub block_headers_commitment: Vec<u8>,
 
@@ -365,8 +365,8 @@ pub struct StateProofMessage {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum StateProofType {
-    // StateProofBasic is our initial state proof setup.
-    // using falcon keys and subset-sum hash
+    /// StateProofBasic is our initial state proof setup.
+    /// using falcon keys and subset-sum hash
     StateProofBasic,
 }
 
