@@ -9,6 +9,9 @@ use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
 use algonaut_model::transaction::ApiSignedLogic;
+use algonaut_model::transaction::StateProof;
+use algonaut_model::transaction::StateProofMessage;
+use algonaut_model::transaction::StateProofType;
 use data_encoding::BASE32_NOPAD;
 use data_encoding::BASE64;
 use sha2::Digest;
@@ -28,6 +31,7 @@ pub enum TransactionType {
     AssetClawbackTransaction(AssetClawbackTransaction),
     AssetFreezeTransaction(AssetFreezeTransaction),
     ApplicationCallTransaction(ApplicationCallTransaction),
+    StateProofTransaction(StateProofTransaction),
 }
 
 /// A transaction that can appear in a block
@@ -138,6 +142,7 @@ impl Transaction {
             TransactionType::AssetClawbackTransaction(t) => t.sender,
             TransactionType::AssetFreezeTransaction(t) => t.sender,
             TransactionType::ApplicationCallTransaction(t) => t.sender,
+            TransactionType::StateProofTransaction(t) => t.sender,
         }
     }
 }
@@ -368,6 +373,16 @@ pub struct ApplicationCallTransaction {
     pub extra_pages: u32,
 }
 
+///
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StateProofTransaction {
+    /// The address of the account that signs and pays the fee.
+    pub sender: Address,
+    pub state_proof_type: StateProofType,
+    pub state_proof: StateProof,
+    pub message: StateProofMessage,
+}
+
 /// An application transaction must indicate the action to be taken following the execution of its approvalProgram or clearStateProgram. The variants below describe the available actions.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ApplicationCallOnComplete {
@@ -428,6 +443,7 @@ pub fn to_tx_type_enum(type_: &TransactionType) -> TransactionTypeEnum {
         | TransactionType::AssetClawbackTransaction(_) => TransactionTypeEnum::AssetTransfer,
         TransactionType::AssetFreezeTransaction(_) => TransactionTypeEnum::AssetFreeze,
         TransactionType::ApplicationCallTransaction(_) => TransactionTypeEnum::ApplicationCall,
+        TransactionType::StateProofTransaction(_) => TransactionTypeEnum::StateProof,
     }
 }
 
