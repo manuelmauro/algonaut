@@ -1,5 +1,6 @@
 use algonaut_core::{Address, MicroAlgos, MultisigSignature, Round, ToMsgPack, VotePk, VrfPk};
 use algonaut_crypto::{HashDigest, HashType, Signature};
+use algonaut_encoding::{deserialize_bytes64, serialize_bytes};
 use serde::{Deserialize, Serialize};
 
 /// IMPORTANT:
@@ -291,7 +292,11 @@ pub struct SigSlotCommit {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Verifier {
-    #[serde(rename = "cmt")]
+    #[serde(
+        rename = "cmt",
+        serialize_with = "serialize_bytes",
+        deserialize_with = "deserialize_bytes64"
+    )]
     pub commitment: [u8; 64],
 
     #[serde(rename = "lf")]
