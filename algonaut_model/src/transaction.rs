@@ -139,6 +139,15 @@ pub struct ApiTransaction {
     #[serde(rename = "snd")]
     pub sender: Address,
 
+    #[serde(rename = "sp", skip_serializing_if = "Option::is_none")]
+    pub state_proof: Option<StateProof>,
+
+    #[serde(rename = "spmsg", skip_serializing_if = "Option::is_none")]
+    pub state_proof_message: Option<StateProofMessage>,
+
+    #[serde(rename = "sptype", skip_serializing_if = "Option::is_none")]
+    pub state_proof_type: Option<StateProofType>,
+
     #[serde(rename = "type")]
     pub type_: String,
 
@@ -156,15 +165,6 @@ pub struct ApiTransaction {
 
     #[serde(rename = "xaid", skip_serializing_if = "Option::is_none")]
     pub xfer: Option<u64>,
-
-    #[serde(rename = "sptype", skip_serializing_if = "Option::is_none")]
-    pub state_proof_type: Option<StateProofType>,
-
-    #[serde(rename = "sp", skip_serializing_if = "Option::is_none")]
-    pub state_proof: Option<StateProof>,
-
-    #[serde(rename = "spmsg", skip_serializing_if = "Option::is_none")]
-    pub state_proof_message: Option<StateProofMessage>,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
