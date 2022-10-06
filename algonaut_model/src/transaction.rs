@@ -2,6 +2,7 @@ use algonaut_core::{Address, MicroAlgos, MultisigSignature, Round, ToMsgPack, Vo
 use algonaut_crypto::{HashDigest, HashType, Signature};
 use algonaut_encoding::{deserialize_bytes64, serialize_bytes};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// IMPORTANT:
 /// When serializing:
@@ -271,7 +272,7 @@ pub struct StateProof {
     /// to the corresponding elements from the sigs and participants
     /// arrays.
     #[serde(rename = "r")]
-    pub reveals: u32, // TODO: define hashmap? map[uint64]Reveal `codec:"r,allocbound=MaxReveals"`
+    pub reveals: HashMap<u64, Reveal>,
 
     #[serde(rename = "pr")]
     pub positions_to_reveal: Vec<u64>,
