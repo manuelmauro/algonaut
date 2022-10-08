@@ -1,6 +1,6 @@
 # ARG GO_IMAGE=golang:1.13-stretch
 # FROM $GO_IMAGE
-FROM rust:1.58.1
+FROM rust:1.64.0
 RUN apt-get update && apt-get install -y make
 
 # Copy SDK code into the container
