@@ -10,7 +10,7 @@ git clone --single-branch --branch master https://github.com/algorand/algorand-s
 # copy feature files into project
 mv test-harness/features tests/features
 
-RUST_IMAGE=rust:1.58.1
+RUST_IMAGE=rust:1.64.0
 
 echo "Building docker image from base \"$RUST_IMAGE\""
 
