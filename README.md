@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="assets/rocket-solid.png" width="200" height="200">
+    <img src="assets/rocket-solid.png" width="128" height="128">
 </p>
 
 # Rust `algonaut`

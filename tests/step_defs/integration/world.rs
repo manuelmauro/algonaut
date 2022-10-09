@@ -9,11 +9,9 @@ use algonaut::{
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
 use algonaut_core::{Address, SuggestedTransactionParams};
 use algonaut_transaction::{account::Account, SignedTransaction, Transaction};
-use async_trait::async_trait;
-use cucumber::WorldInit;
-use std::convert::Infallible;
+use cucumber;
 
-#[derive(Default, Debug, WorldInit)]
+#[derive(Default, Debug, cucumber::World)]
 pub struct World {
     pub algod: Option<Algod>,
 
@@ -43,13 +41,4 @@ pub struct World {
     pub abi_method_arg_types: Option<Vec<AbiType>>,
     pub abi_method_arg_values: Option<Vec<AbiArgValue>>,
     pub tx_composer_res: Option<ExecuteResult>,
-}
-
-#[async_trait(?Send)]
-impl cucumber::World for World {
-    type Error = Infallible;
-
-    async fn new() -> Result<Self, Self::Error> {
-        Ok(Self::default())
-    }
 }

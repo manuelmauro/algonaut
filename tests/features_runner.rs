@@ -1,4 +1,4 @@
-use cucumber::WorldInit;
+use cucumber::World;
 use step_defs::integration;
 
 mod step_defs;
