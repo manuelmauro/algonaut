@@ -12,6 +12,13 @@ pub mod mnemonic;
 ///
 pub mod error;
 
+#[derive(Copy, Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]
+pub enum HashType {
+    Sha512_256,
+    Sumhash,
+    Sha256,
+}
+
 /// A SHA512_256 hash
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct HashDigest(pub [u8; 32]);
@@ -103,6 +110,12 @@ impl<'de> Deserialize<'de> for HashDigest {
 impl Debug for HashDigest {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", BASE32_NOPAD.encode(&self.0))
+    }
+}
+
+impl AsRef<[u8]> for HashDigest {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 

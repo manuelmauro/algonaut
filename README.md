@@ -1,23 +1,17 @@
 <p align="center">
-    <img src="assets/rocket-solid.png">
+    <img src="assets/rocket-solid.png" width="200" height="200">
 </p>
 
 # Rust `algonaut`
 
+[![Crate](https://img.shields.io/crates/v/algonaut.svg)](https://crates.io/crates/algonaut)
 [![Docs](https://docs.rs/algonaut/badge.svg)](https://docs.rs/algonaut)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algonaut/blob/main/LICENSE)
-![Continuous integration](https://github.com/manuelmauro/algonaut/actions/workflows/quickstart.yml/badge.svg)
+![GitHubCI](https://github.com/manuelmauro/algonaut/actions/workflows/quickstart.yml/badge.svg)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/manuelmauro/algonaut/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/manuelmauro/algonaut/tree/main)
 
 Rust **algonaut** is a rusty SDK for [Algorand](https://www.algorand.com/). Please, be aware that this crate is a work in progress.
 
-## Installation
-
-⚠️ Use main. We're currently not maintaining releases.
-```toml
-algonaut = { git = "https://github.com/manuelmauro/algonaut", branch = "main" }
-```
-
-## Example
 ```rust
 use algonaut::algod::v2::Algod;
 use algonaut_core::MicroAlgos;

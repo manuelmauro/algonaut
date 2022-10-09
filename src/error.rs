@@ -100,6 +100,7 @@ impl From<algonaut_client::error::ClientError> for ServiceError {
             algonaut_client::error::ClientError::BadToken => ServiceError::BadToken,
             algonaut_client::error::ClientError::BadHeader(msg) => ServiceError::BadHeader(msg),
             algonaut_client::error::ClientError::Request(e) => ServiceError::Request(e.into()),
+            algonaut_client::error::ClientError::Msg(msg) => ServiceError::Msg(msg),
         }
     }
 }

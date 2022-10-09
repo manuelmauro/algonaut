@@ -1,18 +1,22 @@
+# rust
 /target
 **/*.rs.bk
 Cargo.lock
-/.idea
-*.iml
-/algorand-sdk-testing/
-/test.sh
+
+# examples output
 signed.tx
+
+# environment
 **/.env
 
-# ignore cucumber test resources
-test-harness/
-tests/features/
+# testing files
+*.feature
+test-harness
+tests/features
 
 # editor
 *.code-workspace
 .devcontainer/
 .vscode
+/.idea
+*.iml

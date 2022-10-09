@@ -1,4 +1,3 @@
-
 # Contributing to algonaut
 
 **Note:** Any interaction with the project is subject to our [Code of Conduct](https://github.com/manuelmauro/algonaut/blob/main/CODE_OF_CONDUCT.md).
@@ -28,6 +27,7 @@ Before submitting your pull request to the repository, please make sure you have
 3. All of the following commands completed without errors or warnings.
    1. `cargo test`
    2. `cargo clippy -- -D warnings`
+   3. `make docker-test`
 
 ## Writing Documentation
 

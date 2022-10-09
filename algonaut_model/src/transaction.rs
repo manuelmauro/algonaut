@@ -1,6 +1,8 @@
 use algonaut_core::{Address, MicroAlgos, MultisigSignature, Round, ToMsgPack, VotePk, VrfPk};
-use algonaut_crypto::{HashDigest, Signature};
+use algonaut_crypto::{HashDigest, HashType, Signature};
+use algonaut_encoding::{deserialize_bytes64, serialize_bytes};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// IMPORTANT:
 /// When serializing:
@@ -137,6 +139,15 @@ pub struct ApiTransaction {
     #[serde(rename = "snd")]
     pub sender: Address,
 
+    #[serde(rename = "sp", skip_serializing_if = "Option::is_none")]
+    pub state_proof: Option<StateProof>,
+
+    #[serde(rename = "spmsg", skip_serializing_if = "Option::is_none")]
+    pub state_proof_message: Option<StateProofMessage>,
+
+    #[serde(rename = "sptype", skip_serializing_if = "Option::is_none")]
+    pub state_proof_type: Option<StateProofType>,
+
     #[serde(rename = "type")]
     pub type_: String,
 
@@ -238,6 +249,126 @@ pub struct ApiStateSchema {
 
     #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
     pub number_ints: Option<u64>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct StateProof {
+    #[serde(rename = "c")]
+    pub sig_commit: HashDigest,
+
+    #[serde(rename = "w")]
+    pub signed_weight: u64,
+
+    #[serde(rename = "S")]
+    pub sig_proofs: MerkleArrayProof,
+
+    #[serde(rename = "P")]
+    pub part_proofs: MerkleArrayProof,
+
+    #[serde(rename = "v")]
+    pub merkle_signature_salt_version: u8,
+
+    /// Reveals is a sparse map from the position being revealed
+    /// to the corresponding elements from the sigs and participants
+    /// arrays.
+    #[serde(rename = "r")]
+    pub reveals: HashMap<u64, Reveal>,
+
+    #[serde(rename = "pr")]
+    pub positions_to_reveal: Vec<u64>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct SigSlotCommit {
+    /// Sig is a signature by the participant on the expected message.
+    #[serde(rename = "s")]
+    pub sig: Signature,
+
+    /// l is the total weight of signatures in lower-numbered slots.
+    /// This is initialized once the builder has collected a sufficient
+    /// number of signatures.
+    #[serde(rename = "l")]
+    pub l: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Verifier {
+    #[serde(
+        rename = "cmt",
+        serialize_with = "serialize_bytes",
+        deserialize_with = "deserialize_bytes64"
+    )]
+    pub commitment: [u8; 64],
+
+    #[serde(rename = "lf")]
+    pub key_lifetime: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Participant {
+    /// PK is the identifier used to verify the signature for a specific participant
+    #[serde(rename = "p")]
+    pub pk: Verifier,
+
+    /// Weight is AccountData.MicroAlgos.
+    #[serde(rename = "w")]
+    pub weight: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Reveal {
+    #[serde(rename = "s")]
+    pub sig_slot: SigSlotCommit,
+    pub part: Participant,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct MerkleArrayProof {
+    /// Path is bounded by MaxNumLeavesOnEncodedTree since there could be multiple reveals, and
+    /// given the distribution of the elt positions and the depth of the tree,
+    /// the path length can increase up to 2^MaxEncodedTreeDepth / 2
+    #[serde(rename = "pth")]
+    pub path: Vec<HashDigest>,
+
+    #[serde(rename = "hsh")]
+    pub hash_factory: HashFactory,
+
+    /// TreeDepth represents the depth of the tree that is being proven.
+    /// It is the number of edges from the root to a leaf.
+    #[serde(rename = "td")]
+    pub tree_depth: u8,
+}
+
+#[derive(Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]
+pub struct HashFactory {
+    #[serde(rename = "t")]
+    pub hash_type: HashType,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct StateProofMessage {
+    /// BlockHeadersCommitment contains a commitment on all light block headers within a state proof interval.
+    #[serde(rename = "b")]
+    pub block_headers_commitment: Vec<u8>,
+
+    #[serde(rename = "v")]
+    pub voters_commitment: Vec<u8>,
+
+    #[serde(rename = "P")]
+    pub ln_proven_weight: u64,
+
+    #[serde(rename = "f")]
+    pub first_attested_round: u64,
+
+    #[serde(rename = "l")]
+    pub last_attested_round: u64,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub enum StateProofType {
+    /// StateProofBasic is our initial state proof setup.
+    /// using falcon keys and subset-sum hash
+    StateProofBasic,
 }
 
 impl ToMsgPack for ApiTransaction {}

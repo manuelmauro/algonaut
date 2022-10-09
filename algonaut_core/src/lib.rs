@@ -86,6 +86,12 @@ impl Mul<u64> for Round {
     }
 }
 
+impl From<u64> for Round {
+    fn from(u: u64) -> Self {
+        Self(u)
+    }
+}
+
 /// Participation public key used in key registration transactions
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct VotePk(pub [u8; 32]);
@@ -222,6 +228,7 @@ pub enum TransactionTypeEnum {
     AssetTransfer,
     AssetFreeze,
     ApplicationCall,
+    StateProof,
 }
 
 impl TransactionTypeEnum {
@@ -233,6 +240,7 @@ impl TransactionTypeEnum {
             TransactionTypeEnum::AssetTransfer => "axfer",
             TransactionTypeEnum::AssetFreeze => "afrz",
             TransactionTypeEnum::ApplicationCall => "appl",
+            TransactionTypeEnum::StateProof => "stpf",
         }
     }
 
@@ -244,6 +252,7 @@ impl TransactionTypeEnum {
             "axfer" => Ok(TransactionTypeEnum::AssetTransfer),
             "afrz" => Ok(TransactionTypeEnum::AssetFreeze),
             "appl" => Ok(TransactionTypeEnum::ApplicationCall),
+            "stpf" => Ok(TransactionTypeEnum::StateProof),
             _ => Err(CoreError::General(format!(
                 "Couldn't convert tx type str: `{s}` to tx type"
             ))),

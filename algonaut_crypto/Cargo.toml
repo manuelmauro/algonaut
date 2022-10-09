@@ -6,10 +6,10 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut_crypto"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.3.0"
+version = "0.4.2"
 
 [dependencies]
-algonaut_encoding = {path = "../algonaut_encoding", version = "0.3.0"}
+algonaut_encoding = {path = "../algonaut_encoding", version = "0.4.2"}
 data-encoding = "2.3.1"
 derive_more = "0.99.13"
 indexmap = "1.6.1"

@@ -17,6 +17,9 @@ pub enum ClientError {
     /// HTTP calls.
     #[error("http error: {0}")]
     Request(#[from] RequestError),
+    /// General text-only errors. Dedicated error variants can be created, if needed.
+    #[error("Msg: {0}")]
+    Msg(String),
 }
 
 #[derive(Error, Debug, Clone)]
@@ -48,6 +51,12 @@ pub enum RequestErrorDetails {
 impl From<url::ParseError> for ClientError {
     fn from(error: url::ParseError) -> Self {
         ClientError::BadUrl(error.to_string())
+    }
+}
+
+impl From<rmp_serde::decode::Error> for ClientError {
+    fn from(error: rmp_serde::decode::Error) -> Self {
+        ClientError::Msg(error.to_string())
     }
 }
 
