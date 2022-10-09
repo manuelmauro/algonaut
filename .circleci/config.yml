@@ -1,0 +1,21 @@
+version: 2.1
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - integration-test:
+          matrix:
+            parameters:
+              rust-version: ["1.64.0"]
+
+jobs:
+  integration-test:
+    parameters:
+      rust-version:
+        type: string
+    machine:
+      image: "ubuntu-2004:202104-01"
+    steps:
+      - checkout
+      - run: RUST_VERSION=<< parameters.rust-version >> make docker-test
