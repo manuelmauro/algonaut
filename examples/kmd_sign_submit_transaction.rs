@@ -8,7 +8,6 @@ use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     // kmd manages wallets and accounts

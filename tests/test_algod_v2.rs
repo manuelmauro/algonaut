@@ -8,7 +8,6 @@ use tokio::test;
 
 #[test]
 async fn test_genesis_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -23,7 +22,6 @@ async fn test_genesis_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -38,7 +36,6 @@ async fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_metrics_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -53,7 +50,6 @@ async fn test_metrics_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_account_information_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -70,7 +66,6 @@ async fn test_account_information_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_pending_transactions_for_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -91,7 +86,6 @@ async fn test_pending_transactions_for_endpoint() -> Result<(), Box<dyn Error>> 
 #[test]
 #[ignore]
 async fn test_application_information_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -107,7 +101,6 @@ async fn test_application_information_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_asset_information_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -123,7 +116,6 @@ async fn test_asset_information_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -140,7 +132,6 @@ async fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_start_catchup_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -158,7 +149,6 @@ async fn test_start_catchup_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_abort_catchup_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -175,7 +165,6 @@ async fn test_abort_catchup_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_ledger_supply_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -191,7 +180,6 @@ async fn test_ledger_supply_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_register_participation_keys_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -216,7 +204,6 @@ async fn test_register_participation_keys_endpoint() -> Result<(), Box<dyn Error
 #[test]
 #[ignore]
 async fn test_shutdown_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -231,7 +218,6 @@ async fn test_shutdown_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_status_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -246,7 +232,6 @@ async fn test_status_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_status_after_round_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -265,7 +250,6 @@ async fn test_status_after_round_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_compile_teal_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -291,7 +275,6 @@ pop
 
 #[test]
 async fn test_failure_compiling_teal() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -307,7 +290,6 @@ async fn test_failure_compiling_teal() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore = "TODO"]
 async fn test_dryrun_teal_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     Ok(())
@@ -316,7 +298,6 @@ async fn test_dryrun_teal_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore = "TODO"]
 async fn test_broadcast_raw_transaction_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -331,7 +312,6 @@ async fn test_broadcast_raw_transaction_endpoint() -> Result<(), Box<dyn Error>>
 
 #[test]
 async fn test_transaction_params_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -346,7 +326,6 @@ async fn test_transaction_params_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -362,7 +341,6 @@ async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_pending_transaction_with_id_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -377,7 +355,6 @@ async fn test_pending_transaction_with_id_endpoint() -> Result<(), Box<dyn Error
 
 #[test]
 async fn test_versions_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;

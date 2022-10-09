@@ -9,7 +9,6 @@ extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
     env_logger::init();
 

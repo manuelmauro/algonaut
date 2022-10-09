@@ -7,7 +7,6 @@ use std::io::Read;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let mut f = File::open("./signed.tx")?;
