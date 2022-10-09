@@ -30,18 +30,20 @@ algonaut_crypto = { path = "algonaut_crypto", version = "0.4.2" }
 algonaut_encoding = { path = "algonaut_encoding", version = "0.4.2" }
 algonaut_transaction = { path = "algonaut_transaction", version = "0.4.2" }
 algonaut_abi = { path = "algonaut_abi", version = "0.4.2" }
+log = "0.4.0"
+env_logger = "0.9.0"
 thiserror = "1.0.23"
 rmp-serde = "1.0.0"
 num-traits = "0.2.14"
 num-bigint = "0.4.3"
 futures-timer = "3.0.2"
-instant = { version = "0.1", features = [ "now" ] }
+instant = { version = "0.1", features = ["now"] }
 data-encoding = "2.3.1"
 sha2 = "0.10.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 gloo-timers = { version = "0.2.4", features = ["futures"] }
-instant = { version = "0.1", features = [ "now", "wasm-bindgen" ] }
+instant = { version = "0.1", features = ["now", "wasm-bindgen"] }
 
 [dev-dependencies]
 dotenv = "0.15.0"
@@ -59,4 +61,4 @@ rustls = ["algonaut_client/rustls"]
 [[test]]
 name = "features_runner"
 # Allows Cucumber to print output instead of libtest
-harness = false          
+harness = false

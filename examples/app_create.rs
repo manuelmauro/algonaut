@@ -9,15 +9,20 @@ use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 use std::time::{Duration, Instant};
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
+    env_logger::init();
 
+    info!("creating algod client");
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
-    let sender = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
+    info!("creating account for alice");
+    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
     // To read teal from file: fs::read("my_program.teal")
     let approval_program = r#"
@@ -38,14 +43,18 @@ int 1
 "#
     .as_bytes();
 
+    info!("compiling approva and clear programs");
     let compiled_approval_program = algod.compile_teal(&approval_program).await?;
     let compiled_clear_program = algod.compile_teal(&clear_program).await?;
 
+    info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
+
+    info!("building CreateApplication transaction");
     let t = TxnBuilder::with(
         &params,
         CreateApplication::new(
-            sender.address(),
+            alice.address(),
             compiled_approval_program.clone(),
             compiled_clear_program,
             StateSchema {
@@ -62,13 +71,17 @@ int 1
     )
     .build()?;
 
-    let signed_t = sender.sign_transaction(t)?;
+    info!("signing transaction");
+    let signed_t = alice.sign_transaction(t)?;
 
+    info!("broadcasting transaction");
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
 
+    info!("waiting for transaction finality");
     let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
-    println!(
-        "Application id: {:?}",
+
+    info!(
+        "application id: {:?}",
         pending_t.map(|t| t.application_index)
     );
 
