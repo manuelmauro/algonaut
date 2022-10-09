@@ -5,25 +5,32 @@ use algonaut::transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
+    env_logger::init();
 
+    info!("creating algod client");
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
-    let account = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
+    info!("creating account for alice");
+    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
     let vote_pk_str = "KgL5qW1jtHAQb1lQNIKuqHBqDWXRmb7GTmBN92a/sOQ=";
     let selection_pk_str = "A3s+2bgKlbG9qIaA4wJsrrJl8mVKGzTp/h6gGEyZmAg=";
 
+    info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
+    info!("building RegisterKey transaction");
     let t = TxnBuilder::with(
         &params,
         RegisterKey::online(
-            account.address(),
+            alice.address(),
             VotePk::from_base64_str(vote_pk_str)?,
             VrfPk::from_base64_str(selection_pk_str)?,
             params.first_valid,
@@ -34,12 +41,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .build()?;
 
-    let sign_response = account.sign_transaction(t)?;
+    info!("signing transaction");
+    let sign_response = alice.sign_transaction(t)?;
 
+    info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
     let send_response = algod.broadcast_signed_transaction(&sign_response).await;
-    println!("{:#?}", send_response);
+    info!("{:?}", send_response);
 
     Ok(())
 }
