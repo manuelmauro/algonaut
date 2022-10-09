@@ -203,7 +203,7 @@ async fn test_register_participation_keys_endpoint() -> Result<(), Box<dyn Error
         round_last_valid: None,
     };
 
-    let address = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ALICE_ADDRESS")?.parse()?;
 
     let res = algod.register_participation_keys(&address, &params).await;
 

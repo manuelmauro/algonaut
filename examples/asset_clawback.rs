@@ -4,45 +4,44 @@ use algonaut::transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     // load variables in .env
     dotenv().ok();
+    env_logger::init();
 
+    info!("creating algod client");
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
+    info!("creating account for alice");
     // The account specified as clawback when creating the asset.
-    let sender = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
-    let sender_address = sender.address();
+    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
-    // The asset receiver: In this case we'll make the clawback account also the asset receiver.
-    let asset_receiver_address = sender_address;
-
+    info!("creating account for bob");
     // The asset "sender": The account from which the asset is withdrawn.
-    let asset_sender_address = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?.address();
+    let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
+    info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
+    info!("building ClawbackAsset transaction");
     let t = TxnBuilder::with(
         &params,
-        ClawbackAsset::new(
-            sender_address,
-            4,
-            2,
-            asset_sender_address,
-            asset_receiver_address,
-        )
-        .build(),
+        ClawbackAsset::new(alice.address(), 21, 1, bob.address(), alice.address()).build(),
     )
     .build()?;
 
-    let sign_response = sender.sign_transaction(t)?;
+    info!("signing transaction");
+    let signed_t = alice.sign_transaction(t)?;
 
+    info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_signed_transaction(&sign_response).await;
-    println!("{:#?}", send_response);
+    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
+    info!("response: {:?}", send_response);
 
     Ok(())
 }

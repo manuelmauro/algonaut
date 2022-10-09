@@ -58,7 +58,7 @@ async fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
 
-    let address = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ALICE_ADDRESS")?.parse()?;
 
     let query = QueryAccountInfo {
         include_all: None,
@@ -99,7 +99,7 @@ async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         txid: None,
     };
 
-    let address = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ALICE_ADDRESS")?.parse()?;
 
     let res = indexer.account_transactions(&address, &query).await;
 

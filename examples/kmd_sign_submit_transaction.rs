@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Wallet Handle: {}", wallet_handle_token);
 
     // an account with some funds in our sandbox
-    let from_address = env::var("ACCOUNT")?.parse()?;
+    let from_address = env::var("ALICE_ADDRESS")?.parse()?;
     println!("Sender: {:#?}", from_address);
 
     let to_address = "2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY".parse()?;
