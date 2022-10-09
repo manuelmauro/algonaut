@@ -6,7 +6,7 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut_encoding"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.3.0"
+version = "0.4.2"
 
 [dependencies]
 data-encoding = "2.3.1"

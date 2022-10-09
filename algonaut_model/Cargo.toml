@@ -6,12 +6,12 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut_model"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.3.0"
+version = "0.4.2"
 
 [dependencies]
-algonaut_core = {path = "../algonaut_core", version = "0.3.0"}
-algonaut_crypto = {path = "../algonaut_crypto", version = "0.3.0"}
-algonaut_encoding = {path = "../algonaut_encoding", version = "0.3.0"}
+algonaut_core = {path = "../algonaut_core", version = "0.4.2"}
+algonaut_crypto = {path = "../algonaut_crypto", version = "0.4.2"}
+algonaut_encoding = {path = "../algonaut_encoding", version = "0.4.2"}
 data-encoding = "2.3.1"
 # derive_more = "0.99.13"
 serde = {version = "1.0", features = ["derive"]}

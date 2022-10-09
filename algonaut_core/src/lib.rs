@@ -228,6 +228,7 @@ pub enum TransactionTypeEnum {
     AssetTransfer,
     AssetFreeze,
     ApplicationCall,
+    StateProof,
 }
 
 impl TransactionTypeEnum {
@@ -239,6 +240,7 @@ impl TransactionTypeEnum {
             TransactionTypeEnum::AssetTransfer => "axfer",
             TransactionTypeEnum::AssetFreeze => "afrz",
             TransactionTypeEnum::ApplicationCall => "appl",
+            TransactionTypeEnum::StateProof => "stpf",
         }
     }
 
@@ -250,6 +252,7 @@ impl TransactionTypeEnum {
             "axfer" => Ok(TransactionTypeEnum::AssetTransfer),
             "afrz" => Ok(TransactionTypeEnum::AssetFreeze),
             "appl" => Ok(TransactionTypeEnum::ApplicationCall),
+            "stpf" => Ok(TransactionTypeEnum::StateProof),
             _ => Err(CoreError::General(format!(
                 "Couldn't convert tx type str: `{s}` to tx type"
             ))),

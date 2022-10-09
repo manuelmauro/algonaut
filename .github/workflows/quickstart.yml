@@ -1,4 +1,4 @@
-on: 
+on:
   push:
   pull_request:
     types: [opened]
@@ -51,8 +51,7 @@ jobs:
         with:
           command: test
           args: --workspace --lib --examples --test test_logic_signature
-      - run: make docker-test
-          
+
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
