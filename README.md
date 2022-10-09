@@ -8,7 +8,7 @@
 [![Docs](https://docs.rs/algonaut/badge.svg)](https://docs.rs/algonaut)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/manuelmauro/algonaut/blob/main/LICENSE)
 ![GitHubCI](https://github.com/manuelmauro/algonaut/actions/workflows/quickstart.yml/badge.svg)
-[![CircleCI](https://dl.circleci.com/status-badge/img/null/manuelmauro/algonaut/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/null/manuelmauro/algonaut/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/manuelmauro/algonaut/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/manuelmauro/algonaut/tree/main)
 
 Rust **algonaut** is a rusty SDK for [Algorand](https://www.algorand.com/). Please, be aware that this crate is a work in progress.
 
