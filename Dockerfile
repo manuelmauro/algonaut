@@ -1,5 +1,5 @@
-ARG RUST_IMAGE
-FROM $RUST_IMAGE
+ARG RUST_VERSION="1.64.0"
+FROM rust:$RUST_VERSION
 RUN apt-get update && apt-get install -y make
 
 # Copy SDK code into the container

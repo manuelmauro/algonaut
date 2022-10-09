@@ -4,7 +4,7 @@ set -euo pipefail
 # test-harness.sh setup/start cucumber test environment.
 #
 # Configuration is managed with environment variables, the ones you
-# are most likely to reconfigured are stored in '.test-env'.
+# are most likely to reconfigured are stored in 'test.env'.
 #
 # Variables:
 #   SDK_TESTING_URL     - URL to algorand-sdk-testing, useful for forks.
@@ -45,7 +45,7 @@ fi
 START=$(date "+%s")
 
 THIS=$(basename "$0")
-ENV_FILE=".test-env"
+ENV_FILE="test.env"
 TEST_DIR="tests"
 
 set -a
