@@ -7,13 +7,18 @@ use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
+    env_logger::init();
 
+    info!("creating algod client");
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
+    info!("compiling teal program");
     let program = algod
         .compile_teal(
             r#"
@@ -24,19 +29,26 @@ int 1
         )
         .await?;
 
-    let from = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
-    let to = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?;
+    info!("creating account for alice");
+    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
+    info!("creating account for bob");
+    let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
+
+    info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
+    info!("building Pay transaction");
     let t = TxnBuilder::with(
         &params,
-        Pay::new(from.address(), to.address(), MicroAlgos(123_456)).build(),
+        Pay::new(alice.address(), bob.address(), MicroAlgos(123_456)).build(),
     )
     .build()?;
 
-    let signature = from.generate_program_sig(&program);
+    info!("generating program signature");
+    let signature = alice.generate_program_sig(&program);
 
+    info!("delegating signature for the transaction");
     let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
@@ -48,8 +60,9 @@ int 1
         auth_address: None,
     };
 
+    info!("broadcasting transaction");
     let send_response = algod.broadcast_signed_transaction(&signed_t).await;
-    println!("response {:?}", send_response);
+    info!("response: {:?}", send_response);
 
     Ok(())
 }

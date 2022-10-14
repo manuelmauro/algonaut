@@ -4,18 +4,26 @@ use algonaut::kmd::v1::Kmd;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
+    env_logger::init();
 
+    info!("creating algod client");
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
+
+    info!("creating kmd client");
     let kmd = Kmd::new(&env::var("KMD_URL")?, &env::var("KMD_TOKEN")?)?;
+
+    info!("creating indexer client");
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
 
-    println!("Algod versions: {:#?}", algod.versions().await?);
-    println!("Kmd versions: {:#?}", kmd.versions().await?);
-    println!("Indexer health: {:#?}", indexer.health().await);
+    info!("algod versions: {:?}", algod.versions().await?);
+    info!("kmd versions: {:?}", kmd.versions().await?);
+    info!("indexer health: {:?}", indexer.health().await);
 
     Ok(())
 }

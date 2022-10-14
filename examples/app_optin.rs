@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
-    info!("building  OptInApplication transaction");
+    info!("building OptInApplication transaction");
     let t = TxnBuilder::with(
         &params,
         OptInApplication::new(alice.address(), 3)
