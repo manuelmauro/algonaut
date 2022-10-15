@@ -5,41 +5,38 @@ use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
+    env_logger::init();
 
+    info!("creating algod client");
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
-    let sender = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
+    info!("creating account for alice");
+    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
+    info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
-    // example approval program:
-    // #pragma version 4
-    // txna ApplicationArgs 0
-    // byte 0x0100
-    // ==
-    // txna ApplicationArgs 1
-    // byte 0xFF
-    // ==
-    // &&
-    // example clear program:
-    // #pragma version 4
-    // int 1
+
+    info!("building OptInApplication transaction");
     let t = TxnBuilder::with(
         &params,
-        OptInApplication::new(sender.address(), 5)
+        OptInApplication::new(alice.address(), 3)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )
     .build()?;
 
-    let signed_t = sender.sign_transaction(t)?;
+    info!("signing transaction");
+    let signed_t = alice.sign_transaction(t)?;
 
+    info!("broadcasting transaction");
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
-    println!("response: {:?}", send_response);
+    info!("response: {:?}", send_response);
 
     Ok(())
 }

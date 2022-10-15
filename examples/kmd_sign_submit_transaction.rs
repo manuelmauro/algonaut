@@ -5,15 +5,19 @@ use algonaut::transaction::{Pay, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
+    env_logger::init();
 
+    info!("creating kmd client");
     // kmd manages wallets and accounts
     let kmd = Kmd::new(&env::var("KMD_URL")?, &env::var("KMD_TOKEN")?)?;
 
+    info!("listing wallets");
     // first we obtain a handle to our wallet
     let list_response = kmd.list_wallets().await?;
     let wallet_id = match list_response
@@ -24,37 +28,45 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Some(wallet) => wallet.id,
         None => return Err("Wallet not found".into()),
     };
+
+    info!("initializing handle to the wallet");
     let init_response = kmd.init_wallet_handle(&wallet_id, "").await?;
     let wallet_handle_token = init_response.wallet_handle_token;
-    println!("Wallet Handle: {}", wallet_handle_token);
+    info!("wallet handle: {}", wallet_handle_token);
 
+    info!("retrieving account for sender");
     // an account with some funds in our sandbox
-    let from_address = env::var("ACCOUNT")?.parse()?;
-    println!("Sender: {:#?}", from_address);
+    let sender = "ADD HERE AN ALGO ADDRESS FROM YOUR kmd/sandbox"
+        .parse()
+        .expect("You need to specify an Algorand address from your kmd instance");
+    println!("sender: {:?}", sender);
 
-    let to_address = "2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY".parse()?;
-    println!("Receiver: {:#?}", to_address);
+    info!("creating account for bob");
+    let bob = env::var("BOB_ADDRESS")?.parse()?;
+    println!("receiver: {:#?}", bob);
 
+    info!("creating algod client");
     // algod has a convenient method that retrieves basic information for a transaction
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
+    info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
-    let t = TxnBuilder::with(
-        &params,
-        Pay::new(from_address, to_address, MicroAlgos(123_456)).build(),
-    )
-    .build()?;
+    info!("building Pay transaction");
+    let t =
+        TxnBuilder::with(&params, Pay::new(sender, bob, MicroAlgos(123_456)).build()).build()?;
 
+    info!("signing transaction");
     // we need to sign the transaction to prove that we own the sender address
     let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t).await?;
 
+    info!("broadcasting transaction");
     // broadcast the transaction to the network
     let send_response = algod
         .broadcast_raw_transaction(&sign_response.signed_transaction)
         .await?;
 
-    println!("Transaction ID: {}", send_response.tx_id);
+    info!("transaction ID: {}", send_response.tx_id);
 
     Ok(())
 }

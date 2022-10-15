@@ -11,7 +11,6 @@ use tokio::test;
 
 #[test]
 async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -24,7 +23,6 @@ async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
@@ -38,7 +36,6 @@ async fn test_transaction_information_endpoint() -> Result<(), Box<dyn Error>> {
 // Preconditions: import and fund sender account
 #[test]
 async fn test_app_call_parameters() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;

@@ -7,44 +7,53 @@ use dotenv::dotenv;
 use std::env;
 use std::error::Error;
 use std::time::{Duration, Instant};
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
+    env_logger::init();
 
-    // an account with some funds in our sandbox
-    let creator = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
-    println!("Creator: {:?}", creator.address());
-
+    info!("creating algod client");
     // algod has a convenient method that retrieves basic information for a transaction
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
+    info!("creating account for alice");
+    // an account with some funds in our sandbox
+    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
+    info!("creator: {:?}", alice.address());
+
+    info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
+    info!("building CreateAsset transaction");
     let t = TxnBuilder::with(
         &params,
-        CreateAsset::new(creator.address(), 10, 2, false)
+        CreateAsset::new(alice.address(), 100, 2, false)
             .unit_name("EIRI".to_owned())
             .asset_name("Naki".to_owned())
-            .manager(creator.address())
-            .reserve(creator.address())
-            .freeze(creator.address())
-            .clawback(creator.address())
+            .manager(alice.address())
+            .reserve(alice.address())
+            .freeze(alice.address())
+            .clawback(alice.address())
             .url("example.com".to_owned())
             .build(),
     )
     .build()?;
 
+    info!("signing transaction");
     // we need to sign the transaction to prove that we own the sender address
-    let signed_t = creator.sign_transaction(t)?;
+    let signed_t = alice.sign_transaction(t)?;
 
+    info!("broadcasting transaction");
     // broadcast the transaction to the network
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
-    println!("Transaction ID: {}", send_response.tx_id);
+    info!("transaction ID: {}", send_response.tx_id);
 
+    info!("waiting for transaction finality");
     let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
-    println!("Asset index: {:?}", pending_t.map(|t| t.asset_index));
+    info!("asset index: {:?}", pending_t.map(|t| t.asset_index));
 
     Ok(())
 }

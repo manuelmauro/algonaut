@@ -25,7 +25,7 @@ Before submitting your pull request to the repository, please make sure you have
 2. You have processed your source code with the code formatter.
    1. `cargo fmt --all -- --check`
 3. All of the following commands completed without errors or warnings.
-   1. `cargo test`
+   1. `cargo test --workspace --lib --examples --test test_logic_signature`
    2. `cargo clippy -- -D warnings`
    3. `make docker-test`
 

@@ -12,7 +12,6 @@ use tokio::test;
 
 #[test]
 async fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -27,7 +26,6 @@ async fn test_health_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -53,12 +51,11 @@ async fn test_accounts_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
 
-    let address = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ALICE_ADDRESS")?.parse()?;
 
     let query = QueryAccountInfo {
         include_all: None,
@@ -75,7 +72,6 @@ async fn test_account_info_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -99,7 +95,7 @@ async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
         txid: None,
     };
 
-    let address = env::var("ACCOUNT")?.parse()?;
+    let address = env::var("ALICE_ADDRESS")?.parse()?;
 
     let res = indexer.account_transactions(&address, &query).await;
 
@@ -111,7 +107,6 @@ async fn test_account_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_applications_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -133,7 +128,6 @@ async fn test_applications_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -150,7 +144,6 @@ async fn test_applications_info_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_assets_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -175,7 +168,6 @@ async fn test_assets_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -192,7 +184,6 @@ async fn test_assets_info_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -215,7 +206,6 @@ async fn test_asset_balances_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -250,7 +240,6 @@ async fn test_asset_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
 #[test]
 async fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -266,7 +255,6 @@ async fn test_block_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
@@ -304,7 +292,6 @@ async fn test_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 #[test]
 #[ignore]
 async fn test_transaction_info_endpoint() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
 
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;

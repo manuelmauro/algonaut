@@ -4,20 +4,25 @@ use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // load variables in .env
     dotenv().ok();
+    env_logger::init();
 
+    info!("loading transaction from file");
     let mut f = File::open("./signed.tx")?;
     let mut raw_transaction = Vec::new();
     let _ = f.read_to_end(&mut raw_transaction)?;
 
+    info!("creating algod client");
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
+    info!("broadcasting transaction");
     let send_response = algod.broadcast_raw_transaction(&raw_transaction).await?;
-    println!("Transaction ID: {}", send_response.tx_id);
+    info!("transaction ID: {}", send_response.tx_id);
 
     Ok(())
 }
