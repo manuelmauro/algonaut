@@ -67,7 +67,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 The `/examples` contains a wide set of examples that can help you getting started with `algonaut`. You can run them like this:
 
 ```bash
-cargo run --examples quickstart
+cargo run --example quickstart
 ```
 
 If your environment variables are not properly set, you will read the message `Error: NotPresent`. If this is the case, just run:
