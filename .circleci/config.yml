@@ -7,7 +7,7 @@ workflows:
       - integration-test:
           matrix:
             parameters:
-              rust-version: ["1.64.0"]
+              rust-version: ["1.65.0"]
 
 jobs:
   integration-test:

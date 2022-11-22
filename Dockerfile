@@ -1,4 +1,4 @@
-ARG RUST_VERSION="1.64.0"
+ARG RUST_VERSION="1.65.0"
 FROM rust:$RUST_VERSION
 RUN apt-get update && apt-get install -y make
 
