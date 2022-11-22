@@ -48,7 +48,7 @@ impl Address {
 
     /// Encode to base32 string with checksum
     fn encode_as_string(&self) -> String {
-        let hashed = ChecksumAlg::digest(&self.0);
+        let hashed = ChecksumAlg::digest(self.0);
         let checksum = &hashed[(HASH_LEN - CHECKSUM_LEN)..];
         let checksum_address = [&self.0, checksum].concat();
         BASE32_NOPAD.encode(&checksum_address)
