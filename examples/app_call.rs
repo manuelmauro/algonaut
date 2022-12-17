@@ -20,8 +20,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
    
     let user = String::from("User-Agent");
-    let pass = Strig::from("DoYouLoveMe?")'
-    let headers = Vec<(&user, &pass)>;
+    let pass = String::from("DoYouLoveMe?")'
+    let headers :  Vec<String> = vec![&user, &pass];
     
     //= {'User-Agent': 'DoYouLoveMe?}?;
     
