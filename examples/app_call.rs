@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
    
     let user = String::from("User-Agent");
     let pass = String::from("DoYouLoveMe?");
-    let headers :  Vec<&str, &str> = vec![&user, &pass];
+    let headers :  Vec<(&str, &str)> = vec![(&user, &pass)];
     
     //= {'User-Agent': 'DoYouLoveMe?}?;
     
