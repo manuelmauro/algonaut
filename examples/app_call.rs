@@ -36,9 +36,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
 
     println!("building transaction");
+    let app_id : u32 = 116639568;
+    
     let t = TxnBuilder::with(
         &params,
-        CallApplication::new(alice.address(), 3)
+        CallApplication::new(alice.address(), app_id)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )
