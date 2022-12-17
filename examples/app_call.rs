@@ -39,12 +39,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let app_id : u64 = 116639568;
     let app_arg = String::from("inc").as_bytes();
 
-    println!(app_arg);
+    let arg : u8 = app_arg
+    println!(&app_arg);
 
     let t = TxnBuilder::with(
         &params,
         CallApplication::new(alice.address(), app_id)
-            .app_arguments(vec![vec![255]])
+            .app_arguments(vec![vec![arg]])
             .build(),
     )
     .build()?;
