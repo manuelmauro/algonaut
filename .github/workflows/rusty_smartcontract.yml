@@ -18,5 +18,9 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
+      
+    - name: Env
+      run: ln -s examples.env .env
+     
     - name: Run tests
       run: cargo run --example app_call --verbose
