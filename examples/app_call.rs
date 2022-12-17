@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
     println!("creating algod client");
     //let algod = Algod::new(&url, &token)?;
-    let algod = Algod::with_headers(&url, &headers)?;
+    let algod = Algod::with_headers(&url, headers)?;
     
     println!("creating account for alice");
     let alice = Account::from_mnemonic(&alice_mnemonic)?;
