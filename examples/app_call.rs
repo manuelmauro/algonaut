@@ -13,11 +13,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
     env_logger::init();
 
+    let url = String::from("https://node.testnet.algoexplorerapi.io");
+    let token = String::from(" ");
+    
     info!("creating algod client");
-    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
+    let algod = Algod::new(&url, &token)?;
 
     info!("creating account for alice");
-    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
+    let alice = Account::from_mnemonic(&alice_mnemonic)?;
 
     info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
