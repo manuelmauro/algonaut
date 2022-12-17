@@ -37,10 +37,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("building transaction");
     let app_id : u64 = 116639568;
-    let app_arg : &[u8] = String::from("inc").as_bytes();
+    let mut app_arg : &String = String::from("inc");
+    let mut app_arg = mut app_arg.as_bytes();
 
-
-    println!("{:?}",&app_arg);
+    println!("{:?}", &app_arg);
 
     let t = TxnBuilder::with(
         &params,
