@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token = String::from("");
     
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
-    let mut headers =vec![ "User-Agent".to_string(), "DoYouLoveMe?".to_string() ];
+    let mut headers (&str, &str) = ("User-Agent", "DoYouLoveMe?");
     
     //= {'User-Agent': 'DoYouLoveMe?}?;
     
