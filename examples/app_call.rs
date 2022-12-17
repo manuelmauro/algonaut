@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token = String::from("");
     
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
-    let mut headers (&str, &str) = ("User-Agent", "DoYouLoveMe?");
+    let mut headers (&str) = ("User-Agent".to_string(), "DoYouLoveMe?".to_string());
     
     //= {'User-Agent': 'DoYouLoveMe?}?;
     
@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice = Account::from_mnemonic(&alice_mnemonic)?;
 
     println!("retrieving suggested params");
-    let params = algod?.suggested_transaction_params().await?;
+    let params = algod.suggested_transaction_params().await?;
 
     println!("building transaction");
     let t = TxnBuilder::with(
