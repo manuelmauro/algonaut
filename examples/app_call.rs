@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
 
     let url = String::from("https://node.testnet.algoexplorerapi.io");
-    let token = String::from("");
+    //let token = String::from("");
     
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
    
