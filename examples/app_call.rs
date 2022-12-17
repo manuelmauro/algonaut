@@ -3,6 +3,7 @@ use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::CallApplication;
 use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
+use dict::{ Dict, DictIface };
 
 use std::error::Error;
 #[macro_use]
@@ -17,7 +18,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token = String::from("");
     
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
-    let headers : Dict = {'User-Agent': 'DoYouLoveMe?}?;
+    let mut headers = Dict::<String>::new(); 
+    assert_eq!( headers.add( "User-Agent".to_string(), "DoYouLoveMe?".to_string() ), true );
+    
+    //= {'User-Agent': 'DoYouLoveMe?}?;
     
     info!("creating algod client");
     //let algod = Algod::new(&url, &token)?;
