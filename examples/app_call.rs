@@ -17,10 +17,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token = String::from("");
     
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
+    let headers : Dict = {'User-Agent': 'DoYouLoveMe?}?;
     
     info!("creating algod client");
-    let algod = Algod::new(&url, &token)?;
-
+    //let algod = Algod::new(&url, &token)?;
+    let algod = Algod::with_headers(&url, &headers)
+    
     info!("creating account for alice");
     let alice = Account::from_mnemonic(&alice_mnemonic)?;
 
