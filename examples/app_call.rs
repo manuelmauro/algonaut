@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token = String::from("");
     
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
-    let headers (&str) = ("User-Agent".to_string(), "DoYouLoveMe?".to_string());
+    let headers : (&str) = ("User-Agent".to_string(), "DoYouLoveMe?".to_string());
     
     //= {'User-Agent': 'DoYouLoveMe?}?;
     
