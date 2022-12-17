@@ -3,7 +3,7 @@ use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::CallApplication;
 use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
-use std::collections::HashMap;
+
 
 use std::error::Error;
 #[macro_use]
