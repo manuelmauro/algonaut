@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
 
     println!("building transaction");
-    let app_id : u32 = 116639568;
+    let app_id : u64 = 116639568;
     
     let t = TxnBuilder::with(
         &params,
