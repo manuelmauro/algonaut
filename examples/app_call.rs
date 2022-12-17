@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let t = TxnBuilder::with(
         &params,
         CallApplication::new(alice.address(), app_id)
-            .app_arguments(vec![vec![app_arg]])
+            .app_arguments(vec![vec![0]])
             .build(),
     )
     .build()?;
