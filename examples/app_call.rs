@@ -3,7 +3,7 @@ use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::CallApplication;
 use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
-use dict::{ Dict, DictIface };
+use std::collections::HashMap;
 
 use std::error::Error;
 #[macro_use]
@@ -18,22 +18,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let token = String::from("");
     
     let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
-    let mut headers = Dict::<String>::new(); 
-    assert_eq!( headers.add( "User-Agent".to_string(), "DoYouLoveMe?".to_string() ), true );
+    let mut headers = HashMap::new();
+    
+    
+    headers.insert( "User-Agent".to_string(), "DoYouLoveMe?".to_string() );
     
     //= {'User-Agent': 'DoYouLoveMe?}?;
     
-    info!("creating algod client");
+    println!("creating algod client");
     //let algod = Algod::new(&url, &token)?;
-    let algod = Algod::with_headers(&url, &headers)
+    let algod = Algod::with_headers(&url, &headers)?;
     
-    info!("creating account for alice");
+    println!("creating account for alice");
     let alice = Account::from_mnemonic(&alice_mnemonic)?;
 
-    info!("retrieving suggested params");
+    println!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
-    info!("building transaction");
+    println!("building transaction");
     let t = TxnBuilder::with(
         &params,
         CallApplication::new(alice.address(), 3)
@@ -42,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .build()?;
 
-    info!("signing transaction");
+    println!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
