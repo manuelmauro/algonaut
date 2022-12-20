@@ -179,7 +179,7 @@ impl CompiledTeal {
     }
 
     pub fn hash(&self) -> HashDigest {
-        HashDigest(sha2::Sha512_256::digest(&self.bytes_to_sign()).into())
+        HashDigest(sha2::Sha512_256::digest(self.bytes_to_sign()).into())
     }
 }
 
