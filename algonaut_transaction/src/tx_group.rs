@@ -42,7 +42,7 @@ impl TxGroup {
             ids.push(t.raw_id()?);
         }
         let group = TxGroup::new(ids);
-        let hashed = sha2::Sha512_256::digest(&group.bytes_to_sign()?);
+        let hashed = sha2::Sha512_256::digest(group.bytes_to_sign()?);
         Ok(HashDigest(hashed.into()))
     }
 

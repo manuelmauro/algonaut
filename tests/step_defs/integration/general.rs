@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use crate::step_defs::{
     integration::world::World,
     util::{account_from_kmd_response, wait_for_pending_transaction},
@@ -8,6 +6,8 @@ use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
 use algonaut_core::{MicroAlgos, Round};
 use algonaut_transaction::{Pay, TxnBuilder};
 use cucumber::{given, then, when};
+use rand::Rng;
+use std::error::Error;
 
 #[given(regex = "an algod v2 client")]
 async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
@@ -90,6 +90,9 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     let accounts = w.accounts.as_ref().unwrap();
     let password = w.password.as_ref().unwrap();
     let handle = w.handle.as_ref().unwrap();
+    // add dust to make the transactions unique (with high probability) within a block
+    let mut rng = rand::thread_rng();
+    let dust: u64 = rng.gen_range(1..1_000_000);
 
     let sender_address = accounts[1];
 
@@ -103,7 +106,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
         Pay::new(
             accounts[1],
             sender_account.address(),
-            MicroAlgos(micro_algos),
+            MicroAlgos(micro_algos + dust),
         )
         .build(),
     )
