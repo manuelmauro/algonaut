@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //convert each string to bytes via a tuple
     //supply tuple to app call method
 
-    let arg_as_bytes : Option<u8> = app_arg.as_bytes()
+    let arg_as_bytes : Option<u8> = app_arg.as_bytes();
     
     println!("{:?}", &arg_as_bytes);
 
