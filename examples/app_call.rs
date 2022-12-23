@@ -39,13 +39,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let app_id : u64 = 116639568;
     let app_arg : &String = &String::from("inc");
     
+    //map the string
+    //convert each string to bytes via a tuple
+    //supply tuple to app call method
 
     println!("{:?}", &app_arg.as_bytes());
 
     let t = TxnBuilder::with(
         &params,
         CallApplication::new(alice.address(), app_id)
-            .app_arguments(vec![vec![105, 110, 99]])
+            .app_arguments(vec![vec![&app_arg.as_bytes()]])
             .build(),
     )
     .build()?;
