@@ -37,18 +37,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("building transaction");
     let app_id : u64 = 116639568;
-    let app_arg : &String = &String::from("inc");
+    let app_arg : String = String::from("inc");
     
     //map the string
     //convert each string to bytes via a tuple
     //supply tuple to app call method
 
-    println!("{:?}", &app_arg.as_bytes());
+    let arg_as_bytes : u8 = app_arg.as_bytes()
+    
+    //println!("{:?}", &app_arg.as_bytes());
 
     let t = TxnBuilder::with(
         &params,
         CallApplication::new(alice.address(), app_id)
-            .app_arguments(vec![vec![&app_arg.as_bytes()]])
+            .app_arguments(vec![vec![arg_as_bytes]])
             .build(),
     )
     .build()?;
