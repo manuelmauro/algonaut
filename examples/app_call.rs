@@ -43,20 +43,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //convert each string to bytes via a tuple
     //supply tuple to app call method
 
-    let arg_as_bytes : Option<u8> = app_arg.expect("REASON").as_bytes();
+    let arg_as_bytes : u8 = app_arg.expect("REASON").as_bytes().read();
     
     println!("{:?}", &arg_as_bytes);
 
-    let app_argu: <Vec<Vec<u8>>> = arg_as_bytes.map(|args| {
-            args.map(|var| var.to::<Vec<u8>>().unwrap())
-                .collect()
-        });
-    
+
     
     let t = TxnBuilder::with(
         &params,
-        CallApplication::new(alice.address(), app_id)
-            .app_arguments(app_argu)
+        CallApplication::new(alice.address(), Some(app_id))
+            .app_arguments(vec![vec![arg_as_bytes]])
             .build(),
     )
     .build()?;
