@@ -95,7 +95,7 @@ impl Transaction {
     }
 
     pub fn raw_id(&self) -> Result<HashDigest, TransactionError> {
-        let hashed = sha2::Sha512_256::digest(&self.bytes_to_sign()?);
+        let hashed = sha2::Sha512_256::digest(self.bytes_to_sign()?);
         Ok(HashDigest(hashed.into()))
     }
 
@@ -456,7 +456,7 @@ pub struct SignedLogic {
 
 impl SignedLogic {
     pub fn as_address(&self) -> Address {
-        Address(sha2::Sha512_256::digest(&self.logic.bytes_to_sign()).into())
+        Address(sha2::Sha512_256::digest(self.logic.bytes_to_sign()).into())
     }
 
     /// Performs signature verification against the sender address, and general consistency checks.
