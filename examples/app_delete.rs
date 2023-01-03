@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build()?;
 
     println!("signing transaction");
-    println!("{:?}",t)
+    println!("{:?}",t);
     
     let signed_t = alice.sign_transaction(t)?;
 
