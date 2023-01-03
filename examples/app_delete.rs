@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let t = TxnBuilder::with(
         &params,
         DeleteApplication::new(alice.address(), app_id)
-            .app_arguments(vec![vec![1, 0], vec![255]])
+            //.app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )
     .build()?;
