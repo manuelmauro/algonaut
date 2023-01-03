@@ -5,7 +5,7 @@ use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
 
 use std::error::Error;
-#[macro_use]
+
 extern crate log;
 
 #[tokio::main]
