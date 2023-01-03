@@ -13,30 +13,44 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
     env_logger::init();
 
-    info!("creating algod client");
-    let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
+    let url = String::from("https://node.testnet.algoexplorerapi.io");
+    //let token = String::from("");
+    
+    let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
+   
+    let user = String::from("User-Agent");
+    let pass = String::from("DoYouLoveMe?");
+    let headers :  Vec<(&str, &str)> = vec![(&user, &pass)];
+    
+    
+    println!("creating algod client");
+    let algod = Algod::with_headers(&url, headers)?;
 
-    info!("creating account for alice");
-    let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
+    println!("creating account for alice");
+    let alice = Account::from_mnemonic(&alice_mnemonic)?;
 
-    info!("retrieving suggested params");
+    println!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
 
-    info!("building DeleteApplication transaction");
+    println!("building DeleteApplication transaction");
+    
+    
+    let app_id : u64 = 116639568;
+    
     let t = TxnBuilder::with(
         &params,
-        DeleteApplication::new(alice.address(), 3)
+        DeleteApplication::new(alice.address(), app_id)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )
     .build()?;
 
-    info!("signing transaction");
+    println!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;
 
-    info!("broadcasting transaction");
+    println!("broadcasting transaction");
     let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
-    info!("response: {:?}", send_response);
+    println!("response: {:?}", send_response);
 
     Ok(())
 }
