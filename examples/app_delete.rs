@@ -36,11 +36,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
     
     let app_id : u64 = 116639568;
+    let app_arg : Option<String> = Some(String::from("owner"));
     
     let t = TxnBuilder::with(
         &params,
         DeleteApplication::new(alice.address(), app_id)
-            //.app_arguments(vec![vec![1, 0], vec![255]])
+            .app_arguments(vec![app_arg.expect("REASON").into_bytes()])
             .build(),
     )
     .build()?;
