@@ -3,7 +3,7 @@ use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::DeleteApplication;
 use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
-use std::env;
+
 use std::error::Error;
 #[macro_use]
 extern crate log;
