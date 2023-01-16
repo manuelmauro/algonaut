@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let url = String::from("https://node.testnet.algoexplorerapi.io");
     //let token = String::from("");
     
-    let alice_mnemonic = String::from("tank game arrive train bring taxi tackle popular bacon gasp tell pigeon error step leaf zone suit chest next swim luggage oblige opinion about execute");
+    let alice_mnemonic = String::from("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage");
    
     let user = String::from("User-Agent");
     let pass = String::from("DoYouLoveMe?");
@@ -36,8 +36,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_transaction_params().await?;
 
     println!("building transaction");
-    let app_id : u64 = 116639568;
-    let app_arg : Option<String> = Some(String::from("inc"));
+    let app_id : u64 = 154280672;
+    let app_arg : Option<String> = Some(String::from("withdraw"));
     
     //map the string
     //convert each string to bytes via a tuple
