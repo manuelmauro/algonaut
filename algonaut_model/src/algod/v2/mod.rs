@@ -68,6 +68,11 @@ pub struct Account {
     )]
     pub created_assets: Vec<Asset>,
 
+    /// MicroAlgo balance required by the account. The requirement grows based on asset and
+    /// application usage.
+    #[serde(rename = "min-balance")]
+    pub min_balance: MicroAlgos,
+
     ///
     pub participation: Option<AccountParticipation>,
 
