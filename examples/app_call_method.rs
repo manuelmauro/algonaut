@@ -1,4 +1,7 @@
 use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethodCallParams, transaction_signer::TransactionSigner};
+use algonaut::transaction::transaction::{
+    ApplicationCallOnComplete,
+};
 use algonaut::algod::v2::Algod;
 
 use std::error::Error;
@@ -30,7 +33,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
- app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(2000)}, sender: acct1.address(), suggested_params: params, on_complete: val,
+ app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(2000)}, sender: acct1.address(), suggested_params: params, on_complete: ApplicationCallOnComplete{NoOp},
   approval_program: val, clear_program: val, global_schema: val, local_schema: val, extra_pages: val, 
   note: val, lease: val, rekey_to: val, signer: TransactionSigner
  }
