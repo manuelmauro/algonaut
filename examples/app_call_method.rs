@@ -1,10 +1,10 @@
 use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethodCallParams, transaction_signer::TransactionSigner::BasicAccount};
-use algonaut::transaction::{ account::Account,
+use algonaut::transaction::{
     transaction::ApplicationCallOnComplete::NoOp,
 };
 
 use algonaut_abi::abi_interactions::AbiMethod;
-
+use algonaut::algonaut_transaction::account::Account;
 use algonaut::core::{CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut::algod::v2::Algod;
@@ -51,7 +51,7 @@ let mut atc = AtomicTransactionComposer::add_method_call(
  &mut AddMethodCallParams{
  app_id: 155672004, method: _method, method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
   approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: Option<StateSchema>, local_schema: Option<StateSchema>, extra_pages: pages, 
-  note: _note, lease: Option<HashDigest>, rekey_to: Option<Address>, signer: BasicAccount(acct1.address())
+  note: _note, lease: Option<HashDigest>, rekey_to: Option<Address>, signer: BasicAccount(acct1.mnemonic())
  }
  );
     
