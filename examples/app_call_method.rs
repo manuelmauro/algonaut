@@ -2,6 +2,9 @@ use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethod
 use algonaut::transaction::{ account::Account,
     transaction::ApplicationCallOnComplete::NoOp,
 };
+
+use algonaut_abi::abi_interactions::AbiMethod,
+
 use algonaut::core::{CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut::algod::v2::Algod;
@@ -29,16 +32,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  let val = String::from("");
  let pages: u32 = 0;
- let arg1 : u64 = 0; 
- let arg2 = acct1;
     
- let _note : Option<Vec<u8>> = Some([0].to_vec());
+ //should ideally read from .json file
+ let _method : AbiMethod = AbiMethod{
+     name: String::from("withdraw"),
+     description: Option<String>,
+     args: Vec<AbiMethodArg> = vec[],
+     returns: AbiReturnType{Void},
+    }; 
+ let arg1 : u8 = 0;
+ let arg2 = acct1.address();
+    
+ let _note : Option<Vec<u8>> = Some(vec![0]);
  
  
 let mut atc = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
- app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
+ app_id: 155672004, method: _method, method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
   approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: Option<StateSchema>, local_schema: Option<StateSchema>, extra_pages: pages, 
   note: _note, lease: Option<HashDigest>, rekey_to: Option<Address>, signer: BasicAccount(acct1.address())
  }
