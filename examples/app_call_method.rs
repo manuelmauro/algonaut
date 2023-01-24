@@ -3,7 +3,7 @@ use algonaut::transaction::{ account::Account,
     transaction::ApplicationCallOnComplete::NoOp,
 };
 
-use algonaut_abi::abi_interactions::AbiMethod,
+use algonaut_abi::abi_interactions::AbiMethod;
 
 use algonaut::core::{CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
