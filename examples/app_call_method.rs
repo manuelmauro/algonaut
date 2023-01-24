@@ -41,8 +41,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
      description: Option::<String> = None,
-     args: Vec<AbiMethodArg> = vec![AbiMethodArg{name: Option<String> = Some("amount"), description: Option<String> = None,}, 
-         AbiMethodArg{name: Option<String> = Some("account"), description: Option<String> = None,},
+     args: Vec::<AbiMethodArg> = vec![AbiMethodArg{name: Option::<String> = Some("amount"), description: Option::<String> = None,}, 
+         AbiMethodArg{name: Option::<String> = Some("account"), description: Option::<String> = None,},
      ],
      returns: Void,
     }; 
@@ -56,8 +56,8 @@ let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(
  &self,
  &mut AddMethodCallParams{
  app_id: 155672004, method: _method, method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
-  approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: Option<StateSchema>, local_schema: Option<StateSchema>, extra_pages: pages, 
-  note: _note, lease: Option<HashDigest>, rekey_to: Option<Address>, signer: BasicAccount(acct1.mnemonic())
+  approval_program: Option::<CompiledTeal>, clear_program: Option::<CompiledTeal>, global_schema: Option::<StateSchema>, local_schema: Option::<StateSchema>, extra_pages: pages, 
+  note: _note, lease: Option::<HashDigest>, rekey_to: Option::<Address>, signer: BasicAccount(acct1.mnemonic())
  }
  );
     
