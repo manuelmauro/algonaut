@@ -32,22 +32,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let arg1 : u64 = 0; 
  let arg2 = acct1;
     
- let _note : Option<Vec<u8>> = Some([0]);
+ let _note : Option<Vec<u8>> = Some([0].to_vec());
  
  
-let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
+let mut atc = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
- app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(MicroAlgos(2000))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
+ app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
   approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: Option<StateSchema>, local_schema: Option<StateSchema>, extra_pages: pages, 
   note: _note, lease: Option<HashDigest>, rekey_to: Option<Address>, signer: BasicAccount(acct1.address())
  }
  );
     
 //println!("{}",&mut AtomicTransactionComposer);
-AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
+AtomicTransactionComposer::build_group(&mut atc);
  
-AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);
+AtomicTransactionComposer::execute( &mut atc ,&algod);
 Ok(())
  
  
