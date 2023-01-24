@@ -40,8 +40,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
      args: Vec<AbiMethodArg> = vec[],
      returns: AbiReturnType{Void},
     }; 
- let arg1 : u8 = 0;
- let arg2 = acct1.address();
+ let arg1 : u64 = 0;
+ let arg2 : Address = acct1.address();
     
  let _note : Option<Vec<u8>> = Some(vec![0]);
  
