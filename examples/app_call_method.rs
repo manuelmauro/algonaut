@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _note : Option<Vec<u8>> = Some(vec![0]);
  
  
-let mut atc = AtomicTransactionComposer::add_method_call(  
+let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
  app_id: 155672004, method: _method, method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
@@ -56,9 +56,9 @@ let mut atc = AtomicTransactionComposer::add_method_call(
  );
     
 //println!("{}",&mut AtomicTransactionComposer);
-AtomicTransactionComposer::build_group(&mut atc);
+AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
  
-AtomicTransactionComposer::execute( &mut atc ,&algod);
+AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);
 Ok(())
  
  
