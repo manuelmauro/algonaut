@@ -2,7 +2,7 @@ use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethod
 use algonaut::transaction::{
     transaction::ApplicationCallOnComplete::NoOp,
 };
-
+use algonaut_abi::abi_interactions::AbiReturnType::Void;
 use algonaut_abi::abi_interactions::AbiMethod;
 use algonaut::algonaut_transaction::account::Account;
 use algonaut::core::{CompiledTeal, MicroAlgos};
@@ -38,10 +38,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
      name: String::from("withdraw"),
      description: Option<String>,
      args: Vec<AbiMethodArg> = vec[],
-     returns: AbiReturnType{Void},
+     returns: Void,
     }; 
  let arg1 : u64 = 0;
- let arg2 : Address = acct1.address();
+ let arg2 = &acct1.address();
     
  let _note : Option<Vec<u8>> = Some(vec![0]);
  
