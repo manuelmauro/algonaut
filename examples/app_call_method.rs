@@ -27,8 +27,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let params = algod.suggested_transaction_params().await?;
  
  
- let val = String::from("something");
- let arg1 : u64 = 10000; 
+ let val = String::from("");
+ let pages: u32 = 0;
+ let arg1 : u64 = 0; 
  let arg2 = acct1;
     
  let _note : Option<Vec<u8>> = Some([0]);
@@ -38,10 +39,12 @@ let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(
  &self,
  &mut AddMethodCallParams{
  app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(MicroAlgos(2000))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
-  approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: val, local_schema: val, extra_pages: val, 
-  note: _note, lease: Option<HashDigest>, rekey_to: val, signer: BasicAccount(acct1.address())
+  approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: Option<StateSchema>, local_schema: Option<StateSchema>, extra_pages: pages, 
+  note: _note, lease: Option<HashDigest>, rekey_to: Option<Address>, signer: BasicAccount(acct1.address())
  }
  );
+    
+println!(&mut AtomicTransactionComposer);
 AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
  
 AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);
