@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
      returns: Void,
     }; 
  let arg1 : u64 = 0;
- let arg2 = &acct1.address();
+ let arg2 : u64 = 1000;//= &acct1.address();
     
  let _note : Option<Vec<u8>> = Some(vec![0]);
  
@@ -63,12 +63,12 @@ let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(
  &mut AddMethodCallParams{
  app_id: 155672004, method: _method, method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
   approval_program: None, clear_program: None, global_schema: None, local_schema: None, extra_pages: pages, 
-  note: _note, lease: None, rekey_to: None, signer: BasicAccount(acct1.mnemonic())
+  note: _note, lease: None, rekey_to: None, signer: BasicAccount(acct1)
  }
  );
     
 //println!("{}",&mut AtomicTransactionComposer);
-AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
+AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer.unwrap());
  
 AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);
 Ok(())
