@@ -22,8 +22,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let rekey_to: Option<Address> ="";
  let signer: TransactionSigner = "";
 
-AtomicTransactionComposer::add_method_call(
-   
+AtomicTransactionComposer::add_method_call(  
   )
-
+AtomicTransactionComposer::build_group()
+ 
+AtomicTransactionComposer::execute()
+ 
 }
