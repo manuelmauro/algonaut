@@ -7,7 +7,8 @@ use algonaut_transaction::builder::TxnFee::Fixed;
 
 use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
 
-use algonaut_abi::abi_interactions::AbiMethod;
+use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg};
+
 
 use algonaut::core::{CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
@@ -46,7 +47,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
      description: description1,
-     args: Vec::<AbiMethodArg> = vec![AbiMethodArg{name: method_name1, description: description1,}, 
+     args: vec![AbiMethodArg{name: method_name1, description: description1,}, 
          AbiMethodArg{name: method_name2, description: description2,},
      ],
      returns: Void,
