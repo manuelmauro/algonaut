@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
- app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(MicroAlgos(2000))}, sender: acct1.address(), suggested_params: params, on_complete: ApplicationCallOnComplete::NoOp,
+ app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(MicroAlgos(2000))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
   approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: val, local_schema: val, extra_pages: val, 
   note: _note, lease: Option<HashDigest>, rekey_to: val, signer: BasicAccount(acct1.address())
  }
