@@ -15,19 +15,26 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  let algod = Algod::with_headers(&url, headers)?;
  
+ let acct1 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
+")?;
+ 
+ println!("retrieving suggested params");
+ let params = algod.suggested_transaction_params().await?;
+ 
+ 
  let val = String::from("something");
  
 let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
- app_id: val, method: val, method_args: val, fee: val, sender: val, suggested_params: val, on_complete: val,
+ app_id: 155672004, method: "withdraw", method_args: val, fee: 2000, sender: acct1.address(), suggested_params: params, on_complete: val,
   approval_program: val, clear_program: val, global_schema: val, local_schema: val, extra_pages: val, 
-  note: val, lease: val, rekey_to: val, signer: val 
+  note: val, lease: val, rekey_to: val, signer: TransactionSigner
  }
  );
 AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
  
-AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);;
+AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);
 Ok(())
  
  
