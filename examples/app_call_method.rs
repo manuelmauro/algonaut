@@ -1,5 +1,5 @@
 use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethodCallParams, transaction_signer::TransactionSigner::BasicAccount};
-use algonaut::transaction::{
+use algonaut::transaction::{account::Account,
     transaction::ApplicationCallOnComplete::NoOp,
 };
 use algonaut_transaction::builder::TxnFee::Fixed;
@@ -8,7 +8,7 @@ use algonaut_transaction::builder::TxnFee::Fixed;
 use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
 
 use algonaut_abi::abi_interactions::AbiMethod;
-use algonaut::algonaut_transaction::account::Account;
+
 use algonaut::core::{CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut::algod::v2::Algod;
