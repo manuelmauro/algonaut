@@ -16,11 +16,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let algod = Algod::with_headers(&url, headers)?;
  
  
-AtomicTransactionComposer::add_method_call(  
+let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams
  );
-AtomicTransactionComposer::build_group();
+AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
  
 AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);;
 Ok(())
