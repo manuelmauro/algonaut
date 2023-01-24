@@ -44,7 +44,7 @@ let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(
  }
  );
     
-println!("{}",&mut AtomicTransactionComposer);
+//println!("{}",&mut AtomicTransactionComposer);
 AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
  
 AtomicTransactionComposer::execute( &mut AtomicTransactionComposer ,&algod);
