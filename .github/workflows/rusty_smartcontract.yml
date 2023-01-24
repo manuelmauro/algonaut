@@ -23,4 +23,4 @@ jobs:
       run: ln -s examples.env .env
      
     - name: Run tests
-      run: cargo run --example app_call --verbose
+      run: cargo run --example app_call_method --verbose
