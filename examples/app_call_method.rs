@@ -2,6 +2,8 @@ use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethod
 use algonaut::transaction::transaction::{
     ApplicationCallOnComplete,
 };
+use algonaut::core::{CompiledTeal, MicroAlgos};
+use algonaut_crypto::HashDigest
 use algonaut::algod::v2::Algod;
 
 use std::error::Error;
@@ -33,9 +35,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
- app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(2000)}, sender: acct1.address(), suggested_params: params, on_complete: ApplicationCallOnComplete{NoOp},
-  approval_program: val, clear_program: val, global_schema: val, local_schema: val, extra_pages: val, 
-  note: val, lease: val, rekey_to: val, signer: TransactionSigner
+ app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: TxnFee{Fixed(MicroAlgos(2000))}, sender: acct1.address(), suggested_params: params, on_complete: ApplicationCallOnComplete{NoOp},
+  approval_program: Option<CompiledTeal>, clear_program: Option<CompiledTeal>, global_schema: val, local_schema: val, extra_pages: val, 
+  note: Option<Vec<u8>>, lease: Option<HashDigest>, rekey_to: val, signer: TransactionSigner
  }
  );
 AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
