@@ -2,7 +2,11 @@ use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethod
 use algonaut::transaction::{
     transaction::ApplicationCallOnComplete::NoOp,
 };
-use algonaut_abi::abi_interactions::AbiReturnType::Void;
+use algonaut_transaction::builder::TxnFee::Fixed;
+//use algonaut_abi::abi_interactions::AbiReturnType::Void;
+
+use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
+
 use algonaut_abi::abi_interactions::AbiMethod;
 use algonaut::algonaut_transaction::account::Account;
 use algonaut::core::{CompiledTeal, MicroAlgos};
