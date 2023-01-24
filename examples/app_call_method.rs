@@ -40,9 +40,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
  //should ideally read from .json file
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
-     description: Option::<String> = Some(String::from("description of method")),
-     args: Vec<AbiMethodArg> = vec![AbiMethodArg{name: Option<String> = Some(String::from("amount")), description: Option<String> = Some(String::from("description")),}, 
-         AbiMethodArg{name: Option<String> = Some(String::from("account")), description: Option<String> = Some(String::from("description")),},
+     description: Option::<String> = None,
+     args: Vec<AbiMethodArg> = vec![AbiMethodArg{name: Option<String> = Some("amount"), description: Option<String> = None,}, 
+         AbiMethodArg{name: Option<String> = Some("account"), description: Option<String> = None,},
      ],
      returns: Void,
     }; 
