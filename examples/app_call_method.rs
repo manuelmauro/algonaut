@@ -39,8 +39,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
   
  let method_name1 : Option<String> = Some("amount".to_string());
  let method_name2 : Option<String> = Some("account".to_string());
- let description1 : Option<String> = None,
- let description2 : Option<String> = None,
+ let description1 : Option<String> = None;
+ let description2 : Option<String> = None;
     
  //should ideally read from .json file
  let _method : AbiMethod = AbiMethod{
