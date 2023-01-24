@@ -37,15 +37,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let val = String::from("");
  let pages: u32 = 0;
   
- let method_name1 : Option<String> = Some("amount");
- let method_name2 : Option<String> = Some("account");
+ let method_name1 : Option<String> = Some("amount".to_string());
+ let method_name2 : Option<String> = Some("account".to_string());
  let description1 : Option<String> = None,
  let description2 : Option<String> = None,
     
  //should ideally read from .json file
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
-     description: Option::<String> = None,
+     description: description1,
      args: Vec::<AbiMethodArg> = vec![AbiMethodArg{name: method_name1, description: description1,}, 
          AbiMethodArg{name: method_name2, description: description2,},
      ],
