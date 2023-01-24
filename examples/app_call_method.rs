@@ -15,10 +15,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  let algod = Algod::with_headers(&url, headers)?;
  
+ let val = String::from("something");
  
 let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
- &mut AddMethodCallParams
+ &mut AddMethodCallParams{
+ app_id: val, method: val, method_args: val, fee: val, sender: val, suggested_params: val, on_complete: val,
+  approval_program: val, clear_program: val, global_schema: val, local_schema: val, extra_pages: val, 
+  note: val, lease: val, rekey_to: val, signer: val 
+ }
  );
 AtomicTransactionComposer::build_group(&mut AtomicTransactionComposer);
  
