@@ -23,11 +23,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  
  let val = String::from("something");
+ let arg1 : u64 = 10000; 
+ let arg2 = acct1;
  
 let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
  &self,
  &mut AddMethodCallParams{
- app_id: 155672004, method: "withdraw", method_args: val, fee: 2000, sender: acct1.address(), suggested_params: params, on_complete: val,
+ app_id: 155672004, method: "withdraw", method_args: [arg1, arg2], fee: 2000, sender: acct1.address(), suggested_params: params, on_complete: val,
   approval_program: val, clear_program: val, global_schema: val, local_schema: val, extra_pages: val, 
   note: val, lease: val, rekey_to: val, signer: TransactionSigner
  }
