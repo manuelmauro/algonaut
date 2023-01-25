@@ -8,7 +8,7 @@ use algonaut_abi::abi_interactions::AbiReturnType::Void;
 use algonaut::atomic_transaction_composer::AbiArgValue::AbiValue;
 //
 //use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
-use algonaut_abi::abi_type::AbiValue;
+use algonaut_abi::abi_type::AbiValue as OtherAbiValue;
 use algonaut::atomic_transaction_composer::{AbiArgValue, AbiArgValue::AbiValue};
 
 use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg,AbiReturn};
