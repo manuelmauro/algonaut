@@ -13,6 +13,7 @@ use algonaut::atomic_transaction_composer::{AbiArgValue, AbiArgValue::AbiValue};
 use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg,AbiReturn};
 use num_bigint::BigUint;
 
+use algonaut_abi::abi_type::AbiValue::Int;
 use algonaut::core::{CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut::algod::v2::Algod;
