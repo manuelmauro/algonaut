@@ -1,5 +1,5 @@
 use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethodCallParams, transaction_signer::TransactionSigner::BasicAccount};
-use algonaut::transaction::{account::Account,
+use algonaut::transaction::{account::Account, Pay,
     transaction::ApplicationCallOnComplete::NoOp,
 };
 use algonaut_transaction::builder::TxnFee::Fixed;
