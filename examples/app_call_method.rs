@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
      args: vec![AbiMethodArg{name: method_name1, description: description1,}, 
          AbiMethodArg{name: method_name2, description: description2,},
      ],
-     returns: AbiReturn.type_(Void),
+     returns: AbiReturn::type_(Void),
     }; 
  let arg1 : u64 = 0;
  let arg2 : u64 = 1000;//= &acct1.address();
@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _note : Option<Vec<u8>> = Some(vec![0]);
  
  
-let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(/* &mut AtomicTransactionComposer */, &mut AddMethodCallParams{
+let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call( &mut AtomicTransactionComposer , &mut AddMethodCallParams{
     app_id: 155672004, method: _method, method_args: [arg1, arg2], fee:  Fixed(MicroAlgos(2500)), sender: acct1.address(), suggested_params: params, on_complete: NoOp,
     approval_program: None, clear_program: None, global_schema: None, local_schema: None, extra_pages: pages, 
     note: _note, lease: None, rekey_to: None, signer: BasicAccount(acct1)
