@@ -55,8 +55,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
      description: description1,
-     args: vec![AbiMethodArg{name: method_name1, type_ : type1 , description: description1,}, 
-         AbiMethodArg{name: method_name2, type_: type2 ,description: description2,},
+     args: vec![AbiMethodArg{name: method_name1, type_ : type1 , description: description1, parsed: None}, 
+         AbiMethodArg{name: method_name2, type_: type2 ,description: description2, parsed : None},
      ],
      returns: AbiReturn, //::type_(Void).unwrap(), //should ideally be Void
     }; 
