@@ -22,6 +22,10 @@ use algonaut::algod::v2::Algod;
 
 use std::error::Error;
 use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
+use algonaut::atomic_transaction_composer::TransactionWithSigner;
+
+
+
 #[macro_use]
 
 #[tokio::main]
@@ -51,7 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let type2 : String = String::from("Address");
  let description1 : Option<String> = None;
  let description2 : Option<String> = None;
-    
+ let _signer = BasicAccount(acct1);
  //should ideally read from .json file
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
@@ -69,11 +73,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  const _note : Option<Vec<u8>> = Some(vec![0]);
  
-let mut ATC1 = AtomicTransactionComposer { status: Building, method_map: HashMap, txs: TransactionWithSigner, signed_txs: SignedTransaction };
+let mut ATC1 = AtomicTransactionComposer { status: Building, method_map: HashMap, txs: TransactionWithSigner {tx: Transaction, signer : &_signer}, signed_txs: SignedTransaction };
 let mut ATC2 = AtomicTransactionComposer::add_method_call( &mut AtomicTransactionComposer { &mut ATC1, &mut AddMethodCallParams{
     app_id: 155672004, method: _method, method_args: vec![arg1, arg2], fee:  Fixed(MicroAlgos(2500)), sender: acct1.address(), suggested_params: params, on_complete: NoOp,
     approval_program: None, clear_program: None, global_schema: None, local_schema: None, extra_pages: pages, 
-    note: _note, lease: None, rekey_to: None, signer: BasicAccount(acct1)
+    note: _note, lease: None, rekey_to: None, signer: &_signer
     });
     
 //println!("{}",&mut AtomicTransactionComposer);
