@@ -78,7 +78,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
         &params,
 
-        Pay::new(alice.address(), bob.address(), MicroAlgos(123_456)).build(),
+        Pay::new(&acct1.address(), &acct1.address(), MicroAlgos(123_456)).build(),
 
     )
 
