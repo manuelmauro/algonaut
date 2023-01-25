@@ -16,6 +16,7 @@ use num_bigint::BigUint;
 use algonaut_abi::abi_type::AbiType::Address;
 use algonaut_abi::abi_type::AbiValue::Int;
 use algonaut::core::{CompiledTeal, MicroAlgos};
+
 use algonaut_crypto::HashDigest;
 use algonaut::algod::v2::Algod;
 
@@ -45,6 +46,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
   
  let method_name1 : Option<String> = Some("amount".to_string());
  let method_name2 : Option<String> = Some("account".to_string());
+ let type1 : String = String::from("uint64");
+ let type2 : String = String::from("Address");
  let description1 : Option<String> = None;
  let description2 : Option<String> = None;
     
@@ -52,8 +55,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
      description: description1,
-     args: vec![AbiMethodArg{name: method_name1, description: description1,}, 
-         AbiMethodArg{name: method_name2, description: description2,},
+     args: vec![AbiMethodArg{name: method_name1, type_ : type1 , description: description1,}, 
+         AbiMethodArg{name: method_name2, type_: type2 ,description: description2,},
      ],
      returns: AbiReturn, //::type_(Void).unwrap(), //should ideally be Void
     }; 
