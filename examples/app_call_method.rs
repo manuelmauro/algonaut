@@ -7,10 +7,10 @@ use algonaut_transaction::builder::TxnFee::Fixed;
 use algonaut_abi::abi_interactions::AbiReturnType::Void;
 //
 //use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
+use algonaut_abi::abi_type::AbiValue;
+use algonaut::atomic_transaction_composer::AbiArgValue;
 
-use algonaut_abi::abi_interactions::AbiReturn;
-
-use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg};
+use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg,AbiReturn};
 
 
 use algonaut::core::{CompiledTeal, MicroAlgos};
@@ -55,8 +55,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
      ],
      returns: AbiReturn::type_(Void),
     }; 
- let arg1 : u64 = 0;
- let arg2 : u64 = 1000;//= &acct1.address();
+ let withdrw_amt : BigUint = 0;
+ let arg1 : AbiArgValue = AbiArgValue{AbiValue(Int(withdrw_amt))};
+ let arg2 : AbiArgValue = AbiArgValue{AbiValue{Address(acct1.address())}};//= &acct1.address();
     
  let _note : Option<Vec<u8>> = Some(vec![0]);
  
