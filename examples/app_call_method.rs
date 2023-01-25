@@ -84,7 +84,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     .build();
 let t2 = t.unwrap().clone();
-let sign_txn = acct1.sign_transaction(t2.unwrap())?;
+let sign_txn = acct1.sign_transaction(t2)?;
  
 let mut ATC1 = AtomicTransactionComposer { status: Building, method_map: HashMap, txs: vec![ TransactionWithSigner {tx: t.unwrap(), signer : BasicAccount(acct1)}], signed_txs: vec![sign_txn] };
 let mut ATC2 = AtomicTransactionComposer::add_method_call( &mut AtomicTransactionComposer { &mut ATC1, &mut AddMethodCallParams{
