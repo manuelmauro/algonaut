@@ -13,7 +13,7 @@ use algonaut::atomic_transaction_composer::{AbiArgValue, AbiArgValue::AbiValue};
 
 use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg,AbiReturn};
 use num_bigint::BigUint;
-
+use algonaut_abi::abi_type::AbiType::Address;
 use algonaut_abi::abi_type::AbiValue::Int;
 use algonaut::core::{CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
@@ -60,7 +60,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
  let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
- let arg2 : AbiArgValue = AbiArgValue::AbiValue( Address: acct1.address());//= &acct1.address();
+ let arg2 : AbiArgValue = AbiArgValue::AbiValue( let Address: acct1.address());//= &acct1.address();
 
  const _note : Option<Vec<u8>> = Some(vec![0]);
  
