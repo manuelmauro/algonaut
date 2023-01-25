@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build();
 let sign_txn = acct1.sign_transaction(t)?;
  
-let mut ATC1 = AtomicTransactionComposer { status: Building, method_map: HashMap, txs: vec![ TransactionWithSigner {tx: t, signer : BasicAccount(acct1)}, signed_txs: sign_txn }]};
+let mut ATC1 = AtomicTransactionComposer { status: Building, method_map: HashMap, txs: vec![ TransactionWithSigner {tx: t, signer : BasicAccount(acct1)}], signed_txs: sign_txn };
 let mut ATC2 = AtomicTransactionComposer::add_method_call( &mut AtomicTransactionComposer { &mut ATC1, &mut AddMethodCallParams{
     app_id: 155672004, method: _method, method_args: vec![arg1, arg2], fee:  Fixed(MicroAlgos(2500)), sender: acct1.address(), suggested_params: params, on_complete: NoOp,
     approval_program: None, clear_program: None, global_schema: None, local_schema: None, extra_pages: pages, 
