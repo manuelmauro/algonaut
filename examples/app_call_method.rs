@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let arg1 : AbiArgValue = AbiArgValue::AbiValue { AbiValue(Int(withdrw_amt))};
  let arg2 : AbiArgValue = AbiArgValue::AbiValue{ Address: acct1.address()};//= &acct1.address();
     AbiArgValue::AbiValue(/* fields */)};//= &acct1.address();
- let _note : Option<Vec<u8>> = Some(vec![0]);
+ const _note : Option<Vec<u8>> = Some(vec![0]);
  
  
 let mut ATC = AtomicTransactionComposer::add_method_call( &mut self , &mut AddMethodCallParams{
