@@ -69,7 +69,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  const _note : Option<Vec<u8>> = Some(vec![0]);
  
  
-let mut ATC = AtomicTransactionComposer::add_method_call( &mut self , &mut AddMethodCallParams{
+let mut ATC = AtomicTransactionComposer::add_method_call( &mut AtomicTransactionComposer , &mut AddMethodCallParams{
     app_id: 155672004, method: _method, method_args: vec![arg1, arg2], fee:  Fixed(MicroAlgos(2500)), sender: acct1.address(), suggested_params: params, on_complete: NoOp,
     approval_program: None, clear_program: None, global_schema: None, local_schema: None, extra_pages: pages, 
     note: _note, lease: None, rekey_to: None, signer: BasicAccount(acct1)
