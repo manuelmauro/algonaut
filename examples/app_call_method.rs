@@ -59,7 +59,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  
 let mut AtomicTransactionComposer = AtomicTransactionComposer::add_method_call(  
- &self,
+ &mut self,
  &mut AddMethodCallParams{
  app_id: 155672004, method: _method, method_args: [arg1, arg2], fee: TxnFee{Fixed: Fixed(MicroAlgos(2500))}, sender: acct1.address(), suggested_params: params, on_complete: NoOp,
   approval_program: None, clear_program: None, global_schema: None, local_schema: None, extra_pages: pages, 
