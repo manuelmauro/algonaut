@@ -58,7 +58,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
      args: vec![AbiMethodArg{name: method_name1, type_ : type1 , description: description1, parsed: None}, 
          AbiMethodArg{name: method_name2, type_: type2 ,description: description2, parsed : None},
      ],
-     returns: AbiReturn, //::type_(Void).unwrap(), //should ideally be Void
+     returns: AbiReturn { type_: Void, description: val, parsed: None }, 
     }; 
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
