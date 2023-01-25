@@ -53,9 +53,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
      args: vec![AbiMethodArg{name: method_name1, description: description1,}, 
          AbiMethodArg{name: method_name2, description: description2,},
      ],
-     returns: AbiReturn::type_(Void),
+     returns: AbiReturn::type_(Void).unwrap(),
     }; 
- let withdrw_amt : BigUint = 0;
+ let withdrw_amt : BigUint = BigUint::new(vec![0]);
  let arg1 : AbiArgValue = AbiArgValue{AbiValue: AbiValue(Int(withdrw_amt))};
  let arg2 : AbiArgValue = AbiArgValue{AbiValue: AbiValue{Address: acct1.address()}};//= &acct1.address();
     
