@@ -68,9 +68,9 @@ let mut ATC = AtomicTransactionComposer::add_method_call( &mut self , &mut AddMe
     });
     
 //println!("{}",&mut AtomicTransactionComposer);
-AtomicTransactionComposer::build_group(&mut ATC.unwrap());
+//AtomicTransactionComposer::build_group(&mut ATC.unwrap());
  
-AtomicTransactionComposer::execute( &mut ATC ,&algod);
+//AtomicTransactionComposer::execute( &mut ATC ,&algod);
 Ok(())
  
  
