@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
  let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
- let arg2 : AbiArgValue = AbiArgValue::AbiValue( let Address = acct1.address());//= &acct1.address();
+ let arg2 : AbiArgValue = AbiArgValue::AbiValue( algonaut_abi::abi_type::AbiValue::Bool(let Address = acct1.address()));// &acct1.address();
 
  const _note : Option<Vec<u8>> = Some(vec![0]);
  
