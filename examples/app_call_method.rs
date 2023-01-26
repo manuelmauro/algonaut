@@ -75,14 +75,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let description3_2 : Option<String> = Some("misc description".to_string());
  //let mut _signer = BasicAccount(acct1);
  //should ideally read from .json file
- let _method : AbiMethod = AbiMethod{
+    
+ let _method : AbiMethod = AbiMethod {
      name: String::from("withdraw"),
      description: description1,
-     args: vec![AbiMethodArg{name: method_name1, type_ : type1 , description: description2, parsed: None}, 
-         AbiMethodArg{name: method_name2, type_: type2 ,description: description3, parsed : None},
+     args: vec![
+         AbiMethodArg {
+             name: method_name1,
+             type_: type1,
+             description: description2,
+             parsed: None
+         },
+         AbiMethodArg {
+             name: method_name2,
+             type_: type2,
+             description: description3,
+             parsed: None
+         },
      ],
-     returns: AbiReturn { type_: val1, description: Some(val2), parsed: None }, 
-    }; 
+     returns: AbiReturn {
+         type_: val1,
+         description: Some(val2),
+         parsed: None
+     },
+ };
+
   
  let _method2 : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
