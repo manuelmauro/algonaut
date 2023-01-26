@@ -23,7 +23,7 @@ use algonaut::algod::v2::Algod;
 use std::error::Error;
 use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
 use algonaut::atomic_transaction_composer::TransactionWithSigner;
-
+use std::collections::HashMap
 
 
 #[macro_use]
@@ -65,12 +65,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
      ],
      returns: AbiReturn { type_: val, description: Some(val), parsed: None }, 
     }; 
+  
+ let _method2 = _method.clone();
+    
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
  let withdrw_to_addr : BigUint = BigUint::new(vec![0]);
  let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
  let arg2 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_to_addr));// &acct1.address();
 
+ const q : usize = 0usize;
+ let _hashmap : HashMap<usize, AbiMethod> = Hashmap::from([
+     (q), 
+     (_method2),
+     ]);
+    
+    
  const _note : Option<Vec<u8>> = Some(vec![0]);
 //println!("building Pay transaction");
  let t = TxnBuilder::with(
@@ -89,7 +99,7 @@ let sign_txn = acct1.sign_transaction(t2)?;
 let mut ATC2 = AtomicTransactionComposer::add_method_call(
         &mut AtomicTransactionComposer {
         status: Building,
-        method_map: val,
+        method_map: _hashmap,
         txs: vec![
             TransactionWithSigner {
                 tx: t3,
