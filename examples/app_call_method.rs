@@ -44,19 +44,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let acct1 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
 ")?;
  
+  let acct1_2 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
+")?   
  println!("retrieving suggested params");
  let params = algod.suggested_transaction_params().await?;
  let params2 = algod.suggested_transaction_params().await?;
  
- let val = String::from("");
+ let val = String::from("val");
  let pages: u32 = 0;
   
  let method_name1 : Option<String> = Some("amount".to_string());
  let method_name2 : Option<String> = Some("account".to_string());
  let type1 : String = String::from("uint64");
  let type2 : String = String::from("Address");
- let description1 : Option<String> = None;
- let description2 : Option<String> = None;
+ let description1 : Option<String> = Some("amount description".to_string());
+ let description2 : Option<String> = Some("account description".to_string());
  //let mut _signer = BasicAccount(acct1);
  //should ideally read from .json file
  let _method : AbiMethod = AbiMethod{
@@ -87,7 +89,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  _hashmap.insert(q,_method2); 
  //_hashmap.insert(q,q);
     
- const _note : Option<Vec<u8>> = Some(vec![0]);
+ let _note : Option<Vec<u8>> = Some(vec![0]);
 //println!("building Pay transaction");
  let t = TxnBuilder::with(
 
@@ -130,7 +132,7 @@ let mut ATC2 = AtomicTransactionComposer::add_method_call(
                  note: _note,
                  lease: None,
                  rekey_to: None,
-                 signer: BasicAccount(acct1)
+                 signer: BasicAccount(acct1_2)
          
     }
 );
