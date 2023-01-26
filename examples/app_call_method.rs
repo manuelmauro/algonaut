@@ -75,7 +75,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let arg2 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_to_addr));// &acct1.address();
 
  const q : usize = 0usize;
- let _hashmap : HashMap<usize, AbiMethod> = Hashmap::new();
+ let _hashmap : HashMap<usize, AbiMethod> = Hashmap::from([
+    (q),
+    (_method2),
+    ]);
     
  const _note : Option<Vec<u8>> = Some(vec![0]);
 //println!("building Pay transaction");
