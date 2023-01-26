@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  println!("retrieving suggested params");
  let params = algod.suggested_transaction_params().await?;
- 
+ let params2 = algod.suggested_transaction_params().await?;
  
  let val = String::from("");
  let pages: u32 = 0;
@@ -75,7 +75,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 //println!("building Pay transaction");
  let t = TxnBuilder::with(
 
-        &params,
+        params2,
 
         Pay::new(acct1.address(), acct1.address(), MicroAlgos(123_456)).build(),
 
@@ -104,7 +104,7 @@ let mut ATC2 = AtomicTransactionComposer::add_method_call(
                  method_args: vec![arg1, arg2],
                  fee: Fixed(MicroAlgos(2500)),
                  sender: acct1.address(),
-                 suggested_params: &params,
+                 suggested_params: params,
                  on_complete: NoOp,
                  approval_program: None,
                  clear_program: None,
