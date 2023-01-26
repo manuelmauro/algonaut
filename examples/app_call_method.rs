@@ -79,8 +79,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  const q2 : usize = 0usize;
  let _hashmap : HashMap<usize, AbiMethod> = std::collections::hash_map::HashMap::from([
     (q),
-    //(_method2),
-    (q2),
+    (_method2),
+    //(q2),
     ]);
     
  const _note : Option<Vec<u8>> = Some(vec![0]);
