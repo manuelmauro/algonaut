@@ -141,7 +141,7 @@ let mut ATC2 = AtomicTransactionComposer::add_method_call(
                  method: _method,
                  method_args: vec![arg1, arg2],
                  fee: Fixed(MicroAlgos(2500)),
-                 sender: acct1.address(),
+                 sender: acct1_2.address(),
                  suggested_params: params,
                  on_complete: NoOp,
                  approval_program: None,
