@@ -23,8 +23,9 @@ use algonaut::algod::v2::Algod;
 use std::error::Error;
 use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
 use algonaut::atomic_transaction_composer::TransactionWithSigner;
-use std::collections::HashMap;
+//use std::collections::HashMap;
 
+use std::collections::hash_map::HashMap;
 
 #[macro_use]
 
