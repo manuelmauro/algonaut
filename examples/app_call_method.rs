@@ -76,7 +76,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let arg2 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_to_addr));// &acct1.address();
 
  const q : usize = 0usize;
- let _hashmap : HashMap<usize, AbiMethod> = Hashmap::from([
+ let _hashmap : HashMap<usize, AbiMethod> = hash_map::Hashmap::from([
     (q),
     (_method2),
     ]);
