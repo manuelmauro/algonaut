@@ -50,7 +50,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let params = algod.suggested_transaction_params().await?;
  let params2 = algod.suggested_transaction_params().await?;
  
- let val = String::from("val");
+ let val1 = String::from("val");
+ let val2 = String::from("val");
+ let val3 = String::from("val");
+ let val4 = String::from("val");
+ 
  let pages: u32 = 0;
   
  let method_name1 : Option<String> = Some("amount".to_string());
@@ -59,6 +63,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let type2 : String = String::from("Address");
  let description1 : Option<String> = Some("amount description".to_string());
  let description2 : Option<String> = Some("account description".to_string());
+ let description3 : Option<String> = Some("misc description".to_string());
+    
     
  let method_name1_2 : Option<String> = Some("amount".to_string());
  let method_name2_2 : Option<String> = Some("account".to_string());
@@ -66,24 +72,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let type2_2 : String = String::from("Address");
  let description1_2 : Option<String> = Some("amount description".to_string());
  let description2_2 : Option<String> = Some("account description".to_string());
+ let description3_2 : Option<String> = Some("misc description".to_string());
  //let mut _signer = BasicAccount(acct1);
  //should ideally read from .json file
  let _method : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
      description: description1,
-     args: vec![AbiMethodArg{name: method_name1, type_ : type1 , description: description1, parsed: None}, 
-         AbiMethodArg{name: method_name2, type_: type2 ,description: description2, parsed : None},
+     args: vec![AbiMethodArg{name: method_name1, type_ : type1 , description: description2, parsed: None}, 
+         AbiMethodArg{name: method_name2, type_: type2 ,description: description3, parsed : None},
      ],
-     returns: AbiReturn { type_: val, description: Some(val), parsed: None }, 
+     returns: AbiReturn { type_: val1, description: Some(val2), parsed: None }, 
     }; 
   
  let _method2 : AbiMethod = AbiMethod{
      name: String::from("withdraw"),
      description: description1_2,
-     args: vec![AbiMethodArg{name: method_name1_2, type_ : type1_2 , description: description1_2, parsed: None}, 
-         AbiMethodArg{name: method_name2_2, type_: type2_2 ,description: description2_2, parsed : None},
+     args: vec![AbiMethodArg{name: method_name1_2, type_ : type1_2 , description: description2_2, parsed: None}, 
+         AbiMethodArg{name: method_name2_2, type_: type2_2 ,description: description3_2, parsed : None},
      ],
-     returns: AbiReturn { type_: val, description: Some(val), parsed: None }, 
+     returns: AbiReturn { type_: val3, description: Some(val4), parsed: None }, 
     };
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
