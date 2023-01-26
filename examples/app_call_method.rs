@@ -82,8 +82,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 
 
- _hashmap.insert(q);
- _hashmap.insert(_method2); 
+ _hashmap.insert(usize,q);
+ _hashmap.insert(AbiMethod,_method2); 
  
  const _note : Option<Vec<u8>> = Some(vec![0]);
 //println!("building Pay transaction");
