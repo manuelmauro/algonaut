@@ -98,7 +98,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
  let arg2 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_to_addr));// &acct1.address();
 
- const q : usize = 0usize;
+ const Q : usize = 0usize;
 
  let mut _hashmap: HashMap<usize, AbiMethod>= std::collections::HashMap::new(); //HashMap<usize, AbiMethod>
 
@@ -124,7 +124,7 @@ let t2 = t.unwrap().clone();
 let t3 = t2.clone();
 let sign_txn = acct1.sign_transaction(t2)?;
 
-let mut ATC2 = AtomicTransactionComposer::add_method_call(
+let mut atc2 = AtomicTransactionComposer::add_method_call(
         &mut AtomicTransactionComposer {
         status: Building,
         method_map: _hashmap,
