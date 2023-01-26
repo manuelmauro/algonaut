@@ -77,7 +77,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  const q : usize = 0usize;
  const q2 : usize = 0usize;
- let _hashmap : HashMap<usize, AbiMethod> = std::collections::hash_map::HashMap::from([
+ let _hashmap = std::collections::hash_map::HashMap::from([ //HashMap<usize, AbiMethod>
     (q),
     (_method2),
     //(q2),
