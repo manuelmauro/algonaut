@@ -138,7 +138,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 
  
- _hashmap.insert(q,_method2); 
+ _hashmap.insert(Q,_method2); 
  //_hashmap.insert(q,q);
     
  let _note : Option<Vec<u8>> = Some(vec![0]);
