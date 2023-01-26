@@ -77,7 +77,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 let mut ATC2 = AtomicTransactionComposer::add_method_call(
     &mut AtomicTransactionComposer {
-        &mut ATC2,
+        &mut AtomicTransactionComposer,
         &mut AddMethodCallParams {
             app_id: 155672004,
             method: _method,
