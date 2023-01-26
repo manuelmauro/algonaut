@@ -87,16 +87,17 @@ let t3 = t2.clone();
 let sign_txn = acct1.sign_transaction(t2)?;
 
 let mut ATC2 = AtomicTransactionComposer::add_method_call(
-    &mut AtomicTransactionComposer {
-    status: Building,
-    method_map: val,
-    txs: vec![
-        TransactionWithSigner {
-            tx: t3,
-            signer : BasicAccount(acct1)
-        }
-    ],
-    signed_txs: vec![sign_txn], 
+        &mut AtomicTransactionComposer {
+        status: Building,
+        method_map: val,
+        txs: vec![
+            TransactionWithSigner {
+                tx: t3,
+                signer : BasicAccount(acct1)
+            }
+        ],
+        signed_txs: vec![sign_txn],
+        },
         &mut AddMethodCallParams {
                  app_id: 155672004,
                  method: _method,
