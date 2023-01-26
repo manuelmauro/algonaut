@@ -5,12 +5,12 @@ use algonaut::transaction::{account::Account, Pay, TxnBuilder,
 use algonaut_transaction::builder::TxnFee::Fixed;
 
 use algonaut_abi::abi_interactions::AbiReturnType::Void;
-
+use algonaut_abi::abi_type::AbiType;
 //
 //use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
 use algonaut_abi::abi_type::AbiValue as OtherAbiValue;
 use algonaut::atomic_transaction_composer::{AbiArgValue, AbiArgValue::AbiValue};
-
+use algonaut_abi::abi_interactions::AbiArgType;
 use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg,AbiReturn};
 use num_bigint::BigUint;
 use algonaut_abi::abi_type::AbiType::Address;
@@ -68,13 +68,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
  let method_name1_2 : Option<String> = Some("amount".to_string());
  let method_name2_2 : Option<String> = Some("account".to_string());
+    
  let type1_2 : String = String::from("uint64");
  let type2_2 : String = String::from("Address");
+    
  let description1_2 : Option<String> = Some("amount description".to_string());
  let description2_2 : Option<String> = Some("account description".to_string());
  let description3_2 : Option<String> = Some("misc description".to_string());
  //let mut _signer = BasicAccount(acct1);
  //should ideally read from .json file
+    
+ let method_arg1 :  AbiMethodArg = AbiMethodArg {
+             name: method_name2_2,
+             //type_: type2_2,
+             description: description3_2,
+             //parsed: None
+         },
+    
+    
+ method_arg.type_(AbiArgType { AbiObj(AbiType {UInt {
+        bit_size: u16,
+    }})});   
     
  let _method : AbiMethod = AbiMethod {
      name: String::from("withdraw"),
