@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
              //type_: type2_2,
              description: description3_2,
              //parsed: None
-         },
+         };
     
     
  method_arg.type_(AbiArgType { AbiObj(AbiType {UInt {
