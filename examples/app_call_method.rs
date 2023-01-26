@@ -89,7 +89,7 @@ let sign_txn = acct1.sign_transaction(t2)?;
 let mut ATC2 = AtomicTransactionComposer::add_method_call(
     &mut AtomicTransactionComposer {
     status: Building,
-    method_map: HashMap,
+    method_map: val,
     txs: vec![
         TransactionWithSigner {
             tx: t3,
