@@ -99,16 +99,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
          parsed: None
      },
  };
-
-  
- let _method2 : AbiMethod = AbiMethod{
+  //Duplicate of Method 1 without clone(),
+  let _method2 : AbiMethod = AbiMethod {
      name: String::from("withdraw"),
      description: description1_2,
-     args: vec![AbiMethodArg{name: method_name1_2, type_ : type1_2 , description: description2_2, parsed: None}, 
-         AbiMethodArg{name: method_name2_2, type_: type2_2 ,description: description3_2, parsed : None},
+     args: vec![
+         AbiMethodArg {
+             name: method_name1_2,
+             type_: type1_2,
+             description: description2_2,
+             parsed: None
+         },
+         AbiMethodArg {
+             name: method_name2_2,
+             type_: type2_2,
+             description: description3_2,
+             parsed: None
+         },
      ],
-     returns: AbiReturn { type_: val3, description: Some(val4), parsed: None }, 
-    };
+     returns: AbiReturn {
+         type_: val3,
+         description: Some(val4),
+         parsed: None
+     },
+ };
+
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
  let withdrw_to_addr : BigUint = BigUint::new(vec![0]);
