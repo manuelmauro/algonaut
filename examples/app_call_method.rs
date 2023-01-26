@@ -74,35 +74,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
  const _note : Option<Vec<u8>> = Some(vec![0]);
 //println!("building Pay transaction");
 
- let t = TxnBuilder::with(
-
-        &params,
-
-        Pay::new(acct1.address(), acct1.address(), MicroAlgos(123_456)).build(),
-
-    )
-
-    .build();
-let t2 = t.unwrap().clone();
-let t3 = t2.clone();
-let sign_txn = acct1.sign_transaction(t2)?;
-
-    
-let mut ATC1 = AtomicTransactionComposer {
-    status: Building,
-    method_map: HashMap,
-    txs: vec![
-        TransactionWithSigner {
-            tx: t3,
-            signer : BasicAccount(acct1)
-        }
-    ],
-    signed_txs: vec![sign_txn]
-};
 
 let mut ATC2 = AtomicTransactionComposer::add_method_call(
     &mut AtomicTransactionComposer {
-        &mut ATC1,
+        &mut ATC2,
         &mut AddMethodCallParams {
             app_id: 155672004,
             method: _method,
