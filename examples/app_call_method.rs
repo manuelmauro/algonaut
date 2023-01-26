@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 //println!("building Pay transaction");
  let t = TxnBuilder::with(
 
-        params2,
+        &params2,
 
         Pay::new(acct1.address(), acct1.address(), MicroAlgos(123_456)).build(),
 
