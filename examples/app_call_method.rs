@@ -86,9 +86,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
          };
     
     
- method_arg.type_(AbiArgType { AbiObj(AbiType {UInt {
-        bit_size: u16,
-    }})});   
+ method_arg.type_();   
     
  let _method : AbiMethod = AbiMethod {
      name: String::from("withdraw"),
