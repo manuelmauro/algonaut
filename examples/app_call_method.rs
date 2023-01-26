@@ -75,8 +75,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 //println!("building Pay transaction");
 
 
-let mut ATC2 = AtomicTransactionComposer::add_method_call(&mut AtomicTransactionComposer {
-          AtomicTransactionComposer,
+let mut ATC2 = AtomicTransactionComposer::add_method_call(
           AddMethodCallParams: AddMethodCallParams {
                  app_id: 155672004,
                  method: _method,
@@ -94,7 +93,7 @@ let mut ATC2 = AtomicTransactionComposer::add_method_call(&mut AtomicTransaction
                  lease: None,
                  rekey_to: None,
                  signer: BasicAccount(acct1)
-         }
+         
     }
 );
 
