@@ -23,9 +23,10 @@ use algonaut::algod::v2::Algod;
 use std::error::Error;
 use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
 use algonaut::atomic_transaction_composer::TransactionWithSigner;
-//use std::collections::HashMap;
 
-use std::collections::hash_map::HashMap;
+use std::collections::HashMap;
+
+//use std::collections::hash_map::HashMap;
 
 #[macro_use]
 
@@ -77,7 +78,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  const q : usize = 0usize;
 
- let mut _hashmap = std::collections::hash_map::HashMap::new(); //HashMap<usize, AbiMethod>
+ let mut _hashmap = std::collections::HashMap::new(); //HashMap<usize, AbiMethod>
 
 
 
