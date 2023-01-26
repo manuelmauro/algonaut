@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 ")?;
  
   let acct1_2 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
-")?   
+")?;   
  println!("retrieving suggested params");
  let params = algod.suggested_transaction_params().await?;
  let params2 = algod.suggested_transaction_params().await?;
@@ -59,6 +59,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let type2 : String = String::from("Address");
  let description1 : Option<String> = Some("amount description".to_string());
  let description2 : Option<String> = Some("account description".to_string());
+    
+ let method_name1_2 : Option<String> = Some("amount".to_string());
+ let method_name2_2 : Option<String> = Some("account".to_string());
+ let type1_2 : String = String::from("uint64");
+ let type2_2 : String = String::from("Address");
+ let description1_2 : Option<String> = Some("amount description".to_string());
+ let description2_2 : Option<String> = Some("account description".to_string());
  //let mut _signer = BasicAccount(acct1);
  //should ideally read from .json file
  let _method : AbiMethod = AbiMethod{
@@ -70,8 +77,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
      returns: AbiReturn { type_: val, description: Some(val), parsed: None }, 
     }; 
   
- let _method2 = _method.clone();
-    
+ let _method2 : AbiMethod = AbiMethod{
+     name: String::from("withdraw"),
+     description: description1_2,
+     args: vec![AbiMethodArg{name: method_name1_2, type_ : type1_2 , description: description1_2, parsed: None}, 
+         AbiMethodArg{name: method_name2_2, type_: type2_2 ,description: description2_2, parsed : None},
+     ],
+     returns: AbiReturn { type_: val, description: Some(val), parsed: None }, 
+    };
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
  let withdrw_to_addr : BigUint = BigUint::new(vec![0]);
