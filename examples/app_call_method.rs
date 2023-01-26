@@ -77,12 +77,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  const q : usize = 0usize;
  const q2 : usize = 0usize;
- let _hashmap = std::collections::hash_map::HashMap::from([ //HashMap<usize, AbiMethod>
+ let mut _hashmap = std::collections::hash_map::HashMap::from([ //HashMap<usize, AbiMethod>
     (q),
-    (_method2),
+    //(_method2),
     //(q2),
     ]);
-    
+ mut _hashmap.insert(_method2); 
  const _note : Option<Vec<u8>> = Some(vec![0]);
 //println!("building Pay transaction");
  let t = TxnBuilder::with(
