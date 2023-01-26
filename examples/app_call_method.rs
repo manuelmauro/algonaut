@@ -76,13 +76,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let arg2 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_to_addr));// &acct1.address();
 
  const q : usize = 0usize;
- const q2 : usize = 0usize;
- let mut _hashmap = std::collections::hash_map::HashMap::from([ //HashMap<usize, AbiMethod>
-    (q),
-    //(_method2),
-    //(q2),
-    ]);
- 
+
+ let mut _hashmap = std::collections::hash_map::HashMap::new(); //HashMap<usize, AbiMethod>
+
+
+
+
+ _hashmap.insert(q);
  _hashmap.insert(_method2); 
  
  const _note : Option<Vec<u8>> = Some(vec![0]);
