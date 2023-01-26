@@ -78,14 +78,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  const q : usize = 0usize;
 
- let mut _hashmap = std::collections::HashMap::new(); //HashMap<usize, AbiMethod>
+ let mut _hashmap: HashMap<usize, AbiMethod>= std::collections::HashMap::new(); //HashMap<usize, AbiMethod>
 
 
 
 
  
- _hashmap.insert(AbiMethod,_method2); 
- _hashmap.insert(usize,q);
+ _hashmap.insert(_method2,_method2); 
+ _hashmap.insert(,q);
     
  const _note : Option<Vec<u8>> = Some(vec![0]);
 //println!("building Pay transaction");
