@@ -110,7 +110,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let description3_2 : Option<String> = Some("misc description".to_string());
  
     
- let signer = TransactionSigner::BasicAccount(acct1.as_ref());  
+ let signer = TransactionSigner::BasicAccount(&acct1);  
     
  let method_arg1 :  AbiMethodArg = AbiMethodArg {
              name: method_name2_2,
@@ -204,7 +204,7 @@ let t2 = t.unwrap().clone();
 let t3 = t2.clone();
 let sign_txn = acct1.sign_transaction(t2)?;
 
-let mut atc = AtomicTransactionComposer::default()?;  
+let mut atc = AtomicTransactionComposer::default();  
     
 atc::add_method_call(
         &mut AtomicTransactionComposer {
