@@ -10,7 +10,7 @@ use algonaut_abi::abi_interactions::AbiReturnType::Void;
 
 //
 //use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
-use algonaut_abi::abi_type::AbiValue as OtherAbiValue;
+
 use algonaut::atomic_transaction_composer::{ AbiArgValue::AbiValue};
 
 use algonaut_abi::abi_interactions::{AbiMethodArg};
@@ -206,19 +206,7 @@ let sign_txn = acct1.sign_transaction(t2)?;
 
 let mut atc = AtomicTransactionComposer::default();  
     
-atc.add_method_call(
-        &mut AtomicTransactionComposer {
-        status: Building,
-        method_map: _hashmap,
-        txs: vec![
-            TransactionWithSigner {
-                tx: t3,
-                signer : BasicAccount(acct1)
-            }
-        ],
-        signed_txs: vec![sign_txn],
-        },
-        &mut AddMethodCallParams {
+atc.add_method_call( &mut AddMethodCallParams {
                  app_id: 155672004,
                  method: _method,
                  method_args: vec![arg1, arg2],
