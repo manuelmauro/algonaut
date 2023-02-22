@@ -1,38 +1,37 @@
 //code reference: https://github.com/manuelmauro/algonaut/blob/main/tests/step_defs/integration/abi.rs
 
-use algonaut::atomic_transaction_composer::{AtomicTransactionComposer, AddMethodCallParams, transaction_signer::TransactionSigner::BasicAccount};
-use algonaut::transaction::{account::Account, Pay, TxnBuilder,
+use algonaut::atomic_transaction_composer::{ transaction_signer::TransactionSigner::BasicAccount};
+use algonaut::transaction::{account::Account,
     transaction::ApplicationCallOnComplete::NoOp,
 };
 use algonaut_transaction::builder::TxnFee::Fixed;
 
 use algonaut_abi::abi_interactions::AbiReturnType::Void;
-use algonaut_abi::abi_type::AbiType;
+
 //
 //use algonaut::atomic_transaction_composer::AbiMethodReturnValue::Void;
 use algonaut_abi::abi_type::AbiValue as OtherAbiValue;
-use algonaut::atomic_transaction_composer::{AbiArgValue, AbiArgValue::AbiValue};
-use algonaut_abi::abi_interactions::AbiArgType;
-use algonaut_abi::abi_interactions::{AbiMethod,AbiMethodArg,AbiReturn};
+use algonaut::atomic_transaction_composer::{ AbiArgValue::AbiValue};
+
+use algonaut_abi::abi_interactions::{AbiMethodArg};
 use num_bigint::BigUint;
 use algonaut_abi::abi_type::AbiType::Address;
 use algonaut_abi::abi_type::AbiValue::Int;
-use algonaut::core::{CompiledTeal, MicroAlgos};
+
 
 use algonaut_crypto::HashDigest;
 use algonaut::algod::v2::Algod;
 
-use std::error::Error;
+
 use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
-use algonaut::atomic_transaction_composer::TransactionWithSigner;
 
 use std::collections::HashMap;
 
 //use std::collections::hash_map::HashMap;
-use crate::step_defs::{
-    integration::world::World,
-    util::{read_teal, wait_for_pending_transaction},
-};
+//use crate::step_defs::{
+//    integration::world::World,
+//    util::{read_teal, wait_for_pending_transaction},
+// };
 use algonaut::{
     atomic_transaction_composer::{
         transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue,
@@ -43,9 +42,9 @@ use algonaut::{
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
-    abi_type::{AbiType, AbiValue},
+    abi_type::{AbiType, AbiValue as OtherAbiValue},
 };
-use algonaut_core::{to_app_address, Address, MicroAlgos};
+use algonaut_core::{to_app_address, Address as OtherAddress, MicroAlgos, CompiledTeal};
 use algonaut_model::algod::v2::PendingTransaction;
 use algonaut_transaction::{
     builder::TxnFee,
@@ -64,7 +63,7 @@ use std::error::Error;
 
 #[tokio::main]
 
-#[derive(Clone)]
+// #[derive(Clone)]
 async fn main() -> Result<(), Box<dyn Error>> {
  
  let url = String::from("https://node.testnet.algoexplorerapi.io");
@@ -191,7 +190,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _note : Option<Vec<u8>> = Some(vec![0]);
 
     
- println!("building Pay transaction")?;
+ println!("building Pay transaction");
  let t = TxnBuilder::with(
 
         &params2,
@@ -205,7 +204,7 @@ let t2 = t.unwrap().clone();
 let t3 = t2.clone();
 let sign_txn = acct1.sign_transaction(t2)?;
 
-let mut atc = AtomicTransactionComposer::default()    
+let mut atc = AtomicTransactionComposer::default()?;  
     
 atc::add_method_call(
         &mut AtomicTransactionComposer {
