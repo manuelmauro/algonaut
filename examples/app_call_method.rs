@@ -29,10 +29,40 @@ use algonaut::atomic_transaction_composer::TransactionWithSigner;
 use std::collections::HashMap;
 
 //use std::collections::hash_map::HashMap;
+use crate::step_defs::{
+    integration::world::World,
+    util::{read_teal, wait_for_pending_transaction},
+};
+use algonaut::{
+    atomic_transaction_composer::{
+        transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue,
+        AbiReturnDecodeError, AddMethodCallParams, AtomicTransactionComposer,
+        AtomicTransactionComposerStatus, TransactionWithSigner,
+    },
+    error::ServiceError,
+};
+use algonaut_abi::{
+    abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
+    abi_type::{AbiType, AbiValue},
+};
+use algonaut_core::{to_app_address, Address, MicroAlgos};
+use algonaut_model::algod::v2::PendingTransaction;
+use algonaut_transaction::{
+    builder::TxnFee,
+    transaction::{ApplicationCallOnComplete, StateSchema},
+    Pay, TxnBuilder,
+};
+//use cucumber::{codegen::Regex, given, then, when};
+use data_encoding::BASE64;
+use num_traits::ToPrimitive;
+use sha2::Digest;
+use std::convert::TryInto;
+use std::error::Error;
+
 
 #[macro_use]
 
-#[tokio::main]
+#[tokio::main, Clone]
 async fn main() -> Result<(), Box<dyn Error>> {
  
  let url = String::from("https://node.testnet.algoexplorerapi.io");
@@ -46,11 +76,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let acct1 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
 ")?;
  
-  let acct1_2 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
-")?;   
+  let acct1_2 = acct1.clone();
+    
  println!("retrieving suggested params");
  let params = algod.suggested_transaction_params().await?;
- let params2 = algod.suggested_transaction_params().await?;
+ let params2 = params.clone();
  
  let val1 = String::from("val");
  let val2 = String::from("val");
@@ -77,8 +107,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let description1_2 : Option<String> = Some("amount description".to_string());
  let description2_2 : Option<String> = Some("account description".to_string());
  let description3_2 : Option<String> = Some("misc description".to_string());
- //let mut _signer = BasicAccount(acct1);
- //should ideally read from .json file
+ 
+    
+ let signer = TransactionSigner::BasicAccount(acct1.as_ref());  
     
  let method_arg1 :  AbiMethodArg = AbiMethodArg {
              name: method_name2_2,
@@ -156,7 +187,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
  //_hashmap.insert(q,q);
     
  let _note : Option<Vec<u8>> = Some(vec![0]);
-//println!("building Pay transaction");
+
+    
+ println!("building Pay transaction")?;
  let t = TxnBuilder::with(
 
         &params2,
@@ -170,7 +203,9 @@ let t2 = t.unwrap().clone();
 let t3 = t2.clone();
 let sign_txn = acct1.sign_transaction(t2)?;
 
-let mut atc2 = AtomicTransactionComposer::add_method_call(
+let mut atc = AtomicTransactionComposer::default()    
+    
+atc::add_method_call(
         &mut AtomicTransactionComposer {
         status: Building,
         method_map: _hashmap,
