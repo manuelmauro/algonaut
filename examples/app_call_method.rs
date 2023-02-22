@@ -62,7 +62,9 @@ use std::error::Error;
 
 #[macro_use]
 
-#[tokio::main, Clone]
+#[tokio::main]
+
+#[derive(Clone)]
 async fn main() -> Result<(), Box<dyn Error>> {
  
  let url = String::from("https://node.testnet.algoexplorerapi.io");
