@@ -19,8 +19,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("creating account for alice");
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
-    info!("creating account for alice");
-    let bob = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
+    info!("creating account for bob");
+    let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
     let params = algod.suggested_transaction_params().await?;
