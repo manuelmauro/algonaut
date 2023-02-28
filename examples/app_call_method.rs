@@ -205,7 +205,8 @@ let t3 = t2.clone();
 let sign_txn = acct1.sign_transaction(t2)?;
 
 let mut atc = AtomicTransactionComposer::default();  
-    
+
+//Add method Call     
 atc.add_method_call( &mut AddMethodCallParams {
                  app_id: 155672004,
                  method: _method,
