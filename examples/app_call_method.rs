@@ -110,17 +110,58 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let description3_2 : Option<String> = Some("misc description".to_string());
  
     
- let signer = TransactionSigner::BasicAccount(acct1);  
+ let signer = TransactionSigner::BasicAccount(acct1.clone());  
+ 
+ mod bar {
     
- let method_arg1 :  AbiMethodArg = AbiMethodArg {
-             name: method_name2_2,
-             //type_: type2_2,
-             description: description3_2,
-             //parsed: None
-         };
+    use algonaut_abi::abi_interactions::AbiMethodArg;
+
+    pub struct Foo {
+        pub name: String,
+        description: String, // still private
+    }
+
+    impl Foo {
+        pub fn new() -> AbiMethodArg { // we create a method to instantiate `Foo`
+            AbiMethodArg {
+                name: Some(String::from("Address")), 
+                type_: String::from("Address"),
+                description: Some("misc description".to_string()),
+                parsed: None
+                //a: 0, 
+                //b: 0 
+            
+            }
+        }
+    }
+}
+
+ let method_arg1 : AbiMethodArg = bar::Foo::new();
+
+ //let method_arg1 :  AbiMethodArg = AbiMethodArg {
+  //           name: method_name2_2.clone(),
+  //           type_: type2_2.clone(),
+  //           description: description3_2.clone(),
+  //         parsed: None
+  //       };
+  
+  // Enum Type
+
+//help: the following enum variants are available
     
-    
- method_arg.type_();   
+//123 |   let mut address_abi_type : AbiType = (AbiArgType::AbiObj(/* fields */));
+//                                         
+//123 |   let mut address_abi_type : AbiType = (AbiArgType::Ref(/* fields */));
+//                                           
+//123 |   let mut address_abi_type : AbiType = (AbiArgType::Tx(/* fields */));
+
+
+  let address_abi_type : AbiArgType = AbiArgType::AbiObj(Address);
+   
+  
+  
+
+ //method_arg.type_();   
     
  let _method : AbiMethod = AbiMethod {
      name: String::from("withdraw"),
@@ -226,7 +267,7 @@ atc.add_method_call( &mut AddMethodCallParams {
                  signer: BasicAccount(acct1_2)
          
     }
-);
+).unwrap();
 
 //println!("{}",&mut AtomicTransactionComposer);
 //AtomicTransactionComposer::build_group(&mut ATC.unwrap());
