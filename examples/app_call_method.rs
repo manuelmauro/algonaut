@@ -54,8 +54,9 @@ use algonaut_transaction::{
 //use cucumber::{codegen::Regex, given, then, when};
 use data_encoding::BASE64;
 use num_traits::ToPrimitive;
-use sha2::Digest;
-use std::convert::TryInto;
+
+//use sha2::Digest;
+//use std::convert::TryInto;
 use std::error::Error;
 
 
@@ -115,24 +116,42 @@ async fn main() -> Result<(), Box<dyn Error>> {
  mod bar {
     
     use algonaut_abi::abi_interactions::AbiMethodArg;
+    use algonaut_abi::abi_interactions::AbiReturn;
+
 
     pub struct Foo {
         pub name: String,
-        description: String, // still private
+        pub description : String,
+        type_: String,  // still private
+        parsed : Option<String>,
+
     }
 
     impl Foo {
         pub fn new() -> AbiMethodArg { // we create a method to instantiate `Foo`
             AbiMethodArg {
-                name: Some(String::from("Address")), 
-                type_: String::from("Address"),
+                name: Some("misc Address".to_string()), 
+                type_: Self::Foo::type_,//"misc Address".to_string(), //ReturnAddressType()
                 description: Some("misc description".to_string()),
-                parsed: None
+                parsed: parsed//None
+                
                 //a: 0, 
                 //b: 0 
             
             }
+            
         }
+        pub fn new_2() -> AbiReturn { // we create a method to instantiate `Foo`
+            AbiReturn {
+                type_: String::from("Byte"),
+                description: Some(String::from("val")),
+                parsed: None
+            }
+        }
+    
+        //fn return_address_type() -> AbiMethodArg {AbiMethodArg{type_, parsed}}
+            //return ;
+
     }
 }
 
@@ -167,49 +186,37 @@ async fn main() -> Result<(), Box<dyn Error>> {
      name: String::from("withdraw"),
      description: description1,
      args: vec![
-         AbiMethodArg {
-             name: method_name1,
-             type_: type1,
-             description: description2,
-             parsed: None
-         },
-         AbiMethodArg {
-             name: method_name2,
-             type_: type2,
-             description: description3,
-             parsed: None
-         },
+         bar::Foo::new(),
+         bar::Foo::new(),
      ],
-     returns: AbiReturn {
-         type_: val1,
-         description: Some(val2),
-         parsed: None
-     },
+     returns: bar::Foo::new_2(),
  };
+
+  let _method2 : AbiMethod = _method.clone();
   //Duplicate of Method 1 without clone(),
-  let _method2 : AbiMethod = AbiMethod {
-     name: String::from("withdraw"),
-     description: description1_2,
-     args: vec![
-         AbiMethodArg {
-             name: method_name1_2,
-             type_: type1_2,
-             description: description2_2,
-             parsed: None
-         },
-         AbiMethodArg {
-             name: method_name2_2,
-             type_: type2_2,
-             description: description3_2,
-             parsed: None
-         },
-     ],
-     returns: AbiReturn {
-         type_: val3,
-         description: Some(val4),
-         parsed: None
-     },
- };
+  //let _method2 : AbiMethod = AbiMethod {
+  //   name: String::from("withdraw"),
+  //   description: description1_2,
+  //   args: vec![
+  //       AbiMethodArg {
+  //           name: method_name1_2,
+  //           type_: type1_2,
+  //           description: description2_2,
+  //           parsed: None
+  //       },
+  //       AbiMethodArg {
+  //           name: method_name2_2,
+  //           type_: type2_2,
+  //           description: description3_2,
+  //           parsed: None
+  //       },
+  //   ],
+  //   returns: AbiReturn {
+  //       type_: val3,
+  //       description: Some(val4),
+  //       parsed: None
+  //   },
+ //};
 
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
