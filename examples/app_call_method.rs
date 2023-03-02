@@ -113,49 +113,74 @@ async fn main() -> Result<(), Box<dyn Error>> {
     
  let signer = TransactionSigner::BasicAccount(acct1.clone());  
  
- mod bar {
-    
+mod bar {
     use algonaut_abi::abi_interactions::AbiMethodArg;
     use algonaut_abi::abi_interactions::AbiReturn;
+    use algonaut_abi::abi_type::AbiType;
 
+
+    use algonaut_abi::abi_interactions::AbiMethod;
 
     pub struct Foo {
         pub name: String,
-        pub description : String,
-        type_: String,  // still private
-        parsed : Option<String>,
+        pub description: String,
+        pub type_: String, // still private
+        pub parsed: Option<String>,
+    }
 
+    impl MyTrait for Foo {
+        type Foo = Foo;
+        type type_ = String;
+        type parsed = Option<String>;
+
+        fn new() -> Self::Foo {
+            Foo {
+                name: "".to_string(),
+                description: "".to_string(),
+                type_: "".to_string(),
+                parsed: None,
+            }
+        }
+
+        fn type_() -> String { "".to_string() }
+        fn parsed() -> Option<AbiType> { None }
+    }
+
+    trait MyTrait {
+        type Foo;
+        type type_: ToString;
+        type parsed;
+
+        fn new() -> Self::Foo;
+        fn type_() -> String;
+        fn parsed() -> Option<AbiType>;
     }
 
     impl Foo {
-        pub fn new() -> AbiMethodArg { // we create a method to instantiate `Foo`
-            AbiMethodArg {
-                name: Some("misc Address".to_string()), 
-                type_: Self::Foo::type_,//"misc Address".to_string(), //ReturnAddressType()
-                description: Some("misc description".to_string()),
-                parsed: parsed//None
-                
-                //a: 0, 
-                //b: 0 
-            
-            }
-            
+        pub fn new() -> AbiMethod {
+            AbiMethod::from_signature(&"method_sig".to_string()).unwrap()
         }
-        pub fn new_2() -> AbiReturn { // we create a method to instantiate `Foo`
-            AbiReturn {
-                type_: String::from("Byte"),
-                description: Some(String::from("val")),
-                parsed: None
-            }
-        }
-    
-        //fn return_address_type() -> AbiMethodArg {AbiMethodArg{type_, parsed}}
-            //return ;
+        
+        //pub fn new() -> AbiMethodArg {
+        //    AbiMethodArg {
+        //        name: Some("misc Address".to_string()),
+        //        type_: <Foo as MyTrait>::type_(),
+        //        description: Some("misc description".to_string()),
+        //        parsed: <Foo as MyTrait>::parsed(),
+        //    }
+        //}
 
+        //pub fn new_2() -> AbiReturn {
+        //    AbiReturn {
+        //        type_: String::from("Byte"),
+        //        description: Some(String::from("val")),
+        //        parsed: None,
+        //    }
+        //}
     }
 }
 
- let method_arg1 : AbiMethodArg = bar::Foo::new();
+ //let method_arg1 : AbiMethodArg = bar::Foo::new();
 
  //let method_arg1 :  AbiMethodArg = AbiMethodArg {
   //           name: method_name2_2.clone(),
@@ -182,15 +207,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  //method_arg.type_();   
     
- let _method : AbiMethod = AbiMethod {
-     name: String::from("withdraw"),
-     description: description1,
-     args: vec![
-         bar::Foo::new(),
-         bar::Foo::new(),
-     ],
-     returns: bar::Foo::new_2(),
- };
+ let _method : AbiMethod = bar::Foo::new(); //{
+     //name: String::from("withdraw"),
+    // description: description1,
+    // args: vec![
+    //     bar::Foo::new(),
+   //      bar::Foo::new(),
+  //   ],
+  //   returns: bar::Foo::new_2(),
+ //};
+
+
 
   let _method2 : AbiMethod = _method.clone();
   //Duplicate of Method 1 without clone(),
