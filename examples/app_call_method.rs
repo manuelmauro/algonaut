@@ -157,6 +157,7 @@ mod bar {
     }
 
     impl Foo {
+        //Doc : https://developer.algorand.org/docs/get-details/transactions/signatures/#single-signatures
         pub fn new() -> AbiMethod {
             let method_sig : String = "degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
 ".to_string();
@@ -223,30 +224,7 @@ mod bar {
 
 
   let _method2 : AbiMethod = _method.clone();
-  //Duplicate of Method 1 without clone(),
-  //let _method2 : AbiMethod = AbiMethod {
-  //   name: String::from("withdraw"),
-  //   description: description1_2,
-  //   args: vec![
-  //       AbiMethodArg {
-  //           name: method_name1_2,
-  //           type_: type1_2,
-  //           description: description2_2,
-  //           parsed: None
-  //       },
-  //       AbiMethodArg {
-  //           name: method_name2_2,
-  //           type_: type2_2,
-  //           description: description3_2,
-  //           parsed: None
-  //       },
-  //   ],
-  //   returns: AbiReturn {
-  //       type_: val3,
-  //       description: Some(val4),
-  //       parsed: None
-  //   },
- //};
+  
 
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
  let withdrw_amt : BigUint = BigUint::new(vec![0]);
@@ -306,10 +284,12 @@ atc.add_method_call( &mut AddMethodCallParams {
     }
 ).unwrap();
 
-//println!("{}",&mut AtomicTransactionComposer);
-//AtomicTransactionComposer::build_group(&mut ATC.unwrap());
+println!("{}",&mut AtomicTransactionComposer);
+
+AtomicTransactionComposer::build_group(&mut ATC.unwrap());
  
-//AtomicTransactionComposer::execute( &mut ATC ,&algod);
+AtomicTransactionComposer::execute( &mut ATC ,&algod);
+
 Ok(())
  
 }
