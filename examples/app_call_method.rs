@@ -284,14 +284,18 @@ atc.add_method_call( &mut AddMethodCallParams {
     }
 ).unwrap();
 
-println!("{}",&mut atc);
 
+atc.build_group().await;
 
+atc.execute(&algod)
+   .await;
+   .expect("Failed executing")
+   
 //atc.build_group();
 
-AtomicTransactionComposer::build_group(&mut atc.unwrap());
+//AtomicTransactionComposer::build_group(&mut atc.unwrap());
  
-AtomicTransactionComposer::execute( &mut atc ,&algod);
+//AtomicTransactionComposer::execute( &mut atc ,&algod);
 
 Ok(())
  
