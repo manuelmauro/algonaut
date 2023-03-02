@@ -158,7 +158,10 @@ mod bar {
 
     impl Foo {
         pub fn new() -> AbiMethod {
-            AbiMethod::from_signature(&"method_sig".to_string()).unwrap()
+            let method_sig : String = "degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
+".to_string();
+
+            AbiMethod::from_signature(&method_sig).unwrap()
         }
         
         //pub fn new() -> AbiMethodArg {
