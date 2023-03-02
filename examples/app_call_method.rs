@@ -161,7 +161,7 @@ mod bar {
         //Doc : https://developer.algorand.org/docs/get-details/transactions/signatures/#single-signatures
         //      https://developer.algorand.org/docs/get-details/dapps/smart-contracts/ABI/?from_query=Method%20Signature#reference-types
         pub fn new() -> AbiMethod {
-            let method_sig : String = "withdraw(uint64,Address)void".to_string();
+            let method_sig : String = "withdraw(uint64,account)void".to_string();
             //let method_sig : String = "add(uint64,uint64)uint128".to_string();
 
             
