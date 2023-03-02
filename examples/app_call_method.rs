@@ -90,8 +90,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  let pages: u32 = 0;
   
- let method_name1 : Option<String> = Some("amount".to_string());
- let method_name2 : Option<String> = Some("account".to_string());
+ //let method_name1 : Option<String> = Some("amount".to_string());
+ //let method_name2 : Option<String> = Some("account".to_string());
  
  //let type1 : String = String::from("uint64");
  //let type2 : String = String::from("Address");
@@ -104,8 +104,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  //let method_name1_2 : Option<String> = Some("amount".to_string());
  //let method_name2_2 : Option<String> = Some("account".to_string());
     
- let type1_2 : String = String::from("uint64");
- let type2_2 : String = String::from("Address");
+ //let type1_2 : String = String::from("uint64");
+ //let type2_2 : String = String::from("Address");
     
  //let description1_2 : Option<String> = Some("amount description".to_string());
  //let description2_2 : Option<String> = Some("account description".to_string());
@@ -165,7 +165,7 @@ mod bar {
 
             println!("{}",&method_sig);
 
-            AbiMethod::from_signature(&method_sig).unwrap()
+            AbiMethod::from_signature(&method_sig).unwrap();
         }
         
    
@@ -245,7 +245,8 @@ mod bar {
 
     .build();
 let t2 = t.unwrap().clone();
-let t3 = t2.clone();
+
+//let t3 = t2.clone();
 
 //let sign_txn = acct1.sign_transaction(t2)?;
 
