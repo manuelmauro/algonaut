@@ -266,15 +266,16 @@ let t2 = t.unwrap().clone();
 
 let _app_id = 161737986;
 
-//let _Escrow_Address : Address = logic.get_application_address(_app_id);
-
- println!("building ABI Method Call transaction");
+println!("building ABI Method Call transaction");
 
 let mut atc = AtomicTransactionComposer::default();  
 
 //Get Escrow Address From App ID, but no logic crate in Algonaut SDK
 
-let Escrow_Address = to_app_address(_app_id.clone());
+let _escrow_address = to_app_address(_app_id.clone());
+
+println!(" Escrow Address: {}", &_escrow_address);
+
 
 //Add method Call     
 atc.add_method_call( &mut AddMethodCallParams {
