@@ -168,7 +168,6 @@ mod bar {
 
             AbiMethod::from_signature(&method_sig)
             .expect("Error")
-            //.unwrap()
             
         }
         
@@ -204,16 +203,6 @@ mod bar {
  //method_arg.type_();   
     
  let _method : AbiMethod = bar::Foo::new(); //{
-     //name: String::from("withdraw"),
-    // description: description1,
-    // args: vec![
-    //     bar::Foo::new(),
-   //      bar::Foo::new(),
-  //   ],
-  //   returns: bar::Foo::new_2(),
- //};
-
-
 
   let _method2 : AbiMethod = _method.clone();
   
@@ -263,7 +252,7 @@ let _app_id = 155672004;
 
 let mut atc = AtomicTransactionComposer::default();  
 
-//Get Escrow Address From App ID
+//Get Escrow Address From App ID, but no logic crate in Algonaut SDK
 
 
 
@@ -297,11 +286,6 @@ atc.execute(&algod).await.expect("Error");
    
 
 println!("{:?}", &mut atc.status());
-   //atc.build_group();
-
-//AtomicTransactionComposer::build_group(&mut atc.unwrap());
- 
-//AtomicTransactionComposer::execute( &mut atc ,&algod);
 
 
 Ok(())
