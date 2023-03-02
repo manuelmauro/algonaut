@@ -181,7 +181,7 @@ mod bar {
             //let method_sig : String = "add(uint64,uint64)uint128".to_string();
 
             
-            println!("{}",&method_sig);
+            println!("Method Signature: {}",&method_sig);
 
             AbiMethod::from_signature(&method_sig)
             .expect("Error")
@@ -189,11 +189,11 @@ mod bar {
         }
 
         pub fn deposit() -> AbiMethod {
-            let method_sig : String = "deposit(uint64,account)void".to_string();
+            let method_sig : String = "deposit(PaymentTransaction,account)void".to_string();
             //let method_sig : String = "add(uint64,uint64)uint128".to_string();
 
             
-            println!("{}",&method_sig);
+            println!("Method Signature: {}",&method_sig);
 
             AbiMethod::from_signature(&method_sig)
             .expect("Error")
