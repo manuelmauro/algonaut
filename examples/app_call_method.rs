@@ -285,7 +285,7 @@ atc.add_method_call( &mut AddMethodCallParams {
 ).unwrap();
 
 
-atc.build_group().await;
+atc.build_group();
 
 atc.execute(&algod)
    .await;
