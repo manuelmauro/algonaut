@@ -162,7 +162,7 @@ mod bar {
             let method_sig : String = "degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
 ".to_string();
 
-            println!(&method_sig);
+            println!("{}",&method_sig);
 
             AbiMethod::from_signature(&method_sig).unwrap()
         }
