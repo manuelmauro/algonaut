@@ -60,6 +60,7 @@ use num_traits::ToPrimitive;
 use std::error::Error;
 
 
+
 #[macro_use]
 
 #[tokio::main]
@@ -77,8 +78,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  let acct1 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage")?;
  
-  let acct1_2 = acct1.clone();
+ let acct1_2 = acct1.clone();
     
+ let acct1_3 = acct1.clone();
+  
+
  println!("retrieving suggested params");
  let params = algod.suggested_transaction_params().await?;
  let params2 = params.clone();
@@ -213,11 +217,22 @@ mod bar {
   
 
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
- let withdrw_amt : BigUint = BigUint::new(vec![0]);
- let withdrw_to_addr : BigUint = BigUint::new(vec![0]);
+ let withdrw_amt : BigUint = BigUint::new(vec![0]); //in MicroAlgos
+ 
+ //let withdrw_to_addr : BigUint = BigUint::new(vec![0]);
+ //let addr_as_bytes: &[u8] = acct1.address().to_string().as_bytes();
 
+ let mut withdrw_to_addr: [u8; 32] = [0; 32];
+
+ 
+ withdrw_to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
+
+
+ //withdrawal amount
  let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
- let arg2 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_to_addr));// &acct1.address();
+ 
+let arg2: AbiArgValue = AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(withdrw_to_addr)));
+
 
  const Q : usize = 0usize;
 
