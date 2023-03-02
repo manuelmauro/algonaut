@@ -165,7 +165,7 @@ mod bar {
 
             println!("{}",&method_sig);
 
-            AbiMethod::from_signature(&method_sig).unwrap();
+            AbiMethod::from_signature(&method_sig)
         }
         
    
