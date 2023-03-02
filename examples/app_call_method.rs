@@ -160,7 +160,19 @@ mod bar {
     impl Foo {
         //Doc : https://developer.algorand.org/docs/get-details/transactions/signatures/#single-signatures
         //      https://developer.algorand.org/docs/get-details/dapps/smart-contracts/ABI/?from_query=Method%20Signature#reference-types
-        pub fn new() -> AbiMethod {
+        //pub fn new() -> AbiMethod {
+        //    let method_sig : String = "withdraw(uint64,account)void".to_string();
+            //let method_sig : String = "add(uint64,uint64)uint128".to_string();
+
+            
+        //    println!("{}",&method_sig);
+
+        //    AbiMethod::from_signature(&method_sig)
+        //    .expect("Error")
+            
+        //}
+        
+        pub fn withdraw() -> AbiMethod {
             let method_sig : String = "withdraw(uint64,account)void".to_string();
             //let method_sig : String = "add(uint64,uint64)uint128".to_string();
 
@@ -171,41 +183,33 @@ mod bar {
             .expect("Error")
             
         }
-        
+
+        pub fn deposit() -> AbiMethod {
+            let method_sig : String = "deposit(payment,account)void".to_string();
+            //let method_sig : String = "add(uint64,uint64)uint128".to_string();
+
+            
+            println!("{}",&method_sig);
+
+            AbiMethod::from_signature(&method_sig)
+            .expect("Error")
+            
+        }
    
     }
 }
 
- //let method_arg1 : AbiMethodArg = bar::Foo::new();
-
- //let method_arg1 :  AbiMethodArg = AbiMethodArg {
-  //           name: method_name2_2.clone(),
-  //           type_: type2_2.clone(),
-  //           description: description3_2.clone(),
-  //         parsed: None
-  //       };
-  
-  // Enum Type
-
-//help: the following enum variants are available
-    
-//123 |   let mut address_abi_type : AbiType = (AbiArgType::AbiObj(/* fields */));
-//                                         
-//123 |   let mut address_abi_type : AbiType = (AbiArgType::Ref(/* fields */));
-//                                           
-//123 |   let mut address_abi_type : AbiType = (AbiArgType::Tx(/* fields */));
 
 
-  let address_abi_type : AbiArgType = AbiArgType::AbiObj(Address);
+ let address_abi_type : AbiArgType = AbiArgType::AbiObj(Address);
    
   
   
 
- //method_arg.type_();   
     
- let _method : AbiMethod = bar::Foo::new(); //{
+ let _method : AbiMethod = bar::Foo::withdraw(); 
 
-  let _method2 : AbiMethod = _method.clone();
+ let _method2 : AbiMethod = bar::Foo::deposit();
   
 
  //https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
