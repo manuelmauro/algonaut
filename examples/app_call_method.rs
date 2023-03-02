@@ -162,25 +162,12 @@ mod bar {
             let method_sig : String = "degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
 ".to_string();
 
+            println!(&method_sig);
+
             AbiMethod::from_signature(&method_sig).unwrap()
         }
         
-        //pub fn new() -> AbiMethodArg {
-        //    AbiMethodArg {
-        //        name: Some("misc Address".to_string()),
-        //        type_: <Foo as MyTrait>::type_(),
-        //        description: Some("misc description".to_string()),
-        //        parsed: <Foo as MyTrait>::parsed(),
-        //    }
-        //}
-
-        //pub fn new_2() -> AbiReturn {
-        //    AbiReturn {
-        //        type_: String::from("Byte"),
-        //        description: Some(String::from("val")),
-        //        parsed: None,
-        //    }
-        //}
+   
     }
 }
 
