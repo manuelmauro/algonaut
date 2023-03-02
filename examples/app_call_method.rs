@@ -160,7 +160,7 @@ mod bar {
     impl Foo {
         //Doc : https://developer.algorand.org/docs/get-details/transactions/signatures/#single-signatures
         pub fn new() -> AbiMethod {
-            let method_sig : String = ("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage".to_string());
+            let method_sig : String = "degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage".to_string();
 
             println!("{}",&method_sig);
 
