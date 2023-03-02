@@ -75,8 +75,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  let algod = Algod::with_headers(&url, headers)?;
  
- let acct1 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage
-")?;
+ let acct1 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage")?;
  
   let acct1_2 = acct1.clone();
     
@@ -84,34 +83,36 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let params = algod.suggested_transaction_params().await?;
  let params2 = params.clone();
  
- let val1 = String::from("val");
- let val2 = String::from("val");
- let val3 = String::from("val");
- let val4 = String::from("val");
+ //let val1 = String::from("val");
+ //let val2 = String::from("val");
+ //let val3 = String::from("val");
+ //let val4 = String::from("val");
  
  let pages: u32 = 0;
   
  let method_name1 : Option<String> = Some("amount".to_string());
  let method_name2 : Option<String> = Some("account".to_string());
- let type1 : String = String::from("uint64");
- let type2 : String = String::from("Address");
- let description1 : Option<String> = Some("amount description".to_string());
- let description2 : Option<String> = Some("account description".to_string());
- let description3 : Option<String> = Some("misc description".to_string());
+ 
+ //let type1 : String = String::from("uint64");
+ //let type2 : String = String::from("Address");
+ 
+ //let description1 : Option<String> = Some("amount description".to_string());
+ //let description2 : Option<String> = Some("account description".to_string());
+ //let description3 : Option<String> = Some("misc description".to_string());
     
     
- let method_name1_2 : Option<String> = Some("amount".to_string());
- let method_name2_2 : Option<String> = Some("account".to_string());
+ //let method_name1_2 : Option<String> = Some("amount".to_string());
+ //let method_name2_2 : Option<String> = Some("account".to_string());
     
  let type1_2 : String = String::from("uint64");
  let type2_2 : String = String::from("Address");
     
- let description1_2 : Option<String> = Some("amount description".to_string());
- let description2_2 : Option<String> = Some("account description".to_string());
- let description3_2 : Option<String> = Some("misc description".to_string());
+ //let description1_2 : Option<String> = Some("amount description".to_string());
+ //let description2_2 : Option<String> = Some("account description".to_string());
+ //let description3_2 : Option<String> = Some("misc description".to_string());
  
     
- let signer = TransactionSigner::BasicAccount(acct1.clone());  
+ //let signer = TransactionSigner::BasicAccount(acct1.clone());  
  
 mod bar {
     use algonaut_abi::abi_interactions::AbiMethodArg;
@@ -245,7 +246,8 @@ mod bar {
     .build();
 let t2 = t.unwrap().clone();
 let t3 = t2.clone();
-let sign_txn = acct1.sign_transaction(t2)?;
+
+//let sign_txn = acct1.sign_transaction(t2)?;
 
 let mut atc = AtomicTransactionComposer::default();  
 
