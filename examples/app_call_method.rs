@@ -289,7 +289,7 @@ atc.build_group();
 
 atc.execute(&algod)
    .await;
-   .expect("Failed executing")
+   //.expect("Failed executing")
    
 //atc.build_group();
 
