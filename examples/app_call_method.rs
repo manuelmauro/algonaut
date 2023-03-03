@@ -573,7 +573,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //Add method Call     
     atc.add_method_call( &mut AddMethodCallParams {
                     app_id: 161737986,//escrow::Foo::_app_id,
-                    method: _deposit,
+                    method: _withdraw,
                     method_args: vec![q, p],
                     fee: Fixed(MicroAlgos(2500)),
                     sender: acct1_2.address(),
