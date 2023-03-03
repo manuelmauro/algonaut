@@ -292,47 +292,6 @@ pub mod escrow {
     
 
     
-        //    pub struct Foo {
-        //        pub withdrw_amt : BigUint,
-        //        pub withdrw_to_addr : [u8; 32],
-        //        pub arg1 : AbiArgValue,
-        //        pub arg2 : AbiArgValue,
-        //        pub _app_id : u64,
-        //        pub _escrow_address : Address,
-        //        pub atc : AtomicTransactionComposer,
-                
-                
-
-        //    }
-        
-
-        //    impl MyTrait for Foo {
-        //            type Foo = Foo;
-        //            type Parsed = Option<String>;
-        //            type Payment = Option<Payment>;
-        //            type Params = Option <OtherSuggestedTransactionParams>;
-        //            fn _app_id(&self, x: u64) -> u64 {
-        //              x
-        //            }
-        //          fn default() -> Option<String>{ None }
-        //
-            //        fn suggested_tx_params(&self) -> OtherSuggestedTransactionParams { SomeStruct {
-            //           consensus_version: String { vec: "val".to_string() },
-            //           fee_per_byte: MicroAlgos,
-            //          genesis_hash: HashDigest,
-            
-
-        //  impl Foo {
-            //  trait MyTrait : MySuggestedTransactionParams
-                //type params.ToVariant;
-
-            // fn get<MyTrait>(&self) -> SuggestedTransactionParams
-            //         where
-            //             MyTrait: params::to_variant(),
-            //         {
-            //             MyTrait::suggested_tx_params(self)
-            //         }
-            
         
         pub fn withdraw(acct1: Account ){
              /* 
@@ -598,9 +557,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
  atc.execute(&algod).await.expect("Error");
    
    
+ let status_str = &mut atc.status();
 
- println!("{:?}", &mut atc.status());
+ //Debugging Transaction Status
+ println!("{:?}", status_str);
 
+ //match status_str {
+ //       "BUILDING" => AtomicTransactionComposerStatus::Building,
+ //       "BUILT" => AtomicTransactionComposerStatus::Built,
+ //       "SIGNED" => AtomicTransactionComposerStatus::Signed,
+ //       "SUBMITTED" => AtomicTransactionComposerStatus::Submitted,
+  //      "COMMITTED" => AtomicTransactionComposerStatus::Committed,
+ //       _ => panic!("Not handled status string: {}", status_str),
+  //  };
+
+ //if status_str != atc.status() {
+ //       panic!("status doesn't match");
+ //   }
 
  Ok(())
  
