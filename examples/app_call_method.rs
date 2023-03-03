@@ -103,6 +103,61 @@ use core::fmt::Error;
 
 
 use rmp_serde::from_slice;
+pub mod atc {
+    /*
+    Atomic Transaction Composer Required Traits
+    */
+    use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus as OtherAtomicTransactionComposerStatus;
+    use std::string::String as str;
+    use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
+
+
+    pub enum AtomicTransactionComposerStatus {
+        Building,
+        Built,
+        Signed,
+        Submitted,
+        Committed,
+    }
+
+
+    trait MyTrait {
+        type Into: 'static;
+    }
+
+    // Implement the trait for AtomicTransactionComposerStatus
+    impl MyTrait for AtomicTransactionComposerStatus {
+        type Into = &'static str;
+    }
+
+    
+    // Implement the Into trait for &'a AtomicTransactionComposerStatus to &'a str
+    impl<'a> Into<&'a str> for &'a AtomicTransactionComposerStatus {
+        fn into(self) -> &'a str {
+            (&*self).into()
+        }
+    }
+    // Implement the From trait for AtomicTransactionComposerStatus to &'static str
+    impl <'a> From<AtomicTransactionComposerStatus> for &'a str {
+        //fn from(_: AtomicTransactionComposerStatus) -> Self { todo!() }
+ 
+        fn from(_: AtomicTransactionComposerStatus) -> &'a str  { todo!() }
+ 
+
+        //fn from(status: AtomicTransactionComposerStatus) -> &'a str {
+            
+        //    match status {
+        //        AtomicTransactionComposerStatus::Building => &String::from("Building"),//&Building,
+        //        AtomicTransactionComposerStatus::Built => &String::from("Built"),
+        //        AtomicTransactionComposerStatus::Signed => &String::from("Signed"),
+        //        AtomicTransactionComposerStatus::Submitted => &String::from("Submitted"),
+        //        AtomicTransactionComposerStatus::Committed => &String::from("Committed"),
+        //        _ => panic!()
+        //    }
+        //}
+    }
+
+}
 
 
 pub mod params {
@@ -445,8 +500,10 @@ use crate::escrow::Foo;
 
 #[tokio::main]
 
-// #[derive(Clone)]
 async fn main() -> Result<(), Box<dyn Error>> {
+
+
+ 
  
  let url = String::from("https://node.testnet.algoexplorerapi.io");
  
@@ -556,24 +613,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  atc.execute(&algod).await.expect("Error");
    
-   
- let status_str = &mut atc.status();
+ let status_str : &mut AtomicTransactionComposerStatus = &mut atc.status();
 
- //Debugging Transaction Status
- println!("{:?}", status_str);
-
- //match status_str {
+// let t = match status_str.into() {
  //       "BUILDING" => AtomicTransactionComposerStatus::Building,
  //       "BUILT" => AtomicTransactionComposerStatus::Built,
  //       "SIGNED" => AtomicTransactionComposerStatus::Signed,
  //       "SUBMITTED" => AtomicTransactionComposerStatus::Submitted,
-  //      "COMMITTED" => AtomicTransactionComposerStatus::Committed,
- //       _ => panic!("Not handled status string: {}", status_str),
-  //  };
+ //       "COMMITTED" => AtomicTransactionComposerStatus::Committed,
+ //       _ => panic!("Not handled status string: {:?}", status_str),
+ //   };
 
- //if status_str != atc.status() {
- //       panic!("status doesn't match");
- //   }
+ // Debugging Transaction Status
+ println!("{:?}", status_str);
+
+
+
+ // if status_str != atc.status() {
+ //        panic!("status doesn't match");
+ //    }
 
  Ok(())
  
