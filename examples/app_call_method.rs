@@ -103,14 +103,13 @@ use core::fmt::Error;
 
 
 use rmp_serde::from_slice;
-pub mod atc {
+pub mod ATC {
     /*
     Atomic Transaction Composer Required Traits
     */
     use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus as OtherAtomicTransactionComposerStatus;
     use std::string::String as str;
     use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
-
 
     pub enum AtomicTransactionComposerStatus {
         Building,
@@ -120,43 +119,77 @@ pub mod atc {
         Committed,
     }
 
-
-    trait MyTrait {
-        type Into: 'static;
+    trait Into {
+        type Into ;//: 'static;
+        //type Into: <&'a str> ;//: 'static;
+        type From; 
+        type T ; //: <&str>;
+        
+        //type <'a> ;
+        //type <T,T>;
+        //type From<AtomicTransactionComposerStatus>;
+        //type From<&mut AtomicTransactionComposerStatus>;
+        fn into <T: From<T> + ?Sized>(b : &T) {
+            todo!()
+        }
     }
 
     // Implement the trait for AtomicTransactionComposerStatus
-    impl MyTrait for AtomicTransactionComposerStatus {
-        type Into = &'static str;
-    }
+    //impl Into for dyn From<T>  {
+    //    type Into = &'static str;
 
-    
+
+    //    fn into <T: From<T> + ?Sized>(b : &T) {
+    //        todo!()
+    //    }
+    //}
+
     // Implement the Into trait for &'a AtomicTransactionComposerStatus to &'a str
-    impl<'a> Into<&'a str> for &'a AtomicTransactionComposerStatus {
-        fn into(self) -> &'a str {
-            (&*self).into()
+    //impl<'a> Into<&'a str> for &'a AtomicTransactionComposerStatus {
+    //    fn into(self) -> &'a str {
+    //        (&*self).into()
+    //    }
+    //}
+
+    // Implement the From trait for AtomicTransactionComposerStatus to &'static str
+    impl<'a> From<AtomicTransactionComposerStatus> for &'a str {
+        fn from(_: AtomicTransactionComposerStatus) -> &'a str {
+            todo!()
         }
     }
-    // Implement the From trait for AtomicTransactionComposerStatus to &'static str
-    impl <'a> From<AtomicTransactionComposerStatus> for &'a str {
-        //fn from(_: AtomicTransactionComposerStatus) -> Self { todo!() }
- 
-        fn from(_: AtomicTransactionComposerStatus) -> &'a str  { todo!() }
- 
 
-        //fn from(status: AtomicTransactionComposerStatus) -> &'a str {
-            
-        //    match status {
-        //        AtomicTransactionComposerStatus::Building => &String::from("Building"),//&Building,
-        //        AtomicTransactionComposerStatus::Built => &String::from("Built"),
-        //        AtomicTransactionComposerStatus::Signed => &String::from("Signed"),
-        //        AtomicTransactionComposerStatus::Submitted => &String::from("Submitted"),
-        //        AtomicTransactionComposerStatus::Committed => &String::from("Committed"),
-        //        _ => panic!()
-        //    }
-        //}
+    // Implement the From trait for &mut AtomicTransactionComposerStatus to &str
+    impl<'a> From<&'a mut AtomicTransactionComposerStatus> for &'a str {
+        fn from(_: &'a mut AtomicTransactionComposerStatus) -> &'a str {
+            todo!()
+        }
     }
 
+     // Implement the From trait for String to &'static str
+    //impl From<str> for dyn T  {
+    //    fn from(s: String) -> &'static str {
+    //        &Box::leak(s.into_boxed_str()).to_string()
+    //    }
+    //}
+
+    //pub fn func(status_str: &str) {
+    //    let status = OtherAtomicTransactionComposerStatus::from(status_str);
+        //let t: _ = <&mut AtomicTransactionComposerStatus as std::convert::Into<&str>>::into(status);
+    //}
+
+    //impl From<&mut algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus> for Box <dyn Into <Into = &str, From = &mut algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus>> {AtomicTransactionComposerStatus{
+    //    fn from(_: &mut algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus) -> &str {
+    //         todo!()
+                
+
+    //        }
+    //    }
+    //    fn from(_: T) -> Self { todo!() }
+
+    //    fn into <T: From + ?Sized>(b : &T) {
+    //        todo!()
+    //    }
+    //}
 }
 
 
@@ -495,6 +528,7 @@ use num_traits::ToPrimitive;
 use std::error::Error;
 
 use crate::escrow::Foo;
+use crate::params::ATC;
 
 #[macro_use]
 
@@ -615,8 +649,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
    
  let status_str : &mut AtomicTransactionComposerStatus = &mut atc.status();
 
-// let t = match status_str.into() {
- //       "BUILDING" => AtomicTransactionComposerStatus::Building,
+ //Buggy Trait Implementation
+ //let t : _= <&mut algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus as std::convert::Into<T>>::into(status_str);  // {
+ 
+//       "BUILDING" => AtomicTransactionComposerStatus::Building,
  //       "BUILT" => AtomicTransactionComposerStatus::Built,
  //       "SIGNED" => AtomicTransactionComposerStatus::Signed,
  //       "SUBMITTED" => AtomicTransactionComposerStatus::Submitted,
