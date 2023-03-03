@@ -520,7 +520,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let _withdraw : AbiMethod = bar::Foo::withdraw(); 
 
  //Deposit method
- let _deposit : AbiMethod = bar::Foo::deposit();
+ // Buggy Method Signature
+ //let _deposit : AbiMethod = bar::Foo::deposit();
   
 
 
@@ -528,14 +529,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
  const Q : usize = 0usize;
 
- let mut _hashmap: HashMap<usize, AbiMethod>= std::collections::HashMap::new(); //HashMap<usize, AbiMethod>
+ //let mut _hashmap: HashMap<usize, AbiMethod>= std::collections::HashMap::new(); //HashMap<usize, AbiMethod>
 
 
 
 
  
- _hashmap.insert(Q,_deposit.clone()); 
- //_hashmap.insert(q,q);
+ //_hashmap.insert(Q,_deposit.clone()); 
     
  let _note : Option<Vec<u8>> = Some(vec![0]);
 
