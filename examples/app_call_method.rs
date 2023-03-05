@@ -285,14 +285,14 @@ pub mod escrow {
         },
         error::ServiceError,
     };
-    //use algonaut_abi::{
-    //    abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
-    //    abi_type::{AbiType, AbiValue as OtherAbiValue},
-    //};
-    use algonaut_core::{to_app_address, Address as OtherAddress, MicroAlgos};//, CompiledTeal};
+    use algonaut_abi::{
+        abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
+        abi_type::{AbiType, AbiValue as OtherAbiValue},
+    };
+    use algonaut_core::{to_app_address, Address as OtherAddress, MicroAlgos, CompiledTeal};
     //use algonaut_model::algod::v2::PendingTransaction;
     use algonaut_transaction::{
-        //builder::TxnFee,
+        builder::TxnFee,
         transaction::{ApplicationCallOnComplete, StateSchema},
         Pay, TxnBuilder,
     };
@@ -304,7 +304,7 @@ pub mod escrow {
     use algonaut_transaction::account::Account;
     //use algonaut_transaction::Transaction;
 
-    //use algonaut_crypto::HashDigest;
+    use algonaut_crypto::HashDigest;
     //use algonaut_core::Round;
     //use algonaut_core::SuggestedTransactionParams as OtherSuggestedTransactionParams;
 
@@ -322,6 +322,11 @@ pub mod escrow {
         pub _escrow_address: Address,
         pub atc: &'a AtomicTransactionComposer,
     }
+
+    //pub enum Foo {
+    //    foo ,
+
+    //}
 
     trait MyTrait {
         type Foo <'a>;
@@ -485,7 +490,53 @@ pub mod escrow {
  
         }
 
+        pub fn new() -> AtomicTransactionComposer{
+        /*
+        Constructs a Default Atomic Transation Composer
+        */
+            AtomicTransactionComposer::default()
+        
+        }
      
+        pub fn construct_app_call_method(
+        /*
+        Constructs an App Call Method as a Rust Module
+        
+        */
+        
+        //&AtomicTransactionComposer
+        &self,
+        //#[base] _base: &Node,
+        app_id: u64,
+        method: AbiMethod,
+        method_args: Vec<AbiArgValue>,
+        fee: TxnFee,//Fixed(MicroAlgos(2500u64)), //make customizable
+        sender: Address,
+        on_complete: ApplicationCallOnComplete,
+        clear_program: Option<CompiledTeal>,
+        global_schema: Option<StateSchema>,
+        local_schema: Option<StateSchema>,
+        extra_pages: u32,
+        note: Option<Vec<u8>>,
+        lease: Option<HashDigest>,
+        rekey_to: Option<Address>,
+        signer: TransactionSigner,
+    
+    
+    ) -> Result<Foo<'_>, ServiceError> {
+            todo!()
+            
+    }
+        
+ //        TxnBuilder::with(
+ //       )
+ //        .build()
+ //        .unwrap()
+ //       .into()
+    
+    
+    //}
+    
 
     } 
 
@@ -621,7 +672,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  let pages: u32 = 0;
 
- let address_abi_type : AbiArgType = AbiArgType::AbiObj(Address);
+ //let address_abi_type : AbiArgType = AbiArgType::AbiObj(Address);
    
   
   
@@ -654,7 +705,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("building ABI Method Call transaction");
 
-    let mut atc = AtomicTransactionComposer::default();  
+    let mut atc = escrow::Foo::new();//AtomicTransactionComposer::default();  
 
     let mut _to_addr: [u8; 32] = [0; 32];
 
@@ -677,6 +728,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     //let q = details.arg1;
 
+    
     //let p = details.arg2;
     //Add method Call     
     atc.add_method_call( &mut AddMethodCallParams {
