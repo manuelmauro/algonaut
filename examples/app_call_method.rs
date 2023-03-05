@@ -292,14 +292,14 @@ pub mod escrow {
     use algonaut_core::{to_app_address, Address as OtherAddress, MicroAlgos, CompiledTeal};
     //use algonaut_model::algod::v2::PendingTransaction;
     use algonaut_transaction::{
-        builder::TxnFee,
+        builder::TxnFee, builder::TxnFee::Fixed,
         transaction::{ApplicationCallOnComplete, StateSchema},
         Pay, TxnBuilder,
     };
 
     use algonaut_core::SuggestedTransactionParams as OtherSuggestedTransactionParams;
     use algonaut_transaction::transaction::Payment;
-
+  
     //combine both
     use algonaut_transaction::account::Account;
     //use algonaut_transaction::Transaction;
@@ -406,17 +406,17 @@ pub mod escrow {
             
                 Docs: https://docs.rs/num-bigint/0.4.3/num_bigint/struct.BigUint.html
 
-            
+                Does nothing
             */
 
             //let withdrw_amt : BigUint = BigUint::new(vec![0]); //in MicroAlgos
             
             // Address As Bytes
-            let mut withdrw_to_addr: [u8; 32] = [0; 32];
+            //let mut withdrw_to_addr: [u8; 32] = [0; 32];
 
             //Converts Address to 32 Bit Bytes
             //Should ideally be a method
-            withdrw_to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
+            //withdrw_to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
 
 
             //App Call Arguments For AtomicTransactionComposer
@@ -425,7 +425,7 @@ pub mod escrow {
             
             //let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
             
-            let arg2: AbiArgValue = AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(withdrw_to_addr)));
+            //let arg2: AbiArgValue = AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(withdrw_to_addr)));
         }
         
 
@@ -453,6 +453,8 @@ pub mod escrow {
         pub fn deposit(algod : Algod , acct1_3 : Account ,  params : algonaut_core::SuggestedTransactionParams) -> algonaut_core::SuggestedTransactionParams {
             /*
             Deposit Method Parameters for Escrow SmartContract
+            Unused and Depreciated
+            
             */
 
             //Params
@@ -498,6 +500,20 @@ pub mod escrow {
         
         }
      
+        pub fn address_to_bytes(addr: String) -> [u8; 32]{ 
+        /*
+        Constructs a 32 Bit Byte Slice froma Given Address String
+        */   
+            let mut _to_addr: [u8; 32] = [0; 32];
+            //_to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
+            _to_addr.copy_from_slice(&addr.as_bytes()[..32]);
+
+            _to_addr
+            
+        }
+
+        pub fn fee(amount : u64) -> TxnFee{Fixed(MicroAlgos(amount))}
+
         pub fn construct_app_call_method(
         /*
         Constructs an App Call Method as a Rust Module
@@ -678,7 +694,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
   
 
  //Withdraw method   
- let _withdraw : AbiMethod = bar::Foo::withdraw(); 
+ //let _withdraw : AbiMethod = bar::Foo::withdraw(); 
 
  //Deposit method
  // Buggy Method Signature
@@ -707,9 +723,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut atc = escrow::Foo::new();//AtomicTransactionComposer::default();  
 
-    let mut _to_addr: [u8; 32] = [0; 32];
 
-    _to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
+
+    let mut _to_addr: [u8; 32] = Foo::address_to_bytes(acct1.address().to_string());//[0; 32];
+
+    //_to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
 
     //let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
             
@@ -733,9 +751,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //Add method Call     
     atc.add_method_call( &mut AddMethodCallParams {
                     app_id: details._app_id,//161737986,//escrow::Foo::_app_id,
-                    method: _withdraw,
+                    method: bar::Foo::withdraw(), //bar::Foo::deposit() //for deposits
                     method_args: vec![details.arg1, details.arg2],
-                    fee: Fixed(MicroAlgos(2500)),
+                    fee: Foo::fee(2500),//Fixed(MicroAlgos(2500)),
                     sender: acct1_2.address(),
                     suggested_params: params,
                     on_complete: NoOp,
