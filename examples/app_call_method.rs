@@ -107,10 +107,7 @@ pub mod ATC {
     /*
     Atomic Transaction Composer Required Traits
     */
-    //use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus as OtherAtomicTransactionComposerStatus;
     use std::string::String as str;
-    //use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
-    //use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus;
 
     pub enum AtomicTransactionComposerStatus {
         Building,
@@ -159,32 +156,6 @@ pub mod ATC {
     }
 }
 
-     // Implement the From trait for String to &'static str
-    //impl From<str> for dyn T  {
-    //    fn from(s: String) -> &'static str {
-    //        &Box::leak(s.into_boxed_str()).to_string()
-    //    }
-    //}
-
-    //pub fn func(status_str: &str) {
-    //    let status = OtherAtomicTransactionComposerStatus::from(status_str);
-        //let t: _ = <&mut AtomicTransactionComposerStatus as std::convert::Into<&str>>::into(status);
-    //}
-
-    //impl From<&mut algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus> for Box <dyn Into <Into = &str, From = &mut algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus>> {AtomicTransactionComposerStatus{
-    //    fn from(_: &mut algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus) -> &str {
-    //         todo!()
-                
-
-    //        }
-    //    }
-    //    fn from(_: T) -> Self { todo!() }
-
-    //    fn into <T: From + ?Sized>(b : &T) {
-    //        todo!()
-    //    }
-    //}
-//}
 
 
 pub mod params {
@@ -227,42 +198,6 @@ pub mod params {
                 dict
             }
 
-            //fn from_variant(variant: &Self) -> Result<Self, Error>
-            
-        
-
-        //used when constructing To a variant
-        //impl ToVariant for MySuggestedTransactionParams {
-           
-        //    fn to_variant(&self) -> SuggestedTransactionParams {
-        //        let dict = TrasactionParams::new();
-
-                
-        //        dict
-        //    }
-        //}
-
-    // impl FromVariant for MySuggestedTransactionParams {
-    //     fn from_variant(variant: &Self) -> Result<Self, Error> {
-    //         let dict = variant
-    //             .to::<HashMap>()
-    //             .unwrap();
-                    //.ok_or(FromVariantError::InvalidVariantType {
-                    //    variant_type: variant.get_type(),
-                    //    expected: VariantType::Dictionary,
-                    //})?;
-
-    //         let t = SuggestedTransactionParams {
-    //             genesis_id: "".to_string(),
-    //             first_valid: Round(0u64),
-    //             last_valid: Round(0u64),
-    //             consensus_version: "".to_string(),
-    //             min_fee: MicroAlgos(0u64),
-    //             fee_per_byte: MicroAlgos(0u64),
-    //             genesis_hash: HashDigest,
-    //         };
-    //         Ok()
-    //     }
         }
 
     }
@@ -312,6 +247,7 @@ pub mod escrow {
     //my cyustom params
     use crate::params::params::MySuggestedTransactionParams;
     
+    #[derive(Debug)]
     //lifetime Parameter
     pub struct Foo <'a> {
         pub withdrw_amt: u32,
@@ -409,23 +345,6 @@ pub mod escrow {
                 Does nothing
             */
 
-            //let withdrw_amt : BigUint = BigUint::new(vec![0]); //in MicroAlgos
-            
-            // Address As Bytes
-            //let mut withdrw_to_addr: [u8; 32] = [0; 32];
-
-            //Converts Address to 32 Bit Bytes
-            //Should ideally be a method
-            //withdrw_to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
-
-
-            //App Call Arguments For AtomicTransactionComposer
-            // Withdraw Method
-            // Unused in the Current Scop
-            
-            //let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
-            
-            //let arg2: AbiArgValue = AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(withdrw_to_addr)));
         }
         
 
@@ -449,24 +368,27 @@ pub mod escrow {
             return _t;
         }
 
+        pub fn app_address (app_id : &u64) -> Address{
+            to_app_address(*app_id)
+        }
         
         pub fn deposit(algod : Algod , acct1_3 : Account ,  params : algonaut_core::SuggestedTransactionParams) -> algonaut_core::SuggestedTransactionParams {
             /*
             Deposit Method Parameters for Escrow SmartContract
             Unused and Depreciated
-            
+           
+            Does
             */
 
             //Params
-            //let params = algod.suggested_transaction_params();
-
+            //
             //App ID
             let _app_id = 161737986;
 
             
             //Get Escrow Address From App ID
 
-            let _escrow_address = to_app_address(_app_id.clone());
+            let _escrow_address = Foo::app_address(&_app_id); //to_app_address(_app_id.clone());
            
             println!(" building Pay transaction to Escrow Address: {}", &_escrow_address);
 
@@ -512,6 +434,16 @@ pub mod escrow {
             
         }
 
+        //let arg2: AbiArgValue = AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(withdrw_to_addr)));
+      
+        pub fn address(addr : [u8; 32]) -> AbiArgValue {
+            /* Returns an Address abi value from an Address as [u8,32]*/
+            AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(addr)))
+
+        } 
+
+        
+
         pub fn fee(amount : u64) -> TxnFee{Fixed(MicroAlgos(amount))}
 
         pub fn construct_app_call_method(
@@ -542,17 +474,8 @@ pub mod escrow {
     ) -> Result<Foo<'_>, ServiceError> {
             todo!()
             
-    }
+        }
         
- //        TxnBuilder::with(
- //       )
- //        .build()
- //        .unwrap()
- //       .into()
-    
-    
-    //}
-    
 
     } 
 
@@ -606,49 +529,14 @@ use algonaut_transaction::{
 
 
 
-//GOdot FUnction Template
-//#[method]
-//#[allow(clippy::too_many_arguments)]
-    
-//    fn construct_app_call_method(
-//        &self,
-//        #[base] _base: &Node,
-//        app_id: u64,
-//        method: AbiMethod,
-//        method_args: Vec<AbiArgValue>,
-//        fee: TxnFee,
-//        sender: Address,
-//        on_complete: ApplicationCallOnComplete,
-//        clear_program: Option<CompiledTeal>,
-//        global_schema: Option<StateSchema>,
-//        local_schema: Option<StateSchema>,
-//        extra_pages: u32,
-//        note: Option<Vec<u8>>,
-//        lease: Option<HashDigest>,
-//        rekey_to: Option<Address>,
-//        signer: TransactionSigner,
-    
-    
-//    ) -> Transaction {
-        
-//        TxnBuilder::with(
-//       )
-//        .build()
-//        .unwrap()
- //       .into()
-    
-    
-  //  }
     
 
 
 
 
-//use cucumber::{codegen::Regex, given, then, when};
 use data_encoding::BASE64;
 use num_traits::ToPrimitive;
 
-//use sha2::Digest;
 //use std::convert::TryInto;
 use std::error::Error;
 
@@ -721,39 +609,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("building ABI Method Call transaction");
 
-    let mut atc = escrow::Foo::new();//AtomicTransactionComposer::default();  
+    let mut atc = escrow::Foo::new();  
 
 
 
     let mut _to_addr: [u8; 32] = Foo::address_to_bytes(acct1.address().to_string());//[0; 32];
 
-    //_to_addr.copy_from_slice(&acct1.address().to_string().as_bytes()[..32]);
-
-    //let arg1 : AbiArgValue = AbiArgValue::AbiValue( Int(withdrw_amt));
-            
-    //let arg2: AbiArgValue = AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(withdrw_to_addr)));
-       
+    let __app_id : u64 = 161737986 ;
 
     //Txn Details As a Struct
     let details = escrow::Foo { 
             withdrw_amt : 0u32,//Foo::withdraw_amount(0u32),//BigUint::new(vec![0]),//BigUint { data: vec![0u64] },//BigUint = BigUint::new(vec![0]), 
             withdrw_to_addr: _to_addr.clone(), 
-            arg1: Foo::withdraw_amount(0u32),//AbiArgValue::AbiValue( Int(0u64.into())), 
-            arg2: AbiArgValue::AbiValue(algonaut_abi::abi_type::AbiValue::Address(OtherAddress::new(_to_addr))), 
-            _app_id: 161737986, 
-            _escrow_address: to_app_address(161737986), 
+            arg1: Foo::withdraw_amount(0u32), 
+            arg2: Foo::address(_to_addr),
+            _app_id: __app_id.clone(), 
+            _escrow_address: to_app_address(__app_id), 
             atc: &atc };
 
-    //let q = details.arg1;
+    println!("{:?}", &details);
 
-    
-    //let p = details.arg2;
-    //Add method Call     
+            //Add method Call     
     atc.add_method_call( &mut AddMethodCallParams {
-                    app_id: details._app_id,//161737986,//escrow::Foo::_app_id,
-                    method: bar::Foo::withdraw(), //bar::Foo::deposit() //for deposits
+                    app_id: details._app_id,
+                    method: bar::Foo::deposit(), //bar::Foo::withdraw() //for deposits
                     method_args: vec![details.arg1, details.arg2],
-                    fee: Foo::fee(2500),//Fixed(MicroAlgos(2500)),
+                    fee: Foo::fee(2500),
                     sender: acct1_2.address(),
                     suggested_params: params,
                     on_complete: NoOp,
