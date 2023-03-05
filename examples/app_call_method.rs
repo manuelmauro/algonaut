@@ -493,8 +493,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
  let headers :  Vec<(&str, &str)> = vec![(&user, &pass)];
 
  let algod = Algod::with_headers(&url, headers)?;
- 
- let acct1 = Account::from_mnemonic("degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage")?;
+ let mnemonic : &str = &"degree feature waste gospel screen near subject boost wreck proof caution hen adapt fiber fault level blind entry also embark oval board bunker absorb garage".to_string();
+ let acct1 = Account::from_mnemonic(mnemonic.clone())?;
  
  let acct1_2 = acct1.clone();
     
@@ -556,7 +556,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             arg1: Foo::withdraw_amount(0u32), 
             arg2: Foo::address(_to_addr),
             _app_id: __app_id.clone(), 
-            _escrow_address: to_app_address(__app_id), 
+            _escrow_address: Foo::app_address(&__app_id),//to_app_address(__app_id), 
             atc: &atc };
 
     println!("{:?}", &details);
@@ -578,7 +578,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     note: Foo::note(0u32),//_note,
                     lease: None,
                     rekey_to: None,
-                    signer: BasicAccount(acct1_2)
+                    signer: BasicAccount(algonaut_transaction::account::Account::from_mnemonic(mnemonic).unwrap())
             
         }
     ).unwrap();
