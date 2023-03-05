@@ -234,6 +234,8 @@ pub mod escrow {
    
     //use crate::params::params::MySuggestedTransactionParams;
     
+    use algonaut::atomic_transaction_composer::transaction_signer::TransactionSigner::BasicAccount;
+
     #[derive(Debug)]
     //lifetime Parameter
     pub struct Foo <'a> {
@@ -416,6 +418,10 @@ pub mod escrow {
 
         } 
 
+        pub fn basic_account(mnemonic : &str)  ->  algonaut::atomic_transaction_composer::transaction_signer::TransactionSigner{
+            BasicAccount(algonaut_transaction::account::Account::from_mnemonic(&mnemonic).unwrap())
+        
+        }
         
 
         pub fn fee(amount : u64) -> TxnFee{Fixed(MicroAlgos(amount))}
@@ -455,7 +461,7 @@ pub mod escrow {
 
 }
     
-use algonaut::atomic_transaction_composer::{ transaction_signer::TransactionSigner::BasicAccount};
+//use algonaut::atomic_transaction_composer::{ transaction_signer::TransactionSigner::BasicAccount};
 use algonaut::transaction::{account::Account,
     transaction::ApplicationCallOnComplete::NoOp,
 };
@@ -578,7 +584,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     note: Foo::note(0u32),//_note,
                     lease: None,
                     rekey_to: None,
-                    signer: BasicAccount(algonaut_transaction::account::Account::from_mnemonic(mnemonic).unwrap())
+                    signer: Foo::basic_account(&mnemonic)//BasicAccount(algonaut_transaction::account::Account::from_mnemonic(mnemonic).unwrap())
             
         }
     ).unwrap();
