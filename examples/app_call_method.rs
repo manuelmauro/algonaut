@@ -91,18 +91,10 @@ mod bar {
 
 //Custom Params Struct
 
-//#[derive(Deref, DerefMut, From)]
 mod params {
 
-//use algonaut_core::SuggestedTransactionParams;
-//use algonaut_core::MicroAlgos;
-//use algonaut_core::Round;
-//use algonaut_crypto::HashDigest;
-//use std::collections::HashMap; //inplace of dictionary crate
-//use core::fmt::Error;
 
-
-use rmp_serde::from_slice;
+//use rmp_serde::from_slice;
 pub mod ATC {
     /*
     Atomic Transaction Composer Required Traits
@@ -185,12 +177,12 @@ pub mod params {
 
             //fn suggested_tx_params(&self) -> OtherSuggestedTransactionParams { }
 
-            fn to_variant(&self, Params : SuggestedTransactionParams) -> TransactionParams { 
+            fn to_variant(&self, params : SuggestedTransactionParams) -> TransactionParams { 
                 let dict =  algonaut_model::algod::v2::TransactionParams{
-                    consensus_version: Params.consensus_version,
+                    consensus_version: params.consensus_version,
                     fee_per_byte: MicroAlgos(0u64),
-                    genesis_hash: Params.genesis_hash,//HashDigest([u8; 32]),
-                    genesis_id: Params.genesis_id,
+                    genesis_hash: params.genesis_hash,//HashDigest([u8; 32]),
+                    genesis_id: params.genesis_id,
                     last_round: Round(0u64),
                     min_fee: MicroAlgos(0u64),
                 };
@@ -221,11 +213,11 @@ pub mod escrow {
         error::ServiceError,
     };
     use algonaut_abi::{
-        abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
-        abi_type::{AbiType, AbiValue as OtherAbiValue},
+        abi_interactions::{AbiMethod}, //AbiArgType,AbiReturn,, ReferenceArgType,, AbiReturnType  
+        //abi_type::{AbiType, AbiValue as OtherAbiValue},
     };
     use algonaut_core::{to_app_address, Address as OtherAddress, MicroAlgos, CompiledTeal};
-    //use algonaut_model::algod::v2::PendingTransaction;
+    
     use algonaut_transaction::{
         builder::TxnFee, builder::TxnFee::Fixed,
         transaction::{ApplicationCallOnComplete, StateSchema},
@@ -233,19 +225,13 @@ pub mod escrow {
     };
 
     use algonaut_core::SuggestedTransactionParams as OtherSuggestedTransactionParams;
-    use algonaut_transaction::transaction::Payment;
+    use algonaut_transaction::{transaction::Payment, account::Account};
   
-    //combine both
-    use algonaut_transaction::account::Account;
-    //use algonaut_transaction::Transaction;
-
     use algonaut_crypto::HashDigest;
-    //use algonaut_core::Round;
-    //use algonaut_core::SuggestedTransactionParams as OtherSuggestedTransactionParams;
-
+  
     use std::convert::TryInto;
-    //my cyustom params
-    use crate::params::params::MySuggestedTransactionParams;
+   
+    //use crate::params::params::MySuggestedTransactionParams;
     
     #[derive(Debug)]
     //lifetime Parameter
@@ -258,11 +244,6 @@ pub mod escrow {
         pub _escrow_address: Address,
         pub atc: &'a AtomicTransactionComposer,
     }
-
-    //pub enum Foo {
-    //    foo ,
-
-    //}
 
     trait MyTrait {
         type Foo <'a>;
@@ -288,33 +269,25 @@ pub mod escrow {
     impl Foo <'_> {
         // Adding method to create application call
         fn get_call(&self) -> Result<ApplicationCallOnComplete, ServiceError> {
-            let func_args = vec![self.arg1.clone(), self.arg2.clone()];
-            //let arg_types = vec![
-            //    AbiArgType::Uint(64),
-            //    AbiArgType::Uint(64)
-            //];
-            //let app_args = AbiMethod::encode_args(func_args, arg_types)?;
-
-            let app_args = todo!();
-            //app_args
-            //let app_call = ApplicationCallOnComplete::new(self._app_id, "some_function_name", Some(app_args), None, None)?;
-            //Ok(app_call)
+            //let func_args = vec![self.arg1.clone(), self.arg2.clone()];
+            
+            todo!()
+            
         }
 
         // Adding method to create pay transaction
         fn get_payment(&self) -> Result<Payment, ServiceError> {
-            let tx = todo!();
+            todo!()
            // tx
         }
 
         fn arg1(&self)-> AbiArgValue{ 
-            let x = todo!();
-            //x
+            todo!()
+            
         }
         
         pub fn note(size : u32) -> Option <Vec<u8>>{
             Some(vec![size.try_into().unwrap()])
-
 
         }
     
@@ -336,7 +309,7 @@ pub mod escrow {
             
     
         
-        pub fn withdraw(acct1: Account ){
+        pub fn withdraw(_acct1: Account ){
              /* 
             Withdraw Method Parameters for Escrow SmartContract
             
@@ -372,7 +345,7 @@ pub mod escrow {
             to_app_address(*app_id)
         }
         
-        pub fn deposit(algod : Algod , acct1_3 : Account ,  params : algonaut_core::SuggestedTransactionParams) -> algonaut_core::SuggestedTransactionParams {
+        pub fn deposit(_algod : Algod , acct1_3 : Account ,  params : algonaut_core::SuggestedTransactionParams) -> algonaut_core::SuggestedTransactionParams {
             /*
             Deposit Method Parameters for Escrow SmartContract
             Unused and Depreciated
@@ -455,20 +428,20 @@ pub mod escrow {
         //&AtomicTransactionComposer
         &self,
         //#[base] _base: &Node,
-        app_id: u64,
-        method: AbiMethod,
-        method_args: Vec<AbiArgValue>,
-        fee: TxnFee,//Fixed(MicroAlgos(2500u64)), //make customizable
-        sender: Address,
-        on_complete: ApplicationCallOnComplete,
-        clear_program: Option<CompiledTeal>,
-        global_schema: Option<StateSchema>,
-        local_schema: Option<StateSchema>,
-        extra_pages: u32,
-        note: Option<Vec<u8>>,
-        lease: Option<HashDigest>,
-        rekey_to: Option<Address>,
-        signer: TransactionSigner,
+        _app_id: u64,
+        _method: AbiMethod,
+        _method_args: Vec<AbiArgValue>,
+        _fee: TxnFee,//Fixed(MicroAlgos(2500u64)), //make customizable
+        _sender: Address,
+        _on_complete: ApplicationCallOnComplete,
+        _clear_program: Option<CompiledTeal>,
+        _global_schema: Option<StateSchema>,
+        _local_schema: Option<StateSchema>,
+        _extra_pages: u32,
+        _note: Option<Vec<u8>>,
+        _lease: Option<HashDigest>,
+        _rekey_to: Option<Address>,
+        _signer: TransactionSigner,
     
     
     ) -> Result<Foo<'_>, ServiceError> {
@@ -485,65 +458,23 @@ use algonaut::atomic_transaction_composer::{ transaction_signer::TransactionSign
 use algonaut::transaction::{account::Account,
     transaction::ApplicationCallOnComplete::NoOp,
 };
-use algonaut_transaction::builder::TxnFee::Fixed;
-
-//use algonaut_abi::abi_interactions::AbiReturnType::Void;
-
-
-//use algonaut::atomic_transaction_composer::{ AbiArgValue::AbiValue};
-
-//use algonaut_abi::abi_interactions::{AbiMethodArg};
-use num_bigint::BigUint;
-use algonaut_abi::abi_type::AbiType::Address;
-use algonaut_abi::abi_type::AbiValue::Int;
-
-
-//use algonaut_crypto::HashDigest;
 use algonaut::algod::v2::Algod;
-
-
-//use algonaut::atomic_transaction_composer::AtomicTransactionComposerStatus::Building;
-
-//use std::collections::HashMap;
-
 
 use algonaut::{
     atomic_transaction_composer::{
-        transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue,
-        AbiReturnDecodeError, AddMethodCallParams, AtomicTransactionComposer,
-        AtomicTransactionComposerStatus, TransactionWithSigner,
+        //transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue,
+        AddMethodCallParams, //AtomicTransactionComposer,AbiReturnDecodeError,
+        AtomicTransactionComposerStatus, //TransactionWithSigner,
     },
     //error::ServiceError,
 };
-use algonaut_abi::{
-    abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
-    abi_type::{AbiType, AbiValue as OtherAbiValue},
-};
-use algonaut_core::{to_app_address, Address as OtherAddress, MicroAlgos, CompiledTeal};
-use algonaut_model::algod::v2::PendingTransaction;
-use algonaut_transaction::{
-    builder::TxnFee,
-    transaction::{ApplicationCallOnComplete, StateSchema},
-    Pay, TxnBuilder,
-};
-
-
-
-    
-
-
-
-
-use data_encoding::BASE64;
-use num_traits::ToPrimitive;
-
-//use std::convert::TryInto;
+use algonaut_core::{to_app_address}; //Address as OtherAddress, , MicroAlgos, CompiledTeal
 use std::error::Error;
 
 use crate::escrow::Foo;
-use crate::params::ATC;
+//use crate::params::ATC;
 
-#[macro_use]
+//#[macro_use]
 
 #[tokio::main]
 
@@ -566,7 +497,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
  
  let acct1_2 = acct1.clone();
     
- let acct1_3 = acct1.clone();
+ //let acct1_3 = acct1.clone();
   
 
  println!("retrieving suggested params");
