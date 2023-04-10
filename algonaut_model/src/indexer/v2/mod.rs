@@ -405,7 +405,7 @@ pub struct QueryAssetTransaction {
     pub tx_type: Option<TransactionType>,
 
     /// Lookup the specific transaction by ID.
-    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "txid", skip_serializing_if = "Option::is_none")]
     pub txid: Option<String>,
 }
 
@@ -511,7 +511,7 @@ pub struct QueryTransaction {
     pub tx_type: Option<TransactionType>,
 
     /// Lookup the specific transaction by ID.
-    #[serde(rename = "tx-type", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "txid", skip_serializing_if = "Option::is_none")]
     pub txid: Option<String>,
 }
 
