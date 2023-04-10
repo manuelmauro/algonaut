@@ -20,3 +20,6 @@ tests/features
 .vscode
 /.idea
 *.iml
+
+# os
+**.DS_Store
