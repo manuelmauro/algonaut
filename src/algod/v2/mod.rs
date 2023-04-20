@@ -1,3 +1,5 @@
+use crate::error::ServiceError;
+use algonaut_algod::apis::configuration::{ApiKey, Configuration};
 use algonaut_client::{algod::v2::Client, token::ApiToken, Headers};
 use algonaut_core::{Address, CompiledTeal, Round, SuggestedTransactionParams, ToMsgPack};
 use algonaut_encoding::decode_base64;
@@ -8,11 +10,15 @@ use algonaut_model::algod::v2::{
 };
 use algonaut_transaction::SignedTransaction;
 
-use crate::error::ServiceError;
+use self::error::AlgodError;
+
+/// Error class wrapping errors from algonaut_algod
+pub(crate) mod error;
 
 #[derive(Debug, Clone)]
 pub struct Algod {
     pub(crate) client: Client,
+    pub(crate) configuration: Configuration,
 }
 
 impl Algod {
@@ -24,6 +30,7 @@ impl Algod {
     pub fn new(url: &str, token: &str) -> Result<Algod, ServiceError> {
         Self::with_headers(
             url,
+            token,
             vec![("X-Algo-API-Token", &ApiToken::parse(token)?.to_string())],
         )
     }
@@ -33,9 +40,23 @@ impl Algod {
     /// Use this initializer when interfacing with third party services, that require custom headers.
     ///
     /// Returns an error if the url or headers have an invalid format.
-    pub fn with_headers(url: &str, headers: Headers) -> Result<Algod, ServiceError> {
+    pub fn with_headers(url: &str, token: &str, headers: Headers) -> Result<Algod, ServiceError> {
+        let conf = Configuration {
+            base_path: url.to_owned(),
+            user_agent: Some("OpenAPI-Generator/0.0.1/rust".to_owned()),
+            client: reqwest::Client::new(),
+            basic_auth: None,
+            oauth_access_token: None,
+            bearer_access_token: None,
+            api_key: Some(ApiKey {
+                prefix: None,
+                key: token.to_owned(),
+            }),
+        };
+
         Ok(Algod {
             client: Client::new(url, headers)?,
+            configuration: conf,
         })
     }
 
@@ -46,7 +67,11 @@ impl Algod {
 
     /// Returns Ok if healthy
     pub async fn health(&self) -> Result<(), ServiceError> {
-        Ok(self.client.health().await?)
+        Ok(
+            algonaut_algod::apis::common_api::health_check(&self.configuration)
+                .await
+                .map_err(|e| Into::<AlgodError>::into(e))?,
+        )
     }
 
     /// Return metrics about algod functioning.

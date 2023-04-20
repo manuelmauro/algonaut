@@ -93,6 +93,14 @@ impl RequestErrorDetails {
     }
 }
 
+impl From<crate::algod::v2::error::AlgodError> for ServiceError {
+    fn from(error: crate::algod::v2::error::AlgodError) -> Self {
+        match error {
+            crate::algod::v2::error::AlgodError::Msg(msg) => ServiceError::Msg(msg),
+        }
+    }
+}
+
 impl From<algonaut_client::error::ClientError> for ServiceError {
     fn from(error: algonaut_client::error::ClientError) -> Self {
         match error {
