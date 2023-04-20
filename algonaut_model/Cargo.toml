@@ -12,6 +12,7 @@ repository = "https://github.com/manuelmauro/algonaut"
 version = "0.4.2"
 
 [dependencies]
+algonaut_algod = { path = "../algonaut_algod", version = "0.4.2" }
 algonaut_core = { path = "../algonaut_core", version = "0.4.2" }
 algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }
 algonaut_encoding = { path = "../algonaut_encoding", version = "0.4.2" }

@@ -8,9 +8,9 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
     make_tuple_type,
 };
+use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, CompiledTeal, SuggestedTransactionParams};
 use algonaut_crypto::HashDigest;
-use algonaut_model::algod::v2::PendingTransaction;
 use algonaut_transaction::{
     builder::TxnFee,
     error::TransactionError,
@@ -57,7 +57,7 @@ pub struct AbiMethodResult {
     /// The TxID of the transaction that invoked the ABI method call.
     pub tx_id: String,
     /// Information about the confirmed transaction that invoked the ABI method call.
-    pub tx_info: PendingTransaction,
+    pub tx_info: PendingTransactionResponse,
     /// The method's return value
     pub return_value: Result<AbiMethodReturnValue, AbiReturnDecodeError>,
 }
@@ -446,9 +446,7 @@ impl AtomicTransactionComposer {
 
         self.gather_signatures()?;
 
-        algod
-            .broadcast_signed_transactions(&self.signed_txs)
-            .await?;
+        algod.signed_transactions(&self.signed_txs).await?;
 
         self.status = AtomicTransactionComposerStatus::Submitted;
 
@@ -488,7 +486,7 @@ impl AtomicTransactionComposer {
             if i != index_to_wait {
                 let tx_id = self.signed_txs[i].transaction_id.clone();
 
-                match algod.pending_transaction_with_id(&tx_id).await {
+                match algod.pending_transaction_information(&tx_id).await {
                     Ok(p) => {
                         current_tx_id = tx_id;
                         current_pending_tx = p;
@@ -521,7 +519,7 @@ impl AtomicTransactionComposer {
 }
 
 fn get_return_value_with_return_type(
-    pending_tx: &PendingTransaction,
+    pending_tx: &PendingTransactionResponse,
     tx_id: &str, // our txn in PendingTransaction currently has no fields, so the tx id is passed separately
     return_type: AbiReturnType,
 ) -> Result<AbiMethodResult, ServiceError> {
@@ -743,16 +741,25 @@ fn populate_foreign_array<T: Eq>(
 }
 
 fn get_return_value_with_abi_type(
-    pending_tx: &PendingTransaction,
+    pending_tx: &PendingTransactionResponse,
     abi_type: &AbiType,
 ) -> Result<Result<AbiMethodReturnValue, AbiReturnDecodeError>, ServiceError> {
-    if pending_tx.logs.is_empty() {
+    if pending_tx.logs.is_none() {
         return Err(ServiceError::Msg(
             "App call transaction did not log a return value".to_owned(),
         ));
     }
 
-    let ret_line = &pending_tx.logs[pending_tx.logs.len() - 1];
+    // safe to unwrap given the previous check
+    let logs = &pending_tx.logs.clone().unwrap();
+
+    if logs.is_empty() {
+        return Err(ServiceError::Msg(
+            "App call transaction did not log a return value".to_owned(),
+        ));
+    }
+
+    let ret_line = &logs[logs.len() - 1];
 
     let decoded_ret_line: Vec<u8> = BASE64
         .decode(ret_line.as_bytes())

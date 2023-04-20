@@ -1,5 +1,3 @@
-/// Algorand protocol daemon
-pub mod algod;
 ///
 pub mod error;
 ///

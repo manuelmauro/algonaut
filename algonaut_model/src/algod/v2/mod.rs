@@ -1,3 +1,4 @@
+use algonaut_algod::models::{Account, Application};
 use algonaut_core::{Address, MicroAlgos, Round, ToMsgPack};
 use algonaut_crypto::{deserialize_hash, HashDigest};
 use algonaut_encoding::{deserialize_byte32_arr_opt, deserialize_bytes};
@@ -7,103 +8,6 @@ use serde_with::{serde_as, DisplayFromStr};
 use std::fmt;
 
 use crate::transaction::ApiSignedTransaction;
-
-#[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Account {
-    /// The account public key
-    #[serde_as(as = "DisplayFromStr")]
-    pub address: Address,
-
-    /// The total number of MicroAlgos in the account
-    pub amount: MicroAlgos,
-
-    /// Specifies the amount of MicroAlgos in the account, without the pending rewards.
-    #[serde(rename = "amount-without-pending-rewards")]
-    pub amount_without_pending_rewards: u64,
-
-    /// `appl` applications local data stored in this account.
-    #[serde(
-        default,
-        rename = "apps-local-state",
-        skip_serializing_if = "Vec::is_empty"
-    )]
-    pub apps_local_state: Vec<ApplicationLocalState>,
-
-    /// `tsch` stores the sum of all of the local schemas and global schemas in this account.
-    ///
-    /// Note: the raw account uses StateSchema for this type.
-    #[serde(rename = "apps-total-schema")]
-    pub apps_total_schema: Option<ApplicationStateSchema>,
-
-    /// `asset` assets held by this account.
-    /// Note the raw object uses map(int) -> AssetHolding for this type.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub assets: Vec<AssetHolding>,
-
-    /// `spend` the address against which signing should be checked. If empty, the address of the
-    /// current account is used. This field can be updated in any transaction by setting the
-    /// RekeyTo field.
-    #[serde(default, rename = "auth-addr")]
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub auth_addr: Option<Address>,
-
-    /// `appp` parameters of applications created by this account including app global data.
-    ///
-    /// Note: the raw account uses map(int) -> AppParams for this type.
-    #[serde(
-        default,
-        rename = "created-apps",
-        skip_serializing_if = "Vec::is_empty"
-    )]
-    pub created_apps: Vec<Application>,
-
-    /// `apar` parameters of assets created by this account.
-    ///
-    /// Note: the raw account uses map(int) -> Asset for this type.
-    #[serde(
-        default,
-        rename = "created-assets",
-        skip_serializing_if = "Vec::is_empty"
-    )]
-    pub created_assets: Vec<Asset>,
-
-    /// MicroAlgo balance required by the account. The requirement grows based on asset and
-    /// application usage.
-    #[serde(rename = "min-balance")]
-    pub min_balance: MicroAlgos,
-
-    ///
-    pub participation: Option<AccountParticipation>,
-
-    /// Amount of MicroAlgos of pending rewards in this account.
-    #[serde(rename = "pending-rewards")]
-    pub pending_rewards: MicroAlgos,
-
-    /// `ebase` used as part of the rewards computation. Only applicable to accounts which
-    /// are participating.
-    #[serde(rename = "reward-base")]
-    pub reward_base: Option<u64>,
-
-    /// `ern` total rewards of MicroAlgos the account has received, including pending rewards.
-    pub rewards: MicroAlgos,
-
-    /// The round for which this information is relevant.
-    pub round: Round,
-
-    /// Indicates what type of signature is used by this account, must be one of:
-    /// * sig
-    /// * msig
-    /// * lsig
-    #[serde(rename = "sig-type")]
-    pub sig_type: Option<SignatureType>,
-
-    /// `onl` delegation status of the account's MicroAlgos
-    /// * Offline - indicates that the associated account is delegated.
-    /// * Online - indicates that the associated account used as part of the delegation pool.
-    /// * NotParticipating - indicates that the associated account is neither a delegator nor a delegate.
-    pub status: String,
-}
 
 /// Signature types.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -165,16 +69,6 @@ pub struct AccountStateDelta {
     pub delta: Vec<EvalDeltaKeyValue>,
 }
 
-/// Application index and its parameters
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Application {
-    /// `appidx` application index.
-    pub id: u64,
-
-    /// `appparams` application parameters.
-    pub params: ApplicationParams,
-}
-
 /// Stores local state associated with an application.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApplicationLocalState {
@@ -188,52 +82,6 @@ pub struct ApplicationLocalState {
     /// `hsch` schema.
     #[serde(rename = "schema")]
     pub schema: ApplicationStateSchema,
-}
-
-/// Stores the global information associated with an application.
-#[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ApplicationParams {
-    /// `approv` approval program.
-    /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
-    #[serde(
-        rename = "approval-program",
-        default,
-        skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "deserialize_bytes"
-    )]
-    pub approval_program: Vec<u8>,
-
-    /// `clearp` approval program.
-    /// Pattern : "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==\|[A-Za-z0-9+/]{3}=)?$"
-    #[serde(
-        rename = "clear-state-program",
-        default,
-        skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "deserialize_bytes"
-    )]
-    pub clear_state_program: Vec<u8>,
-
-    /// The address that created this application. This is the address where the parameters and
-    /// global state for this application can be found.
-    #[serde_as(as = "DisplayFromStr")]
-    pub creator: Address,
-
-    /// `gs` global schema
-    #[serde(
-        default,
-        rename = "global-state",
-        skip_serializing_if = "Vec::is_empty"
-    )]
-    pub global_state: Vec<TealKeyValue>,
-
-    /// `lsch` global schema
-    #[serde(rename = "global-state-schema")]
-    pub global_state_schema: Option<ApplicationStateSchema>,
-
-    /// `lsch` local schema
-    #[serde(rename = "local-state-schema")]
-    pub local_state_schema: Option<ApplicationStateSchema>,
 }
 
 /// Specifies maximums on the number of each type that may be stored.

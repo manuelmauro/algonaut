@@ -9,7 +9,7 @@ pub enum AlgodError {
 }
 
 impl<T> From<apis::Error<T>> for AlgodError {
-    fn from(error: apis::Error<T>) -> Self {
+    fn from(_error: apis::Error<T>) -> Self {
         AlgodError::Msg("".to_owned())
     }
 }

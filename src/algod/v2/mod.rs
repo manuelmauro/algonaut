@@ -11,6 +11,8 @@ use algonaut_algod::{
         TealDisassemble200Response, TealDryrun200Response, TransactionParams200Response, Version,
     },
 };
+use algonaut_core::ToMsgPack;
+use algonaut_transaction::SignedTransaction;
 
 use self::error::AlgodError;
 
@@ -346,6 +348,28 @@ impl Algod {
                 .await
                 .map_err(|e| Into::<AlgodError>::into(e))?,
         )
+    }
+
+    /// Broadcasts a transaction to the network.
+    pub async fn signed_transaction(
+        &self,
+        txn: &SignedTransaction,
+    ) -> Result<RawTransaction200Response, ServiceError> {
+        self.raw_transaction(&txn.to_msg_pack()?).await
+    }
+
+    /// Broadcasts a transaction group to the network.
+    ///
+    /// Atomic if the transactions share a [group](algonaut_transaction::transaction::Transaction::group)
+    pub async fn signed_transactions(
+        &self,
+        txns: &[SignedTransaction],
+    ) -> Result<RawTransaction200Response, ServiceError> {
+        let mut bytes = vec![];
+        for t in txns {
+            bytes.push(t.to_msg_pack()?);
+        }
+        self.raw_transaction(&bytes.concat()).await
     }
 
     /// Sets the minimum sync round on the ledger.

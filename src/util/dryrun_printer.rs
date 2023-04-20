@@ -1,9 +1,7 @@
 use crate::{algod::v2::Algod, error::ServiceError};
+use algonaut_algod::models::{Application, ApplicationParams, ApplicationStateSchema};
 use algonaut_core::{to_app_address, Address, Round};
-use algonaut_model::algod::v2::{
-    Application, ApplicationParams, ApplicationStateSchema, DryrunRequest, DryrunState,
-    DryrunTxnResult, TealValue,
-};
+use algonaut_model::algod::v2::{DryrunRequest, DryrunState, DryrunTxnResult, TealValue};
 use algonaut_transaction::{
     transaction::{ApplicationCallTransaction, StateSchema},
     SignedTransaction, TransactionType,
@@ -67,18 +65,20 @@ pub async fn create_dryrun_with_settings(
     }
 
     for asset_id in assets {
-        let asset = algod.asset_information(asset_id).await?;
-        accts.insert(asset.params.creator);
+        let asset = algod.get_asset_by_id(asset_id).await?;
+        accts.insert(asset.params.creator.parse().unwrap());
     }
 
     for app_id in apps {
-        let app = algod.application_information(app_id).await?;
-        accts.insert(app.params.creator);
+        let app = algod.get_application_by_id(app_id).await?;
+        accts.insert(app.params.creator.parse().unwrap());
         app_infos.push(app);
     }
 
     for address in accts {
-        let acc = algod.account_information(&address).await?;
+        let acc = algod
+            .account_information(&address.to_string().as_str())
+            .await?;
         acct_infos.push(acc);
     }
 
@@ -95,31 +95,41 @@ pub async fn create_dryrun_with_settings(
 
 fn to_application(app_call: &ApplicationCallTransaction, sender: &Address) -> Application {
     let params = ApplicationParams {
-        approval_program: app_call
-            .approval_program
-            .clone()
-            .map(|p| p.0)
-            .unwrap_or_default(),
-        clear_state_program: app_call
-            .clear_state_program
-            .clone()
-            .map(|p| p.0)
-            .unwrap_or_default(),
-        creator: *sender,
-        global_state: vec![],
+        approval_program: String::from_utf8(
+            app_call
+                .approval_program
+                .clone()
+                .map(|p| p.0)
+                .unwrap_or_default(),
+        )
+        .unwrap(),
+        clear_state_program: String::from_utf8(
+            app_call
+                .clear_state_program
+                .clone()
+                .map(|p| p.0)
+                .unwrap_or_default(),
+        )
+        .unwrap(),
+        creator: (*sender).to_string(),
+        global_state: Some(vec![]),
         global_state_schema: app_call
             .global_state_schema
             .clone()
-            .map(to_application_state_schema),
+            .map(to_application_state_schema)
+            .map(|o| Box::new(o)),
         local_state_schema: app_call
             .local_state_schema
             .clone()
-            .map(to_application_state_schema),
+            .map(to_application_state_schema)
+            .map(|o| Box::new(o)),
+        // TODO add this
+        extra_program_pages: None,
     };
 
     Application {
         id: DEFAULT_APP_ID,
-        params,
+        params: Box::new(params),
     }
 }
 
