@@ -73,10 +73,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::common_api::health_check(&self.configuration)
                 .await
-                .map_err(|e| {
-                    log::error!("{:?}", e);
-                    Into::<AlgodError>::into(e)
-                })?,
+                .map_err(|e| Into::<AlgodError>::into(e))?,
         )
     }
 
@@ -182,10 +179,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::nonparticipating_api::get_status(&self.configuration)
                 .await
-                .map_err(|e| {
-                    log::error!("{:?}", e);
-                    Into::<AlgodError>::into(e)
-                })?,
+                .map_err(|e| Into::<AlgodError>::into(e))?,
         )
     }
 

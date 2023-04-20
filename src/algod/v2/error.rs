@@ -9,13 +9,13 @@ pub enum AlgodError {
 }
 
 impl From<apis::Error<apis::common_api::HealthCheckError>> for AlgodError {
-    fn from(_error: apis::Error<apis::common_api::HealthCheckError>) -> Self {
-        AlgodError::Msg("HealthCheckError".to_owned())
+    fn from(error: apis::Error<apis::common_api::HealthCheckError>) -> Self {
+        AlgodError::Msg(error.to_string())
     }
 }
 
 impl From<apis::Error<apis::nonparticipating_api::GetStatusError>> for AlgodError {
-    fn from(_error: apis::Error<apis::nonparticipating_api::GetStatusError>) -> Self {
-        AlgodError::Msg("GetStatusError".to_owned())
+    fn from(error: apis::Error<apis::nonparticipating_api::GetStatusError>) -> Self {
+        AlgodError::Msg(error.to_string())
     }
 }
