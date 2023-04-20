@@ -10,25 +10,21 @@
 
 /// Asset : Specifies both the unique identifier and the parameters for an asset
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Asset {
     /// unique asset identifier
     #[serde(rename = "index")]
-    pub index: i32,
+    pub index: u64,
     #[serde(rename = "params")]
     pub params: Box<crate::models::AssetParams>,
 }
 
 impl Asset {
     /// Specifies both the unique identifier and the parameters for an asset
-    pub fn new(index: i32, params: crate::models::AssetParams) -> Asset {
+    pub fn new(index: u64, params: crate::models::AssetParams) -> Asset {
         Asset {
             index,
             params: Box::new(params),
         }
     }
 }
-
-

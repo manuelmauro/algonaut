@@ -10,8 +10,6 @@
 
 /// ApplicationParams : Stores the global information associated with an application.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ApplicationParams {
     /// \\[approv\\] approval program.
@@ -24,12 +22,18 @@ pub struct ApplicationParams {
     #[serde(rename = "creator")]
     pub creator: String,
     /// \\[epp\\] the amount of extra program pages available to this app.
-    #[serde(rename = "extra-program-pages", skip_serializing_if = "Option::is_none")]
-    pub extra_program_pages: Option<i32>,
+    #[serde(
+        rename = "extra-program-pages",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub extra_program_pages: Option<u64>,
     /// Represents a key-value store for use in an application.
     #[serde(rename = "global-state", skip_serializing_if = "Option::is_none")]
     pub global_state: Option<Vec<crate::models::TealKeyValue>>,
-    #[serde(rename = "global-state-schema", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "global-state-schema",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub global_state_schema: Option<Box<crate::models::ApplicationStateSchema>>,
     #[serde(rename = "local-state-schema", skip_serializing_if = "Option::is_none")]
     pub local_state_schema: Option<Box<crate::models::ApplicationStateSchema>>,
@@ -37,7 +41,11 @@ pub struct ApplicationParams {
 
 impl ApplicationParams {
     /// Stores the global information associated with an application.
-    pub fn new(approval_program: String, clear_state_program: String, creator: String) -> ApplicationParams {
+    pub fn new(
+        approval_program: String,
+        clear_state_program: String,
+        creator: String,
+    ) -> ApplicationParams {
         ApplicationParams {
             approval_program,
             clear_state_program,
@@ -49,5 +57,3 @@ impl ApplicationParams {
         }
     }
 }
-
-

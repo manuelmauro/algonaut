@@ -10,16 +10,20 @@
 
 /// SimulateTransactionResult : Simulation result for an individual transaction
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct SimulateTransactionResult {
     /// Budget used during execution of an app call transaction. This value includes budged used by inner app calls spawned by this transaction.
-    #[serde(rename = "app-budget-consumed", skip_serializing_if = "Option::is_none")]
-    pub app_budget_consumed: Option<i32>,
+    #[serde(
+        rename = "app-budget-consumed",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub app_budget_consumed: Option<u64>,
     /// Budget used during execution of a logic sig transaction.
-    #[serde(rename = "logic-sig-budget-consumed", skip_serializing_if = "Option::is_none")]
-    pub logic_sig_budget_consumed: Option<i32>,
+    #[serde(
+        rename = "logic-sig-budget-consumed",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub logic_sig_budget_consumed: Option<u64>,
     /// A boolean indicating whether this transaction is missing signatures
     #[serde(rename = "missing-signature", skip_serializing_if = "Option::is_none")]
     pub missing_signature: Option<bool>,
@@ -38,5 +42,3 @@ impl SimulateTransactionResult {
         }
     }
 }
-
-

@@ -10,24 +10,22 @@
 
 /// GetSupply200Response : Supply represents the current supply of MicroAlgos in the system
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct GetSupply200Response {
     /// Round
     #[serde(rename = "current_round")]
-    pub current_round: i32,
+    pub current_round: u64,
     /// OnlineMoney
     #[serde(rename = "online-money")]
-    pub online_money: i32,
+    pub online_money: u64,
     /// TotalMoney
     #[serde(rename = "total-money")]
-    pub total_money: i32,
+    pub total_money: u64,
 }
 
 impl GetSupply200Response {
     /// Supply represents the current supply of MicroAlgos in the system
-    pub fn new(current_round: i32, online_money: i32, total_money: i32) -> GetSupply200Response {
+    pub fn new(current_round: u64, online_money: u64, total_money: u64) -> GetSupply200Response {
         GetSupply200Response {
             current_round,
             online_money,
@@ -35,5 +33,3 @@ impl GetSupply200Response {
         }
     }
 }
-
-

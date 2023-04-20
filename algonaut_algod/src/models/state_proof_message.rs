@@ -10,8 +10,6 @@
 
 /// StateProofMessage : Represents the message that the state proofs are attesting to.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct StateProofMessage {
     /// The vector commitment root on all light block headers within a state proof interval.
@@ -19,13 +17,13 @@ pub struct StateProofMessage {
     pub block_headers_commitment: String,
     /// The first round the message attests to.
     #[serde(rename = "FirstAttestedRound")]
-    pub first_attested_round: i32,
+    pub first_attested_round: u64,
     /// The last round the message attests to.
     #[serde(rename = "LastAttestedRound")]
-    pub last_attested_round: i32,
+    pub last_attested_round: u64,
     /// An integer value representing the natural log of the proven weight with 16 bits of precision. This value would be used to verify the next state proof.
     #[serde(rename = "LnProvenWeight")]
-    pub ln_proven_weight: i32,
+    pub ln_proven_weight: u64,
     /// The vector commitment root of the top N accounts to sign the next StateProof.
     #[serde(rename = "VotersCommitment")]
     pub voters_commitment: String,
@@ -33,7 +31,13 @@ pub struct StateProofMessage {
 
 impl StateProofMessage {
     /// Represents the message that the state proofs are attesting to.
-    pub fn new(block_headers_commitment: String, first_attested_round: i32, last_attested_round: i32, ln_proven_weight: i32, voters_commitment: String) -> StateProofMessage {
+    pub fn new(
+        block_headers_commitment: String,
+        first_attested_round: u64,
+        last_attested_round: u64,
+        ln_proven_weight: u64,
+        voters_commitment: String,
+    ) -> StateProofMessage {
         StateProofMessage {
             block_headers_commitment,
             first_attested_round,
@@ -43,5 +47,3 @@ impl StateProofMessage {
         }
     }
 }
-
-

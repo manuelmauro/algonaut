@@ -10,13 +10,11 @@
 
 /// ApplicationLocalState : Stores local state associated with an application.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ApplicationLocalState {
     /// The application which this local state is for.
     #[serde(rename = "id")]
-    pub id: i32,
+    pub id: u64,
     /// Represents a key-value store for use in an application.
     #[serde(rename = "key-value", skip_serializing_if = "Option::is_none")]
     pub key_value: Option<Vec<crate::models::TealKeyValue>>,
@@ -26,7 +24,7 @@ pub struct ApplicationLocalState {
 
 impl ApplicationLocalState {
     /// Stores local state associated with an application.
-    pub fn new(id: i32, schema: crate::models::ApplicationStateSchema) -> ApplicationLocalState {
+    pub fn new(id: u64, schema: crate::models::ApplicationStateSchema) -> ApplicationLocalState {
         ApplicationLocalState {
             id,
             key_value: None,
@@ -34,5 +32,3 @@ impl ApplicationLocalState {
         }
     }
 }
-
-

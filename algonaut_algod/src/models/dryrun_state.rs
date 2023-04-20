@@ -10,8 +10,6 @@
 
 /// DryrunState : Stores the TEAL eval step data
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct DryrunState {
     /// Evaluation error if any
@@ -19,10 +17,10 @@ pub struct DryrunState {
     pub error: Option<String>,
     /// Line number
     #[serde(rename = "line")]
-    pub line: i32,
+    pub line: u64,
     /// Program counter
     #[serde(rename = "pc")]
-    pub pc: i32,
+    pub pc: u64,
     #[serde(rename = "scratch", skip_serializing_if = "Option::is_none")]
     pub scratch: Option<Vec<crate::models::TealValue>>,
     #[serde(rename = "stack")]
@@ -31,7 +29,7 @@ pub struct DryrunState {
 
 impl DryrunState {
     /// Stores the TEAL eval step data
-    pub fn new(line: i32, pc: i32, stack: Vec<crate::models::TealValue>) -> DryrunState {
+    pub fn new(line: u64, pc: u64, stack: Vec<crate::models::TealValue>) -> DryrunState {
         DryrunState {
             error: None,
             line,
@@ -41,5 +39,3 @@ impl DryrunState {
         }
     }
 }
-
-

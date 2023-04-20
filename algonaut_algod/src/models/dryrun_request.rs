@@ -10,8 +10,6 @@
 
 /// DryrunRequest : Request data type for dryrun endpoint. Given the Transactions and simulated ledger state upload, run TEAL scripts and return debugging information.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct DryrunRequest {
     #[serde(rename = "accounts")]
@@ -26,7 +24,7 @@ pub struct DryrunRequest {
     pub protocol_version: String,
     /// Round is available to some TEAL scripts. Defaults to the current round on the network this algod is attached to.
     #[serde(rename = "round")]
-    pub round: i32,
+    pub round: u64,
     #[serde(rename = "sources")]
     pub sources: Vec<crate::models::DryrunSource>,
     #[serde(rename = "txns")]
@@ -35,7 +33,15 @@ pub struct DryrunRequest {
 
 impl DryrunRequest {
     /// Request data type for dryrun endpoint. Given the Transactions and simulated ledger state upload, run TEAL scripts and return debugging information.
-    pub fn new(accounts: Vec<crate::models::Account>, apps: Vec<crate::models::Application>, latest_timestamp: i64, protocol_version: String, round: i32, sources: Vec<crate::models::DryrunSource>, txns: Vec<String>) -> DryrunRequest {
+    pub fn new(
+        accounts: Vec<crate::models::Account>,
+        apps: Vec<crate::models::Application>,
+        latest_timestamp: i64,
+        protocol_version: String,
+        round: u64,
+        sources: Vec<crate::models::DryrunSource>,
+        txns: Vec<String>,
+    ) -> DryrunRequest {
         DryrunRequest {
             accounts,
             apps,
@@ -47,5 +53,3 @@ impl DryrunRequest {
         }
     }
 }
-
-

@@ -10,25 +10,21 @@
 
 /// Application : Application index and its parameters
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct Application {
     /// \\[appidx\\] application index.
     #[serde(rename = "id")]
-    pub id: i32,
+    pub id: u64,
     #[serde(rename = "params")]
     pub params: Box<crate::models::ApplicationParams>,
 }
 
 impl Application {
     /// Application index and its parameters
-    pub fn new(id: i32, params: crate::models::ApplicationParams) -> Application {
+    pub fn new(id: u64, params: crate::models::ApplicationParams) -> Application {
         Application {
             id,
             params: Box::new(params),
         }
     }
 }
-
-

@@ -10,8 +10,6 @@
 
 /// TealValue : Represents a TEAL value.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct TealValue {
     /// \\[tb\\] bytes value.
@@ -19,15 +17,15 @@ pub struct TealValue {
     pub bytes: String,
     /// \\[tt\\] value type. Value `1` refers to **bytes**, value `2` refers to **uint**
     #[serde(rename = "type")]
-    pub r#type: i32,
+    pub r#type: u64,
     /// \\[ui\\] uint value.
     #[serde(rename = "uint")]
-    pub uint: i32,
+    pub uint: u64,
 }
 
 impl TealValue {
     /// Represents a TEAL value.
-    pub fn new(bytes: String, r#type: i32, uint: i32) -> TealValue {
+    pub fn new(bytes: String, r#type: u64, uint: u64) -> TealValue {
         TealValue {
             bytes,
             r#type,
@@ -35,5 +33,3 @@ impl TealValue {
         }
     }
 }
-
-
