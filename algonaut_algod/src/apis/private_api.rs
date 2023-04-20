@@ -155,7 +155,7 @@ pub async fn abort_catchup(
 
 pub async fn add_participation_key(
     configuration: &configuration::Configuration,
-    participationkey: std::path::PathBuf,
+    participationkey: &[u8],
 ) -> Result<crate::models::AddParticipationKey200Response, Error<AddParticipationKeyError>> {
     let local_var_configuration = configuration;
 
@@ -203,7 +203,7 @@ pub async fn add_participation_key(
 pub async fn append_keys(
     configuration: &configuration::Configuration,
     participation_id: &str,
-    keymap: std::path::PathBuf,
+    keymap: &[u8],
 ) -> Result<crate::models::ParticipationKey, Error<AppendKeysError>> {
     let local_var_configuration = configuration;
 

@@ -1214,7 +1214,7 @@ pub async fn start_catchup(
 /// Given TEAL source code in plain text, return base64 encoded program bytes and base32 SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
 pub async fn teal_compile(
     configuration: &configuration::Configuration,
-    source: std::path::PathBuf,
+    source: &[u8],
     sourcemap: Option<bool>,
 ) -> Result<crate::models::TealCompile200Response, Error<TealCompileError>> {
     let local_var_configuration = configuration;
