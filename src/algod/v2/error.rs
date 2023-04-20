@@ -1,3 +1,4 @@
+use algonaut_algod::apis;
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
@@ -7,12 +8,14 @@ pub enum AlgodError {
     Msg(String),
 }
 
-impl From<algonaut_algod::apis::Error<algonaut_algod::apis::common_api::HealthCheckError>>
-    for AlgodError
-{
-    fn from(
-        _error: algonaut_algod::apis::Error<algonaut_algod::apis::common_api::HealthCheckError>,
-    ) -> Self {
+impl From<apis::Error<apis::common_api::HealthCheckError>> for AlgodError {
+    fn from(_error: apis::Error<apis::common_api::HealthCheckError>) -> Self {
         AlgodError::Msg("HealthCheckError".to_owned())
+    }
+}
+
+impl From<apis::Error<apis::nonparticipating_api::GetStatusError>> for AlgodError {
+    fn from(_error: apis::Error<apis::nonparticipating_api::GetStatusError>) -> Self {
+        AlgodError::Msg("GetStatusError".to_owned())
     }
 }

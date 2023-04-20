@@ -1,5 +1,8 @@
 use crate::error::ServiceError;
-use algonaut_algod::apis::configuration::{ApiKey, Configuration};
+use algonaut_algod::{
+    apis::configuration::{ApiKey, Configuration},
+    models::GetStatus200Response,
+};
 use algonaut_client::{algod::v2::Client, token::ApiToken, Headers};
 use algonaut_core::{Address, CompiledTeal, Round, SuggestedTransactionParams, ToMsgPack};
 use algonaut_encoding::decode_base64;
@@ -172,8 +175,12 @@ impl Algod {
     }
 
     /// Gets the current node status.
-    pub async fn status(&self) -> Result<NodeStatus, ServiceError> {
-        Ok(self.client.status().await?)
+    pub async fn status(&self) -> Result<GetStatus200Response, ServiceError> {
+        Ok(
+            algonaut_algod::apis::nonparticipating_api::get_status(&self.configuration)
+                .await
+                .map_err(|e| Into::<AlgodError>::into(e))?,
+        )
     }
 
     /// Gets the node status after waiting for the given round.
