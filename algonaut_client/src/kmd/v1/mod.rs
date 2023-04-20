@@ -19,7 +19,7 @@ use algonaut_model::kmd::v1::{
 use reqwest::header::HeaderMap;
 use reqwest::Url;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// Client for interacting with the key management daemon
 pub struct Client {
     pub(super) address: String,

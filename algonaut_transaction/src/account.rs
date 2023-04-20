@@ -44,7 +44,7 @@ impl Account {
         Ok(Self::from_seed(seed))
     }
 
-    /// Create account from 32 byte seed
+    /// Create account from 32-byte seed
     pub fn from_seed(seed: [u8; 32]) -> Account {
         let key_pair = Ed25519KeyPair::from_seed_unchecked(&seed).unwrap();
         let public_key = key_pair.public_key().as_ref();
@@ -59,6 +59,15 @@ impl Account {
             address,
             key_pair,
         }
+    }
+
+    /// Create an account from 64-byte Ed25519 key pair
+    ///
+    /// Note the first 32 bytes of the Ed25519 key is the seed, the second 32 bytes is the public key
+    pub fn from_key_pair(key_pair: [u8; 64]) -> Result<Account, TransactionError> {
+        let seed = key_pair[0..32].try_into().unwrap();
+
+        Ok(Account::from_seed(seed))
     }
 
     #[cfg(test)]

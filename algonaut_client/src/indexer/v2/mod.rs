@@ -13,7 +13,7 @@ use reqwest::header::HeaderMap;
 use reqwest::Url;
 
 /// Client interacting with the Algorand's indexer
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Client {
     pub(super) url: String,
     pub(super) headers: HeaderMap,

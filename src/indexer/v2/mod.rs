@@ -10,7 +10,7 @@ use algonaut_model::indexer::v2::{
 
 use crate::error::ServiceError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Indexer {
     pub(super) client: Client,
 }

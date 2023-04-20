@@ -37,7 +37,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build()?;
 
     info!("signing transaction");
-    // sign the transaction
     let signed_transaction = alice.sign_transaction(t)?;
     let bytes = signed_transaction.to_msg_pack()?;
 

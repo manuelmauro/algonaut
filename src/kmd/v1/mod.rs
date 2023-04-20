@@ -13,7 +13,7 @@ use algonaut_transaction::Transaction;
 
 use crate::error::ServiceError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Kmd {
     pub(crate) client: Client,
 }
