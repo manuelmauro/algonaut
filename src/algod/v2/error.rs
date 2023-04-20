@@ -8,14 +8,8 @@ pub enum AlgodError {
     Msg(String),
 }
 
-impl From<apis::Error<apis::common_api::HealthCheckError>> for AlgodError {
-    fn from(error: apis::Error<apis::common_api::HealthCheckError>) -> Self {
-        AlgodError::Msg(error.to_string())
-    }
-}
-
-impl From<apis::Error<apis::nonparticipating_api::GetStatusError>> for AlgodError {
-    fn from(error: apis::Error<apis::nonparticipating_api::GetStatusError>) -> Self {
-        AlgodError::Msg(error.to_string())
+impl<T> From<apis::Error<T>> for AlgodError {
+    fn from(error: apis::Error<T>) -> Self {
+        AlgodError::Msg("".to_owned())
     }
 }

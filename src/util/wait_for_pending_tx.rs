@@ -1,5 +1,6 @@
 use super::sleep;
-use crate::{algod::v2::Algod, error::ServiceError, model::algod::v2::PendingTransaction};
+use crate::{algod::v2::Algod, error::ServiceError};
+use algonaut_algod::models::PendingTransactionResponse;
 use instant::Instant;
 use std::time::Duration;
 
@@ -7,11 +8,11 @@ use std::time::Duration;
 pub async fn wait_for_pending_transaction(
     algod: &Algod,
     tx_id: &str,
-) -> Result<PendingTransaction, ServiceError> {
+) -> Result<PendingTransactionResponse, ServiceError> {
     let timeout = Duration::from_secs(60);
     let start = Instant::now();
     loop {
-        let pending_transaction = algod.pending_transaction_with_id(tx_id).await?;
+        let pending_transaction = algod.pending_transaction_information(tx_id).await?;
         // If the transaction has been confirmed or we time out, exit.
         if pending_transaction.confirmed_round.is_some() {
             return Ok(pending_transaction);
