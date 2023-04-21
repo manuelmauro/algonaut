@@ -8,11 +8,10 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
     make_tuple_type,
 };
-use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::{Address, CompiledTeal, SuggestedTransactionParams};
+use algonaut_algod::models::{PendingTransactionResponse, TransactionParams200Response};
+use algonaut_core::{Address, CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
-    builder::TxnFee,
     error::TransactionError,
     transaction::{
         to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction, StateSchema,
@@ -80,11 +79,11 @@ pub struct AddMethodCallParams {
     /// The arguments to include in the method call. If omitted, no arguments will be passed to the method.
     pub method_args: Vec<AbiArgValue>,
     /// Fee
-    pub fee: TxnFee,
+    pub fee: MicroAlgos,
     /// The address of the sender of this application call
     pub sender: Address,
     /// Transactions params to use for this application call
-    pub suggested_params: SuggestedTransactionParams,
+    pub suggested_params: TransactionParams200Response,
     /// The OnComplete action to take for this application call
     pub on_complete: ApplicationCallOnComplete,
     /// The approval program for this application call. Only set this if this is an application

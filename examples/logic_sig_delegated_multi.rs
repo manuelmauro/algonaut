@@ -3,6 +3,7 @@ use algonaut::core::{LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut::transaction::transaction::TransactionSignature;
 use algonaut::transaction::{account::Account, TxnBuilder};
 use algonaut::transaction::{Pay, SignedTransaction};
+use algonaut_core::CompiledTeal;
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;
@@ -20,12 +21,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("compiling teal program");
     let program = algod
-        .compile_teal(
+        .teal_compile(
             r#"
 #pragma version 3
 int 1
-"#
-            .as_bytes(),
+"#,
+            None,
         )
         .await?;
 
@@ -42,7 +43,7 @@ int 1
     let multisig_address = MultisigAddress::new(1, 2, &[alice.address(), bob.address()])?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building Pay transaction");
     let t = TxnBuilder::with(
@@ -52,14 +53,18 @@ int 1
     .build()?;
 
     info!("alice is initializing multi-signature");
-    let msig = alice.init_logic_msig(&program, &multisig_address)?;
+    let msig = alice.init_logic_msig(
+        &CompiledTeal(program.clone().result.into_bytes()),
+        &multisig_address,
+    )?;
 
     info!("bob is appending to multi-signature");
-    let msig = bob.append_to_logic_msig(&program, msig)?;
+    let msig =
+        bob.append_to_logic_msig(&CompiledTeal(program.clone().result.into_bytes()), msig)?;
 
     info!("building logic signature");
     let sig = TransactionSignature::Logic(SignedLogic {
-        logic: program,
+        logic: CompiledTeal(program.result.into_bytes()),
         args: vec![],
         sig: LogicSignature::DelegatedMultiSig(msig),
     });
@@ -74,7 +79,7 @@ int 1
 
     info!("broadcasting transaction");
     // the transaction will fail because the multisig address has no funds
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
+    let send_response = algod.signed_transaction(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

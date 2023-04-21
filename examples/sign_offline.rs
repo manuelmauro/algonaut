@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building Pay transaction");
     let t = TxnBuilder::with(

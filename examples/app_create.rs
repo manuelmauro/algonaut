@@ -1,10 +1,11 @@
 use algonaut::algod::v2::Algod;
 use algonaut::error::ServiceError;
-use algonaut::model::algod::v2::PendingTransaction;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::transaction::StateSchema;
 use algonaut::transaction::CreateApplication;
 use algonaut::transaction::TxnBuilder;
+use algonaut_algod::models::PendingTransactionResponse;
+use algonaut_core::CompiledTeal;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -33,29 +34,27 @@ txna ApplicationArgs 1
 byte 0xFF
 ==
 &&
-"#
-    .as_bytes();
+"#;
 
     let clear_program = r#"
 #pragma version 4
 int 1
-"#
-    .as_bytes();
+"#;
 
-    info!("compiling approva and clear programs");
-    let compiled_approval_program = algod.compile_teal(&approval_program).await?;
-    let compiled_clear_program = algod.compile_teal(&clear_program).await?;
+    info!("compiling approval and clear programs");
+    let compiled_approval_program = algod.teal_compile(approval_program, None).await?;
+    let compiled_clear_program = algod.teal_compile(clear_program, None).await?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building CreateApplication transaction");
     let t = TxnBuilder::with(
         &params,
         CreateApplication::new(
             alice.address(),
-            compiled_approval_program.clone(),
-            compiled_clear_program,
+            CompiledTeal(compiled_approval_program.result.into_bytes()),
+            CompiledTeal(compiled_clear_program.result.into_bytes()),
             StateSchema {
                 number_ints: 0,
                 number_byteslices: 0,
@@ -74,7 +73,7 @@ int 1
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+    let send_response = algod.signed_transaction(&signed_t).await?;
 
     info!("waiting for transaction finality");
     let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
@@ -91,11 +90,11 @@ int 1
 async fn wait_for_pending_transaction(
     algod: &Algod,
     txid: &str,
-) -> Result<Option<PendingTransaction>, ServiceError> {
+) -> Result<Option<PendingTransactionResponse>, ServiceError> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {
-        let pending_transaction = algod.pending_transaction_with_id(txid).await?;
+        let pending_transaction = algod.pending_transaction_information(txid).await?;
         // If the transaction has been confirmed or we time out, exit.
         if pending_transaction.confirmed_round.is_some() {
             return Ok(Some(pending_transaction));

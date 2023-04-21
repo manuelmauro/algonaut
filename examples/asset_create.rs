@@ -1,6 +1,6 @@
 use algonaut::algod::v2::Algod;
+use algonaut::algod_exp::models::PendingTransactionResponse;
 use algonaut::error::ServiceError;
-use algonaut::model::algod::v2::PendingTransaction;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
 use dotenv::dotenv;
@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("creator: {:?}", alice.address());
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building CreateAsset transaction");
     let t = TxnBuilder::with(
@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("broadcasting transaction");
     // broadcast the transaction to the network
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+    let send_response = algod.signed_transaction(&signed_t).await?;
     info!("transaction ID: {}", send_response.tx_id);
 
     info!("waiting for transaction finality");
@@ -62,11 +62,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 async fn wait_for_pending_transaction(
     algod: &Algod,
     txid: &str,
-) -> Result<Option<PendingTransaction>, ServiceError> {
+) -> Result<Option<PendingTransactionResponse>, ServiceError> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {
-        let pending_transaction = algod.pending_transaction_with_id(txid).await?;
+        let pending_transaction = algod.pending_transaction_information(txid).await?;
         // If the transaction has been confirmed or we time out, exit.
         if pending_transaction.confirmed_round.is_some() {
             return Ok(Some(pending_transaction));

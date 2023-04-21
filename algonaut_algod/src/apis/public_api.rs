@@ -1870,7 +1870,7 @@ pub async fn swagger_json(
 /// Given TEAL source code in plain text, return base64 encoded program bytes and base32 SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
 pub async fn teal_compile(
     configuration: &configuration::Configuration,
-    source: &[u8],
+    source: &str,
     sourcemap: Option<bool>,
 ) -> Result<crate::models::TealCompile200Response, Error<TealCompileError>> {
     let local_var_configuration = configuration;
@@ -1897,7 +1897,7 @@ pub async fn teal_compile(
         };
         local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&source);
+    local_var_req_builder = local_var_req_builder.body(source.to_owned());
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

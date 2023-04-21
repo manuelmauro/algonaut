@@ -3,6 +3,7 @@ use algonaut::core::MicroAlgos;
 use algonaut::transaction::contract_account::ContractAccount;
 use algonaut::transaction::Pay;
 use algonaut::transaction::TxnBuilder;
+use algonaut_core::CompiledTeal;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -19,7 +20,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("compiling teal program");
     let compiled_teal = algod
-        .compile_teal(
+        .teal_compile(
             r#"
 #pragma version 4
 arg 0
@@ -29,19 +30,19 @@ arg 1
 byte 0xFF
 ==
 &&
-"#
-            .as_bytes(),
+"#,
+            None,
         )
         .await?;
 
     info!("creating contract account");
-    let contract_account = ContractAccount::new(compiled_teal);
+    let contract_account = ContractAccount::new(CompiledTeal(compiled_teal.result.into_bytes()));
 
     info!("creating account for alice");
     let receiver = env::var("ALICE_ADDRESS")?.parse()?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building Pay transaction");
     let t = TxnBuilder::with(
@@ -55,7 +56,7 @@ byte 0xFF
 
     info!("broadcasting transaction");
     // the transaction will fail because contract_account has no funds
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
+    let send_response = algod.signed_transaction(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

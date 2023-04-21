@@ -1,5 +1,8 @@
 [package]
-authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
+authors = [
+    "Manuel Mauro <manuel.mauro@protonmail.com>",
+    "Ivan Schuetz <ivanhp978@gmail.com>",
+]
 description = "Implementation of the Algorand blockchain transaction set."
 edition = "2018"
 keywords = ["Algorand", "sdk"]
@@ -9,18 +12,19 @@ repository = "https://github.com/manuelmauro/algonaut"
 version = "0.4.2"
 
 [dependencies]
-algonaut_core = {path = "../algonaut_core", version = "0.4.2"}
-algonaut_crypto = {path = "../algonaut_crypto", version = "0.4.2"}
-algonaut_encoding = {path = "../algonaut_encoding", version = "0.4.2"}
-algonaut_model = {path = "../algonaut_model", version = "0.4.2"}
-algonaut_abi = {path = "../algonaut_abi", version = "0.4.2"}
+algonaut_algod = { path = "../algonaut_algod", version = "0.4.2" }
+algonaut_core = { path = "../algonaut_core", version = "0.4.2" }
+algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }
+algonaut_encoding = { path = "../algonaut_encoding", version = "0.4.2" }
+algonaut_model = { path = "../algonaut_model", version = "0.4.2" }
+algonaut_abi = { path = "../algonaut_abi", version = "0.4.2" }
 data-encoding = "2.3.1"
 derive_more = "0.99.13"
 rand = "0.8.3"
 getrandom = { version = "0.2.2", features = ["js"] }
 ring = "0.16.19"
 rmp-serde = "1.0.0"
-serde = {version = "1.0", features = ["derive"]}
+serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11.4"
 sha2 = "0.10.1"
 thiserror = "1.0.23"

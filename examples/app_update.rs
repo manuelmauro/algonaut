@@ -1,4 +1,5 @@
 use algonaut::algod::v2::Algod;
+use algonaut::core::CompiledTeal;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::UpdateApplication;
 use algonaut::transaction::TxnBuilder;
@@ -23,24 +24,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let approval_program = r#"
 #pragma version 4
 int 1
-"#
-    .as_bytes();
+"#;
 
     info!("creating clear program");
     let clear_program = r#"
 #pragma version 4
 int 1
-"#
-    .as_bytes();
+"#;
 
     info!("compiling approval program");
-    let compiled_approval_program = algod.compile_teal(&approval_program).await?;
+    let compiled_approval_program = algod.teal_compile(approval_program, None).await?;
 
     info!("compiling approval program");
-    let compiled_clear_program = algod.compile_teal(&clear_program).await?;
+    let compiled_clear_program = algod.teal_compile(clear_program, None).await?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building UpdateApplication transaction");
     let t = TxnBuilder::with(
@@ -48,8 +47,8 @@ int 1
         UpdateApplication::new(
             alice.address(),
             5,
-            compiled_approval_program,
-            compiled_clear_program,
+            CompiledTeal(compiled_approval_program.result.into_bytes()),
+            CompiledTeal(compiled_clear_program.result.into_bytes()),
         )
         .app_arguments(vec![vec![1, 0], vec![255]]) // for the program being upgraded
         .build(),
@@ -60,7 +59,7 @@ int 1
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+    let send_response = algod.signed_transaction(&signed_t).await?;
     info!("response: {:?}", send_response);
 
     Ok(())

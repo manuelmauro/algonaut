@@ -3,6 +3,7 @@ use algonaut::core::{LogicSignature, MicroAlgos};
 use algonaut::transaction::transaction::TransactionSignature;
 use algonaut::transaction::{account::Account, TxnBuilder};
 use algonaut::transaction::{Pay, SignedTransaction};
+use algonaut_core::CompiledTeal;
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;
@@ -20,12 +21,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("compiling teal program");
     let program = algod
-        .compile_teal(
+        .teal_compile(
             r#"
 #pragma version 3
 int 1
-"#
-            .as_bytes(),
+"#,
+            None,
         )
         .await?;
 
@@ -36,7 +37,7 @@ int 1
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building Pay transaction");
     let t = TxnBuilder::with(
@@ -46,14 +47,14 @@ int 1
     .build()?;
 
     info!("generating program signature");
-    let signature = alice.generate_program_sig(&program);
+    let signature = alice.generate_program_sig(&CompiledTeal(program.clone().result.into_bytes()));
 
     info!("delegating signature for the transaction");
     let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: program,
+            logic: CompiledTeal(program.result.into_bytes()),
             args: vec![],
             sig: LogicSignature::DelegatedSig(signature),
         }),
@@ -61,7 +62,7 @@ int 1
     };
 
     info!("broadcasting transaction");
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await;
+    let send_response = algod.signed_transaction(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

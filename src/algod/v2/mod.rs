@@ -407,7 +407,7 @@ impl Algod {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32 SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
     pub async fn teal_compile(
         &self,
-        source: &[u8],
+        source: &str,
         sourcemap: Option<bool>,
     ) -> Result<TealCompile200Response, ServiceError> {
         Ok(

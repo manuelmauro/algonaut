@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("retrieving account for sender");
     // an account with some funds in our sandbox
-    let sender = "ADD HERE AN ALGO ADDRESS FROM YOUR kmd/sandbox"
+    let sender = "OV4BQOSU7RQODSJ3VK4EXL3JOKZFO3IT3EKWVHHPQBEJOXEVNOJT545BLU"
         .parse()
         .expect("You need to specify an Algorand address from your kmd instance");
     println!("sender: {:?}", sender);
@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
 
     info!("building Pay transaction");
     let t =
@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("broadcasting transaction");
     // broadcast the transaction to the network
     let send_response = algod
-        .broadcast_raw_transaction(&sign_response.signed_transaction)
+        .raw_transaction(&sign_response.signed_transaction)
         .await?;
 
     info!("transaction ID: {}", send_response.tx_id);

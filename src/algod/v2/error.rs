@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use algonaut_algod::apis;
 use thiserror::Error;
 
@@ -8,8 +10,8 @@ pub enum AlgodError {
     Msg(String),
 }
 
-impl<T> From<apis::Error<T>> for AlgodError {
-    fn from(_error: apis::Error<T>) -> Self {
-        AlgodError::Msg("".to_owned())
+impl<T: Debug> From<apis::Error<T>> for AlgodError {
+    fn from(error: apis::Error<T>) -> Self {
+        AlgodError::Msg(format!("{:?}", error))
     }
 }

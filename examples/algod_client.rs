@@ -1,5 +1,4 @@
 use algonaut::algod::v2::Algod;
-use algonaut::core::Round;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -16,7 +15,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // print algod status
     info!("retrieving node status");
-    let node_status = algod.status().await?;
+    let node_status = algod.get_status().await?;
     info!("algod last round: {}", node_status.last_round);
     info!(
         "algod time since last round: {}",
@@ -26,7 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("algod latest version: {}", node_status.last_version);
 
     // fetch block information
-    let last_block = algod.block(Round(node_status.last_round)).await?;
+    let last_block = algod.get_block(node_status.last_round).await?;
     info!("{:?}", last_block);
 
     Ok(())

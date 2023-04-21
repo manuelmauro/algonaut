@@ -7,34 +7,15 @@ use crate::{
         TransactionType,
     },
 };
-use algonaut_core::{
-    Address, CompiledTeal, MicroAlgos, Round, SuggestedTransactionParams, VotePk, VrfPk,
-};
+use algonaut_algod::models::TransactionParams200Response;
+use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TxnFee {
-    /// The fee is calculated based on the estimated signed tx size, fee per byte and a min fee
-    Estimated {
-        fee_per_byte: MicroAlgos,
-        min_fee: MicroAlgos,
-    },
-    /// Set directly the fee
-    Fixed(MicroAlgos),
-}
-
-impl TxnFee {
-    /// Useful in group txs, when fees are paid by other txn
-    pub fn zero() -> TxnFee {
-        TxnFee::Fixed(MicroAlgos(0))
-    }
-}
 
 /// A builder for [Transaction].
 pub struct TxnBuilder {
-    fee: TxnFee,
+    fee: MicroAlgos,
     first_valid: Round,
-    genesis_hash: HashDigest,
+    genesis_hash: String,
     last_valid: Round,
     txn_type: TransactionType,
     genesis_id: Option<String>,
@@ -48,40 +29,33 @@ impl TxnBuilder {
     /// Convenience to initialize builder with suggested transaction params
     ///
     /// The txn fee is estimated, based on params. To set the fee manually, use [with_fee](Self::with_fee) or [new](Self::new).
-    pub fn with(params: &SuggestedTransactionParams, txn_type: TransactionType) -> Self {
-        Self::with_fee(
-            params,
-            TxnFee::Estimated {
-                fee_per_byte: params.fee_per_byte,
-                min_fee: params.min_fee,
-            },
-            txn_type,
-        )
+    pub fn with(params: &TransactionParams200Response, txn_type: TransactionType) -> Self {
+        Self::with_fee(params, MicroAlgos(params.min_fee), txn_type)
     }
 
     /// Convenience to initialize builder with suggested transaction params, and set the fee manually (ignoring the fee fields in params).
     ///
     /// Useful e.g. in txns groups where one txn pays the fee for others.
     pub fn with_fee(
-        params: &SuggestedTransactionParams,
-        fee: TxnFee,
+        params: &TransactionParams200Response,
+        fee: MicroAlgos,
         txn_type: TransactionType,
     ) -> Self {
         Self::new(
             fee,
-            params.first_valid,
-            params.last_valid,
-            params.genesis_hash,
+            Round(params.last_round),
+            Round(params.last_round + 1000),
+            params.genesis_hash.clone(),
             txn_type,
         )
         .genesis_id(params.genesis_id.clone())
     }
 
     pub fn new(
-        fee: TxnFee,
+        fee: MicroAlgos,
         first_valid: Round,
         last_valid: Round,
-        genesis_hash: HashDigest,
+        genesis_hash: String,
         txn_type: TransactionType,
     ) -> Self {
         TxnBuilder {
@@ -124,30 +98,14 @@ impl TxnBuilder {
     }
 
     pub fn build(self) -> Result<Transaction, TransactionError> {
-        Ok(match self.fee {
-            TxnFee::Estimated {
-                fee_per_byte,
-                min_fee,
-            } => self.build_tx_with_calculated_basic_sig_fee(fee_per_byte, min_fee)?,
-            TxnFee::Fixed(fee) => self.build_tx(fee),
-        })
-    }
-
-    fn build_tx_with_calculated_basic_sig_fee(
-        &self,
-        fee_per_byte: MicroAlgos,
-        min_fee: MicroAlgos,
-    ) -> Result<Transaction, TransactionError> {
-        let mut txn = self.build_tx(MicroAlgos(0));
-        txn.fee = txn.estimate_basic_sig_fee(fee_per_byte, min_fee)?;
-        Ok(txn)
+        Ok(self.build_tx(self.fee))
     }
 
     fn build_tx(&self, fee: MicroAlgos) -> Transaction {
         Transaction {
             fee,
             first_valid: self.first_valid,
-            genesis_hash: self.genesis_hash,
+            genesis_hash: self.genesis_hash.clone(),
             last_valid: self.last_valid,
             txn_type: self.txn_type.clone(),
             genesis_id: self.genesis_id.clone(),

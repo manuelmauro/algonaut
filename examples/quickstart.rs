@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("creating indexer client");
     let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
 
-    info!("algod versions: {:?}", algod.versions().await?);
+    info!("algod versions: {:?}", algod.get_version().await?);
     info!("kmd versions: {:?}", kmd.versions().await?);
     info!("indexer health: {:?}", indexer.health().await);
 
