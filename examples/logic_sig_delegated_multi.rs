@@ -3,7 +3,6 @@ use algonaut::core::{LogicSignature, MicroAlgos, MultisigAddress};
 use algonaut::transaction::transaction::TransactionSignature;
 use algonaut::transaction::{account::Account, TxnBuilder};
 use algonaut::transaction::{Pay, SignedTransaction};
-use algonaut_core::CompiledTeal;
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;
@@ -25,7 +24,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             r#"
 #pragma version 3
 int 1
-"#,
+"#
+            .as_bytes(),
             None,
         )
         .await?;
@@ -53,18 +53,14 @@ int 1
     .build()?;
 
     info!("alice is initializing multi-signature");
-    let msig = alice.init_logic_msig(
-        &CompiledTeal(program.clone().result.into_bytes()),
-        &multisig_address,
-    )?;
+    let msig = alice.init_logic_msig(&program, &multisig_address)?;
 
     info!("bob is appending to multi-signature");
-    let msig =
-        bob.append_to_logic_msig(&CompiledTeal(program.clone().result.into_bytes()), msig)?;
+    let msig = bob.append_to_logic_msig(&program, msig)?;
 
     info!("building logic signature");
     let sig = TransactionSignature::Logic(SignedLogic {
-        logic: CompiledTeal(program.result.into_bytes()),
+        logic: program,
         args: vec![],
         sig: LogicSignature::DelegatedMultiSig(msig),
     });

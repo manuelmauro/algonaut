@@ -3,7 +3,6 @@ use algonaut::core::{LogicSignature, MicroAlgos};
 use algonaut::transaction::transaction::TransactionSignature;
 use algonaut::transaction::{account::Account, TxnBuilder};
 use algonaut::transaction::{Pay, SignedTransaction};
-use algonaut_core::CompiledTeal;
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;
@@ -25,7 +24,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             r#"
 #pragma version 3
 int 1
-"#,
+"#
+            .as_bytes(),
             None,
         )
         .await?;
@@ -47,14 +47,14 @@ int 1
     .build()?;
 
     info!("generating program signature");
-    let signature = alice.generate_program_sig(&CompiledTeal(program.clone().result.into_bytes()));
+    let signature = alice.generate_program_sig(&program);
 
     info!("delegating signature for the transaction");
     let signed_t = SignedTransaction {
         transaction: t,
         transaction_id: "".to_owned(),
         sig: TransactionSignature::Logic(SignedLogic {
-            logic: CompiledTeal(program.result.into_bytes()),
+            logic: program,
             args: vec![],
             sig: LogicSignature::DelegatedSig(signature),
         }),

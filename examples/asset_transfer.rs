@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("building TransferAsset transaction");
     let t = TxnBuilder::with(
         &params,
-        TransferAsset::new(alice.address(), 21, 1, bob.address()).build(),
+        TransferAsset::new(alice.address(), 16, 1, bob.address()).build(),
     )
     .build()?;
 

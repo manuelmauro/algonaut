@@ -3,7 +3,6 @@ use algonaut::core::MicroAlgos;
 use algonaut::transaction::contract_account::ContractAccount;
 use algonaut::transaction::Pay;
 use algonaut::transaction::TxnBuilder;
-use algonaut_core::CompiledTeal;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -30,13 +29,14 @@ arg 1
 byte 0xFF
 ==
 &&
-"#,
+"#
+            .as_bytes(),
             None,
         )
         .await?;
 
     info!("creating contract account");
-    let contract_account = ContractAccount::new(CompiledTeal(compiled_teal.result.into_bytes()));
+    let contract_account = ContractAccount::new(compiled_teal);
 
     info!("creating account for alice");
     let receiver = env::var("ALICE_ADDRESS")?.parse()?;

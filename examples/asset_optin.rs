@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.transaction_params().await?;
 
     info!("building AcceptAsset transaction");
-    let t = TxnBuilder::with(&params, AcceptAsset::new(bob.address(), 21).build()).build()?;
+    let t = TxnBuilder::with(&params, AcceptAsset::new(bob.address(), 16).build()).build()?;
 
     info!("signing transaction");
     let sign_response = bob.sign_transaction(t)?;
