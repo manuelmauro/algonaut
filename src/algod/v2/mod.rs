@@ -465,6 +465,7 @@ impl Algod {
                 .map_err(|e| Into::<AlgodError>::into(e))?,
         )
     }
+
     /// Waits for a block to appear after round {round} and returns the node's status at the time.
     pub async fn wait_for_block(&self, round: u64) -> Result<GetStatus200Response, ServiceError> {
         Ok(

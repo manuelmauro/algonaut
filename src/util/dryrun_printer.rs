@@ -265,7 +265,7 @@ fn trace(
 
         let cur_scratch = &s.scratch;
         let prev_scratch = if i > 0 {
-            state.to_owned().clone()[i - 1].clone().scratch.unwrap()
+            state[i - 1].clone().scratch.unwrap()
         } else {
             vec![]
         };
