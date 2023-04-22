@@ -80,7 +80,7 @@ pub async fn create_dryrun_with_settings(
 
     for address in accts {
         let acc = algod
-            .account_information(&address.to_string().as_str())
+            .account_information(address.to_string().as_str())
             .await?;
         acct_infos.push(acc);
     }
@@ -118,12 +118,12 @@ fn to_application(app_call: &ApplicationCallTransaction, sender: &Address) -> Ap
             .global_state_schema
             .clone()
             .map(to_application_state_schema)
-            .map(|o| Box::new(o)),
+            .map(Box::new),
         local_state_schema: app_call
             .local_state_schema
             .clone()
             .map(to_application_state_schema)
-            .map(|o| Box::new(o)),
+            .map(Box::new),
         // TODO add this
         extra_program_pages: None,
     };

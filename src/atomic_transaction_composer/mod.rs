@@ -327,8 +327,7 @@ impl AtomicTransactionComposer {
             extra_pages: params.extra_pages,
         });
 
-        let mut tx_builder =
-            TxnBuilder::with_fee(&params.suggested_params, params.fee.clone(), app_call);
+        let mut tx_builder = TxnBuilder::with_fee(&params.suggested_params, params.fee, app_call);
         if let Some(rekey_to) = params.rekey_to {
             tx_builder = tx_builder.rekey_to(rekey_to);
         }

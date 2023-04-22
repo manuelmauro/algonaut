@@ -125,6 +125,7 @@ pub struct GetStatus200Response {
     pub upgrade_yes_votes: Option<u64>,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl GetStatus200Response {
     /// NodeStatus contains the information about a node status
     pub fn new(

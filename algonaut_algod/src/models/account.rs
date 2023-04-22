@@ -87,6 +87,7 @@ pub struct Account {
     pub total_created_assets: u64,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl Account {
     /// Account information at a given round.  Definition: data/basics/userBalance.go : AccountData
     pub fn new(

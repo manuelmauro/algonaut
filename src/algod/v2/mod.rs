@@ -64,7 +64,7 @@ impl Algod {
                 None,
             )
             .await
-            .map_err(|e| Into::<AlgodError>::into(e))?,
+            .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -77,7 +77,7 @@ impl Algod {
             None,
         )
         .await
-        .map_err(|e| Into::<AlgodError>::into(e))?)
+        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Returns wether the experimental API are enabled
@@ -85,7 +85,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::experimental_check(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -102,7 +102,7 @@ impl Algod {
                 name,
             )
             .await
-            .map_err(|e| Into::<AlgodError>::into(e))?,
+            .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -118,7 +118,7 @@ impl Algod {
             max,
         )
         .await
-        .map_err(|e| Into::<AlgodError>::into(e))?)
+        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Given a application ID, it returns application information including creator, approval and clear programs, global and local schemas, and global state.
@@ -128,7 +128,7 @@ impl Algod {
             application_id,
         )
         .await
-        .map_err(|e| Into::<AlgodError>::into(e))?)
+        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Given a asset ID, it returns asset information including creator, name, total supply and special addresses.
@@ -136,7 +136,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_asset_by_id(&self.configuration, asset_id)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -145,7 +145,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_block(&self.configuration, round, None)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -154,7 +154,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_block_hash(&self.configuration, round)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -163,7 +163,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_genesis(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -175,7 +175,7 @@ impl Algod {
             None,
         )
         .await
-        .map_err(|e| Into::<AlgodError>::into(e))?)
+        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Gets a proof for a given light block header inside a state proof commitment.
@@ -189,7 +189,7 @@ impl Algod {
                 round,
             )
             .await
-            .map_err(|e| Into::<AlgodError>::into(e))?,
+            .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -204,7 +204,7 @@ impl Algod {
             None,
         )
         .await
-        .map_err(|e| Into::<AlgodError>::into(e))?)
+        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Get the list of pending transactions by address, sorted by priority, in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
@@ -221,7 +221,7 @@ impl Algod {
                 None,
             )
             .await
-            .map_err(|e| Into::<AlgodError>::into(e))?,
+            .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -230,7 +230,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_ready(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -239,7 +239,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_state_proof(&self.configuration, round)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -248,7 +248,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_status(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -257,7 +257,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_supply(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -266,7 +266,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_sync_round(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -284,7 +284,7 @@ impl Algod {
             None,
         )
         .await
-        .map_err(|e| Into::<AlgodError>::into(e))?)
+        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Retrieves the supported API versions, binary build versions, and genesis information.
@@ -292,7 +292,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::get_version(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -301,7 +301,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::health_check(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -310,7 +310,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::metrics(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -326,7 +326,7 @@ impl Algod {
                 None,
             )
             .await
-            .map_err(|e| Into::<AlgodError>::into(e))?,
+            .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -335,7 +335,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::raw_transaction(&self.configuration, rawtxn)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -366,7 +366,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::set_sync_round(&self.configuration, round)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -381,7 +381,7 @@ impl Algod {
             None,
         )
         .await
-        .map_err(|e| Into::<AlgodError>::into(e))?)
+        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Returns the entire swagger spec in json.
@@ -389,7 +389,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::swagger_json(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -402,7 +402,7 @@ impl Algod {
         let api_compiled_teal =
             algonaut_algod::apis::public_api::teal_compile(&self.configuration, source, sourcemap)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?;
+                .map_err(Into::<AlgodError>::into)?;
         // The api result (program + hash) is mapped to the domain program struct, which computes the hash on demand.
         // The hash here is redundant and we want to allow to generate it with the SDK too (e.g. for when loading programs from a DB).
         // At the moment it seems not warranted to add a cache (so it's initialized with the API hash or lazily), but this can be re-evaluated.
@@ -420,7 +420,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::teal_disassemble(&self.configuration, source)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -432,7 +432,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::teal_dryrun(&self.configuration, request)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -441,7 +441,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::transaction_params(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -450,7 +450,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::unset_sync_round(&self.configuration)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 
@@ -459,7 +459,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::wait_for_block(&self.configuration, round)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
+                .map_err(Into::<AlgodError>::into)?,
         )
     }
 }
