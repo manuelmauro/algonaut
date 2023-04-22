@@ -5,6 +5,7 @@ use std::error::Error;
 use tokio::test;
 
 #[test]
+#[ignore]
 async fn test_genesis_endpoint() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 

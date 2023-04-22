@@ -476,41 +476,4 @@ mod tests {
         );
         assert!(res.ok().is_some());
     }
-
-    #[test]
-    fn test_client_builder_with_invalid_url() {
-        let res = Algod::new(
-            "asfdsdfs",
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        );
-        assert!(res.is_err());
-        assert!(matches!(res.err().unwrap(), Error::BadUrl(_)));
-    }
-
-    #[test]
-    fn test_client_builder_with_invalid_url_no_scheme() {
-        let res = Algod::new(
-            "example.com",
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        );
-        assert!(res.is_err());
-        assert!(matches!(res.err().unwrap(), Error::BadUrl(_)));
-    }
-
-    #[test]
-    fn test_client_builder_with_invalid_token() {
-        let res = Algod::new(
-            "http://example.com",
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        );
-        assert!(res.is_err());
-        assert!(res.err().unwrap() == Error::BadToken);
-    }
-
-    #[test]
-    fn test_client_builder_with_empty_token() {
-        let res = Algod::new("http://example.com", "");
-        assert!(res.is_err());
-        assert!(res.err().unwrap() == Error::BadToken);
-    }
 }

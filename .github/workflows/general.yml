@@ -7,7 +7,7 @@ name: Continuous integration
 
 jobs:
   check:
-    name: Check
+    name: cargo-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -22,7 +22,7 @@ jobs:
       - uses: actions-rs/cargo@v1
 
   wasm-check:
-    name: Check WASM
+    name: cargo-check-wasm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
           args: --target wasm32-unknown-unknown
 
   tests:
-    name: Tests
+    name: cargo-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -53,7 +53,7 @@ jobs:
           args: --workspace --lib --examples --test test_logic_signature
 
   fmt:
-    name: Rustfmt
+    name: cargo-fmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -69,7 +69,7 @@ jobs:
           args: --all -- --check
 
   clippy:
-    name: Clippy
+    name: cargo-clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

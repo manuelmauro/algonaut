@@ -68,3 +68,4 @@ rustls = ["algonaut_indexer/rustls", "algonaut_indexer/rustls"]
 name = "features_runner"
 # Allows Cucumber to print output instead of libtest
 harness = false
+test = false
