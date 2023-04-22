@@ -10,8 +10,6 @@
 
 /// EvalDeltaKeyValue : Key-value pairs for StateDelta.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct EvalDeltaKeyValue {
     #[serde(rename = "key")]
@@ -29,5 +27,3 @@ impl EvalDeltaKeyValue {
         }
     }
 }
-
-

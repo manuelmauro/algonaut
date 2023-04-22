@@ -10,8 +10,6 @@
 
 /// AccountStateDelta : Application state delta.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct AccountStateDelta {
     #[serde(rename = "address")]
@@ -24,11 +22,6 @@ pub struct AccountStateDelta {
 impl AccountStateDelta {
     /// Application state delta.
     pub fn new(address: String, delta: Vec<crate::models::EvalDeltaKeyValue>) -> AccountStateDelta {
-        AccountStateDelta {
-            address,
-            delta,
-        }
+        AccountStateDelta { address, delta }
     }
 }
-
-

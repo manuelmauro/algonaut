@@ -10,8 +10,6 @@
 
 /// SimulateRequestTransactionGroup : A transaction group to simulate.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct SimulateRequestTransactionGroup {
     /// An atomic transaction group.
@@ -22,10 +20,6 @@ pub struct SimulateRequestTransactionGroup {
 impl SimulateRequestTransactionGroup {
     /// A transaction group to simulate.
     pub fn new(txns: Vec<String>) -> SimulateRequestTransactionGroup {
-        SimulateRequestTransactionGroup {
-            txns,
-        }
+        SimulateRequestTransactionGroup { txns }
     }
 }
-
-

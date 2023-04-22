@@ -10,8 +10,6 @@
 
 /// TealKeyValue : Represents a key-value pair in an application store.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct TealKeyValue {
     #[serde(rename = "key")]
@@ -29,5 +27,3 @@ impl TealKeyValue {
         }
     }
 }
-
-

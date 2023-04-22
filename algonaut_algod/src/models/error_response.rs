@@ -10,8 +10,6 @@
 
 /// ErrorResponse : An error response with optional data field.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct ErrorResponse {
     #[serde(rename = "data", skip_serializing_if = "Option::is_none")]
@@ -29,5 +27,3 @@ impl ErrorResponse {
         }
     }
 }
-
-

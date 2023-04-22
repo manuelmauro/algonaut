@@ -10,8 +10,6 @@
 
 /// AbortCatchup200Response : An catchpoint abort response.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct AbortCatchup200Response {
     /// Catchup abort response string
@@ -22,10 +20,6 @@ pub struct AbortCatchup200Response {
 impl AbortCatchup200Response {
     /// An catchpoint abort response.
     pub fn new(catchup_message: String) -> AbortCatchup200Response {
-        AbortCatchup200Response {
-            catchup_message,
-        }
+        AbortCatchup200Response { catchup_message }
     }
 }
-
-

@@ -10,8 +10,6 @@
 
 /// StartCatchup200Response : An catchpoint start response.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct StartCatchup200Response {
     /// Catchup start response string
@@ -22,10 +20,6 @@ pub struct StartCatchup200Response {
 impl StartCatchup200Response {
     /// An catchpoint start response.
     pub fn new(catchup_message: String) -> StartCatchup200Response {
-        StartCatchup200Response {
-            catchup_message,
-        }
+        StartCatchup200Response { catchup_message }
     }
 }
-
-

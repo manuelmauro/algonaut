@@ -10,8 +10,6 @@
 
 /// SimulateRequest : Request type for simulation endpoint.
 
-
-
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct SimulateRequest {
     /// The transaction groups to simulate.
@@ -22,10 +20,6 @@ pub struct SimulateRequest {
 impl SimulateRequest {
     /// Request type for simulation endpoint.
     pub fn new(txn_groups: Vec<crate::models::SimulateRequestTransactionGroup>) -> SimulateRequest {
-        SimulateRequest {
-            txn_groups,
-        }
+        SimulateRequest { txn_groups }
     }
 }
-
-
