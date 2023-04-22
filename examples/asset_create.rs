@@ -1,5 +1,5 @@
 use algonaut::algod::v2::Algod;
-use algonaut::algod_exp::models::PendingTransactionResponse;
+use algonaut::openapi_algod::models::PendingTransactionResponse;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
 use dotenv::dotenv;

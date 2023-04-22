@@ -7,7 +7,7 @@
 // Re-exports
 
 pub use algonaut_abi as abi;
-pub use algonaut_algod as algod_exp;
+pub use algonaut_algod as openapi_algod;
 
 pub use algonaut_core as core;
 pub use algonaut_crypto as crypto;
