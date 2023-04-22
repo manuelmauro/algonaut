@@ -1241,7 +1241,7 @@ pub async fn teal_compile(
         };
         local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&source);
+    local_var_req_builder = local_var_req_builder.body(source.to_vec());
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -1266,7 +1266,7 @@ pub async fn teal_compile(
 /// Given the program bytes, return the TEAL source code in plain text. This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
 pub async fn teal_disassemble(
     configuration: &configuration::Configuration,
-    source: String,
+    source: &[u8],
 ) -> Result<crate::models::TealDisassemble200Response, Error<TealDisassembleError>> {
     let local_var_configuration = configuration;
 
@@ -1288,7 +1288,7 @@ pub async fn teal_disassemble(
         };
         local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&source);
+    local_var_req_builder = local_var_req_builder.body(source.to_vec());
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

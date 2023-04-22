@@ -4,6 +4,7 @@ use algonaut_algod::models::{
     DryrunTxnResult, TealValue,
 };
 use algonaut_core::{to_app_address, Address};
+use algonaut_encoding::Bytes;
 use algonaut_transaction::{
     transaction::{ApplicationCallTransaction, StateSchema},
     SignedTransaction, TransactionType,
@@ -97,16 +98,20 @@ pub async fn create_dryrun_with_settings(
 
 fn to_application(app_call: &ApplicationCallTransaction, sender: &Address) -> Application {
     let params = ApplicationParams {
-        approval_program: app_call
-            .approval_program
-            .clone()
-            .map(|p| p.0)
-            .unwrap_or_default(),
-        clear_state_program: app_call
-            .clear_state_program
-            .clone()
-            .map(|p| p.0)
-            .unwrap_or_default(),
+        approval_program: Bytes(
+            app_call
+                .approval_program
+                .clone()
+                .map(|p| p.0)
+                .unwrap_or_default(),
+        ),
+        clear_state_program: Bytes(
+            app_call
+                .clear_state_program
+                .clone()
+                .map(|p| p.0)
+                .unwrap_or_default(),
+        ),
         creator: (*sender).to_string(),
         global_state: Some(vec![]),
         global_state_schema: app_call

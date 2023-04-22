@@ -177,7 +177,7 @@ pub async fn add_participation_key(
         };
         local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&participationkey);
+    local_var_req_builder = local_var_req_builder.body(participationkey.to_vec());
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;
@@ -229,7 +229,7 @@ pub async fn append_keys(
         };
         local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&keymap);
+    local_var_req_builder = local_var_req_builder.body(keymap.to_vec());
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

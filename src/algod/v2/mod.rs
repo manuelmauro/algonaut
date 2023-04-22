@@ -427,7 +427,7 @@ impl Algod {
     /// Given the program bytes, return the TEAL source code in plain text. This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
     pub async fn teal_disassemble(
         &self,
-        source: String,
+        source: &[u8],
     ) -> Result<TealDisassemble200Response, ServiceError> {
         Ok(
             algonaut_algod::apis::public_api::teal_disassemble(&self.configuration, source)

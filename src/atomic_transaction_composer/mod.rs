@@ -761,7 +761,7 @@ fn get_return_value_with_abi_type(
     let ret_line = &logs[logs.len() - 1];
 
     let decoded_ret_line: Vec<u8> = BASE64
-        .decode(ret_line.as_bytes())
+        .decode(&ret_line.0[..])
         .map_err(|e| ServiceError::Msg(format!("BASE64 Decoding error: {e:?}")))?;
 
     if !check_log_ret(&decoded_ret_line) {

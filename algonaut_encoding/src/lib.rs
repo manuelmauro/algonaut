@@ -1,8 +1,18 @@
 use data_encoding::BASE64;
 use serde::de::Error;
 use serde::de::Visitor;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::convert::TryInto;
+
+/// Convenience newtype for a array of bytes.
+#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Bytes(
+    #[serde(
+        skip_serializing_if = "Vec::is_empty",
+        deserialize_with = "deserialize_bytes"
+    )]
+    pub Vec<u8>,
+);
 
 pub struct SignatureVisitor;
 
@@ -108,7 +118,7 @@ where
     })
 }
 
-pub fn slice_to_byte32_arr<'de, D>(slice: &[u8]) -> Result<[u8; 32], D::Error>
+fn slice_to_byte32_arr<'de, D>(slice: &[u8]) -> Result<[u8; 32], D::Error>
 where
     D: Deserializer<'de>,
 {
