@@ -1,7 +1,9 @@
 use crate::{algod::v2::Algod, error::ServiceError};
-use algonaut_algod::models::{Application, ApplicationParams, ApplicationStateSchema};
-use algonaut_core::{to_app_address, Address, Round};
-use algonaut_model::algod::v2::{DryrunRequest, DryrunState, DryrunTxnResult, TealValue};
+use algonaut_algod::models::{
+    Application, ApplicationParams, ApplicationStateSchema, DryrunRequest, DryrunState,
+    DryrunTxnResult, TealValue,
+};
+use algonaut_core::{to_app_address, Address};
 use algonaut_transaction::{
     transaction::{ApplicationCallTransaction, StateSchema},
     SignedTransaction, TransactionType,
@@ -16,7 +18,7 @@ pub async fn create_dryrun(
     algod: &Algod,
     signed_txs: &[SignedTransaction],
 ) -> Result<DryrunRequest, ServiceError> {
-    create_dryrun_with_settings(algod, signed_txs, "", 0, Round(0)).await
+    create_dryrun_with_settings(algod, signed_txs, "", 0, 0).await
 }
 
 pub async fn create_dryrun_with_settings(
@@ -24,7 +26,7 @@ pub async fn create_dryrun_with_settings(
     signed_txs: &[SignedTransaction],
     protocol_version: &str,
     latest_timestamp: u64,
-    round: Round,
+    round: u64,
 ) -> Result<DryrunRequest, ServiceError> {
     if signed_txs.is_empty() {
         return Err(ServiceError::Msg("No txs".to_owned()));
@@ -258,7 +260,7 @@ fn trace(
 
         let cur_scratch = &s.scratch;
         let prev_scratch = if i > 0 {
-            state.to_owned().clone()[i - 1].clone().scratch
+            state.to_owned().clone()[i - 1].clone().scratch.unwrap()
         } else {
             vec![]
         };
@@ -273,7 +275,11 @@ fn trace(
             format!("{:3}", s.line.to_string()),
             truncate(&src, config.max_column_widths.source),
             truncate(
-                &scratch_to_str(&prev_scratch, cur_scratch, &config.bytes_format)?,
+                &scratch_to_str(
+                    &prev_scratch,
+                    &cur_scratch.clone().unwrap()[..],
+                    &config.bytes_format,
+                )?,
                 config.max_column_widths.scratch,
             ),
             truncate(
@@ -315,7 +321,7 @@ fn pad(s: &str, len: usize) -> String {
 
 pub fn app_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
     trace(
-        &dryrun_res.app_call_trace,
+        &dryrun_res.app_call_trace.clone().unwrap(),
         &dryrun_res.disassembly,
         &StackPrinterConfig::default(),
     )
@@ -325,7 +331,11 @@ pub fn app_trace_with_config(
     dryrun_res: &DryrunTxnResult,
     config: &StackPrinterConfig,
 ) -> Result<String, ServiceError> {
-    trace(&dryrun_res.app_call_trace, &dryrun_res.disassembly, config)
+    trace(
+        &dryrun_res.app_call_trace.clone().unwrap(),
+        &dryrun_res.disassembly,
+        config,
+    )
 }
 
 pub fn lsig_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
@@ -336,7 +346,11 @@ pub fn lsig_trace_with_config(
     dryrun_res: &DryrunTxnResult,
     config: &StackPrinterConfig,
 ) -> Result<String, ServiceError> {
-    trace(&dryrun_res.logic_sig_trace, &dryrun_res.disassembly, config)
+    trace(
+        &dryrun_res.logic_sig_trace.clone().unwrap(),
+        &dryrun_res.disassembly,
+        config,
+    )
 }
 
 fn to_hex_str(bytes: &[u8]) -> String {

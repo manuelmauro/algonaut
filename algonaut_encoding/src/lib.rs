@@ -108,9 +108,17 @@ where
     })
 }
 
-fn slice_to_byte32_arr<'de, D>(slice: &[u8]) -> Result<[u8; 32], D::Error>
+pub fn slice_to_byte32_arr<'de, D>(slice: &[u8]) -> Result<[u8; 32], D::Error>
 where
     D: Deserializer<'de>,
 {
     slice.try_into().map_err(D::Error::custom)
+}
+
+pub fn deserialize_vec_opt_to_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: Option<Vec<String>> = Deserialize::deserialize(deserializer)?;
+    Ok(s.unwrap_or_default())
 }
