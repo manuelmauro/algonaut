@@ -1696,7 +1696,8 @@ pub async fn raw_transaction(
         };
         local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
     };
-    local_var_req_builder = local_var_req_builder.json(&rawtxn);
+    // TODO check for a better type that implements Into<Body>
+    local_var_req_builder = local_var_req_builder.body((&rawtxn).to_vec());
 
     let local_var_req = local_var_req_builder.build()?;
     let local_var_resp = local_var_client.execute(local_var_req).await?;

@@ -47,7 +47,7 @@ pub struct Transaction {
 
     /// The hash of the genesis block of the network for which the transaction is valid. See the
     /// genesis hash for MainNet, TestNet, and BetaNet.
-    pub genesis_hash: String,
+    pub genesis_hash: HashDigest,
 
     /// The ending round for which the transaction is valid. After this round, the transaction will
     /// be rejected by the network.

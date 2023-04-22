@@ -26,7 +26,7 @@ impl From<Transaction> for ApiTransaction {
             fee: num_as_api_option(t.fee.0).map(MicroAlgos),
             first_valid: num_as_api_option(t.first_valid.0).map(Round),
             genesis_id: t.genesis_id.clone().and_then(str_as_api_option),
-            genesis_hash: t.genesis_hash.clone(),
+            genesis_hash: t.genesis_hash,
             group: t.group,
             last_valid: num_as_api_option(t.last_valid.0).map(Round),
             lease: t.lease,

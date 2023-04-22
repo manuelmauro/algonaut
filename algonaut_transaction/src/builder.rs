@@ -15,7 +15,7 @@ use algonaut_crypto::HashDigest;
 pub struct TxnBuilder {
     fee: MicroAlgos,
     first_valid: Round,
-    genesis_hash: String,
+    genesis_hash: HashDigest,
     last_valid: Round,
     txn_type: TransactionType,
     genesis_id: Option<String>,
@@ -45,7 +45,7 @@ impl TxnBuilder {
             fee,
             Round(params.last_round),
             Round(params.last_round + 1000),
-            params.genesis_hash.clone(),
+            params.genesis_hash,
             txn_type,
         )
         .genesis_id(params.genesis_id.clone())
@@ -55,7 +55,7 @@ impl TxnBuilder {
         fee: MicroAlgos,
         first_valid: Round,
         last_valid: Round,
-        genesis_hash: String,
+        genesis_hash: HashDigest,
         txn_type: TransactionType,
     ) -> Self {
         TxnBuilder {
@@ -105,7 +105,7 @@ impl TxnBuilder {
         Transaction {
             fee,
             first_valid: self.first_valid,
-            genesis_hash: self.genesis_hash.clone(),
+            genesis_hash: self.genesis_hash,
             last_valid: self.last_valid,
             txn_type: self.txn_type.clone(),
             genesis_id: self.genesis_id.clone(),

@@ -20,7 +20,7 @@ pub enum HashType {
 }
 
 /// A SHA512_256 hash
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct HashDigest(pub [u8; 32]);
 
 impl FromStr for HashDigest {

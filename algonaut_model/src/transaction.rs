@@ -105,7 +105,7 @@ pub struct ApiTransaction {
     pub genesis_id: Option<String>,
 
     #[serde(rename = "gh")]
-    pub genesis_hash: String,
+    pub genesis_hash: HashDigest,
 
     #[serde(rename = "grp", skip_serializing_if = "Option::is_none")]
     pub group: Option<HashDigest>,
