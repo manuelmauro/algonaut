@@ -1,4 +1,4 @@
-use crate::error::ServiceError;
+use crate::ServiceError;
 use algonaut_algod::{
     apis::configuration::{ApiKey, Configuration},
     models::{

@@ -1,4 +1,4 @@
-use crate::{algod::v2::Algod, error::ServiceError};
+use crate::{algod::v2::Algod, ServiceError};
 use algonaut_algod::models::{
     Application, ApplicationParams, ApplicationStateSchema, DryrunRequest, DryrunState,
     DryrunTxnResult, TealValue,

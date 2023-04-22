@@ -1,8 +1,8 @@
 use algonaut::algod::v2::Algod;
 use algonaut::algod_exp::models::PendingTransactionResponse;
-use algonaut::error::ServiceError;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
+use algonaut::ServiceError;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

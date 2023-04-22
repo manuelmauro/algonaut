@@ -1,3 +1,4 @@
+use crate::ServiceError;
 use algonaut_client::{kmd::v1::Client, token::ApiToken, Headers};
 use algonaut_core::{Address, MultisigSignature, ToMsgPack};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
@@ -10,8 +11,6 @@ use algonaut_model::kmd::v1::{
     SignTransactionResponse, VersionsResponse,
 };
 use algonaut_transaction::Transaction;
-
-use crate::error::ServiceError;
 
 #[derive(Debug, Clone)]
 pub struct Kmd {

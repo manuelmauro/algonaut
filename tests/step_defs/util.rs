@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use algonaut::{algod::v2::Algod, error::ServiceError};
+use algonaut::{algod::v2::Algod, ServiceError};
 use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, CompiledTeal};
 use algonaut_model::kmd::v1::ExportKeyResponse;

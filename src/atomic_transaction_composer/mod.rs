@@ -25,7 +25,7 @@ use num_traits::ToPrimitive;
 use std::collections::HashMap;
 
 use crate::{
-    algod::v2::Algod, error::ServiceError, util::wait_for_pending_tx::wait_for_pending_transaction,
+    algod::v2::Algod, util::wait_for_pending_tx::wait_for_pending_transaction, ServiceError,
 };
 
 use self::transaction_signer::TransactionSigner;

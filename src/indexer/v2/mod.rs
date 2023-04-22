@@ -8,7 +8,7 @@ use algonaut_model::indexer::v2::{
     QueryBalances, QueryTransaction, TransactionInfoResponse, TransactionResponse,
 };
 
-use crate::error::ServiceError;
+use crate::ServiceError;
 
 #[derive(Debug, Clone)]
 pub struct Indexer {

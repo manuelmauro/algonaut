@@ -8,7 +8,7 @@ use algonaut::{
         AbiReturnDecodeError, AddMethodCallParams, AtomicTransactionComposer,
         AtomicTransactionComposerStatus, TransactionWithSigner,
     },
-    error::ServiceError,
+    ServiceError,
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},

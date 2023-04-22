@@ -1,9 +1,9 @@
 use algonaut::algod::v2::Algod;
-use algonaut::error::ServiceError;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::transaction::StateSchema;
 use algonaut::transaction::CreateApplication;
 use algonaut::transaction::TxnBuilder;
+use algonaut::ServiceError;
 use algonaut_algod::models::PendingTransactionResponse;
 use dotenv::dotenv;
 use std::env;
