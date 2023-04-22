@@ -49,6 +49,7 @@ pub use self::eval_delta_key_value::EvalDeltaKeyValue;
 pub mod get_application_boxes_200_response;
 pub use self::get_application_boxes_200_response::GetApplicationBoxes200Response;
 pub mod get_block_200_response;
+pub use self::get_block_200_response::Block;
 pub use self::get_block_200_response::GetBlock200Response;
 pub mod get_block_hash_200_response;
 pub use self::get_block_hash_200_response::GetBlockHash200Response;
