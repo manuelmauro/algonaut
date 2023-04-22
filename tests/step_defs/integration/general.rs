@@ -3,7 +3,7 @@ use crate::step_defs::{
     util::{account_from_kmd_response, wait_for_pending_transaction},
 };
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
-use algonaut_core::{MicroAlgos, Round};
+use algonaut_core::MicroAlgos;
 use algonaut_transaction::{Pay, TxnBuilder};
 use cucumber::{given, then, when};
 use rand::Rng;
@@ -17,7 +17,7 @@ async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
     )
     .unwrap();
 
-    algod.status_after_round(Round(1)).await?;
+    algod.wait_for_block(1).await?;
     w.algod = Some(algod);
 
     Ok(())
@@ -75,7 +75,7 @@ async fn wallet_information(w: &mut World) -> Result<(), Box<dyn Error>> {
 async fn suggested_params(w: &mut World) -> Result<(), Box<dyn Error>> {
     let algod = w.algod.as_ref().unwrap();
 
-    w.tx_params = Some(algod.suggested_transaction_params().await?);
+    w.tx_params = Some(algod.transaction_params().await?);
 
     Ok(())
 }
@@ -100,7 +100,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
 
     let sender_account = account_from_kmd_response(&sender_key)?;
 
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
     let tx = TxnBuilder::with(
         &params,
         Pay::new(
@@ -114,7 +114,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
 
     let s_tx = sender_account.sign_transaction(tx)?;
 
-    let send_response = algod.broadcast_signed_transaction(&s_tx).await?;
+    let send_response = algod.signed_transaction(&s_tx).await?;
     let _ = wait_for_pending_transaction(&algod, &send_response.tx_id);
 
     w.transient_account = Some(sender_account);
@@ -141,7 +141,7 @@ async fn i_sign_and_submit_the_transaction_saving_the_tx_id_if_there_is_an_error
 
     let s_tx = transient_account.sign_transaction(tx.clone()).unwrap();
 
-    match algod.broadcast_signed_transaction(&s_tx).await {
+    match algod.signed_transaction(&s_tx).await {
         Ok(response) => {
             w.tx_id = Some(response.tx_id);
         }

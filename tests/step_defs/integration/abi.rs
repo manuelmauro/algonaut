@@ -14,10 +14,9 @@ use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
     abi_type::{AbiType, AbiValue},
 };
+use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{to_app_address, Address, MicroAlgos};
-use algonaut_model::algod::v2::PendingTransaction;
 use algonaut_transaction::{
-    builder::TxnFee,
     transaction::{ApplicationCallOnComplete, StateSchema},
     Pay, TxnBuilder,
 };
@@ -405,10 +404,7 @@ async fn add_method_call(
         app_id: application_id,
         method: abi_method.to_owned(),
         method_args: abi_method_args.to_owned(),
-        fee: TxnFee::Estimated {
-            fee_per_byte: tx_params.fee_per_byte,
-            min_fee: tx_params.min_fee,
-        },
+        fee: MicroAlgos(tx_params.min_fee),
         sender: use_account.address(),
         suggested_params: tx_params,
         on_complete,
@@ -702,7 +698,8 @@ async fn check_inner_txn_group_ids(w: &mut World, colon_separated_paths_string: 
     let mut tx_infos_to_check = vec![];
 
     for path in paths {
-        let mut current: PendingTransaction = tx_composer_res.method_results[0].tx_info.clone();
+        let mut current: PendingTransactionResponse =
+            tx_composer_res.method_results[0].tx_info.clone();
         for path_index in 1..path.len() {
             let inner_txn_index = path[path_index];
             if path_index == 0 {
@@ -710,7 +707,12 @@ async fn check_inner_txn_group_ids(w: &mut World, colon_separated_paths_string: 
                     .tx_info
                     .clone();
             } else {
-                current = current.inner_txs[inner_txn_index].clone();
+                current = current
+                    .inner_txns
+                    .unwrap()
+                    .get(inner_txn_index)
+                    .unwrap()
+                    .clone();
             }
         }
 
@@ -801,7 +803,7 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
     let app_address = to_app_address(app_id);
 
     let tx_params = algod
-        .suggested_transaction_params()
+        .transaction_params()
         .await
         .expect("couldn't get params");
 
@@ -818,7 +820,7 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
         .expect("couldn't sign tx");
 
     let res = algod
-        .broadcast_raw_transaction(&signed_tx.signed_transaction)
+        .raw_transaction(&signed_tx.signed_transaction)
         .await
         .expect("couldn't send tx");
 

@@ -15,8 +15,8 @@ async fn test_pending_transactions_endpoint() -> Result<(), Box<dyn Error>> {
 
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
-    println!("{:?}", algod.pending_transactions(0).await);
-    assert!(algod.pending_transactions(0).await.is_ok());
+    println!("{:?}", algod.get_pending_transactions(Some(0)).await);
+    assert!(algod.get_pending_transactions(Some(0)).await.is_ok());
 
     Ok(())
 }
@@ -41,7 +41,11 @@ async fn test_app_call_parameters() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let sender = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
-    dbg!(algod.account_information(&sender.address()).await?);
+    dbg!(
+        algod
+            .account_information(&sender.address().to_string())
+            .await?
+    );
 
     let approval_program = r#"
 #pragma version 4
@@ -90,10 +94,10 @@ int 1
 "#
     .as_bytes();
 
-    let compiled_approval_program = algod.compile_teal(&approval_program).await?;
-    let compiled_clear_program = algod.compile_teal(&clear_program).await?;
+    let compiled_approval_program = algod.teal_compile(&approval_program, None).await?;
+    let compiled_clear_program = algod.teal_compile(&clear_program, None).await?;
 
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.transaction_params().await?;
     let t = TxnBuilder::with(
         &params,
         CreateApplication::new(
@@ -130,7 +134,7 @@ int 1
 
     let signed_t = sender.sign_transaction(t)?;
 
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+    let send_response = algod.signed_transaction(&signed_t).await?;
     println!("send_response: {:?}", send_response);
 
     Ok(())
