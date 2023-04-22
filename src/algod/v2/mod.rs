@@ -1,4 +1,4 @@
-use crate::ServiceError;
+use crate::Error;
 use algonaut_algod::{
     apis::configuration::{ApiKey, Configuration},
     models::{
@@ -31,7 +31,7 @@ impl Algod {
     /// For third party providers / custom headers, use [with_headers](Self::with_headers).
     ///
     /// Returns an error if the url or token have an invalid format.
-    pub fn new(url: &str, token: &str) -> Result<Algod, ServiceError> {
+    pub fn new(url: &str, token: &str) -> Result<Algod, Error> {
         let conf = Configuration {
             base_path: url.to_owned(),
             user_agent: Some("OpenAPI-Generator/0.0.1/rust".to_owned()),
@@ -55,7 +55,7 @@ impl Algod {
         self,
         address: &str,
         application_id: u64,
-    ) -> Result<AccountApplicationInformation200Response, ServiceError> {
+    ) -> Result<AccountApplicationInformation200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::account_application_information(
                 &self.configuration,
@@ -69,7 +69,7 @@ impl Algod {
     }
 
     /// Given a specific account public key, this call returns the accounts status, balance and spendable amounts
-    pub async fn account_information(&self, address: &str) -> Result<Account, ServiceError> {
+    pub async fn account_information(&self, address: &str) -> Result<Account, Error> {
         Ok(algonaut_algod::apis::public_api::account_information(
             &self.configuration,
             address,
@@ -81,7 +81,7 @@ impl Algod {
     }
 
     /// Returns wether the experimental API are enabled
-    pub async fn experimental_check(&self) -> Result<(), ServiceError> {
+    pub async fn experimental_check(&self) -> Result<(), Error> {
         Ok(
             algonaut_algod::apis::public_api::experimental_check(&self.configuration)
                 .await
@@ -94,7 +94,7 @@ impl Algod {
         &self,
         application_id: u64,
         name: &str,
-    ) -> Result<models::Box, ServiceError> {
+    ) -> Result<models::Box, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_application_box_by_name(
                 &self.configuration,
@@ -111,7 +111,7 @@ impl Algod {
         &self,
         application_id: u64,
         max: Option<u64>,
-    ) -> Result<GetApplicationBoxes200Response, ServiceError> {
+    ) -> Result<GetApplicationBoxes200Response, Error> {
         Ok(algonaut_algod::apis::public_api::get_application_boxes(
             &self.configuration,
             application_id,
@@ -122,10 +122,7 @@ impl Algod {
     }
 
     /// Given a application ID, it returns application information including creator, approval and clear programs, global and local schemas, and global state.
-    pub async fn get_application_by_id(
-        &self,
-        application_id: u64,
-    ) -> Result<Application, ServiceError> {
+    pub async fn get_application_by_id(&self, application_id: u64) -> Result<Application, Error> {
         Ok(algonaut_algod::apis::public_api::get_application_by_id(
             &self.configuration,
             application_id,
@@ -135,7 +132,7 @@ impl Algod {
     }
 
     /// Given a asset ID, it returns asset information including creator, name, total supply and special addresses.
-    pub async fn get_asset_by_id(&self, asset_id: u64) -> Result<Asset, ServiceError> {
+    pub async fn get_asset_by_id(&self, asset_id: u64) -> Result<Asset, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_asset_by_id(&self.configuration, asset_id)
                 .await
@@ -144,7 +141,7 @@ impl Algod {
     }
 
     /// Get the block for the given round.
-    pub async fn get_block(&self, round: u64) -> Result<GetBlock200Response, ServiceError> {
+    pub async fn get_block(&self, round: u64) -> Result<GetBlock200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block(&self.configuration, round, None)
                 .await
@@ -153,10 +150,7 @@ impl Algod {
     }
 
     /// Get the block hash for the block on the given round.
-    pub async fn get_block_hash(
-        &self,
-        round: u64,
-    ) -> Result<GetBlockHash200Response, ServiceError> {
+    pub async fn get_block_hash(&self, round: u64) -> Result<GetBlockHash200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block_hash(&self.configuration, round)
                 .await
@@ -165,7 +159,7 @@ impl Algod {
     }
 
     /// Returns the entire genesis file in json.
-    pub async fn get_genesis(&self) -> Result<String, ServiceError> {
+    pub async fn get_genesis(&self) -> Result<String, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_genesis(&self.configuration)
                 .await
@@ -174,10 +168,7 @@ impl Algod {
     }
 
     /// Get ledger deltas for a round.
-    pub async fn get_ledger_state_delta(
-        &self,
-        round: u64,
-    ) -> Result<serde_json::Value, ServiceError> {
+    pub async fn get_ledger_state_delta(&self, round: u64) -> Result<serde_json::Value, Error> {
         Ok(algonaut_algod::apis::public_api::get_ledger_state_delta(
             &self.configuration,
             round,
@@ -191,7 +182,7 @@ impl Algod {
     pub async fn get_light_block_header_proof(
         &self,
         round: u64,
-    ) -> Result<LightBlockHeaderProof, ServiceError> {
+    ) -> Result<LightBlockHeaderProof, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_light_block_header_proof(
                 &self.configuration,
@@ -206,7 +197,7 @@ impl Algod {
     pub async fn get_pending_transactions(
         &self,
         max: Option<u64>,
-    ) -> Result<GetPendingTransactionsByAddress200Response, ServiceError> {
+    ) -> Result<GetPendingTransactionsByAddress200Response, Error> {
         Ok(algonaut_algod::apis::public_api::get_pending_transactions(
             &self.configuration,
             max,
@@ -221,7 +212,7 @@ impl Algod {
         &self,
         address: &str,
         max: Option<u64>,
-    ) -> Result<GetPendingTransactionsByAddress200Response, ServiceError> {
+    ) -> Result<GetPendingTransactionsByAddress200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_pending_transactions_by_address(
                 &self.configuration,
@@ -235,7 +226,7 @@ impl Algod {
     }
 
     /// TODO
-    pub async fn get_ready(&self) -> Result<(), ServiceError> {
+    pub async fn get_ready(&self) -> Result<(), Error> {
         Ok(
             algonaut_algod::apis::public_api::get_ready(&self.configuration)
                 .await
@@ -244,7 +235,7 @@ impl Algod {
     }
 
     /// Get a state proof that covers a given round.
-    pub async fn get_state_proof(&self, round: u64) -> Result<StateProof, ServiceError> {
+    pub async fn get_state_proof(&self, round: u64) -> Result<StateProof, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_state_proof(&self.configuration, round)
                 .await
@@ -253,7 +244,7 @@ impl Algod {
     }
 
     /// Gets the current node status.
-    pub async fn get_status(&self) -> Result<GetStatus200Response, ServiceError> {
+    pub async fn get_status(&self) -> Result<GetStatus200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_status(&self.configuration)
                 .await
@@ -262,7 +253,7 @@ impl Algod {
     }
 
     /// Get the current supply reported by the ledger.
-    pub async fn get_supply(&self) -> Result<GetSupply200Response, ServiceError> {
+    pub async fn get_supply(&self) -> Result<GetSupply200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_supply(&self.configuration)
                 .await
@@ -271,7 +262,7 @@ impl Algod {
     }
 
     /// Gets the minimum sync round for the ledger.
-    pub async fn get_sync_round(&self) -> Result<GetSyncRound200Response, ServiceError> {
+    pub async fn get_sync_round(&self) -> Result<GetSyncRound200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_sync_round(&self.configuration)
                 .await
@@ -284,7 +275,7 @@ impl Algod {
         &self,
         round: u64,
         txid: &str,
-    ) -> Result<GetTransactionProof200Response, ServiceError> {
+    ) -> Result<GetTransactionProof200Response, Error> {
         Ok(algonaut_algod::apis::public_api::get_transaction_proof(
             &self.configuration,
             round,
@@ -297,7 +288,7 @@ impl Algod {
     }
 
     /// Retrieves the supported API versions, binary build versions, and genesis information.
-    pub async fn get_version(&self) -> Result<Version, ServiceError> {
+    pub async fn get_version(&self) -> Result<Version, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_version(&self.configuration)
                 .await
@@ -306,7 +297,7 @@ impl Algod {
     }
 
     /// Returns Ok if healthy
-    pub async fn health_check(&self) -> Result<(), ServiceError> {
+    pub async fn health_check(&self) -> Result<(), Error> {
         Ok(
             algonaut_algod::apis::public_api::health_check(&self.configuration)
                 .await
@@ -315,7 +306,7 @@ impl Algod {
     }
 
     /// Return metrics about algod functioning.
-    pub async fn metrics(&self) -> Result<(), ServiceError> {
+    pub async fn metrics(&self) -> Result<(), Error> {
         Ok(
             algonaut_algod::apis::public_api::metrics(&self.configuration)
                 .await
@@ -327,7 +318,7 @@ impl Algod {
     pub async fn pending_transaction_information(
         &self,
         txid: &str,
-    ) -> Result<PendingTransactionResponse, ServiceError> {
+    ) -> Result<PendingTransactionResponse, Error> {
         Ok(
             algonaut_algod::apis::public_api::pending_transaction_information(
                 &self.configuration,
@@ -340,10 +331,7 @@ impl Algod {
     }
 
     /// Broadcasts a raw transaction or transaction group to the network.
-    pub async fn raw_transaction(
-        &self,
-        rawtxn: &[u8],
-    ) -> Result<RawTransaction200Response, ServiceError> {
+    pub async fn raw_transaction(&self, rawtxn: &[u8]) -> Result<RawTransaction200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::raw_transaction(&self.configuration, rawtxn)
                 .await
@@ -355,7 +343,7 @@ impl Algod {
     pub async fn signed_transaction(
         &self,
         txn: &SignedTransaction,
-    ) -> Result<RawTransaction200Response, ServiceError> {
+    ) -> Result<RawTransaction200Response, Error> {
         self.raw_transaction(&txn.to_msg_pack()?).await
     }
 
@@ -365,7 +353,7 @@ impl Algod {
     pub async fn signed_transactions(
         &self,
         txns: &[SignedTransaction],
-    ) -> Result<RawTransaction200Response, ServiceError> {
+    ) -> Result<RawTransaction200Response, Error> {
         let mut bytes = vec![];
         for t in txns {
             bytes.push(t.to_msg_pack()?);
@@ -374,7 +362,7 @@ impl Algod {
     }
 
     /// Sets the minimum sync round on the ledger.
-    pub async fn set_sync_round(&self, round: u64) -> Result<(), ServiceError> {
+    pub async fn set_sync_round(&self, round: u64) -> Result<(), Error> {
         Ok(
             algonaut_algod::apis::public_api::set_sync_round(&self.configuration, round)
                 .await
@@ -386,7 +374,7 @@ impl Algod {
     pub async fn simulate_transaction(
         &self,
         request: SimulateRequest,
-    ) -> Result<SimulateTransaction200Response, ServiceError> {
+    ) -> Result<SimulateTransaction200Response, Error> {
         Ok(algonaut_algod::apis::public_api::simulate_transaction(
             &self.configuration,
             request,
@@ -397,7 +385,7 @@ impl Algod {
     }
 
     /// Returns the entire swagger spec in json.
-    pub async fn swagger_json(&self) -> Result<String, ServiceError> {
+    pub async fn swagger_json(&self) -> Result<String, Error> {
         Ok(
             algonaut_algod::apis::public_api::swagger_json(&self.configuration)
                 .await
@@ -410,7 +398,7 @@ impl Algod {
         &self,
         source: &[u8],
         sourcemap: Option<bool>,
-    ) -> Result<CompiledTeal, ServiceError> {
+    ) -> Result<CompiledTeal, Error> {
         let api_compiled_teal =
             algonaut_algod::apis::public_api::teal_compile(&self.configuration, source, sourcemap)
                 .await
@@ -428,7 +416,7 @@ impl Algod {
     pub async fn teal_disassemble(
         &self,
         source: &[u8],
-    ) -> Result<TealDisassemble200Response, ServiceError> {
+    ) -> Result<TealDisassemble200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::teal_disassemble(&self.configuration, source)
                 .await
@@ -440,7 +428,7 @@ impl Algod {
     pub async fn teal_dryrun(
         &self,
         request: Option<DryrunRequest>,
-    ) -> Result<TealDryrun200Response, ServiceError> {
+    ) -> Result<TealDryrun200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::teal_dryrun(&self.configuration, request)
                 .await
@@ -449,7 +437,7 @@ impl Algod {
     }
 
     /// Get parameters for constructing a new transaction.
-    pub async fn transaction_params(&self) -> Result<TransactionParams200Response, ServiceError> {
+    pub async fn transaction_params(&self) -> Result<TransactionParams200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::transaction_params(&self.configuration)
                 .await
@@ -458,7 +446,7 @@ impl Algod {
     }
 
     /// Unset the ledger sync round.
-    pub async fn unset_sync_round(&self) -> Result<(), ServiceError> {
+    pub async fn unset_sync_round(&self) -> Result<(), Error> {
         Ok(
             algonaut_algod::apis::public_api::unset_sync_round(&self.configuration)
                 .await
@@ -467,7 +455,7 @@ impl Algod {
     }
 
     /// Waits for a block to appear after round {round} and returns the node's status at the time.
-    pub async fn wait_for_block(&self, round: u64) -> Result<GetStatus200Response, ServiceError> {
+    pub async fn wait_for_block(&self, round: u64) -> Result<GetStatus200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::wait_for_block(&self.configuration, round)
                 .await
@@ -496,7 +484,7 @@ mod tests {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         );
         assert!(res.is_err());
-        assert!(matches!(res.err().unwrap(), ServiceError::BadUrl(_)));
+        assert!(matches!(res.err().unwrap(), Error::BadUrl(_)));
     }
 
     #[test]
@@ -506,7 +494,7 @@ mod tests {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         );
         assert!(res.is_err());
-        assert!(matches!(res.err().unwrap(), ServiceError::BadUrl(_)));
+        assert!(matches!(res.err().unwrap(), Error::BadUrl(_)));
     }
 
     #[test]
@@ -516,13 +504,13 @@ mod tests {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         );
         assert!(res.is_err());
-        assert!(res.err().unwrap() == ServiceError::BadToken);
+        assert!(res.err().unwrap() == Error::BadToken);
     }
 
     #[test]
     fn test_client_builder_with_empty_token() {
         let res = Algod::new("http://example.com", "");
         assert!(res.is_err());
-        assert!(res.err().unwrap() == ServiceError::BadToken);
+        assert!(res.err().unwrap() == Error::BadToken);
     }
 }

@@ -1,4 +1,4 @@
-use crate::{algod::v2::Algod, ServiceError};
+use crate::{algod::v2::Algod, Error};
 use algonaut_algod::models::{
     Application, ApplicationParams, ApplicationStateSchema, DryrunRequest, DryrunState,
     DryrunTxnResult, TealValue,
@@ -18,7 +18,7 @@ const DEFAULT_MAX_WIDTH: usize = 30;
 pub async fn create_dryrun(
     algod: &Algod,
     signed_txs: &[SignedTransaction],
-) -> Result<DryrunRequest, ServiceError> {
+) -> Result<DryrunRequest, Error> {
     create_dryrun_with_settings(algod, signed_txs, "", 0, 0).await
 }
 
@@ -28,9 +28,9 @@ pub async fn create_dryrun_with_settings(
     protocol_version: &str,
     latest_timestamp: u64,
     round: u64,
-) -> Result<DryrunRequest, ServiceError> {
+) -> Result<DryrunRequest, Error> {
     if signed_txs.is_empty() {
-        return Err(ServiceError::Msg("No txs".to_owned()));
+        return Err(Error::Msg("No txs".to_owned()));
     }
 
     // The details we need to add to DryrunRequest object
@@ -187,7 +187,7 @@ fn truncate(s: &str, max_len: usize) -> String {
     }
 }
 
-fn stack_to_str(stack: &[TealValue], bytes_format: &BytesFormat) -> Result<String, ServiceError> {
+fn stack_to_str(stack: &[TealValue], bytes_format: &BytesFormat) -> Result<String, Error> {
     let mut elems = vec![];
     for value in stack {
         match value.value_type {
@@ -214,7 +214,7 @@ fn scratch_to_str(
     prev_scratch: &[TealValue],
     cur_scratch: &[TealValue],
     bytes_format: &BytesFormat,
-) -> Result<String, ServiceError> {
+) -> Result<String, Error> {
     if cur_scratch.is_empty() {
         return Ok("".to_owned());
     }
@@ -246,7 +246,7 @@ fn trace(
     state: &[DryrunState],
     disassembly: &[String],
     config: &StackPrinterConfig,
-) -> Result<String, ServiceError> {
+) -> Result<String, Error> {
     let mut lines = vec![vec![
         "pc#".to_owned(),
         "ln#".to_owned(),
@@ -324,7 +324,7 @@ fn pad(s: &str, len: usize) -> String {
     format!("{s}{}", str::repeat(" ", len - s.len()))
 }
 
-pub fn app_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
+pub fn app_trace(dryrun_res: &DryrunTxnResult) -> Result<String, Error> {
     trace(
         &dryrun_res.app_call_trace.clone().unwrap(),
         &dryrun_res.disassembly,
@@ -335,7 +335,7 @@ pub fn app_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
 pub fn app_trace_with_config(
     dryrun_res: &DryrunTxnResult,
     config: &StackPrinterConfig,
-) -> Result<String, ServiceError> {
+) -> Result<String, Error> {
     trace(
         &dryrun_res.app_call_trace.clone().unwrap(),
         &dryrun_res.disassembly,
@@ -343,14 +343,14 @@ pub fn app_trace_with_config(
     )
 }
 
-pub fn lsig_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
+pub fn lsig_trace(dryrun_res: &DryrunTxnResult) -> Result<String, Error> {
     lsig_trace_with_config(dryrun_res, &StackPrinterConfig::default())
 }
 
 pub fn lsig_trace_with_config(
     dryrun_res: &DryrunTxnResult,
     config: &StackPrinterConfig,
-) -> Result<String, ServiceError> {
+) -> Result<String, Error> {
     trace(
         &dryrun_res.logic_sig_trace.clone().unwrap(),
         &dryrun_res.disassembly,
@@ -369,8 +369,8 @@ fn to_application_state_schema(schema: StateSchema) -> ApplicationStateSchema {
     }
 }
 
-impl From<DecodeError> for ServiceError {
+impl From<DecodeError> for Error {
     fn from(e: DecodeError) -> Self {
-        ServiceError::Msg(format!("Decoding error: {e}"))
+        Error::Msg(format!("Decoding error: {e}"))
     }
 }

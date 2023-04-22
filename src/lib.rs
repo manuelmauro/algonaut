@@ -16,7 +16,7 @@ pub use algonaut_transaction as transaction;
 pub mod algod;
 pub mod atomic_transaction_composer;
 pub mod error;
-pub use error::ServiceError;
+pub use error::Error;
 
 pub mod indexer;
 pub mod kmd;

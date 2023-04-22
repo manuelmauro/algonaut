@@ -3,7 +3,6 @@ use algonaut::transaction::account::Account;
 use algonaut::transaction::transaction::StateSchema;
 use algonaut::transaction::CreateApplication;
 use algonaut::transaction::TxnBuilder;
-use algonaut::ServiceError;
 use algonaut_algod::models::PendingTransactionResponse;
 use dotenv::dotenv;
 use std::env;
@@ -91,7 +90,7 @@ int 1
 async fn wait_for_pending_transaction(
     algod: &Algod,
     txid: &str,
-) -> Result<Option<PendingTransactionResponse>, ServiceError> {
+) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {

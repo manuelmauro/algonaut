@@ -2,13 +2,10 @@ use crate::step_defs::{
     integration::world::World,
     util::{read_teal, wait_for_pending_transaction},
 };
-use algonaut::{
-    atomic_transaction_composer::{
-        transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue,
-        AbiReturnDecodeError, AddMethodCallParams, AtomicTransactionComposer,
-        AtomicTransactionComposerStatus, TransactionWithSigner,
-    },
-    ServiceError,
+use algonaut::atomic_transaction_composer::{
+    transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError,
+    AddMethodCallParams, AtomicTransactionComposer, AtomicTransactionComposerStatus,
+    TransactionWithSigner,
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
@@ -465,7 +462,7 @@ fn i_build_the_transaction_group_with_the_composer(w: &mut World, error_type: St
             let message = match build_res {
                 Ok(_) => None,
                 Err(e) => match e {
-                    ServiceError::Msg(m) => Some(m),
+                    algonaut::Error::Msg(m) => Some(m),
                     _ => None,
                 },
             };

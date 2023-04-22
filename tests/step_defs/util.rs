@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use algonaut::{algod::v2::Algod, ServiceError};
+use algonaut::algod::v2::Algod;
 use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, CompiledTeal};
 use algonaut_model::kmd::v1::ExportKeyResponse;
@@ -16,7 +16,7 @@ use algonaut_transaction::account::Account;
 pub async fn wait_for_pending_transaction(
     algod: &Algod,
     txid: &str,
-) -> Result<Option<PendingTransactionResponse>, ServiceError> {
+) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {
