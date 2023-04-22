@@ -25,7 +25,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("building CloseApplication transaction");
     // to test this, create an application that sets local state and opt-in, for/with the account sending this transaction.
     // the approval program has to return success for the local state to be cleared.
-    let t = TxnBuilder::with(&params, CloseApplication::new(alice.address(), 3).build()).build()?;
+    // TODO set a correct app-id here
+    let t = TxnBuilder::with(&params, CloseApplication::new(alice.address(), 0).build()).build()?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

@@ -25,7 +25,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("building OptInApplication transaction");
     let t = TxnBuilder::with(
         &params,
-        OptInApplication::new(alice.address(), 3)
+        // TODO set a correct app-id here
+        OptInApplication::new(alice.address(), 11)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )

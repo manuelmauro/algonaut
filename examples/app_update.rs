@@ -1,5 +1,4 @@
 use algonaut::algod::v2::Algod;
-use algonaut::core::CompiledTeal;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::UpdateApplication;
 use algonaut::transaction::TxnBuilder;
@@ -24,13 +23,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let approval_program = r#"
 #pragma version 4
 int 1
-"#;
+"#
+    .as_bytes();
 
     info!("creating clear program");
     let clear_program = r#"
 #pragma version 4
 int 1
-"#;
+"#
+    .as_bytes();
 
     info!("compiling approval program");
     let compiled_approval_program = algod.teal_compile(approval_program, None).await?;
@@ -47,8 +48,8 @@ int 1
         UpdateApplication::new(
             alice.address(),
             5,
-            CompiledTeal(compiled_approval_program.result.into_bytes()),
-            CompiledTeal(compiled_clear_program.result.into_bytes()),
+            compiled_approval_program,
+            compiled_clear_program,
         )
         .app_arguments(vec![vec![1, 0], vec![255]]) // for the program being upgraded
         .build(),

@@ -25,7 +25,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("building transaction");
     let t = TxnBuilder::with(
         &params,
-        CallApplication::new(alice.address(), 3)
+        // TODO set a correct app-id here
+        CallApplication::new(alice.address(), 5)
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )
