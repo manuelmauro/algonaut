@@ -5,7 +5,6 @@ use algonaut::transaction::transaction::StateSchema;
 use algonaut::transaction::CreateApplication;
 use algonaut::transaction::TxnBuilder;
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::CompiledTeal;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -34,12 +33,14 @@ txna ApplicationArgs 1
 byte 0xFF
 ==
 &&
-"#;
+"#
+    .as_bytes();
 
     let clear_program = r#"
 #pragma version 4
 int 1
-"#;
+"#
+    .as_bytes();
 
     info!("compiling approval and clear programs");
     let compiled_approval_program = algod.teal_compile(approval_program, None).await?;
@@ -53,8 +54,8 @@ int 1
         &params,
         CreateApplication::new(
             alice.address(),
-            CompiledTeal(compiled_approval_program.result.into_bytes()),
-            CompiledTeal(compiled_clear_program.result.into_bytes()),
+            compiled_approval_program,
+            compiled_clear_program,
             StateSchema {
                 number_ints: 0,
                 number_byteslices: 0,

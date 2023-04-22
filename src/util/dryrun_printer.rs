@@ -95,22 +95,16 @@ pub async fn create_dryrun_with_settings(
 
 fn to_application(app_call: &ApplicationCallTransaction, sender: &Address) -> Application {
     let params = ApplicationParams {
-        approval_program: String::from_utf8(
-            app_call
-                .approval_program
-                .clone()
-                .map(|p| p.0)
-                .unwrap_or_default(),
-        )
-        .unwrap(),
-        clear_state_program: String::from_utf8(
-            app_call
-                .clear_state_program
-                .clone()
-                .map(|p| p.0)
-                .unwrap_or_default(),
-        )
-        .unwrap(),
+        approval_program: app_call
+            .approval_program
+            .clone()
+            .map(|p| p.0)
+            .unwrap_or_default(),
+        clear_state_program: app_call
+            .clear_state_program
+            .clone()
+            .map(|p| p.0)
+            .unwrap_or_default(),
         creator: (*sender).to_string(),
         global_state: Some(vec![]),
         global_state_schema: app_call

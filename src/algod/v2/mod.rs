@@ -7,11 +7,12 @@ use algonaut_algod::{
         GetPendingTransactionsByAddress200Response, GetStatus200Response, GetSupply200Response,
         GetSyncRound200Response, GetTransactionProof200Response, LightBlockHeaderProof,
         PendingTransactionResponse, RawTransaction200Response, SimulateRequest,
-        SimulateTransaction200Response, StateProof, TealCompile200Response,
-        TealDisassemble200Response, TealDryrun200Response, TransactionParams200Response, Version,
+        SimulateTransaction200Response, StateProof, TealDisassemble200Response,
+        TealDryrun200Response, TransactionParams200Response, Version,
     },
 };
-use algonaut_core::ToMsgPack;
+use algonaut_core::{CompiledTeal, ToMsgPack};
+use algonaut_encoding::decode_base64;
 use algonaut_transaction::SignedTransaction;
 
 use self::error::AlgodError;
@@ -407,14 +408,20 @@ impl Algod {
     /// Given TEAL source code in plain text, return base64 encoded program bytes and base32 SHA512_256 hash of program bytes (Address style). This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
     pub async fn teal_compile(
         &self,
-        source: &str,
+        source: &[u8],
         sourcemap: Option<bool>,
-    ) -> Result<TealCompile200Response, ServiceError> {
-        Ok(
+    ) -> Result<CompiledTeal, ServiceError> {
+        let api_compiled_teal =
             algonaut_algod::apis::public_api::teal_compile(&self.configuration, source, sourcemap)
                 .await
-                .map_err(|e| Into::<AlgodError>::into(e))?,
-        )
+                .map_err(|e| Into::<AlgodError>::into(e))?;
+        // The api result (program + hash) is mapped to the domain program struct, which computes the hash on demand.
+        // The hash here is redundant and we want to allow to generate it with the SDK too (e.g. for when loading programs from a DB).
+        // At the moment it seems not warranted to add a cache (so it's initialized with the API hash or lazily), but this can be re-evaluated.
+        // Note that for contract accounts, there's [ContractAccount](algonaut_transaction::account::ContractAccount), which caches it (as address).
+        Ok(CompiledTeal(decode_base64(
+            api_compiled_teal.result.as_bytes(),
+        )?))
     }
 
     /// Given the program bytes, return the TEAL source code in plain text. This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
