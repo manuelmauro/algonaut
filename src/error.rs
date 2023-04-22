@@ -101,32 +101,66 @@ impl From<crate::algod::v2::error::AlgodError> for Error {
     }
 }
 
-impl From<algonaut_client::error::ClientError> for Error {
-    fn from(error: algonaut_client::error::ClientError) -> Self {
+impl From<algonaut_indexer::error::ClientError> for Error {
+    fn from(error: algonaut_indexer::error::ClientError) -> Self {
         match error {
-            algonaut_client::error::ClientError::BadUrl(msg) => Error::BadUrl(msg),
-            algonaut_client::error::ClientError::BadToken => Error::BadToken,
-            algonaut_client::error::ClientError::BadHeader(msg) => Error::BadHeader(msg),
-            algonaut_client::error::ClientError::Request(e) => Error::Request(e.into()),
-            algonaut_client::error::ClientError::Msg(msg) => Error::Msg(msg),
+            algonaut_indexer::error::ClientError::BadUrl(msg) => Error::BadUrl(msg),
+            algonaut_indexer::error::ClientError::BadToken => Error::BadToken,
+            algonaut_indexer::error::ClientError::BadHeader(msg) => Error::BadHeader(msg),
+            algonaut_indexer::error::ClientError::Request(e) => Error::Request(e.into()),
+            algonaut_indexer::error::ClientError::Msg(msg) => Error::Msg(msg),
         }
     }
 }
 
-impl From<algonaut_client::error::RequestError> for RequestError {
-    fn from(error: algonaut_client::error::RequestError) -> Self {
+impl From<algonaut_indexer::error::RequestError> for RequestError {
+    fn from(error: algonaut_indexer::error::RequestError) -> Self {
         RequestError::new(error.url.clone(), error.details.into())
     }
 }
 
-impl From<algonaut_client::error::RequestErrorDetails> for RequestErrorDetails {
-    fn from(details: algonaut_client::error::RequestErrorDetails) -> Self {
+impl From<algonaut_indexer::error::RequestErrorDetails> for RequestErrorDetails {
+    fn from(details: algonaut_indexer::error::RequestErrorDetails) -> Self {
         match details {
-            algonaut_client::error::RequestErrorDetails::Http { status, message } => {
+            algonaut_indexer::error::RequestErrorDetails::Http { status, message } => {
                 RequestErrorDetails::Http { status, message }
             }
-            algonaut_client::error::RequestErrorDetails::Timeout => RequestErrorDetails::Timeout {},
-            algonaut_client::error::RequestErrorDetails::Client { description } => {
+            algonaut_indexer::error::RequestErrorDetails::Timeout => {
+                RequestErrorDetails::Timeout {}
+            }
+            algonaut_indexer::error::RequestErrorDetails::Client { description } => {
+                RequestErrorDetails::Client { description }
+            }
+        }
+    }
+}
+
+impl From<algonaut_kmd::error::ClientError> for Error {
+    fn from(error: algonaut_kmd::error::ClientError) -> Self {
+        match error {
+            algonaut_kmd::error::ClientError::BadUrl(msg) => Error::BadUrl(msg),
+            algonaut_kmd::error::ClientError::BadToken => Error::BadToken,
+            algonaut_kmd::error::ClientError::BadHeader(msg) => Error::BadHeader(msg),
+            algonaut_kmd::error::ClientError::Request(e) => Error::Request(e.into()),
+            algonaut_kmd::error::ClientError::Msg(msg) => Error::Msg(msg),
+        }
+    }
+}
+
+impl From<algonaut_kmd::error::RequestError> for RequestError {
+    fn from(error: algonaut_kmd::error::RequestError) -> Self {
+        RequestError::new(error.url.clone(), error.details.into())
+    }
+}
+
+impl From<algonaut_kmd::error::RequestErrorDetails> for RequestErrorDetails {
+    fn from(details: algonaut_kmd::error::RequestErrorDetails) -> Self {
+        match details {
+            algonaut_kmd::error::RequestErrorDetails::Http { status, message } => {
+                RequestErrorDetails::Http { status, message }
+            }
+            algonaut_kmd::error::RequestErrorDetails::Timeout => RequestErrorDetails::Timeout {},
+            algonaut_kmd::error::RequestErrorDetails::Client { description } => {
                 RequestErrorDetails::Client { description }
             }
         }

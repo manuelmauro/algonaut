@@ -1,22 +1,25 @@
 [package]
-authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
+authors = [
+    "Manuel Mauro <manuel.mauro@protonmail.com>",
+    "Ivan Schuetz <ivanhp978@gmail.com>",
+]
 description = "API clients for the Algorand blockchain."
 edition = "2018"
 keywords = ["Algorand", "sdk"]
 license = "MIT"
-name = "algonaut_client"
+name = "algonaut_kmd"
 repository = "https://github.com/manuelmauro/algonaut"
 version = "0.4.2"
 
 [dependencies]
-algonaut_model = {path = "../algonaut_model", version = "0.4.2"}
-algonaut_core = {path = "../algonaut_core", version = "0.4.2"}
-algonaut_crypto = {path = "../algonaut_crypto", version = "0.4.2"}
-algonaut_encoding = {path = "../algonaut_encoding", version = "0.4.2"}
+algonaut_model = { path = "../algonaut_model", version = "0.4.2" }
+algonaut_core = { path = "../algonaut_core", version = "0.4.2" }
+algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }
+algonaut_encoding = { path = "../algonaut_encoding", version = "0.4.2" }
 data-encoding = "2.3.1"
 derive_more = "0.99.13"
-reqwest = {version = "0.11", features = ["json"], default-features = false}
-serde = {version = "1.0", features = ["derive"]}
+reqwest = { version = "0.11", features = ["json"], default-features = false }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.40"
 thiserror = "1.0.23"
 url = "2.2.0"

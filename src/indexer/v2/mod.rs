@@ -1,5 +1,5 @@
-use algonaut_client::{indexer::v2::Client, Headers};
 use algonaut_core::{Address, Round};
+use algonaut_indexer::{indexer::v2::Client, Headers};
 use algonaut_model::indexer::v2::{
     AccountInfoResponse, AccountResponse, AccountTransactionResponse, ApplicationInfoResponse,
     ApplicationResponse, AssetResponse, AssetTransactionResponse, AssetsInfoResponse,

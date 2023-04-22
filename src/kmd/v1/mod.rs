@@ -1,7 +1,7 @@
 use crate::Error;
-use algonaut_client::{kmd::v1::Client, token::ApiToken, Headers};
 use algonaut_core::{Address, MultisigSignature, ToMsgPack};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
+use algonaut_kmd::{kmd::v1::Client, token::ApiToken, Headers};
 use algonaut_model::kmd::v1::{
     CreateWalletResponse, DeleteKeyResponse, DeleteMultisigResponse, ExportKeyResponse,
     ExportMasterDerivationKeyResponse, ExportMultisigResponse, GenerateKeyResponse,

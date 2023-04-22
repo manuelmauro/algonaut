@@ -14,22 +14,24 @@ version = "0.4.2"
 [workspace]
 members = [
   "algonaut_algod",
-  "algonaut_client",
   "algonaut_model",
   "algonaut_core",
   "algonaut_crypto",
   "algonaut_encoding",
+  "algonaut_indexer",
+  "algonaut_kmd",
   "algonaut_transaction",
   "algonaut_abi",
 ]
 
 [dependencies]
 algonaut_algod = { path = "algonaut_algod", version = "0.4.2" }
-algonaut_client = { path = "algonaut_client", version = "0.4.2", default-features = false }
 algonaut_model = { path = "algonaut_model", version = "0.4.2" }
 algonaut_core = { path = "algonaut_core", version = "0.4.2" }
 algonaut_crypto = { path = "algonaut_crypto", version = "0.4.2" }
 algonaut_encoding = { path = "algonaut_encoding", version = "0.4.2" }
+algonaut_indexer = { path = "algonaut_indexer", version = "0.4.2", default-features = false }
+algonaut_kmd = { path = "algonaut_kmd", version = "0.4.2", default-features = false }
 algonaut_transaction = { path = "algonaut_transaction", version = "0.4.2" }
 algonaut_abi = { path = "algonaut_abi", version = "0.4.2" }
 data-encoding = "2.3.1"
@@ -59,8 +61,8 @@ async-trait = "0.1.51"
 
 [features]
 default = ["native"]
-native = ["algonaut_client/native"]
-rustls = ["algonaut_client/rustls"]
+native = ["algonaut_indexer/native", "algonaut_kmd/native"]
+rustls = ["algonaut_indexer/rustls", "algonaut_indexer/rustls"]
 
 [[test]]
 name = "features_runner"
