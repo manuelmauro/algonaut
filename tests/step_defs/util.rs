@@ -20,7 +20,7 @@ pub async fn wait_for_pending_transaction(
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {
-        let pending_transaction = algod.pending_transaction_information(txid).await?;
+        let pending_transaction = algod.pending_txn(txid).await?;
         // If the transaction has been confirmed or we time out, exit.
         if pending_transaction.confirmed_round.is_some() {
             return Ok(Some(pending_transaction));

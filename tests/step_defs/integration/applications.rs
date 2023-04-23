@@ -45,7 +45,7 @@ async fn i_build_an_application_transaction(
     let foreign_apps = split_uint64(&foreign_apps)?;
     let foreign_assets = split_uint64(&foreign_assets)?;
 
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     let tx_type = match operation.as_str() {
         "create" => {
@@ -156,7 +156,7 @@ async fn i_remember_the_new_application_id(w: &mut World) {
     let tx_id = w.tx_id.as_ref().unwrap();
     let app_ids: &mut Vec<u64> = w.app_ids.as_mut();
 
-    let p_tx = algod.pending_transaction_information(tx_id).await.unwrap();
+    let p_tx = algod.pending_txn(tx_id).await.unwrap();
     assert!(p_tx.application_index.is_some());
     let app_id = p_tx.application_index.unwrap();
 
@@ -181,7 +181,7 @@ async fn the_transient_account_should_have(
     let app_id = w.app_id.unwrap();
 
     let account_infos = algod
-        .account_information(&transient_account.address().to_string())
+        .account(&transient_account.address().to_string())
         .await
         .unwrap();
 

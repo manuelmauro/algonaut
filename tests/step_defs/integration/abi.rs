@@ -799,10 +799,7 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
 
     let app_address = to_app_address(app_id);
 
-    let tx_params = algod
-        .transaction_params()
-        .await
-        .expect("couldn't get params");
+    let tx_params = algod.txn_params().await.expect("couldn't get params");
 
     let tx = TxnBuilder::with(
         &tx_params,
@@ -817,7 +814,7 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
         .expect("couldn't sign tx");
 
     let res = algod
-        .raw_transaction(&signed_tx.signed_transaction)
+        .send_raw_txn(&signed_tx.signed_transaction)
         .await
         .expect("couldn't send tx");
 
