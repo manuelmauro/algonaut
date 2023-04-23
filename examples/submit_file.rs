@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.broadcast_raw_transaction(&raw_transaction).await?;
+    let send_response = algod.send_raw_txn(&raw_transaction).await?;
     info!("transaction ID: {}", send_response.tx_id);
 
     Ok(())

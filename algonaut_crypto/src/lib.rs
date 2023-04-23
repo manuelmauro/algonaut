@@ -20,7 +20,7 @@ pub enum HashType {
 }
 
 /// A SHA512_256 hash
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct HashDigest(pub [u8; 32]);
 
 impl FromStr for HashDigest {
@@ -156,6 +156,19 @@ where
     D: Deserializer<'de>,
 {
     Ok(HashDigest(deserialize_bytes32(deserializer)?))
+}
+
+pub fn deserialize_opt_hash<'de, D>(deserializer: D) -> Result<Option<HashDigest>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    // TODO needs testing
+    let hash = deserialize_bytes32(deserializer)?;
+    if hash == [0; 32] {
+        Ok(None)
+    } else {
+        Ok(Some(HashDigest(hash)))
+    }
 }
 
 pub fn deserialize_mdk<'de, D>(deserializer: D) -> Result<MasterDerivationKey, D::Error>

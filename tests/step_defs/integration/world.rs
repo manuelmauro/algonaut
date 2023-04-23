@@ -7,7 +7,8 @@ use algonaut::{
     kmd::v1::Kmd,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
-use algonaut_core::{Address, SuggestedTransactionParams};
+use algonaut_algod::models::TransactionParams200Response;
+use algonaut_core::Address;
 use algonaut_transaction::{account::Account, SignedTransaction, Transaction};
 use cucumber;
 
@@ -28,7 +29,7 @@ pub struct World {
     pub app_id: Option<u64>,
     pub app_ids: Vec<u64>,
 
-    pub tx_params: Option<SuggestedTransactionParams>,
+    pub tx_params: Option<TransactionParams200Response>,
 
     pub note: Option<Vec<u8>>,
 

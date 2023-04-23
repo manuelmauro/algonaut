@@ -20,12 +20,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building TransferAsset transaction");
     let t = TxnBuilder::with(
         &params,
-        TransferAsset::new(alice.address(), 21, 1, bob.address()).build(),
+        TransferAsset::new(alice.address(), 16, 1, bob.address()).build(),
     )
     .build()?;
 
@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_signed_transaction(&sign_response).await;
+    let send_response = algod.send_txn(&sign_response).await;
     info!("response: {:?}", send_response);
 
     Ok(())

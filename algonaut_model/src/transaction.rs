@@ -17,7 +17,7 @@ use std::collections::HashMap;
 ///
 /// We intentionally don't use `skip_serializing_if` for values other than `Option` for a consistent representation of optionals.
 ///
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ApiTransaction {
     #[serde(rename = "aamt", skip_serializing_if = "Option::is_none")]
     pub asset_amount: Option<u64>,
@@ -182,7 +182,7 @@ pub struct ApiSignedLogic {
     pub sig: Option<Signature>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ApiSignedTransaction {
     #[serde(rename = "lsig", skip_serializing_if = "Option::is_none")]
     pub lsig: Option<ApiSignedLogic>,

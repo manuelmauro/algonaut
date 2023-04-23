@@ -34,13 +34,13 @@ int 1
     .as_bytes();
 
     info!("compiling approval program");
-    let compiled_approval_program = algod.compile_teal(&approval_program).await?;
+    let compiled_approval_program = algod.teal_compile(approval_program, None).await?;
 
     info!("compiling approval program");
-    let compiled_clear_program = algod.compile_teal(&clear_program).await?;
+    let compiled_clear_program = algod.teal_compile(clear_program, None).await?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building UpdateApplication transaction");
     let t = TxnBuilder::with(
@@ -60,7 +60,7 @@ int 1
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+    let send_response = algod.send_txn(&signed_t).await?;
     info!("response: {:?}", send_response);
 
     Ok(())

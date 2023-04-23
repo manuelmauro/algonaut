@@ -13,33 +13,39 @@ version = "0.4.2"
 
 [workspace]
 members = [
-  "algonaut_client",
+  "algonaut_algod",
   "algonaut_model",
   "algonaut_core",
   "algonaut_crypto",
   "algonaut_encoding",
+  "algonaut_indexer",
+  "algonaut_kmd",
   "algonaut_transaction",
   "algonaut_abi",
 ]
 
 [dependencies]
-algonaut_client = { path = "algonaut_client", version = "0.4.2", default-features = false }
+algonaut_algod = { path = "algonaut_algod", version = "0.4.2" }
 algonaut_model = { path = "algonaut_model", version = "0.4.2" }
 algonaut_core = { path = "algonaut_core", version = "0.4.2" }
 algonaut_crypto = { path = "algonaut_crypto", version = "0.4.2" }
 algonaut_encoding = { path = "algonaut_encoding", version = "0.4.2" }
+algonaut_indexer = { path = "algonaut_indexer", version = "0.4.2", default-features = false }
+algonaut_kmd = { path = "algonaut_kmd", version = "0.4.2", default-features = false }
 algonaut_transaction = { path = "algonaut_transaction", version = "0.4.2" }
 algonaut_abi = { path = "algonaut_abi", version = "0.4.2" }
-log = "0.4.0"
+data-encoding = "2.3.1"
 env_logger = "0.10.0"
-thiserror = "1.0.23"
-rmp-serde = "1.0.0"
-num-traits = "0.2.14"
-num-bigint = "0.4.3"
 futures-timer = "3.0.2"
 instant = { version = "0.1", features = ["now"] }
-data-encoding = "2.3.1"
+log = "0.4.0"
+num-bigint = "0.4.3"
+num-traits = "0.2.14"
+reqwest = "0.11.16"
+rmp-serde = "1.0.0"
+serde_json = "1.0.0"
 sha2 = "0.10.1"
+thiserror = "1.0.23"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 gloo-timers = { version = "0.2.4", features = ["futures"] }
@@ -55,10 +61,11 @@ async-trait = "0.1.51"
 
 [features]
 default = ["native"]
-native = ["algonaut_client/native"]
-rustls = ["algonaut_client/rustls"]
+native = ["algonaut_indexer/native", "algonaut_kmd/native"]
+rustls = ["algonaut_indexer/rustls", "algonaut_indexer/rustls"]
 
 [[test]]
 name = "features_runner"
 # Allows Cucumber to print output instead of libtest
 harness = false
+test = false

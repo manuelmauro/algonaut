@@ -1,6 +1,7 @@
-use algonaut_client::{kmd::v1::Client, token::ApiToken, Headers};
+use crate::Error;
 use algonaut_core::{Address, MultisigSignature, ToMsgPack};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
+use algonaut_kmd::{kmd::v1::Client, token::ApiToken, Headers};
 use algonaut_model::kmd::v1::{
     CreateWalletResponse, DeleteKeyResponse, DeleteMultisigResponse, ExportKeyResponse,
     ExportMasterDerivationKeyResponse, ExportMultisigResponse, GenerateKeyResponse,
@@ -10,8 +11,6 @@ use algonaut_model::kmd::v1::{
     SignTransactionResponse, VersionsResponse,
 };
 use algonaut_transaction::Transaction;
-
-use crate::error::ServiceError;
 
 #[derive(Debug, Clone)]
 pub struct Kmd {
@@ -24,7 +23,7 @@ impl Kmd {
     /// For third party providers / custom headers, use [with_headers](Self::with_headers).
     ///
     /// Returns an error if the url or token have an invalid format.
-    pub fn new(url: &str, token: &str) -> Result<Kmd, ServiceError> {
+    pub fn new(url: &str, token: &str) -> Result<Kmd, Error> {
         Self::with_headers(
             url,
             vec![("X-KMD-API-Token", &ApiToken::parse(token)?.to_string())],
@@ -36,19 +35,19 @@ impl Kmd {
     /// Use this initializer when interfacing with third party services, that require custom headers.
     ///
     /// Returns an error if the url or headers have an invalid format.
-    pub fn with_headers(url: &str, headers: Headers) -> Result<Kmd, ServiceError> {
+    pub fn with_headers(url: &str, headers: Headers) -> Result<Kmd, Error> {
         Ok(Kmd {
             client: Client::new(url, headers)?,
         })
     }
 
     /// Retrieves the current version
-    pub async fn versions(&self) -> Result<VersionsResponse, ServiceError> {
+    pub async fn versions(&self) -> Result<VersionsResponse, Error> {
         Ok(self.client.versions().await?)
     }
 
     /// List all of the wallets that kmd is aware of
-    pub async fn list_wallets(&self) -> Result<ListWalletsResponse, ServiceError> {
+    pub async fn list_wallets(&self) -> Result<ListWalletsResponse, Error> {
         Ok(self.client.list_wallets().await?)
     }
 
@@ -59,7 +58,7 @@ impl Kmd {
         wallet_password: &str,
         wallet_driver_name: &str,
         master_derivation_key: MasterDerivationKey,
-    ) -> Result<CreateWalletResponse, ServiceError> {
+    ) -> Result<CreateWalletResponse, Error> {
         Ok(self
             .client
             .create_wallet(
@@ -81,7 +80,7 @@ impl Kmd {
         &self,
         wallet_id: &str,
         wallet_password: &str,
-    ) -> Result<InitWalletHandleResponse, ServiceError> {
+    ) -> Result<InitWalletHandleResponse, Error> {
         Ok(self
             .client
             .init_wallet_handle(wallet_id, wallet_password)
@@ -92,7 +91,7 @@ impl Kmd {
     pub async fn release_wallet_handle(
         &self,
         wallet_handle: &str,
-    ) -> Result<ReleaseWalletHandleResponse, ServiceError> {
+    ) -> Result<ReleaseWalletHandleResponse, Error> {
         Ok(self.client.release_wallet_handle(wallet_handle).await?)
     }
 
@@ -100,7 +99,7 @@ impl Kmd {
     pub async fn renew_wallet_handle(
         &self,
         wallet_handle: &str,
-    ) -> Result<RenewWalletHandleResponse, ServiceError> {
+    ) -> Result<RenewWalletHandleResponse, Error> {
         Ok(self.client.renew_wallet_handle(wallet_handle).await?)
     }
 
@@ -110,7 +109,7 @@ impl Kmd {
         wallet_id: &str,
         wallet_password: &str,
         new_name: &str,
-    ) -> Result<RenameWalletResponse, ServiceError> {
+    ) -> Result<RenameWalletResponse, Error> {
         Ok(self
             .client
             .rename_wallet(wallet_id, wallet_password, new_name)
@@ -121,7 +120,7 @@ impl Kmd {
     pub async fn get_wallet_info(
         &self,
         wallet_handle: &str,
-    ) -> Result<GetWalletInfoResponse, ServiceError> {
+    ) -> Result<GetWalletInfoResponse, Error> {
         Ok(self.client.get_wallet_info(wallet_handle).await?)
     }
 
@@ -130,7 +129,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-    ) -> Result<ExportMasterDerivationKeyResponse, ServiceError> {
+    ) -> Result<ExportMasterDerivationKeyResponse, Error> {
         Ok(self
             .client
             .export_master_derivation_key(wallet_handle, wallet_password)
@@ -142,7 +141,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         private_key: [u8; 32],
-    ) -> Result<ImportKeyResponse, ServiceError> {
+    ) -> Result<ImportKeyResponse, Error> {
         Ok(self.client.import_key(wallet_handle, private_key).await?)
     }
 
@@ -154,7 +153,7 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         address: &Address,
-    ) -> Result<ExportKeyResponse, ServiceError> {
+    ) -> Result<ExportKeyResponse, Error> {
         Ok(self
             .client
             .export_key(wallet_handle, wallet_password, address)
@@ -162,10 +161,7 @@ impl Kmd {
     }
 
     /// Generates a key and adds it to the wallet, returning the public key
-    pub async fn generate_key(
-        &self,
-        wallet_handle: &str,
-    ) -> Result<GenerateKeyResponse, ServiceError> {
+    pub async fn generate_key(&self, wallet_handle: &str) -> Result<GenerateKeyResponse, Error> {
         Ok(self.client.generate_key(wallet_handle).await?)
     }
 
@@ -175,7 +171,7 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteKeyResponse, ServiceError> {
+    ) -> Result<DeleteKeyResponse, Error> {
         Ok(self
             .client
             .delete_key(wallet_handle, wallet_password, address)
@@ -183,7 +179,7 @@ impl Kmd {
     }
 
     /// List all of the public keys in the wallet
-    pub async fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, ServiceError> {
+    pub async fn list_keys(&self, wallet_handle: &str) -> Result<ListKeysResponse, Error> {
         Ok(self.client.list_keys(wallet_handle).await?)
     }
 
@@ -193,7 +189,7 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         transaction: &Transaction,
-    ) -> Result<SignTransactionResponse, ServiceError> {
+    ) -> Result<SignTransactionResponse, Error> {
         Ok(self
             .client
             .sign_transaction(wallet_handle, wallet_password, transaction.to_msg_pack()?)
@@ -201,10 +197,7 @@ impl Kmd {
     }
 
     /// Lists all of the multisig accounts whose preimages this wallet stores
-    pub async fn list_multisig(
-        &self,
-        wallet_handle: &str,
-    ) -> Result<ListMultisigResponse, ServiceError> {
+    pub async fn list_multisig(&self, wallet_handle: &str) -> Result<ListMultisigResponse, Error> {
         Ok(self.client.list_multisig(wallet_handle).await?)
     }
 
@@ -215,7 +208,7 @@ impl Kmd {
         version: u8,
         threshold: u8,
         pks: &[Ed25519PublicKey],
-    ) -> Result<ImportMultisigResponse, ServiceError> {
+    ) -> Result<ImportMultisigResponse, Error> {
         Ok(self
             .client
             .import_multisig(wallet_handle, version, threshold, pks)
@@ -227,7 +220,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         address: &str,
-    ) -> Result<ExportMultisigResponse, ServiceError> {
+    ) -> Result<ExportMultisigResponse, Error> {
         Ok(self.client.export_multisig(wallet_handle, address).await?)
     }
 
@@ -237,7 +230,7 @@ impl Kmd {
         wallet_handle: &str,
         wallet_password: &str,
         address: &str,
-    ) -> Result<DeleteMultisigResponse, ServiceError> {
+    ) -> Result<DeleteMultisigResponse, Error> {
         Ok(self
             .client
             .delete_multisig(wallet_handle, wallet_password, address)
@@ -254,7 +247,7 @@ impl Kmd {
         transaction: &Transaction,
         public_key: Ed25519PublicKey,
         partial_multisig: Option<MultisigSignature>,
-    ) -> Result<SignMultisigTransactionResponse, ServiceError> {
+    ) -> Result<SignMultisigTransactionResponse, Error> {
         Ok(self
             .client
             .sign_multisig_transaction(

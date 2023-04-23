@@ -1,5 +1,5 @@
 use algonaut::algod::v2::Algod;
-use algonaut::core::{VotePk, VrfPk};
+use algonaut::core::{Round, VotePk, VrfPk};
 use algonaut::transaction::RegisterKey;
 use algonaut::transaction::{account::Account, TxnBuilder};
 use dotenv::dotenv;
@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let selection_pk_str = "A3s+2bgKlbG9qIaA4wJsrrJl8mVKGzTp/h6gGEyZmAg=";
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building RegisterKey transaction");
     let t = TxnBuilder::with(
@@ -32,8 +32,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             alice.address(),
             VotePk::from_base64_str(vote_pk_str)?,
             VrfPk::from_base64_str(selection_pk_str)?,
-            params.first_valid,
-            params.first_valid + 3_000_000,
+            Round(params.last_round),
+            Round(params.last_round + 3_000_000),
             10_000,
         )
         .build(),
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_signed_transaction(&sign_response).await;
+    let send_response = algod.send_txn(&sign_response).await;
     info!("{:?}", send_response);
 
     Ok(())

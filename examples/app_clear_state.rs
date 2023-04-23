@@ -20,17 +20,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building CreateApplication transaction");
     // to test this, create an application that sets local state and opt-in, for/with the account sending this transaction.
-    let t = TxnBuilder::with(&params, ClearApplication::new(alice.address(), 3).build()).build()?;
+    // TODO set a correct app-id here
+    let t =
+        TxnBuilder::with(&params, ClearApplication::new(alice.address(), 11).build()).build()?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.broadcast_signed_transaction(&signed_t).await?;
+    let send_response = algod.send_txn(&signed_t).await?;
     info!("response: {:?}", send_response);
 
     Ok(())

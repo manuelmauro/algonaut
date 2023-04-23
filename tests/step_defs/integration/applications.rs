@@ -1,6 +1,6 @@
 use crate::step_defs::integration::world::World;
 use crate::step_defs::util::{parse_app_args, read_teal, split_addresses, split_uint64};
-use algonaut_model::algod::v2::{Application, ApplicationLocalState};
+use algonaut_algod::models::{Application, ApplicationLocalState};
 use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,
     UpdateApplication,
@@ -45,7 +45,7 @@ async fn i_build_an_application_transaction(
     let foreign_apps = split_uint64(&foreign_apps)?;
     let foreign_assets = split_uint64(&foreign_assets)?;
 
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     let tx_type = match operation.as_str() {
         "create" => {
@@ -156,7 +156,7 @@ async fn i_remember_the_new_application_id(w: &mut World) {
     let tx_id = w.tx_id.as_ref().unwrap();
     let app_ids: &mut Vec<u64> = w.app_ids.as_mut();
 
-    let p_tx = algod.pending_transaction_with_id(tx_id).await.unwrap();
+    let p_tx = algod.pending_txn(tx_id).await.unwrap();
     assert!(p_tx.application_index.is_some());
     let app_id = p_tx.application_index.unwrap();
 
@@ -181,17 +181,22 @@ async fn the_transient_account_should_have(
     let app_id = w.app_id.unwrap();
 
     let account_infos = algod
-        .account_information(&transient_account.address())
+        .account(&transient_account.address().to_string())
         .await
         .unwrap();
 
-    assert!(account_infos.apps_total_schema.is_some());
-    let total_schema = account_infos.apps_total_schema.unwrap();
+    assert!(account_infos.clone().apps_total_schema.is_some());
+    let total_schema = account_infos.clone().apps_total_schema.unwrap();
 
     assert_eq!(byte_slices, total_schema.num_byte_slice);
     assert_eq!(uints, total_schema.num_uint);
 
-    let app_in_account = account_infos.created_apps.iter().any(|a| a.id == app_id);
+    let app_in_account = account_infos
+        .clone()
+        .created_apps
+        .unwrap()
+        .iter()
+        .any(|a| a.id == app_id);
 
     match (app_created, app_in_account) {
         (true, false) => Err(format!("AppId {} is not found in the account", app_id))?,
@@ -209,10 +214,12 @@ async fn the_transient_account_should_have(
     let key_values = match application_state.to_lowercase().as_ref() {
         "local" => {
             let local_state = account_infos
+                .clone()
                 .apps_local_state
-                .iter()
+                .unwrap()
+                .into_iter()
                 .filter(|s| s.id == app_id)
-                .collect::<Vec<&ApplicationLocalState>>();
+                .collect::<Vec<ApplicationLocalState>>();
 
             let len = local_state.len();
             if len == 1 {
@@ -226,10 +233,12 @@ async fn the_transient_account_should_have(
         }
         "global" => {
             let apps = account_infos
+                .clone()
                 .created_apps
-                .iter()
+                .unwrap()
+                .into_iter()
                 .filter(|s| s.id == app_id)
-                .collect::<Vec<&Application>>();
+                .collect::<Vec<Application>>();
 
             let len = apps.len();
             if len == 1 {
@@ -241,15 +250,15 @@ async fn the_transient_account_should_have(
         _ => Err(format!("Unknown application state: {}", application_state))?,
     };
 
-    if key_values.is_empty() {
+    if key_values.is_none() {
         Err("Expected key values length to be greater than 0")?
     }
 
     let mut key_value_found = false;
-    for key_value in key_values.iter().filter(|kv| kv.key == key) {
-        if key_value.value.value_type == 1 {
+    for key_value in key_values.unwrap().iter().filter(|kv| kv.key == key) {
+        if (*key_value.value).value_type == 1 {
             let value_bytes = BASE64.decode(value.as_bytes())?;
-            if key_value.value.bytes != value_bytes {
+            if (*key_value.value).bytes != value_bytes {
                 Err(format!(
                     "Value mismatch (bytes): expected: '{:?}', got '{:?}'",
                     value_bytes, key_value.value.bytes
@@ -274,13 +283,3 @@ async fn the_transient_account_should_have(
 
     Ok(())
 }
-
-// fn load_teal(file_name: &str) -> Result<Vec<u8>, Box<dyn Error>> {
-//     Ok(fs::read(format!("tests/features/resources/{}", file_name))?)
-// }
-
-// async fn load_and_compile_teal(algod: &Algod, file_name: &str) -> Result<Vec<CompiledTeal> {
-//     let source = load_teal(file_name)?;
-
-//     Ok(fs::read(format!("tests/features/resources/{}", file_name))?)
-// }

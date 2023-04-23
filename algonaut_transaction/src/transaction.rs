@@ -21,7 +21,7 @@ use std::fmt::Debug;
 use std::fmt::Formatter;
 
 /// Enum containing the types of transactions and their specific fields
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TransactionType {
     Payment(Payment),
     KeyRegistration(KeyRegistration),
@@ -35,7 +35,7 @@ pub enum TransactionType {
 }
 
 /// A transaction that can appear in a block
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Transaction {
     /// Paid by the sender to the FeeSink to prevent denial-of-service. The minimum fee on Algorand
     /// is currently 1000 microAlgos.
@@ -325,7 +325,7 @@ pub struct AssetFreezeTransaction {
 }
 
 ///
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ApplicationCallTransaction {
     /// The address of the account that signs and pays the fee.
     pub sender: Address,
@@ -416,7 +416,7 @@ pub struct StateSchema {
 
 /// Wraps a transaction in a signature. The encoding of this struct is suitable to be broadcast
 /// on the network
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SignedTransaction {
     pub transaction: Transaction,
     pub transaction_id: String,

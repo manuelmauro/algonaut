@@ -1,9 +1,10 @@
-use crate::{algod::v2::Algod, error::ServiceError};
-use algonaut_core::{to_app_address, Address, Round};
-use algonaut_model::algod::v2::{
+use crate::{algod::v2::Algod, Error};
+use algonaut_algod::models::{
     Application, ApplicationParams, ApplicationStateSchema, DryrunRequest, DryrunState,
     DryrunTxnResult, TealValue,
 };
+use algonaut_core::{to_app_address, Address};
+use algonaut_encoding::Bytes;
 use algonaut_transaction::{
     transaction::{ApplicationCallTransaction, StateSchema},
     SignedTransaction, TransactionType,
@@ -17,8 +18,8 @@ const DEFAULT_MAX_WIDTH: usize = 30;
 pub async fn create_dryrun(
     algod: &Algod,
     signed_txs: &[SignedTransaction],
-) -> Result<DryrunRequest, ServiceError> {
-    create_dryrun_with_settings(algod, signed_txs, "", 0, Round(0)).await
+) -> Result<DryrunRequest, Error> {
+    create_dryrun_with_settings(algod, signed_txs, "", 0, 0).await
 }
 
 pub async fn create_dryrun_with_settings(
@@ -26,10 +27,10 @@ pub async fn create_dryrun_with_settings(
     signed_txs: &[SignedTransaction],
     protocol_version: &str,
     latest_timestamp: u64,
-    round: Round,
-) -> Result<DryrunRequest, ServiceError> {
+    round: u64,
+) -> Result<DryrunRequest, Error> {
     if signed_txs.is_empty() {
-        return Err(ServiceError::Msg("No txs".to_owned()));
+        return Err(Error::Msg("No txs".to_owned()));
     }
 
     // The details we need to add to DryrunRequest object
@@ -67,18 +68,18 @@ pub async fn create_dryrun_with_settings(
     }
 
     for asset_id in assets {
-        let asset = algod.asset_information(asset_id).await?;
-        accts.insert(asset.params.creator);
+        let asset = algod.asset(asset_id).await?;
+        accts.insert(asset.params.creator.parse().unwrap());
     }
 
     for app_id in apps {
-        let app = algod.application_information(app_id).await?;
-        accts.insert(app.params.creator);
+        let app = algod.app(app_id).await?;
+        accts.insert(app.params.creator.parse().unwrap());
         app_infos.push(app);
     }
 
     for address in accts {
-        let acc = algod.account_information(&address).await?;
+        let acc = algod.account(address.to_string().as_str()).await?;
         acct_infos.push(acc);
     }
 
@@ -95,31 +96,39 @@ pub async fn create_dryrun_with_settings(
 
 fn to_application(app_call: &ApplicationCallTransaction, sender: &Address) -> Application {
     let params = ApplicationParams {
-        approval_program: app_call
-            .approval_program
-            .clone()
-            .map(|p| p.0)
-            .unwrap_or_default(),
-        clear_state_program: app_call
-            .clear_state_program
-            .clone()
-            .map(|p| p.0)
-            .unwrap_or_default(),
-        creator: *sender,
-        global_state: vec![],
+        approval_program: Bytes(
+            app_call
+                .approval_program
+                .clone()
+                .map(|p| p.0)
+                .unwrap_or_default(),
+        ),
+        clear_state_program: Bytes(
+            app_call
+                .clear_state_program
+                .clone()
+                .map(|p| p.0)
+                .unwrap_or_default(),
+        ),
+        creator: (*sender).to_string(),
+        global_state: Some(vec![]),
         global_state_schema: app_call
             .global_state_schema
             .clone()
-            .map(to_application_state_schema),
+            .map(to_application_state_schema)
+            .map(Box::new),
         local_state_schema: app_call
             .local_state_schema
             .clone()
-            .map(to_application_state_schema),
+            .map(to_application_state_schema)
+            .map(Box::new),
+        // TODO add this
+        extra_program_pages: None,
     };
 
     Application {
         id: DEFAULT_APP_ID,
-        params,
+        params: Box::new(params),
     }
 }
 
@@ -176,7 +185,7 @@ fn truncate(s: &str, max_len: usize) -> String {
     }
 }
 
-fn stack_to_str(stack: &[TealValue], bytes_format: &BytesFormat) -> Result<String, ServiceError> {
+fn stack_to_str(stack: &[TealValue], bytes_format: &BytesFormat) -> Result<String, Error> {
     let mut elems = vec![];
     for value in stack {
         match value.value_type {
@@ -203,7 +212,7 @@ fn scratch_to_str(
     prev_scratch: &[TealValue],
     cur_scratch: &[TealValue],
     bytes_format: &BytesFormat,
-) -> Result<String, ServiceError> {
+) -> Result<String, Error> {
     if cur_scratch.is_empty() {
         return Ok("".to_owned());
     }
@@ -235,7 +244,7 @@ fn trace(
     state: &[DryrunState],
     disassembly: &[String],
     config: &StackPrinterConfig,
-) -> Result<String, ServiceError> {
+) -> Result<String, Error> {
     let mut lines = vec![vec![
         "pc#".to_owned(),
         "ln#".to_owned(),
@@ -254,7 +263,7 @@ fn trace(
 
         let cur_scratch = &s.scratch;
         let prev_scratch = if i > 0 {
-            state.to_owned().clone()[i - 1].clone().scratch
+            state[i - 1].clone().scratch.unwrap()
         } else {
             vec![]
         };
@@ -269,7 +278,11 @@ fn trace(
             format!("{:3}", s.line.to_string()),
             truncate(&src, config.max_column_widths.source),
             truncate(
-                &scratch_to_str(&prev_scratch, cur_scratch, &config.bytes_format)?,
+                &scratch_to_str(
+                    &prev_scratch,
+                    &cur_scratch.clone().unwrap()[..],
+                    &config.bytes_format,
+                )?,
                 config.max_column_widths.scratch,
             ),
             truncate(
@@ -309,9 +322,9 @@ fn pad(s: &str, len: usize) -> String {
     format!("{s}{}", str::repeat(" ", len - s.len()))
 }
 
-pub fn app_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
+pub fn app_trace(dryrun_res: &DryrunTxnResult) -> Result<String, Error> {
     trace(
-        &dryrun_res.app_call_trace,
+        &dryrun_res.app_call_trace.clone().unwrap(),
         &dryrun_res.disassembly,
         &StackPrinterConfig::default(),
     )
@@ -320,19 +333,27 @@ pub fn app_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
 pub fn app_trace_with_config(
     dryrun_res: &DryrunTxnResult,
     config: &StackPrinterConfig,
-) -> Result<String, ServiceError> {
-    trace(&dryrun_res.app_call_trace, &dryrun_res.disassembly, config)
+) -> Result<String, Error> {
+    trace(
+        &dryrun_res.app_call_trace.clone().unwrap(),
+        &dryrun_res.disassembly,
+        config,
+    )
 }
 
-pub fn lsig_trace(dryrun_res: &DryrunTxnResult) -> Result<String, ServiceError> {
+pub fn lsig_trace(dryrun_res: &DryrunTxnResult) -> Result<String, Error> {
     lsig_trace_with_config(dryrun_res, &StackPrinterConfig::default())
 }
 
 pub fn lsig_trace_with_config(
     dryrun_res: &DryrunTxnResult,
     config: &StackPrinterConfig,
-) -> Result<String, ServiceError> {
-    trace(&dryrun_res.logic_sig_trace, &dryrun_res.disassembly, config)
+) -> Result<String, Error> {
+    trace(
+        &dryrun_res.logic_sig_trace.clone().unwrap(),
+        &dryrun_res.disassembly,
+        config,
+    )
 }
 
 fn to_hex_str(bytes: &[u8]) -> String {
@@ -346,8 +367,8 @@ fn to_application_state_schema(schema: StateSchema) -> ApplicationStateSchema {
     }
 }
 
-impl From<DecodeError> for ServiceError {
+impl From<DecodeError> for Error {
     fn from(e: DecodeError) -> Self {
-        ServiceError::Msg(format!("Decoding error: {e}"))
+        Error::Msg(format!("Decoding error: {e}"))
     }
 }

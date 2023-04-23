@@ -1,0 +1,21 @@
+[package]
+name = "algonaut_algod"
+version = "0.4.2"
+authors = ["contact@algorand.com"]
+description = "API endpoint for algod operations."
+# Override this license by providing a License Object in the OpenAPI.
+license = "MIT"
+edition = "2018"
+
+[dependencies]
+algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }
+algonaut_encoding = { path = "../algonaut_encoding", version = "0.4.2" }
+algonaut_model = { path = "../algonaut_model", version = "0.4.2" }
+serde = "^1.0"
+serde_derive = "^1.0"
+serde_json = "^1.0"
+url = "^2.2"
+uuid = { version = "^1.0", features = ["serde"] }
+[dependencies.reqwest]
+version = "^0.11"
+features = ["json", "multipart"]

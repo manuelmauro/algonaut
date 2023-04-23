@@ -8,11 +8,10 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
     make_tuple_type,
 };
-use algonaut_core::{Address, CompiledTeal, SuggestedTransactionParams};
+use algonaut_algod::models::{PendingTransactionResponse, TransactionParams200Response};
+use algonaut_core::{Address, CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
-use algonaut_model::algod::v2::PendingTransaction;
 use algonaut_transaction::{
-    builder::TxnFee,
     error::TransactionError,
     transaction::{
         to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction, StateSchema,
@@ -25,9 +24,7 @@ use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use std::collections::HashMap;
 
-use crate::{
-    algod::v2::Algod, error::ServiceError, util::wait_for_pending_tx::wait_for_pending_transaction,
-};
+use crate::{algod::v2::Algod, util::wait_for_pending_tx::wait_for_pending_transaction, Error};
 
 use self::transaction_signer::TransactionSigner;
 
@@ -57,7 +54,7 @@ pub struct AbiMethodResult {
     /// The TxID of the transaction that invoked the ABI method call.
     pub tx_id: String,
     /// Information about the confirmed transaction that invoked the ABI method call.
-    pub tx_info: PendingTransaction,
+    pub tx_info: PendingTransactionResponse,
     /// The method's return value
     pub return_value: Result<AbiMethodReturnValue, AbiReturnDecodeError>,
 }
@@ -80,11 +77,11 @@ pub struct AddMethodCallParams {
     /// The arguments to include in the method call. If omitted, no arguments will be passed to the method.
     pub method_args: Vec<AbiArgValue>,
     /// Fee
-    pub fee: TxnFee,
+    pub fee: MicroAlgos,
     /// The address of the sender of this application call
     pub sender: Address,
     /// Transactions params to use for this application call
-    pub suggested_params: SuggestedTransactionParams,
+    pub suggested_params: TransactionParams200Response,
     /// The OnComplete action to take for this application call
     pub on_complete: ApplicationCallOnComplete,
     /// The approval program for this application call. Only set this if this is an application
@@ -228,18 +225,15 @@ impl AtomicTransactionComposer {
     ///
     /// An error will be thrown if the composer's status is not Building,
     /// or if adding this transaction causes the current group to exceed MaxAtomicGroupSize.
-    pub fn add_transaction(
-        &mut self,
-        txn_with_signer: TransactionWithSigner,
-    ) -> Result<(), ServiceError> {
+    pub fn add_transaction(&mut self, txn_with_signer: TransactionWithSigner) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(ServiceError::Msg(
+            return Err(Error::Msg(
                 "status must be BUILDING in order to add transactions".to_owned(),
             ));
         }
 
         if self.len() == MAX_ATOMIC_GROUP_SIZE {
-            return Err(ServiceError::Msg(format!(
+            return Err(Error::Msg(format!(
                 "reached max group size: {MAX_ATOMIC_GROUP_SIZE}"
             )));
         }
@@ -251,24 +245,21 @@ impl AtomicTransactionComposer {
         Ok(())
     }
 
-    pub fn add_method_call(
-        &mut self,
-        params: &mut AddMethodCallParams,
-    ) -> Result<(), ServiceError> {
+    pub fn add_method_call(&mut self, params: &mut AddMethodCallParams) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(ServiceError::Msg(
+            return Err(Error::Msg(
                 "status must be BUILDING in order to add transactions".to_owned(),
             ));
         }
         if params.method_args.len() != params.method.args.len() {
-            return Err(ServiceError::Msg(format!(
+            return Err(Error::Msg(format!(
                 "incorrect number of arguments were provided: {} != {}",
                 params.method_args.len(),
                 params.method.args.len()
             )));
         }
         if self.len() + params.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
-            return Err(ServiceError::Msg(format!(
+            return Err(Error::Msg(format!(
                 "reached max group size: {MAX_ATOMIC_GROUP_SIZE}"
             )));
         }
@@ -336,8 +327,7 @@ impl AtomicTransactionComposer {
             extra_pages: params.extra_pages,
         });
 
-        let mut tx_builder =
-            TxnBuilder::with_fee(&params.suggested_params, params.fee.clone(), app_call);
+        let mut tx_builder = TxnBuilder::with_fee(&params.suggested_params, params.fee, app_call);
         if let Some(rekey_to) = params.rekey_to {
             tx_builder = tx_builder.rekey_to(rekey_to);
         }
@@ -363,13 +353,13 @@ impl AtomicTransactionComposer {
 
     /// Finalize the transaction group and returned the finalized transactions.
     /// The composer's status will be at least BUILT after executing this method.
-    pub fn build_group(&mut self) -> Result<Vec<TransactionWithSigner>, ServiceError> {
+    pub fn build_group(&mut self) -> Result<Vec<TransactionWithSigner>, Error> {
         if self.status >= AtomicTransactionComposerStatus::Built {
             return Ok(self.txs.clone());
         }
 
         if self.txs.is_empty() {
-            return Err(ServiceError::Msg(
+            return Err(Error::Msg(
                 "should not build transaction group with 0 transactions in composer".to_owned(),
             ));
         } else if self.txs.len() > 1 {
@@ -384,7 +374,7 @@ impl AtomicTransactionComposer {
         Ok(self.txs.clone())
     }
 
-    pub fn gather_signatures(&mut self) -> Result<Vec<SignedTransaction>, ServiceError> {
+    pub fn gather_signatures(&mut self) -> Result<Vec<SignedTransaction>, Error> {
         if self.status >= AtomicTransactionComposerStatus::Signed {
             return Ok(self.signed_txs.clone());
         }
@@ -411,7 +401,7 @@ impl AtomicTransactionComposer {
             }
 
             if indices_to_sign.is_empty() {
-                return Err(ServiceError::Msg(
+                return Err(Error::Msg(
                     "invalid tx signer provided, isn't equal to self".to_owned(),
                 ));
             }
@@ -437,27 +427,25 @@ impl AtomicTransactionComposer {
             .collect()
     }
 
-    pub async fn submit(&mut self, algod: &Algod) -> Result<Vec<String>, ServiceError> {
+    pub async fn submit(&mut self, algod: &Algod) -> Result<Vec<String>, Error> {
         if self.status >= AtomicTransactionComposerStatus::Submitted {
-            return Err(ServiceError::Msg(
+            return Err(Error::Msg(
                 "Atomic Transaction Composer cannot submit committed transaction".to_owned(),
             ));
         }
 
         self.gather_signatures()?;
 
-        algod
-            .broadcast_signed_transactions(&self.signed_txs)
-            .await?;
+        algod.send_txns(&self.signed_txs).await?;
 
         self.status = AtomicTransactionComposerStatus::Submitted;
 
         Ok(self.get_txs_ids())
     }
 
-    pub async fn execute(&mut self, algod: &Algod) -> Result<ExecuteResult, ServiceError> {
+    pub async fn execute(&mut self, algod: &Algod) -> Result<ExecuteResult, Error> {
         if self.status >= AtomicTransactionComposerStatus::Committed {
-            return Err(ServiceError::Msg("status is already committed".to_owned()));
+            return Err(Error::Msg("status is already committed".to_owned()));
         }
 
         self.submit(algod).await?;
@@ -488,7 +476,7 @@ impl AtomicTransactionComposer {
             if i != index_to_wait {
                 let tx_id = self.signed_txs[i].transaction_id.clone();
 
-                match algod.pending_transaction_with_id(&tx_id).await {
+                match algod.pending_txn(&tx_id).await {
                     Ok(p) => {
                         current_tx_id = tx_id;
                         current_pending_tx = p;
@@ -521,10 +509,10 @@ impl AtomicTransactionComposer {
 }
 
 fn get_return_value_with_return_type(
-    pending_tx: &PendingTransaction,
+    pending_tx: &PendingTransactionResponse,
     tx_id: &str, // our txn in PendingTransaction currently has no fields, so the tx id is passed separately
     return_type: AbiReturnType,
-) -> Result<AbiMethodResult, ServiceError> {
+) -> Result<AbiMethodResult, Error> {
     let return_value = match return_type {
         AbiReturnType::Some(return_type) => {
             get_return_value_with_abi_type(pending_tx, &return_type)?
@@ -539,13 +527,13 @@ fn get_return_value_with_return_type(
     })
 }
 
-impl From<TransactionError> for ServiceError {
+impl From<TransactionError> for Error {
     fn from(e: TransactionError) -> Self {
         Self::Msg(format!("{e:?}"))
     }
 }
 
-impl From<AbiError> for ServiceError {
+impl From<AbiError> for Error {
     fn from(e: AbiError) -> Self {
         match e {
             AbiError::Msg(msg) => Self::Msg(msg),
@@ -553,15 +541,15 @@ impl From<AbiError> for ServiceError {
     }
 }
 
-fn validate_tx(tx: &Transaction, expected_type: TransactionArgType) -> Result<(), ServiceError> {
+fn validate_tx(tx: &Transaction, expected_type: TransactionArgType) -> Result<(), Error> {
     if tx.group.is_some() {
-        return Err(ServiceError::Msg("Expected empty group id".to_owned()));
+        return Err(Error::Msg("Expected empty group id".to_owned()));
     }
 
     if expected_type != TransactionArgType::Any
         && expected_type != TransactionArgType::One(to_tx_type_enum(&tx.txn_type))
     {
-        return Err(ServiceError::Msg(format!(
+        return Err(Error::Msg(format!(
             "expected transaction with type {expected_type:?}, but got type {:?}",
             tx.txn_type
         )));
@@ -574,11 +562,11 @@ fn add_tx_arg_type_to_method_call(
     arg_value: &AbiArgValue,
     expected_type: TransactionArgType,
     txs_with_signer: &mut Vec<TransactionWithSigner>,
-) -> Result<(), ServiceError> {
+) -> Result<(), Error> {
     let txn_and_signer = match arg_value {
         AbiArgValue::TxWithSigner(tx_with_signer) => tx_with_signer,
         _ => {
-            return Err(ServiceError::Msg(
+            return Err(Error::Msg(
                 "invalid arg value, expected transaction".to_owned(),
             ));
         }
@@ -595,14 +583,14 @@ fn add_abi_obj_arg_to_method_call(
     arg_value: &AbiArgValue,
     method_types: &mut Vec<AbiType>,
     method_args: &mut Vec<AbiValue>,
-) -> Result<(), ServiceError> {
+) -> Result<(), Error> {
     match arg_value {
         AbiArgValue::AbiValue(value) => {
             method_types.push(abi_type.clone());
             method_args.push(value.clone());
         }
         AbiArgValue::TxWithSigner(_) => {
-            return Err(ServiceError::Msg(
+            return Err(Error::Msg(
                 "Invalid state: shouldn't be here with a tx with signer value type".to_owned(),
             ));
         }
@@ -625,7 +613,7 @@ fn add_ref_arg_to_method_call(
 
     sender: Address,
     app_id: u64,
-) -> Result<(), ServiceError> {
+) -> Result<(), Error> {
     let index = add_to_foreign_array(
         arg_type,
         arg_value,
@@ -652,7 +640,7 @@ fn add_to_foreign_array(
     foreign_apps: &mut Vec<u64>,
     sender: Address,
     app_id: u64,
-) -> Result<usize, ServiceError> {
+) -> Result<usize, Error> {
     match arg_type {
         ReferenceArgType::Account => match arg_value.address() {
             Some(address) => Ok(populate_foreign_array(
@@ -660,7 +648,7 @@ fn add_to_foreign_array(
                 foreign_accounts,
                 Some(sender),
             )),
-            _ => Err(ServiceError::Msg(format!(
+            _ => Err(Error::Msg(format!(
                 "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
             ))),
         },
@@ -672,7 +660,7 @@ fn add_to_foreign_array(
 
                 Ok(populate_foreign_array(intu64, foreign_assets, None))
             }
-            _ => Err(ServiceError::Msg(format!(
+            _ => Err(Error::Msg(format!(
                 "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
             ))),
         },
@@ -684,7 +672,7 @@ fn add_to_foreign_array(
 
                 Ok(populate_foreign_array(intu64, foreign_apps, Some(app_id)))
             }
-            _ => Err(ServiceError::Msg(format!(
+            _ => Err(Error::Msg(format!(
                 "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
             ))),
         },
@@ -694,7 +682,7 @@ fn add_to_foreign_array(
 fn wrap_overflowing_values(
     method_types: &[AbiType],
     method_args: &[AbiValue],
-) -> Result<(AbiType, AbiValue), ServiceError> {
+) -> Result<(AbiType, AbiValue), Error> {
     let mut wrapped_abi_types = vec![];
     let mut wrapped_value_list = vec![];
 
@@ -743,23 +731,32 @@ fn populate_foreign_array<T: Eq>(
 }
 
 fn get_return_value_with_abi_type(
-    pending_tx: &PendingTransaction,
+    pending_tx: &PendingTransactionResponse,
     abi_type: &AbiType,
-) -> Result<Result<AbiMethodReturnValue, AbiReturnDecodeError>, ServiceError> {
-    if pending_tx.logs.is_empty() {
-        return Err(ServiceError::Msg(
+) -> Result<Result<AbiMethodReturnValue, AbiReturnDecodeError>, Error> {
+    if pending_tx.logs.is_none() {
+        return Err(Error::Msg(
             "App call transaction did not log a return value".to_owned(),
         ));
     }
 
-    let ret_line = &pending_tx.logs[pending_tx.logs.len() - 1];
+    // safe to unwrap given the previous check
+    let logs = &pending_tx.logs.clone().unwrap();
+
+    if logs.is_empty() {
+        return Err(Error::Msg(
+            "App call transaction did not log a return value".to_owned(),
+        ));
+    }
+
+    let ret_line = &logs[logs.len() - 1];
 
     let decoded_ret_line: Vec<u8> = BASE64
-        .decode(ret_line.as_bytes())
-        .map_err(|e| ServiceError::Msg(format!("BASE64 Decoding error: {e:?}")))?;
+        .decode(&ret_line.0[..])
+        .map_err(|e| Error::Msg(format!("BASE64 Decoding error: {e:?}")))?;
 
     if !check_log_ret(&decoded_ret_line) {
-        return Err(ServiceError::Msg(
+        return Err(Error::Msg(
             "App call transaction did not log a return value(2)".to_owned(),
         ));
     }

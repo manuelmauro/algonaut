@@ -6,20 +6,21 @@ use std::{
     time::{Duration, Instant},
 };
 
-use algonaut::{algod::v2::Algod, error::ServiceError};
+use algonaut::algod::v2::Algod;
+use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, CompiledTeal};
-use algonaut_model::{algod::v2::PendingTransaction, kmd::v1::ExportKeyResponse};
+use algonaut_model::kmd::v1::ExportKeyResponse;
 use algonaut_transaction::account::Account;
 
 /// Utility function to wait on a transaction to be confirmed
 pub async fn wait_for_pending_transaction(
     algod: &Algod,
     txid: &str,
-) -> Result<Option<PendingTransaction>, ServiceError> {
+) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {
-        let pending_transaction = algod.pending_transaction_with_id(txid).await?;
+        let pending_transaction = algod.pending_txn(txid).await?;
         // If the transaction has been confirmed or we time out, exit.
         if pending_transaction.confirmed_round.is_some() {
             return Ok(Some(pending_transaction));
@@ -79,7 +80,7 @@ pub async fn read_teal(algod: &Algod, file_name: &str) -> CompiledTeal {
     let file_bytes = fs::read(&format!("tests/features/resources/{file_name}")).unwrap();
 
     if file_name.ends_with(".teal") {
-        algod.compile_teal(&file_bytes).await.unwrap()
+        algod.teal_compile(&file_bytes, None).await.unwrap()
     } else {
         CompiledTeal(file_bytes)
     }

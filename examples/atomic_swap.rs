@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     // To keep the example short and as self-contained as possible, both transactions send Algos.
     // Normally you'll want to submit e.g. a payment and asset transfer or asset transfers for different assets.
@@ -50,9 +50,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let signed_t2 = bob.sign_transaction(t2)?;
 
     info!("broadcasting transaction");
-    let send_response = algod
-        .broadcast_signed_transactions(&[signed_t1, signed_t2])
-        .await;
+    let send_response = algod.send_txns(&[signed_t1, signed_t2]).await;
     info!("response: {:?}", send_response);
 
     Ok(())

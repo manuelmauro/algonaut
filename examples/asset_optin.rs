@@ -20,10 +20,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("bob's address {:?}", bob.address());
 
     info!("retrieving suggested params");
-    let params = algod.suggested_transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building AcceptAsset transaction");
-    let t = TxnBuilder::with(&params, AcceptAsset::new(bob.address(), 21).build()).build()?;
+    let t = TxnBuilder::with(&params, AcceptAsset::new(bob.address(), 16).build()).build()?;
 
     info!("signing transaction");
     let sign_response = bob.sign_transaction(t)?;
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.broadcast_signed_transaction(&sign_response).await;
+    let send_response = algod.send_txn(&sign_response).await;
     info!("response: {:?}", send_response);
 
     Ok(())
