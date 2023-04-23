@@ -18,8 +18,6 @@ pub struct GetBlock200Response {
     pub cert: Option<serde_json::Value>,
 }
 
-pub type Block = GetBlock200Response;
-
 impl GetBlock200Response {
     pub fn new(block: serde_json::Value) -> GetBlock200Response {
         GetBlock200Response { block, cert: None }

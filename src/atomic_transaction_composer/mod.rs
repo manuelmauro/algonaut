@@ -436,7 +436,7 @@ impl AtomicTransactionComposer {
 
         self.gather_signatures()?;
 
-        algod.signed_transactions(&self.signed_txs).await?;
+        algod.send_txns(&self.signed_txs).await?;
 
         self.status = AtomicTransactionComposerStatus::Submitted;
 
@@ -476,7 +476,7 @@ impl AtomicTransactionComposer {
             if i != index_to_wait {
                 let tx_id = self.signed_txs[i].transaction_id.clone();
 
-                match algod.pending_transaction_information(&tx_id).await {
+                match algod.pending_txn(&tx_id).await {
                     Ok(p) => {
                         current_tx_id = tx_id;
                         current_pending_tx = p;

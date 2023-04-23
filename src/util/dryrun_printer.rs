@@ -68,20 +68,18 @@ pub async fn create_dryrun_with_settings(
     }
 
     for asset_id in assets {
-        let asset = algod.get_asset_by_id(asset_id).await?;
+        let asset = algod.asset(asset_id).await?;
         accts.insert(asset.params.creator.parse().unwrap());
     }
 
     for app_id in apps {
-        let app = algod.get_application_by_id(app_id).await?;
+        let app = algod.app(app_id).await?;
         accts.insert(app.params.creator.parse().unwrap());
         app_infos.push(app);
     }
 
     for address in accts {
-        let acc = algod
-            .account_information(address.to_string().as_str())
-            .await?;
+        let acc = algod.account(address.to_string().as_str()).await?;
         acct_infos.push(acc);
     }
 

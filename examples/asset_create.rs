@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("creator: {:?}", alice.address());
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building CreateAsset transaction");
     let t = TxnBuilder::with(
@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("broadcasting transaction");
     // broadcast the transaction to the network
-    let send_response = algod.signed_transaction(&signed_t).await?;
+    let send_response = algod.send_txn(&signed_t).await?;
     info!("transaction ID: {}", send_response.tx_id);
 
     info!("waiting for transaction finality");
@@ -65,7 +65,7 @@ async fn wait_for_pending_transaction(
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {
-        let pending_transaction = algod.pending_transaction_information(txid).await?;
+        let pending_transaction = algod.pending_txn(txid).await?;
         // If the transaction has been confirmed or we time out, exit.
         if pending_transaction.confirmed_round.is_some() {
             return Ok(Some(pending_transaction));

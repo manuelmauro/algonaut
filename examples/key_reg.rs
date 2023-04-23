@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let selection_pk_str = "A3s+2bgKlbG9qIaA4wJsrrJl8mVKGzTp/h6gGEyZmAg=";
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building RegisterKey transaction");
     let t = TxnBuilder::with(
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.signed_transaction(&sign_response).await;
+    let send_response = algod.send_txn(&sign_response).await;
     info!("{:?}", send_response);
 
     Ok(())

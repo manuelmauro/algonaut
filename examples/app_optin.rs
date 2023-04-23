@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building OptInApplication transaction");
     let t = TxnBuilder::with(
@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.signed_transaction(&signed_t).await?;
+    let send_response = algod.send_txn(&signed_t).await?;
     info!("response: {:?}", send_response);
 
     Ok(())

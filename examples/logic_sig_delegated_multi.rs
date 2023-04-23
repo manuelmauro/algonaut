@@ -43,7 +43,7 @@ int 1
     let multisig_address = MultisigAddress::new(1, 2, &[alice.address(), bob.address()])?;
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
     let t = TxnBuilder::with(
@@ -75,7 +75,7 @@ int 1
 
     info!("broadcasting transaction");
     // the transaction will fail because the multisig address has no funds
-    let send_response = algod.signed_transaction(&signed_t).await;
+    let send_response = algod.send_txn(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

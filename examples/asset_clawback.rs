@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building ClawbackAsset transaction");
     let t = TxnBuilder::with(
@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.signed_transaction(&signed_t).await;
+    let send_response = algod.send_txn(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

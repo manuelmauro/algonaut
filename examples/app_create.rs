@@ -46,7 +46,7 @@ int 1
     let compiled_clear_program = algod.teal_compile(clear_program, None).await?;
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building CreateApplication transaction");
     let t = TxnBuilder::with(
@@ -73,7 +73,7 @@ int 1
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.signed_transaction(&signed_t).await?;
+    let send_response = algod.send_txn(&signed_t).await?;
 
     info!("waiting for transaction finality");
     let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
@@ -94,7 +94,7 @@ async fn wait_for_pending_transaction(
     let timeout = Duration::from_secs(10);
     let start = Instant::now();
     loop {
-        let pending_transaction = algod.pending_transaction_information(txid).await?;
+        let pending_transaction = algod.pending_txn(txid).await?;
         // If the transaction has been confirmed or we time out, exit.
         if pending_transaction.confirmed_round.is_some() {
             return Ok(Some(pending_transaction));

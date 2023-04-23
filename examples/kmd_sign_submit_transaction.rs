@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
     let t =
@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("broadcasting transaction");
     // broadcast the transaction to the network
     let send_response = algod
-        .raw_transaction(&sign_response.signed_transaction)
+        .send_raw_txn(&sign_response.signed_transaction)
         .await?;
 
     info!("transaction ID: {}", send_response.tx_id);

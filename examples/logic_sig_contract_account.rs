@@ -42,7 +42,7 @@ byte 0xFF
     let receiver = env::var("ALICE_ADDRESS")?.parse()?;
 
     info!("retrieving suggested params");
-    let params = algod.transaction_params().await?;
+    let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
     let t = TxnBuilder::with(
@@ -56,7 +56,7 @@ byte 0xFF
 
     info!("broadcasting transaction");
     // the transaction will fail because contract_account has no funds
-    let send_response = algod.signed_transaction(&signed_t).await;
+    let send_response = algod.send_txn(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())
