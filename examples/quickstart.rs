@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let kmd = Kmd::new(&env::var("KMD_URL")?, &env::var("KMD_TOKEN")?)?;
 
     info!("creating indexer client");
-    let indexer = Indexer::new(&env::var("INDEXER_URL")?)?;
+    let indexer = Indexer::new(&env::var("INDEXER_URL")?, &env::var("INDEXER_TOKEN")?)?;
 
     info!("algod versions: {:?}", algod.version().await?);
     info!("kmd versions: {:?}", kmd.versions().await?);
