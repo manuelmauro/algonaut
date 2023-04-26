@@ -101,36 +101,10 @@ impl From<crate::algod::v2::error::AlgodError> for Error {
     }
 }
 
-impl From<algonaut_indexer::error::ClientError> for Error {
-    fn from(error: algonaut_indexer::error::ClientError) -> Self {
+impl From<crate::indexer::v2::error::IndexerError> for Error {
+    fn from(error: crate::indexer::v2::error::IndexerError) -> Self {
         match error {
-            algonaut_indexer::error::ClientError::BadUrl(msg) => Error::BadUrl(msg),
-            algonaut_indexer::error::ClientError::BadToken => Error::BadToken,
-            algonaut_indexer::error::ClientError::BadHeader(msg) => Error::BadHeader(msg),
-            algonaut_indexer::error::ClientError::Request(e) => Error::Request(e.into()),
-            algonaut_indexer::error::ClientError::Msg(msg) => Error::Msg(msg),
-        }
-    }
-}
-
-impl From<algonaut_indexer::error::RequestError> for RequestError {
-    fn from(error: algonaut_indexer::error::RequestError) -> Self {
-        RequestError::new(error.url.clone(), error.details.into())
-    }
-}
-
-impl From<algonaut_indexer::error::RequestErrorDetails> for RequestErrorDetails {
-    fn from(details: algonaut_indexer::error::RequestErrorDetails) -> Self {
-        match details {
-            algonaut_indexer::error::RequestErrorDetails::Http { status, message } => {
-                RequestErrorDetails::Http { status, message }
-            }
-            algonaut_indexer::error::RequestErrorDetails::Timeout => {
-                RequestErrorDetails::Timeout {}
-            }
-            algonaut_indexer::error::RequestErrorDetails::Client { description } => {
-                RequestErrorDetails::Client { description }
-            }
+            crate::indexer::v2::error::IndexerError::Msg(msg) => Error::Msg(msg),
         }
     }
 }

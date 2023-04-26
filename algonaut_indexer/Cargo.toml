@@ -1,38 +1,18 @@
 [package]
-authors = [
-    "Manuel Mauro <manuel.mauro@protonmail.com>",
-    "Ivan Schuetz <ivanhp978@gmail.com>",
-]
-description = "API clients for the Algorand blockchain."
-edition = "2018"
-keywords = ["Algorand", "sdk"]
-license = "MIT"
 name = "algonaut_indexer"
-repository = "https://github.com/manuelmauro/algonaut"
 version = "0.4.2"
+authors = ["OpenAPI Generator team and contributors"]
+description = "Algorand ledger analytics API."
+# Override this license by providing a License Object in the OpenAPI.
+license = "MIT"
+edition = "2021"
 
 [dependencies]
-algonaut_model = { path = "../algonaut_model", version = "0.4.2" }
-algonaut_core = { path = "../algonaut_core", version = "0.4.2" }
-algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }
-algonaut_encoding = { path = "../algonaut_encoding", version = "0.4.2" }
-data-encoding = "2.3.1"
-derive_more = "0.99.13"
-reqwest = { version = "0.11", features = ["json"], default-features = false }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.40"
-thiserror = "1.0.23"
-url = "2.2.0"
-async-trait = "0.1.50"
-rmp-serde = "1.0.0"
-
-[dev-dependencies]
-dotenv = "0.15.0"
-rand = "0.8.3"
-getrandom = { version = "0.2.2", features = ["js"] }
-tokio = { version = "1.6.0", features = ["macros"] }
-
-[features]
-default = ["native"]
-rustls = ["reqwest/rustls-tls"]
-native = ["reqwest/native-tls"]
+serde = "^1.0"
+serde_derive = "^1.0"
+serde_json = "^1.0"
+url = "^2.2"
+uuid = { version = "^1.0", features = ["serde"] }
+[dependencies.reqwest]
+version = "^0.11"
+features = ["json", "multipart"]
