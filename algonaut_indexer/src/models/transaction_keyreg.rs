@@ -26,13 +26,13 @@ pub struct TransactionKeyreg {
     pub state_proof_key: Option<String>,
     /// \\[votefst\\] First round this participation key is valid.
     #[serde(rename = "vote-first-valid", skip_serializing_if = "Option::is_none")]
-    pub vote_first_valid: Option<i32>,
+    pub vote_first_valid: Option<u64>,
     /// \\[votekd\\] Number of subkeys in each batch of participation keys.
     #[serde(rename = "vote-key-dilution", skip_serializing_if = "Option::is_none")]
-    pub vote_key_dilution: Option<i32>,
+    pub vote_key_dilution: Option<u64>,
     /// \\[votelst\\] Last round this participation key is valid.
     #[serde(rename = "vote-last-valid", skip_serializing_if = "Option::is_none")]
-    pub vote_last_valid: Option<i32>,
+    pub vote_last_valid: Option<u64>,
     /// \\[votekey\\] Participation public key used in key registration transactions.
     #[serde(
         rename = "vote-participation-key",

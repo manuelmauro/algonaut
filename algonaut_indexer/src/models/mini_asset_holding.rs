@@ -15,7 +15,7 @@ pub struct MiniAssetHolding {
     #[serde(rename = "address")]
     pub address: String,
     #[serde(rename = "amount")]
-    pub amount: i32,
+    pub amount: u64,
     /// Whether or not this asset holding is currently deleted from its account.
     #[serde(rename = "deleted", skip_serializing_if = "Option::is_none")]
     pub deleted: Option<bool>,
@@ -23,15 +23,15 @@ pub struct MiniAssetHolding {
     pub is_frozen: bool,
     /// Round during which the account opted into the asset.
     #[serde(rename = "opted-in-at-round", skip_serializing_if = "Option::is_none")]
-    pub opted_in_at_round: Option<i32>,
+    pub opted_in_at_round: Option<u64>,
     /// Round during which the account opted out of the asset.
     #[serde(rename = "opted-out-at-round", skip_serializing_if = "Option::is_none")]
-    pub opted_out_at_round: Option<i32>,
+    pub opted_out_at_round: Option<u64>,
 }
 
 impl MiniAssetHolding {
     /// A simplified version of AssetHolding
-    pub fn new(address: String, amount: i32, is_frozen: bool) -> MiniAssetHolding {
+    pub fn new(address: String, amount: u64, is_frozen: bool) -> MiniAssetHolding {
         MiniAssetHolding {
             address,
             amount,

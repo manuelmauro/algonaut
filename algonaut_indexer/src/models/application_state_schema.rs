@@ -14,15 +14,15 @@
 pub struct ApplicationStateSchema {
     /// \\[nbs\\] num of byte slices.
     #[serde(rename = "num-byte-slice")]
-    pub num_byte_slice: i32,
+    pub num_byte_slice: u64,
     /// \\[nui\\] num of uints.
     #[serde(rename = "num-uint")]
-    pub num_uint: i32,
+    pub num_uint: u64,
 }
 
 impl ApplicationStateSchema {
     /// Specifies maximums on the number of each type that may be stored.
-    pub fn new(num_byte_slice: i32, num_uint: i32) -> ApplicationStateSchema {
+    pub fn new(num_byte_slice: u64, num_uint: u64) -> ApplicationStateSchema {
         ApplicationStateSchema {
             num_byte_slice,
             num_uint,

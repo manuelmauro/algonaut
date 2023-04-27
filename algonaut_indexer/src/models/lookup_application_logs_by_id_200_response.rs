@@ -12,10 +12,10 @@
 pub struct LookupApplicationLogsById200Response {
     /// \\[appidx\\] application index.
     #[serde(rename = "application-id")]
-    pub application_id: i32,
+    pub application_id: u64,
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
     #[serde(rename = "log-data", skip_serializing_if = "Option::is_none")]
     pub log_data: Option<Vec<crate::models::ApplicationLogData>>,
     /// Used for pagination, when making another request provide this token with the next parameter.
@@ -24,7 +24,7 @@ pub struct LookupApplicationLogsById200Response {
 }
 
 impl LookupApplicationLogsById200Response {
-    pub fn new(application_id: i32, current_round: i32) -> LookupApplicationLogsById200Response {
+    pub fn new(application_id: u64, current_round: u64) -> LookupApplicationLogsById200Response {
         LookupApplicationLogsById200Response {
             application_id,
             current_round,

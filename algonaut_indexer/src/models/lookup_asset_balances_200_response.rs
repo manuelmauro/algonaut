@@ -14,7 +14,7 @@ pub struct LookupAssetBalances200Response {
     pub balances: Vec<crate::models::MiniAssetHolding>,
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
     /// Used for pagination, when making another request provide this token with the next parameter.
     #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
     pub next_token: Option<String>,
@@ -23,7 +23,7 @@ pub struct LookupAssetBalances200Response {
 impl LookupAssetBalances200Response {
     pub fn new(
         balances: Vec<crate::models::MiniAssetHolding>,
-        current_round: i32,
+        current_round: u64,
     ) -> LookupAssetBalances200Response {
         LookupAssetBalances200Response {
             balances,

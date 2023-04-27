@@ -26,7 +26,7 @@ pub struct ApplicationParams {
         rename = "extra-program-pages",
         skip_serializing_if = "Option::is_none"
     )]
-    pub extra_program_pages: Option<i32>,
+    pub extra_program_pages: Option<u64>,
     /// Represents a key-value store for use in an application.
     #[serde(rename = "global-state", skip_serializing_if = "Option::is_none")]
     pub global_state: Option<Vec<crate::models::TealKeyValue>>,

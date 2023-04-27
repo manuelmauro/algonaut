@@ -23,7 +23,7 @@ pub struct HealthCheck {
     #[serde(rename = "message")]
     pub message: String,
     #[serde(rename = "round")]
-    pub round: i32,
+    pub round: u64,
     /// Current version.
     #[serde(rename = "version")]
     pub version: String,
@@ -35,7 +35,7 @@ impl HealthCheck {
         db_available: bool,
         is_migrating: bool,
         message: String,
-        round: i32,
+        round: u64,
         version: String,
     ) -> HealthCheck {
         HealthCheck {

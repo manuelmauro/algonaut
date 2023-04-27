@@ -14,11 +14,11 @@ pub struct LookupAssetById200Response {
     pub asset: Box<crate::models::Asset>,
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
 }
 
 impl LookupAssetById200Response {
-    pub fn new(asset: crate::models::Asset, current_round: i32) -> LookupAssetById200Response {
+    pub fn new(asset: crate::models::Asset, current_round: u64) -> LookupAssetById200Response {
         LookupAssetById200Response {
             asset: Box::new(asset),
             current_round,

@@ -18,7 +18,7 @@ pub struct TransactionStateProof {
     pub state_proof: Option<Box<crate::models::StateProofFields>>,
     /// \\[sptype\\] Type of the state proof. Integer representing an entry defined in protocol/stateproof.go
     #[serde(rename = "state-proof-type", skip_serializing_if = "Option::is_none")]
-    pub state_proof_type: Option<i32>,
+    pub state_proof_type: Option<u64>,
 }
 
 impl TransactionStateProof {

@@ -12,7 +12,7 @@
 pub struct HashFactory {
     /// \\[t\\]
     #[serde(rename = "hash-type", skip_serializing_if = "Option::is_none")]
-    pub hash_type: Option<i32>,
+    pub hash_type: Option<u64>,
 }
 
 impl HashFactory {

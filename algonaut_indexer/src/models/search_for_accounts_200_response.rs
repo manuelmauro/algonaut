@@ -14,7 +14,7 @@ pub struct SearchForAccounts200Response {
     pub accounts: Vec<crate::models::Account>,
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
     /// Used for pagination, when making another request provide this token with the next parameter.
     #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
     pub next_token: Option<String>,
@@ -23,7 +23,7 @@ pub struct SearchForAccounts200Response {
 impl SearchForAccounts200Response {
     pub fn new(
         accounts: Vec<crate::models::Account>,
-        current_round: i32,
+        current_round: u64,
     ) -> SearchForAccounts200Response {
         SearchForAccounts200Response {
             accounts,

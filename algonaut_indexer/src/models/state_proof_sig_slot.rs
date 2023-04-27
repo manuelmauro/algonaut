@@ -12,7 +12,7 @@
 pub struct StateProofSigSlot {
     /// \\[l\\] The total weight of signatures in the lower-numbered slots.
     #[serde(rename = "lower-sig-weight", skip_serializing_if = "Option::is_none")]
-    pub lower_sig_weight: Option<i32>,
+    pub lower_sig_weight: Option<u64>,
     #[serde(rename = "signature", skip_serializing_if = "Option::is_none")]
     pub signature: Option<Box<crate::models::StateProofSignature>>,
 }

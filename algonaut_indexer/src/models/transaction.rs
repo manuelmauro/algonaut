@@ -37,31 +37,31 @@ pub struct Transaction {
     pub auth_addr: Option<String>,
     /// \\[rc\\] rewards applied to close-remainder-to account.
     #[serde(rename = "close-rewards", skip_serializing_if = "Option::is_none")]
-    pub close_rewards: Option<i32>,
+    pub close_rewards: Option<u64>,
     /// \\[ca\\] closing amount for transaction.
     #[serde(rename = "closing-amount", skip_serializing_if = "Option::is_none")]
-    pub closing_amount: Option<i32>,
+    pub closing_amount: Option<u64>,
     /// Round when the transaction was confirmed.
     #[serde(rename = "confirmed-round", skip_serializing_if = "Option::is_none")]
-    pub confirmed_round: Option<i32>,
+    pub confirmed_round: Option<u64>,
     /// Specifies an application index (ID) if an application was created with this transaction.
     #[serde(
         rename = "created-application-index",
         skip_serializing_if = "Option::is_none"
     )]
-    pub created_application_index: Option<i32>,
+    pub created_application_index: Option<u64>,
     /// Specifies an asset index (ID) if an asset was created with this transaction.
     #[serde(
         rename = "created-asset-index",
         skip_serializing_if = "Option::is_none"
     )]
-    pub created_asset_index: Option<i32>,
+    pub created_asset_index: Option<u64>,
     /// \\[fee\\] Transaction fee.
     #[serde(rename = "fee")]
-    pub fee: i32,
+    pub fee: u64,
     /// \\[fv\\] First valid round for this transaction.
     #[serde(rename = "first-valid")]
-    pub first_valid: i32,
+    pub first_valid: u64,
     /// \\[gh\\] Hash of genesis block.
     #[serde(rename = "genesis-hash", skip_serializing_if = "Option::is_none")]
     pub genesis_hash: Option<String>,
@@ -82,12 +82,12 @@ pub struct Transaction {
     pub inner_txns: Option<Vec<crate::models::Transaction>>,
     /// Offset into the round where this transaction was confirmed.
     #[serde(rename = "intra-round-offset", skip_serializing_if = "Option::is_none")]
-    pub intra_round_offset: Option<i32>,
+    pub intra_round_offset: Option<u64>,
     #[serde(rename = "keyreg-transaction", skip_serializing_if = "Option::is_none")]
     pub keyreg_transaction: Option<Box<crate::models::TransactionKeyreg>>,
     /// \\[lv\\] Last valid round for this transaction.
     #[serde(rename = "last-valid")]
-    pub last_valid: i32,
+    pub last_valid: u64,
     /// \\[lx\\] Base64 encoded 32-byte array. Lease enforces mutual exclusion of transactions.  If this field is nonzero, then once the transaction is confirmed, it acquires the lease identified by the (Sender, Lease) pair of the transaction until the LastValid round passes.  While this transaction possesses the lease, no other transaction specifying this lease can be confirmed.
     #[serde(rename = "lease", skip_serializing_if = "Option::is_none")]
     pub lease: Option<String>,
@@ -107,19 +107,19 @@ pub struct Transaction {
     pub payment_transaction: Option<Box<crate::models::TransactionPayment>>,
     /// \\[rr\\] rewards applied to receiver account.
     #[serde(rename = "receiver-rewards", skip_serializing_if = "Option::is_none")]
-    pub receiver_rewards: Option<i32>,
+    pub receiver_rewards: Option<u64>,
     /// \\[rekey\\] when included in a valid transaction, the accounts auth addr will be updated with this value and future signatures must be signed with the key represented by this address.
     #[serde(rename = "rekey-to", skip_serializing_if = "Option::is_none")]
     pub rekey_to: Option<String>,
     /// Time when the block this transaction is in was confirmed.
     #[serde(rename = "round-time", skip_serializing_if = "Option::is_none")]
-    pub round_time: Option<i32>,
+    pub round_time: Option<u64>,
     /// \\[snd\\] Sender's address.
     #[serde(rename = "sender")]
     pub sender: String,
     /// \\[rs\\] rewards applied to sender account.
     #[serde(rename = "sender-rewards", skip_serializing_if = "Option::is_none")]
-    pub sender_rewards: Option<i32>,
+    pub sender_rewards: Option<u64>,
     #[serde(rename = "signature", skip_serializing_if = "Option::is_none")]
     pub signature: Option<Box<crate::models::TransactionSignature>>,
     #[serde(
@@ -135,9 +135,9 @@ pub struct Transaction {
 impl Transaction {
     /// Contains all fields common to all transactions and serves as an envelope to all transactions type. Represents both regular and inner transactions.  Definition: data/transactions/signedtxn.go : SignedTxn data/transactions/transaction.go : Transaction
     pub fn new(
-        fee: i32,
-        first_valid: i32,
-        last_valid: i32,
+        fee: u64,
+        first_valid: u64,
+        last_valid: u64,
         sender: String,
         tx_type: TxType,
     ) -> Transaction {

@@ -14,7 +14,7 @@ pub struct StateProofParticipant {
     pub verifier: Option<Box<crate::models::StateProofVerifier>>,
     /// \\[w\\]
     #[serde(rename = "weight", skip_serializing_if = "Option::is_none")]
-    pub weight: Option<i32>,
+    pub weight: Option<u64>,
 }
 
 impl StateProofParticipant {

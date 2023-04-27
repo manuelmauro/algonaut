@@ -14,11 +14,11 @@ pub struct LookupApplicationById200Response {
     pub application: Option<Box<crate::models::Application>>,
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
 }
 
 impl LookupApplicationById200Response {
-    pub fn new(current_round: i32) -> LookupApplicationById200Response {
+    pub fn new(current_round: u64) -> LookupApplicationById200Response {
         LookupApplicationById200Response {
             application: None,
             current_round,

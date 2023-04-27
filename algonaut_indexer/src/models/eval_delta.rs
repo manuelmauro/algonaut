@@ -14,18 +14,18 @@
 pub struct EvalDelta {
     /// \\[at\\] delta action.
     #[serde(rename = "action")]
-    pub action: i32,
+    pub action: u64,
     /// \\[bs\\] bytes value.
     #[serde(rename = "bytes", skip_serializing_if = "Option::is_none")]
     pub bytes: Option<String>,
     /// \\[ui\\] uint value.
     #[serde(rename = "uint", skip_serializing_if = "Option::is_none")]
-    pub uint: Option<i32>,
+    pub uint: Option<u64>,
 }
 
 impl EvalDelta {
     /// Represents a TEAL value delta.
-    pub fn new(action: i32) -> EvalDelta {
+    pub fn new(action: u64) -> EvalDelta {
         EvalDelta {
             action,
             bytes: None,

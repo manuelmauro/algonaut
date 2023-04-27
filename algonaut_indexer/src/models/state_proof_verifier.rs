@@ -15,7 +15,7 @@ pub struct StateProofVerifier {
     pub commitment: Option<String>,
     /// \\[lf\\] Key lifetime.
     #[serde(rename = "key-lifetime", skip_serializing_if = "Option::is_none")]
-    pub key_lifetime: Option<i32>,
+    pub key_lifetime: Option<u64>,
 }
 
 impl StateProofVerifier {

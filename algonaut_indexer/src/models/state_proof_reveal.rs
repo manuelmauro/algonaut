@@ -14,7 +14,7 @@ pub struct StateProofReveal {
     pub participant: Option<Box<crate::models::StateProofParticipant>>,
     /// The position in the signature and participants arrays corresponding to this entry.
     #[serde(rename = "position", skip_serializing_if = "Option::is_none")]
-    pub position: Option<i32>,
+    pub position: Option<u64>,
     #[serde(rename = "sig-slot", skip_serializing_if = "Option::is_none")]
     pub sig_slot: Option<Box<crate::models::StateProofSigSlot>>,
 }

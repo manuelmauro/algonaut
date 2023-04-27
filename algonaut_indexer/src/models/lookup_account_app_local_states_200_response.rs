@@ -14,7 +14,7 @@ pub struct LookupAccountAppLocalStates200Response {
     pub apps_local_states: Vec<crate::models::ApplicationLocalState>,
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
     /// Used for pagination, when making another request provide this token with the next parameter.
     #[serde(rename = "next-token", skip_serializing_if = "Option::is_none")]
     pub next_token: Option<String>,
@@ -23,7 +23,7 @@ pub struct LookupAccountAppLocalStates200Response {
 impl LookupAccountAppLocalStates200Response {
     pub fn new(
         apps_local_states: Vec<crate::models::ApplicationLocalState>,
-        current_round: i32,
+        current_round: u64,
     ) -> LookupAccountAppLocalStates200Response {
         LookupAccountAppLocalStates200Response {
             apps_local_states,

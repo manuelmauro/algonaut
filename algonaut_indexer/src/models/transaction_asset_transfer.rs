@@ -14,13 +14,13 @@
 pub struct TransactionAssetTransfer {
     /// \\[aamt\\] Amount of asset to transfer. A zero amount transferred to self allocates that asset in the account's Assets map.
     #[serde(rename = "amount")]
-    pub amount: i32,
+    pub amount: u64,
     /// \\[xaid\\] ID of the asset being transferred.
     #[serde(rename = "asset-id")]
-    pub asset_id: i32,
+    pub asset_id: u64,
     /// Number of assets transfered to the close-to account as part of the transaction.
     #[serde(rename = "close-amount", skip_serializing_if = "Option::is_none")]
-    pub close_amount: Option<i32>,
+    pub close_amount: Option<u64>,
     /// \\[aclose\\] Indicates that the asset should be removed from the account's Assets map, and specifies where the remaining asset holdings should be transferred.  It's always valid to transfer remaining asset holdings to the creator account.
     #[serde(rename = "close-to", skip_serializing_if = "Option::is_none")]
     pub close_to: Option<String>,
@@ -34,7 +34,7 @@ pub struct TransactionAssetTransfer {
 
 impl TransactionAssetTransfer {
     /// Fields for an asset transfer transaction.  Definition: data/transactions/asset.go : AssetTransferTxnFields
-    pub fn new(amount: i32, asset_id: i32, receiver: String) -> TransactionAssetTransfer {
+    pub fn new(amount: u64, asset_id: u64, receiver: String) -> TransactionAssetTransfer {
         TransactionAssetTransfer {
             amount,
             asset_id,

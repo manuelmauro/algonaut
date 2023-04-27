@@ -30,7 +30,7 @@ pub struct Block {
     pub rewards: Option<Box<crate::models::BlockRewards>>,
     /// \\[rnd\\] Current round on which this block was appended to the chain.
     #[serde(rename = "round")]
-    pub round: i32,
+    pub round: u64,
     /// \\[seed\\] Sortition seed.
     #[serde(rename = "seed")]
     pub seed: String,
@@ -42,7 +42,7 @@ pub struct Block {
     pub state_proof_tracking: Option<Vec<crate::models::StateProofTracking>>,
     /// \\[ts\\] Block creation timestamp in seconds since eposh
     #[serde(rename = "timestamp")]
-    pub timestamp: i32,
+    pub timestamp: u64,
     /// \\[txns\\] list of transactions corresponding to a given round.
     #[serde(rename = "transactions", skip_serializing_if = "Option::is_none")]
     pub transactions: Option<Vec<crate::models::Transaction>>,
@@ -54,7 +54,7 @@ pub struct Block {
     pub transactions_root_sha256: String,
     /// \\[tc\\] TxnCounter counts the number of transactions committed in the ledger, from the time at which support for this feature was introduced.  Specifically, TxnCounter is the number of the next transaction that will be committed after this block.  It is 0 when no transactions have ever been committed (since TxnCounter started being supported).
     #[serde(rename = "txn-counter", skip_serializing_if = "Option::is_none")]
-    pub txn_counter: Option<i32>,
+    pub txn_counter: Option<u64>,
     #[serde(rename = "upgrade-state", skip_serializing_if = "Option::is_none")]
     pub upgrade_state: Option<Box<crate::models::BlockUpgradeState>>,
     #[serde(rename = "upgrade-vote", skip_serializing_if = "Option::is_none")]
@@ -63,13 +63,14 @@ pub struct Block {
 
 impl Block {
     /// Block information.  Definition: data/bookkeeping/block.go : Block
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         genesis_hash: String,
         genesis_id: String,
         previous_block_hash: String,
-        round: i32,
+        round: u64,
         seed: String,
-        timestamp: i32,
+        timestamp: u64,
         transactions_root: String,
         transactions_root_sha256: String,
     ) -> Block {

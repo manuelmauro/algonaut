@@ -19,13 +19,13 @@ pub struct StateProofFields {
         rename = "positions-to-reveal",
         skip_serializing_if = "Option::is_none"
     )]
-    pub positions_to_reveal: Option<Vec<i32>>,
+    pub positions_to_reveal: Option<Vec<u64>>,
     /// \\[r\\] Note that this is actually stored as a map\[uint64\] - Reveal in the actual msgp
     #[serde(rename = "reveals", skip_serializing_if = "Option::is_none")]
     pub reveals: Option<Vec<crate::models::StateProofReveal>>,
     /// \\[v\\] Salt version of the merkle signature.
     #[serde(rename = "salt-version", skip_serializing_if = "Option::is_none")]
-    pub salt_version: Option<i32>,
+    pub salt_version: Option<u64>,
     /// \\[c\\]
     #[serde(rename = "sig-commit", skip_serializing_if = "Option::is_none")]
     pub sig_commit: Option<String>,
@@ -33,7 +33,7 @@ pub struct StateProofFields {
     pub sig_proofs: Option<Box<crate::models::MerkleArrayProof>>,
     /// \\[w\\]
     #[serde(rename = "signed-weight", skip_serializing_if = "Option::is_none")]
-    pub signed_weight: Option<i32>,
+    pub signed_weight: Option<u64>,
 }
 
 impl StateProofFields {

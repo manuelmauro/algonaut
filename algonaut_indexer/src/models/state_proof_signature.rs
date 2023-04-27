@@ -13,7 +13,7 @@ pub struct StateProofSignature {
     #[serde(rename = "falcon-signature", skip_serializing_if = "Option::is_none")]
     pub falcon_signature: Option<String>,
     #[serde(rename = "merkle-array-index", skip_serializing_if = "Option::is_none")]
-    pub merkle_array_index: Option<i32>,
+    pub merkle_array_index: Option<u64>,
     #[serde(rename = "proof", skip_serializing_if = "Option::is_none")]
     pub proof: Option<Box<crate::models::MerkleArrayProof>>,
     /// \\[vkey\\]

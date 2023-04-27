@@ -14,13 +14,13 @@ pub struct LookupAccountById200Response {
     pub account: Box<crate::models::Account>,
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
 }
 
 impl LookupAccountById200Response {
     pub fn new(
         account: crate::models::Account,
-        current_round: i32,
+        current_round: u64,
     ) -> LookupAccountById200Response {
         LookupAccountById200Response {
             account: Box::new(account),

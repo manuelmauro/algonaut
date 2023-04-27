@@ -12,7 +12,7 @@
 pub struct SearchForApplicationBoxes200Response {
     /// \\[appidx\\] application index.
     #[serde(rename = "application-id")]
-    pub application_id: i32,
+    pub application_id: u64,
     #[serde(rename = "boxes")]
     pub boxes: Vec<crate::models::BoxDescriptor>,
     /// Used for pagination, when making another request provide this token with the next parameter.
@@ -22,7 +22,7 @@ pub struct SearchForApplicationBoxes200Response {
 
 impl SearchForApplicationBoxes200Response {
     pub fn new(
-        application_id: i32,
+        application_id: u64,
         boxes: Vec<crate::models::BoxDescriptor>,
     ) -> SearchForApplicationBoxes200Response {
         SearchForApplicationBoxes200Response {

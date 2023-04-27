@@ -21,16 +21,16 @@ pub struct IndexerStateProofMessage {
         rename = "first-attested-round",
         skip_serializing_if = "Option::is_none"
     )]
-    pub first_attested_round: Option<i32>,
+    pub first_attested_round: Option<u64>,
     /// \\[l\\]
     #[serde(
         rename = "latest-attested-round",
         skip_serializing_if = "Option::is_none"
     )]
-    pub latest_attested_round: Option<i32>,
+    pub latest_attested_round: Option<u64>,
     /// \\[P\\]
     #[serde(rename = "ln-proven-weight", skip_serializing_if = "Option::is_none")]
-    pub ln_proven_weight: Option<i32>,
+    pub ln_proven_weight: Option<u64>,
     /// \\[v\\]
     #[serde(rename = "voters-commitment", skip_serializing_if = "Option::is_none")]
     pub voters_commitment: Option<String>,

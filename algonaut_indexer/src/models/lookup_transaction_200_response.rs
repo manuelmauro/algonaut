@@ -12,14 +12,14 @@
 pub struct LookupTransaction200Response {
     /// Round at which the results were computed.
     #[serde(rename = "current-round")]
-    pub current_round: i32,
+    pub current_round: u64,
     #[serde(rename = "transaction")]
     pub transaction: Box<crate::models::Transaction>,
 }
 
 impl LookupTransaction200Response {
     pub fn new(
-        current_round: i32,
+        current_round: u64,
         transaction: crate::models::Transaction,
     ) -> LookupTransaction200Response {
         LookupTransaction200Response {

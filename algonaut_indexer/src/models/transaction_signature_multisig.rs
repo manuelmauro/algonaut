@@ -17,10 +17,10 @@ pub struct TransactionSignatureMultisig {
     pub subsignature: Option<Vec<crate::models::TransactionSignatureMultisigSubsignature>>,
     /// \\[thr\\]
     #[serde(rename = "threshold", skip_serializing_if = "Option::is_none")]
-    pub threshold: Option<i32>,
+    pub threshold: Option<u64>,
     /// \\[v\\]
     #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
-    pub version: Option<i32>,
+    pub version: Option<u64>,
 }
 
 impl TransactionSignatureMultisig {

@@ -20,7 +20,7 @@ pub struct TransactionApplication {
     pub application_args: Option<Vec<String>>,
     /// \\[apid\\] ID of the application being configured or empty if creating.
     #[serde(rename = "application-id")]
-    pub application_id: i32,
+    pub application_id: u64,
     /// \\[apap\\] Logic executed for every application transaction, except when on-completion is set to \"clear\". It can read and write global state for the application, as well as account-specific local state. Approval programs may reject the transaction.
     #[serde(rename = "approval-program", skip_serializing_if = "Option::is_none")]
     pub approval_program: Option<String>,
@@ -35,13 +35,13 @@ pub struct TransactionApplication {
         rename = "extra-program-pages",
         skip_serializing_if = "Option::is_none"
     )]
-    pub extra_program_pages: Option<i32>,
+    pub extra_program_pages: Option<u64>,
     /// \\[apfa\\] Lists the applications in addition to the application-id whose global states may be accessed by this application's approval-program and clear-state-program. The access is read-only.
     #[serde(rename = "foreign-apps", skip_serializing_if = "Option::is_none")]
-    pub foreign_apps: Option<Vec<i32>>,
+    pub foreign_apps: Option<Vec<u64>>,
     /// \\[apas\\] lists the assets whose parameters may be accessed by this application's ApprovalProgram and ClearStateProgram. The access is read-only.
     #[serde(rename = "foreign-assets", skip_serializing_if = "Option::is_none")]
-    pub foreign_assets: Option<Vec<i32>>,
+    pub foreign_assets: Option<Vec<u64>>,
     #[serde(
         rename = "global-state-schema",
         skip_serializing_if = "Option::is_none"
@@ -56,7 +56,7 @@ pub struct TransactionApplication {
 impl TransactionApplication {
     /// Fields for application transactions.  Definition: data/transactions/application.go : ApplicationCallTxnFields
     pub fn new(
-        application_id: i32,
+        application_id: u64,
         on_completion: crate::models::OnCompletion,
     ) -> TransactionApplication {
         TransactionApplication {

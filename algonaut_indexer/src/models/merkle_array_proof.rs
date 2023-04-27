@@ -17,7 +17,7 @@ pub struct MerkleArrayProof {
     pub path: Option<Vec<String>>,
     /// \\[td\\]
     #[serde(rename = "tree-depth", skip_serializing_if = "Option::is_none")]
-    pub tree_depth: Option<i32>,
+    pub tree_depth: Option<u64>,
 }
 
 impl MerkleArrayProof {

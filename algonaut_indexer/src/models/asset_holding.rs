@@ -14,10 +14,10 @@
 pub struct AssetHolding {
     /// \\[a\\] number of units held.
     #[serde(rename = "amount")]
-    pub amount: i32,
+    pub amount: u64,
     /// Asset ID of the holding.
     #[serde(rename = "asset-id")]
-    pub asset_id: i32,
+    pub asset_id: u64,
     /// Whether or not the asset holding is currently deleted from its account.
     #[serde(rename = "deleted", skip_serializing_if = "Option::is_none")]
     pub deleted: Option<bool>,
@@ -26,15 +26,15 @@ pub struct AssetHolding {
     pub is_frozen: bool,
     /// Round during which the account opted into this asset holding.
     #[serde(rename = "opted-in-at-round", skip_serializing_if = "Option::is_none")]
-    pub opted_in_at_round: Option<i32>,
+    pub opted_in_at_round: Option<u64>,
     /// Round during which the account opted out of this asset holding.
     #[serde(rename = "opted-out-at-round", skip_serializing_if = "Option::is_none")]
-    pub opted_out_at_round: Option<i32>,
+    pub opted_out_at_round: Option<u64>,
 }
 
 impl AssetHolding {
     /// Describes an asset held by an account.  Definition: data/basics/userBalance.go : AssetHolding
-    pub fn new(amount: i32, asset_id: i32, is_frozen: bool) -> AssetHolding {
+    pub fn new(amount: u64, asset_id: u64, is_frozen: bool) -> AssetHolding {
         AssetHolding {
             amount,
             asset_id,

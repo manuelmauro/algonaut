@@ -17,7 +17,7 @@ pub struct TransactionAssetFreeze {
     pub address: String,
     /// \\[faid\\] ID of the asset being frozen or thawed.
     #[serde(rename = "asset-id")]
-    pub asset_id: i32,
+    pub asset_id: u64,
     /// \\[afrz\\] The new freeze status.
     #[serde(rename = "new-freeze-status")]
     pub new_freeze_status: bool,
@@ -25,7 +25,7 @@ pub struct TransactionAssetFreeze {
 
 impl TransactionAssetFreeze {
     /// Fields for an asset freeze transaction.  Definition: data/transactions/asset.go : AssetFreezeTxnFields
-    pub fn new(address: String, asset_id: i32, new_freeze_status: bool) -> TransactionAssetFreeze {
+    pub fn new(address: String, asset_id: u64, new_freeze_status: bool) -> TransactionAssetFreeze {
         TransactionAssetFreeze {
             address,
             asset_id,

@@ -23,19 +23,19 @@ pub struct BlockUpgradeState {
         rename = "next-protocol-approvals",
         skip_serializing_if = "Option::is_none"
     )]
-    pub next_protocol_approvals: Option<i32>,
+    pub next_protocol_approvals: Option<u64>,
     /// \\[nextswitch\\] Round on which the protocol upgrade will take effect.
     #[serde(
         rename = "next-protocol-switch-on",
         skip_serializing_if = "Option::is_none"
     )]
-    pub next_protocol_switch_on: Option<i32>,
+    pub next_protocol_switch_on: Option<u64>,
     /// \\[nextbefore\\] Deadline round for this protocol upgrade (No votes will be consider after this round).
     #[serde(
         rename = "next-protocol-vote-before",
         skip_serializing_if = "Option::is_none"
     )]
-    pub next_protocol_vote_before: Option<i32>,
+    pub next_protocol_vote_before: Option<u64>,
 }
 
 impl BlockUpgradeState {

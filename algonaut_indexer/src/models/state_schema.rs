@@ -14,15 +14,15 @@
 pub struct StateSchema {
     /// Maximum number of TEAL byte slices that may be stored in the key/value store.
     #[serde(rename = "num-byte-slice")]
-    pub num_byte_slice: i32,
+    pub num_byte_slice: u64,
     /// Maximum number of TEAL uints that may be stored in the key/value store.
     #[serde(rename = "num-uint")]
-    pub num_uint: i32,
+    pub num_uint: u64,
 }
 
 impl StateSchema {
     /// Represents a \\[apls\\] local-state or \\[apgs\\] global-state schema. These schemas determine how much storage may be used in a local-state or global-state for an application. The more space used, the larger minimum balance must be maintained in the account holding the data.
-    pub fn new(num_byte_slice: i32, num_uint: i32) -> StateSchema {
+    pub fn new(num_byte_slice: u64, num_uint: u64) -> StateSchema {
         StateSchema {
             num_byte_slice,
             num_uint,

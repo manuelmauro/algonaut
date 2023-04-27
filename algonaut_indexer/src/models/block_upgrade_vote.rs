@@ -17,7 +17,7 @@ pub struct BlockUpgradeVote {
     pub upgrade_approve: Option<bool>,
     /// \\[upgradedelay\\] Indicates the time between acceptance and execution.
     #[serde(rename = "upgrade-delay", skip_serializing_if = "Option::is_none")]
-    pub upgrade_delay: Option<i32>,
+    pub upgrade_delay: Option<u64>,
     /// \\[upgradeprop\\] Indicates a proposed upgrade.
     #[serde(rename = "upgrade-propose", skip_serializing_if = "Option::is_none")]
     pub upgrade_propose: Option<String>,

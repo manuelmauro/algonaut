@@ -59,18 +59,19 @@ pub enum SearchForTransactionsError {
 }
 
 /// Search for accounts.
+#[allow(clippy::too_many_arguments)]
 pub async fn search_for_accounts(
     configuration: &configuration::Configuration,
-    asset_id: Option<i32>,
-    limit: Option<i32>,
+    asset_id: Option<u64>,
+    limit: Option<u64>,
     next: Option<&str>,
-    currency_greater_than: Option<i32>,
+    currency_greater_than: Option<u64>,
     include_all: Option<bool>,
     exclude: Option<Vec<String>>,
-    currency_less_than: Option<i32>,
+    currency_less_than: Option<u64>,
     auth_addr: Option<&str>,
-    round: Option<i32>,
-    application_id: Option<i32>,
+    round: Option<u64>,
+    application_id: Option<u64>,
 ) -> Result<crate::models::SearchForAccounts200Response, Error<SearchForAccountsError>> {
     let local_var_configuration = configuration;
 
@@ -104,18 +105,17 @@ pub async fn search_for_accounts(
         local_var_req_builder = match "csv" {
             "multi" => local_var_req_builder.query(
                 &local_var_str
-                    .into_iter()
+                    .iter()
                     .map(|p| ("exclude".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => local_var_req_builder.query(&[(
                 "exclude",
                 &local_var_str
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
-                    .join(",")
-                    .to_string(),
+                    .join(","),
             )]),
         };
     }
@@ -163,8 +163,8 @@ pub async fn search_for_accounts(
 /// Given an application ID, returns the box names of that application sorted lexicographically.
 pub async fn search_for_application_boxes(
     configuration: &configuration::Configuration,
-    application_id: i32,
-    limit: Option<i32>,
+    application_id: u64,
+    limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
     crate::models::SearchForApplicationBoxes200Response,
@@ -218,10 +218,10 @@ pub async fn search_for_application_boxes(
 /// Search for applications
 pub async fn search_for_applications(
     configuration: &configuration::Configuration,
-    application_id: Option<i32>,
+    application_id: Option<u64>,
     creator: Option<&str>,
     include_all: Option<bool>,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
     crate::models::LookupAccountCreatedApplications200Response,
@@ -281,15 +281,16 @@ pub async fn search_for_applications(
 }
 
 /// Search for assets.
+#[allow(clippy::too_many_arguments)]
 pub async fn search_for_assets(
     configuration: &configuration::Configuration,
     include_all: Option<bool>,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
     creator: Option<&str>,
     name: Option<&str>,
     unit: Option<&str>,
-    asset_id: Option<i32>,
+    asset_id: Option<u64>,
 ) -> Result<crate::models::LookupAccountCreatedAssets200Response, Error<SearchForAssetsError>> {
     let local_var_configuration = configuration;
 
@@ -353,27 +354,28 @@ pub async fn search_for_assets(
 }
 
 /// Search for transactions. Transactions are returned oldest to newest unless the address parameter is used, in which case results are returned newest to oldest.
+#[allow(clippy::too_many_arguments)]
 pub async fn search_for_transactions(
     configuration: &configuration::Configuration,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
     note_prefix: Option<&str>,
     tx_type: Option<&str>,
     sig_type: Option<&str>,
     txid: Option<&str>,
-    round: Option<i32>,
-    min_round: Option<i32>,
-    max_round: Option<i32>,
-    asset_id: Option<i32>,
+    round: Option<u64>,
+    min_round: Option<u64>,
+    max_round: Option<u64>,
+    asset_id: Option<u64>,
     before_time: Option<String>,
     after_time: Option<String>,
-    currency_greater_than: Option<i32>,
-    currency_less_than: Option<i32>,
+    currency_greater_than: Option<u64>,
+    currency_less_than: Option<u64>,
     address: Option<&str>,
     address_role: Option<&str>,
     exclude_close_to: Option<bool>,
     rekey_to: Option<bool>,
-    application_id: Option<i32>,
+    application_id: Option<u64>,
 ) -> Result<crate::models::LookupAccountTransactions200Response, Error<SearchForTransactionsError>>
 {
     let local_var_configuration = configuration;

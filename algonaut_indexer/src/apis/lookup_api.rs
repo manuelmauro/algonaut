@@ -149,9 +149,9 @@ pub enum LookupTransactionError {
 pub async fn lookup_account_app_local_states(
     configuration: &configuration::Configuration,
     account_id: &str,
-    application_id: Option<i32>,
+    application_id: Option<u64>,
     include_all: Option<bool>,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
     crate::models::LookupAccountAppLocalStates200Response,
@@ -214,9 +214,9 @@ pub async fn lookup_account_app_local_states(
 pub async fn lookup_account_assets(
     configuration: &configuration::Configuration,
     account_id: &str,
-    asset_id: Option<i32>,
+    asset_id: Option<u64>,
     include_all: Option<bool>,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<crate::models::LookupAccountAssets200Response, Error<LookupAccountAssetsError>> {
     let local_var_configuration = configuration;
@@ -276,7 +276,7 @@ pub async fn lookup_account_assets(
 pub async fn lookup_account_by_id(
     configuration: &configuration::Configuration,
     account_id: &str,
-    round: Option<i32>,
+    round: Option<u64>,
     include_all: Option<bool>,
     exclude: Option<Vec<String>>,
 ) -> Result<crate::models::LookupAccountById200Response, Error<LookupAccountByIdError>> {
@@ -304,18 +304,17 @@ pub async fn lookup_account_by_id(
         local_var_req_builder = match "csv" {
             "multi" => local_var_req_builder.query(
                 &local_var_str
-                    .into_iter()
+                    .iter()
                     .map(|p| ("exclude".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => local_var_req_builder.query(&[(
                 "exclude",
                 &local_var_str
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
-                    .join(",")
-                    .to_string(),
+                    .join(","),
             )]),
         };
     }
@@ -348,9 +347,9 @@ pub async fn lookup_account_by_id(
 pub async fn lookup_account_created_applications(
     configuration: &configuration::Configuration,
     account_id: &str,
-    application_id: Option<i32>,
+    application_id: Option<u64>,
     include_all: Option<bool>,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
     crate::models::LookupAccountCreatedApplications200Response,
@@ -413,9 +412,9 @@ pub async fn lookup_account_created_applications(
 pub async fn lookup_account_created_assets(
     configuration: &configuration::Configuration,
     account_id: &str,
-    asset_id: Option<i32>,
+    asset_id: Option<u64>,
     include_all: Option<bool>,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
     crate::models::LookupAccountCreatedAssets200Response,
@@ -475,23 +474,24 @@ pub async fn lookup_account_created_assets(
 }
 
 /// Lookup account transactions. Transactions are returned newest to oldest.
+#[allow(clippy::too_many_arguments)]
 pub async fn lookup_account_transactions(
     configuration: &configuration::Configuration,
     account_id: &str,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
     note_prefix: Option<&str>,
     tx_type: Option<&str>,
     sig_type: Option<&str>,
     txid: Option<&str>,
-    round: Option<i32>,
-    min_round: Option<i32>,
-    max_round: Option<i32>,
-    asset_id: Option<i32>,
+    round: Option<u64>,
+    min_round: Option<u64>,
+    max_round: Option<u64>,
+    asset_id: Option<u64>,
     before_time: Option<String>,
     after_time: Option<String>,
-    currency_greater_than: Option<i32>,
-    currency_less_than: Option<i32>,
+    currency_greater_than: Option<u64>,
+    currency_less_than: Option<u64>,
     rekey_to: Option<bool>,
 ) -> Result<
     crate::models::LookupAccountTransactions200Response,
@@ -597,7 +597,7 @@ pub async fn lookup_account_transactions(
 /// Given an application ID and box name, returns base64 encoded box name and value. Box names must be in the goal app call arg form 'encoding:value'. For ints, use the form 'int:1234'. For raw bytes, encode base 64 and use 'b64' prefix as in 'b64:A=='. For printable strings, use the form 'str:hello'. For addresses, use the form 'addr:XYZ...'.
 pub async fn lookup_application_box_by_id_and_name(
     configuration: &configuration::Configuration,
-    application_id: i32,
+    application_id: u64,
     name: &str,
 ) -> Result<crate::models::Box, Error<LookupApplicationBoxByIdAndNameError>> {
     let local_var_configuration = configuration;
@@ -641,7 +641,7 @@ pub async fn lookup_application_box_by_id_and_name(
 /// Lookup application.
 pub async fn lookup_application_by_id(
     configuration: &configuration::Configuration,
-    application_id: i32,
+    application_id: u64,
     include_all: Option<bool>,
 ) -> Result<crate::models::LookupApplicationById200Response, Error<LookupApplicationByIdError>> {
     let local_var_configuration = configuration;
@@ -686,14 +686,15 @@ pub async fn lookup_application_by_id(
 }
 
 /// Lookup application logs.
+#[allow(clippy::too_many_arguments)]
 pub async fn lookup_application_logs_by_id(
     configuration: &configuration::Configuration,
-    application_id: i32,
-    limit: Option<i32>,
+    application_id: u64,
+    limit: Option<u64>,
     next: Option<&str>,
     txid: Option<&str>,
-    min_round: Option<i32>,
-    max_round: Option<i32>,
+    min_round: Option<u64>,
+    max_round: Option<u64>,
     sender_address: Option<&str>,
 ) -> Result<
     crate::models::LookupApplicationLogsById200Response,
@@ -763,12 +764,12 @@ pub async fn lookup_application_logs_by_id(
 /// Lookup the list of accounts who hold this asset
 pub async fn lookup_asset_balances(
     configuration: &configuration::Configuration,
-    asset_id: i32,
+    asset_id: u64,
     include_all: Option<bool>,
-    limit: Option<i32>,
+    limit: Option<u64>,
     next: Option<&str>,
-    currency_greater_than: Option<i32>,
-    currency_less_than: Option<i32>,
+    currency_greater_than: Option<u64>,
+    currency_less_than: Option<u64>,
 ) -> Result<crate::models::LookupAssetBalances200Response, Error<LookupAssetBalancesError>> {
     let local_var_configuration = configuration;
 
@@ -830,7 +831,7 @@ pub async fn lookup_asset_balances(
 /// Lookup asset information.
 pub async fn lookup_asset_by_id(
     configuration: &configuration::Configuration,
-    asset_id: i32,
+    asset_id: u64,
     include_all: Option<bool>,
 ) -> Result<crate::models::LookupAssetById200Response, Error<LookupAssetByIdError>> {
     let local_var_configuration = configuration;
@@ -875,22 +876,23 @@ pub async fn lookup_asset_by_id(
 }
 
 /// Lookup transactions for an asset. Transactions are returned oldest to newest.
+#[allow(clippy::too_many_arguments)]
 pub async fn lookup_asset_transactions(
     configuration: &configuration::Configuration,
-    asset_id: i32,
-    limit: Option<i32>,
+    asset_id: u64,
+    limit: Option<u64>,
     next: Option<&str>,
     note_prefix: Option<&str>,
     tx_type: Option<&str>,
     sig_type: Option<&str>,
     txid: Option<&str>,
-    round: Option<i32>,
-    min_round: Option<i32>,
-    max_round: Option<i32>,
+    round: Option<u64>,
+    min_round: Option<u64>,
+    max_round: Option<u64>,
     before_time: Option<String>,
     after_time: Option<String>,
-    currency_greater_than: Option<i32>,
-    currency_less_than: Option<i32>,
+    currency_greater_than: Option<u64>,
+    currency_less_than: Option<u64>,
     address: Option<&str>,
     address_role: Option<&str>,
     exclude_close_to: Option<bool>,
@@ -1005,7 +1007,7 @@ pub async fn lookup_asset_transactions(
 /// Lookup block.
 pub async fn lookup_block(
     configuration: &configuration::Configuration,
-    round_number: i32,
+    round_number: u64,
     header_only: Option<bool>,
 ) -> Result<crate::models::Block, Error<LookupBlockError>> {
     let local_var_configuration = configuration;

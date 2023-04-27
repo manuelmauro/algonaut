@@ -17,30 +17,30 @@ pub struct BlockRewards {
     pub fee_sink: String,
     /// \\[rwcalr\\] number of leftover MicroAlgos after the distribution of rewards-rate MicroAlgos for every reward unit in the next round.
     #[serde(rename = "rewards-calculation-round")]
-    pub rewards_calculation_round: i32,
+    pub rewards_calculation_round: u64,
     /// \\[earn\\] How many rewards, in MicroAlgos, have been distributed to each RewardUnit of MicroAlgos since genesis.
     #[serde(rename = "rewards-level")]
-    pub rewards_level: i32,
+    pub rewards_level: u64,
     /// \\[rwd\\] accepts periodic injections from the fee-sink and continually redistributes them as rewards.
     #[serde(rename = "rewards-pool")]
     pub rewards_pool: String,
     /// \\[rate\\] Number of new MicroAlgos added to the participation stake from rewards at the next round.
     #[serde(rename = "rewards-rate")]
-    pub rewards_rate: i32,
+    pub rewards_rate: u64,
     /// \\[frac\\] Number of leftover MicroAlgos after the distribution of RewardsRate/rewardUnits MicroAlgos for every reward unit in the next round.
     #[serde(rename = "rewards-residue")]
-    pub rewards_residue: i32,
+    pub rewards_residue: u64,
 }
 
 impl BlockRewards {
     /// Fields relating to rewards,
     pub fn new(
         fee_sink: String,
-        rewards_calculation_round: i32,
-        rewards_level: i32,
+        rewards_calculation_round: u64,
+        rewards_level: u64,
         rewards_pool: String,
-        rewards_rate: i32,
-        rewards_residue: i32,
+        rewards_rate: u64,
+        rewards_residue: u64,
     ) -> BlockRewards {
         BlockRewards {
             fee_sink,
