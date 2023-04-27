@@ -28,10 +28,6 @@ pub struct Algod {
 
 impl Algod {
     /// Build a v2 client for Algorand protocol daemon.
-    ///
-    /// For third party providers / custom headers, use [with_headers](Self::with_headers).
-    ///
-    /// Returns an error if the url or token have an invalid format.
     pub fn new(url: &str, token: &str) -> Result<Self, Error> {
         let conf = Configuration {
             base_path: url.to_owned(),
