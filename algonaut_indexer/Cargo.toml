@@ -8,6 +8,8 @@ license = "MIT"
 edition = "2021"
 
 [dependencies]
+algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }
+algonaut_encoding = { path = "../algonaut_encoding", version = "0.4.2" }
 serde = "^1.0"
 serde_derive = "^1.0"
 serde_json = "^1.0"
