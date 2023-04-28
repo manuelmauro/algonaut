@@ -1,3 +1,4 @@
+use self::error::AlgodError;
 use crate::Error;
 use algonaut_algod::{
     apis::configuration::{ApiKey, Configuration},
@@ -15,8 +16,6 @@ use algonaut_core::{CompiledTeal, ToMsgPack};
 use algonaut_encoding::decode_base64;
 use algonaut_transaction::SignedTransaction;
 
-use self::error::AlgodError;
-
 /// Error class wrapping errors from algonaut_algod
 pub(crate) mod error;
 
@@ -29,14 +28,10 @@ pub struct Algod {
 
 impl Algod {
     /// Build a v2 client for Algorand protocol daemon.
-    ///
-    /// For third party providers / custom headers, use [with_headers](Self::with_headers).
-    ///
-    /// Returns an error if the url or token have an invalid format.
-    pub fn new(url: &str, token: &str) -> Result<Algod, Error> {
+    pub fn new(url: &str, token: &str) -> Result<Self, Error> {
         let conf = Configuration {
             base_path: url.to_owned(),
-            user_agent: Some("OpenAPI-Generator/0.0.1/rust".to_owned()),
+            user_agent: Some("algonaut".to_owned()),
             client: reqwest::Client::new(),
             basic_auth: None,
             oauth_access_token: None,
@@ -47,7 +42,7 @@ impl Algod {
             }),
         };
 
-        Ok(Algod {
+        Ok(Self {
             configuration: conf,
         })
     }

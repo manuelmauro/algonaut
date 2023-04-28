@@ -13,7 +13,7 @@ use std::collections::HashMap;
 /// - Non existent keys can mean None or a semantic zero value, depending on context.
 ///
 /// Note that to date the REST API documentation specifies explicitly zero values for some fields, which is incorrect.
-/// https://github.com/algorand/docs/pull/454, https://github.com/algorand/docs/issues/415 (not comprehensive)
+/// <https://github.com/algorand/docs/pull/454>, <https://github.com/algorand/docs/issues/415> (not comprehensive)
 ///
 /// We intentionally don't use `skip_serializing_if` for values other than `Option` for a consistent representation of optionals.
 ///

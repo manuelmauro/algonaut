@@ -1,10 +1,10 @@
-///
-pub mod error;
-///
-mod extensions;
-/// Algorand's indexer
-pub mod indexer;
-/// Api token management utils
-pub mod token;
+#[macro_use]
+extern crate serde_derive;
 
-pub type Headers<'a> = Vec<(&'a str, &'a str)>;
+extern crate reqwest;
+extern crate serde;
+extern crate serde_json;
+extern crate url;
+
+pub mod apis;
+pub mod models;

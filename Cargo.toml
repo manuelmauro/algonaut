@@ -61,8 +61,8 @@ async-trait = "0.1.51"
 
 [features]
 default = ["native"]
-native = ["algonaut_indexer/native", "algonaut_kmd/native"]
-rustls = ["algonaut_indexer/rustls", "algonaut_indexer/rustls"]
+native = ["algonaut_kmd/native"]
+rustls = ["algonaut_kmd/rustls"]
 
 [[test]]
 name = "features_runner"
