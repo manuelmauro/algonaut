@@ -15,22 +15,19 @@ async fn main() {
 
     integration::world::World::cucumber()
         .max_concurrent_scenarios(1)
-        // show output (e.g. println! or dbg!) in terminal https://cucumber-rs.github.io/cucumber/current/output/terminal.html#manual-printing
-        // .with_writer(
-        //     writer::Basic::raw(io::stdout(), writer::Coloring::Auto, 0)
-        //         .summarized()
-        //         .assert_normalized(),
-        // )
-        .run("tests/features/integration/applications.feature")
+        .fail_on_skipped()
+        .run_and_exit("tests/features/integration/applications.feature")
         .await;
 
     integration::world::World::cucumber()
         .max_concurrent_scenarios(1)
-        .run("tests/features/integration/abi.feature")
+        .fail_on_skipped()
+        .run_and_exit("tests/features/integration/abi.feature")
         .await;
 
     integration::world::World::cucumber()
         .max_concurrent_scenarios(1)
-        .run("tests/features/integration/c2c.feature")
+        .fail_on_skipped()
+        .run_and_exit("tests/features/integration/c2c.feature")
         .await;
 }
