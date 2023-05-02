@@ -72,7 +72,7 @@ native = ["algonaut_kmd/native"]
 rustls = ["algonaut_kmd/rustls"]
 
 [[test]]
-name = "features_runner"
+name = "cucumber"
 # Allows Cucumber to print output instead of libtest
 harness = false
 test = false
