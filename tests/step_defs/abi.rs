@@ -1,6 +1,6 @@
 use crate::step_defs::{
-    integration::world::World,
     util::{read_teal, wait_for_pending_transaction},
+    world::World,
 };
 use algonaut::atomic_transaction_composer::{
     transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError,

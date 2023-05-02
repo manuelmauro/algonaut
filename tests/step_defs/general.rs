@@ -1,6 +1,6 @@
 use crate::step_defs::{
-    integration::world::World,
     util::{account_from_kmd_response, wait_for_pending_transaction},
+    world::World,
 };
 use algonaut::{algod::v2::Algod, indexer::v2::Indexer, kmd::v1::Kmd};
 use algonaut_core::MicroAlgos;

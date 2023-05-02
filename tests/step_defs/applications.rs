@@ -1,7 +1,7 @@
-use crate::step_defs::integration::world::World;
 use crate::step_defs::util::{
     parse_app_args, read_teal, split_addresses, split_and_process_app_args, split_uint64,
 };
+use crate::step_defs::world::World;
 use algonaut_algod::models::{Application, ApplicationLocalState};
 use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,

@@ -1,4 +1,4 @@
-use crate::step_defs::integration::world::World;
+use crate::step_defs::world::World;
 use cucumber::then;
 
 #[then(

@@ -1,5 +1,5 @@
 use cucumber::World;
-use step_defs::integration;
+use step_defs::world;
 
 mod step_defs;
 
@@ -13,19 +13,19 @@ async fn main() {
 
     // TODO use tags - so we don't have to create a new config per file (until the tests are complete)
 
-    integration::world::World::cucumber()
+    world::World::cucumber()
         .max_concurrent_scenarios(1)
         .fail_on_skipped()
         .run_and_exit("tests/features/integration/applications.feature")
         .await;
 
-    integration::world::World::cucumber()
+    world::World::cucumber()
         .max_concurrent_scenarios(1)
         .fail_on_skipped()
         .run_and_exit("tests/features/integration/abi.feature")
         .await;
 
-    integration::world::World::cucumber()
+    world::World::cucumber()
         .max_concurrent_scenarios(1)
         .fail_on_skipped()
         .run_and_exit("tests/features/integration/c2c.feature")
