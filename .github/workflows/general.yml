@@ -40,6 +40,8 @@ jobs:
   tests:
     name: cargo-test
     runs-on: ubuntu-latest
+    env:
+      CI: true
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1

@@ -1,2 +1,2 @@
 pub mod integration;
-mod util;
+pub mod util;

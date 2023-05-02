@@ -1,5 +1,7 @@
 use crate::step_defs::integration::world::World;
-use crate::step_defs::util::{parse_app_args, read_teal, split_addresses, split_uint64};
+use crate::step_defs::util::{
+    parse_app_args, read_teal, split_addresses, split_and_process_app_args, split_uint64,
+};
 use algonaut_algod::models::{Application, ApplicationLocalState};
 use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,
@@ -34,7 +36,7 @@ async fn i_build_an_application_transaction(
     foreign_assets: String,
     app_accounts: String,
     extra_pages: u32,
-    boxes: String
+    _boxes: String, // TODO implement boxes
 ) -> Result<(), Box<dyn Error>> {
     let algod = w.algod.as_ref().unwrap();
     let transient_account = w.transient_account.as_ref().unwrap();
@@ -283,4 +285,18 @@ async fn the_transient_account_should_have(
     }
 
     Ok(())
+}
+
+#[then(
+    regex = r#"according to "([^"]*)", the contents of the box with name "([^"]*)" in the current application should be "([^"]*)". If there is an error it is "([^"]*)"."#
+)]
+fn check_box_contents(
+    _w: &mut World,
+    _context: String,
+    _from_client: String,
+    box_name: String,
+    _box_value: String,
+    _error_string: String,
+) {
+    let _box_name = split_and_process_app_args(box_name);
 }
