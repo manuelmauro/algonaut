@@ -7,9 +7,15 @@ use crate::{
         TransactionType,
     },
 };
-use algonaut_algod::models::TransactionParams200Response;
 use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
+
+pub trait TransactionParams {
+    fn last_round(&self) -> u64;
+    fn min_fee(&self) -> u64;
+    fn genesis_hash(&self) -> HashDigest;
+    fn genesis_id(&self) -> &String;
+}
 
 /// A builder for [Transaction].
 pub struct TxnBuilder {
@@ -29,26 +35,26 @@ impl TxnBuilder {
     /// Convenience to initialize builder with suggested transaction params
     ///
     /// The txn fee is estimated, based on params. To set the fee manually, use [with_fee](Self::with_fee) or [new](Self::new).
-    pub fn with(params: &TransactionParams200Response, txn_type: TransactionType) -> Self {
-        Self::with_fee(params, MicroAlgos(params.min_fee), txn_type)
+    pub fn with(params: &impl TransactionParams, txn_type: TransactionType) -> Self {
+        Self::with_fee(params, MicroAlgos(params.min_fee()), txn_type)
     }
 
     /// Convenience to initialize builder with suggested transaction params, and set the fee manually (ignoring the fee fields in params).
     ///
     /// Useful e.g. in txns groups where one txn pays the fee for others.
     pub fn with_fee(
-        params: &TransactionParams200Response,
+        params: &impl TransactionParams,
         fee: MicroAlgos,
         txn_type: TransactionType,
     ) -> Self {
         Self::new(
             fee,
-            Round(params.last_round),
-            Round(params.last_round + 1000),
-            params.genesis_hash,
+            Round(params.last_round()),
+            Round(params.last_round() + 1000),
+            params.genesis_hash(),
             txn_type,
         )
-        .genesis_id(params.genesis_id.clone())
+        .genesis_id(params.genesis_id().clone())
     }
 
     pub fn new(
