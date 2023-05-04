@@ -11,8 +11,8 @@ signed.tx
 
 # testing files
 *.feature
-test-harness
-tests/features
+/test-harness
+/tests/features
 
 # editor
 *.code-workspace
