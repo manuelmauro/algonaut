@@ -1,5 +1,5 @@
 use crate::step_defs::util::{
-    parse_app_args, read_teal, split_addresses, split_and_process_app_args, split_uint64,
+    read_teal, split_addresses, split_and_process_app_args, split_uint64,
 };
 use crate::step_defs::world::World;
 use algonaut_algod::models::{Application, ApplicationLocalState};
@@ -41,7 +41,7 @@ async fn i_build_an_application_transaction(
     let algod = w.algod.as_ref().unwrap();
     let transient_account = w.transient_account.as_ref().unwrap();
 
-    let args = parse_app_args(app_args)?;
+    let args = split_and_process_app_args(app_args);
 
     let accounts = split_addresses(app_accounts)?;
 
@@ -290,7 +290,7 @@ async fn the_transient_account_should_have(
 #[then(
     regex = r#"according to "([^"]*)", the contents of the box with name "([^"]*)" in the current application should be "([^"]*)". If there is an error it is "([^"]*)"."#
 )]
-fn check_box_contents(
+async fn check_box_contents(
     _w: &mut World,
     _context: String,
     _from_client: String,
@@ -299,4 +299,15 @@ fn check_box_contents(
     _error_string: String,
 ) {
     let _box_name = split_and_process_app_args(box_name);
+
+    // TODO
+    // if from_client == "algod" {
+    //     let box_response = w
+    //         .algod
+    //         .as_ref()
+    //         .unwrap()
+    //         .app_box(w.app_id.unwrap(), &box_name)
+    //         .await
+    //         .ok();
+    // }
 }

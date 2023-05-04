@@ -45,33 +45,6 @@ pub fn split_addresses(args_str: String) -> Result<Vec<Address>, String> {
     args_str.split(",").map(|a| a.parse()).collect()
 }
 
-pub fn parse_app_args(args_str: String) -> Result<Vec<Vec<u8>>, Box<dyn Error>> {
-    if args_str.is_empty() {
-        return Ok(vec![]);
-    }
-
-    let args = args_str.split(",");
-
-    let mut args_bytes: Vec<Vec<u8>> = vec![];
-    for arg in args {
-        let parts = arg.split(":").collect::<Vec<&str>>();
-        let type_part = parts[0];
-        match type_part {
-            "str" => args_bytes.push(parts[1].as_bytes().to_vec()),
-            "int" => {
-                let int = parts[1].parse::<u64>()?;
-                args_bytes.push(int.to_be_bytes().to_vec());
-            }
-            _ => Err(format!(
-                "Applications doesn't currently support argument of type {}",
-                type_part
-            ))?,
-        }
-    }
-
-    Ok(args_bytes)
-}
-
 pub fn account_from_kmd_response(key_res: &ExportKeyResponse) -> Result<Account, Box<dyn Error>> {
     Ok(Account::from_seed(key_res.private_key[0..32].try_into()?))
 }
@@ -88,6 +61,7 @@ pub async fn read_teal(algod: &Algod, file_name: &str) -> CompiledTeal {
 
 pub fn split_and_process_app_args(s: String) -> Vec<Vec<u8>> {
     s.split(',')
+        .filter(|s| !s.is_empty())
         .map(|arg| arg.parse::<AppArg>().unwrap().as_bytes())
         .collect()
 }
