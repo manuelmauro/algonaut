@@ -19,8 +19,6 @@ use algonaut_transaction::SignedTransaction;
 /// Error class wrapping errors from algonaut_algod
 pub(crate) mod error;
 
-pub type Block = GetBlock200Response;
-
 #[derive(Debug, Clone)]
 pub struct Algod {
     pub(crate) configuration: Configuration,
@@ -134,7 +132,7 @@ impl Algod {
     }
 
     /// Get the block for the given round.
-    pub async fn block(&self, round: u64) -> Result<Block, Error> {
+    pub async fn block(&self, round: u64) -> Result<GetBlock200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block(&self.configuration, round, None)
                 .await
