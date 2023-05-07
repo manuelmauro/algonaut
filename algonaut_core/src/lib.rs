@@ -28,6 +28,16 @@ pub const MICRO_ALGO_CONVERSION_FACTOR: f64 = 1e6;
 )]
 pub struct MicroAlgos(pub u64);
 
+impl MicroAlgos {
+    pub fn from_algos(algos: u64) -> Self {
+        MicroAlgos(algos * 1_000_000)
+    }
+
+    pub fn from_millialgos(millialgos: u64) -> Self {
+        MicroAlgos(millialgos * 1_000)
+    }
+}
+
 impl Add<u64> for MicroAlgos {
     type Output = Self;
 
