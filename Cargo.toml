@@ -48,7 +48,7 @@ sha2 = "0.10.1"
 thiserror = "1.0.23"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-gloo-timers = { version = "0.2.4", features = ["futures"] }
+gloo-timers = { version = "0.3.0", features = ["futures"] }
 instant = { version = "0.1", features = ["now", "wasm-bindgen"] }
 
 [dev-dependencies]
