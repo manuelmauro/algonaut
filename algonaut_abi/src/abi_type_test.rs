@@ -453,7 +453,7 @@ mod test {
                 assert!(t.byte_len().is_err())
             } else {
                 let mut size = 0;
-                let ct_list = t.children().clone();
+                let ct_list = t.children();
 
                 for i in 0..ct_list.len() {
                     match ct_list[i] {
