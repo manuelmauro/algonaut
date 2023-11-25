@@ -37,27 +37,27 @@ Documentation improvements are always welcome! A solid SDK needs to have solid d
 
 ```mermaid
 stateDiagram-v2
-    abi --> core
-    algod --> crypto
     algod --> encoding
-    algod --> model
     core --> encoding
-    core --> crypto
     crypto --> encoding
     indexer --> encoding
-    indexer --> crypto
-    kmd --> core
-    kmd --> crypto
     kmd --> encoding
-    kmd --> model
-    model --> core
-    model --> crypto
     model --> encoding
-    transaction --> core
-    transaction --> abi
-    transaction --> crypto
     transaction --> encoding
+    algod --> crypto
+    indexer --> crypto
+    core --> crypto
+    kmd --> crypto
+    model --> crypto
+    transaction --> crypto
+    abi --> core
+    kmd --> core
+    model --> core
+    transaction --> core
+    algod --> model
+    kmd --> model
     transaction --> model
+    transaction --> abi
 ```
 
 ## Useful Resources
