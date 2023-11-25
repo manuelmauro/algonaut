@@ -33,6 +33,24 @@ Before submitting your pull request to the repository, please make sure you have
 
 Documentation improvements are always welcome! A solid SDK needs to have solid documentation to go with it.
 
+## Dependency Diagram
+
+```mermaid
+stateDiagram-v2
+    crypto --> encoding
+    indexer --> encoding
+    algod --> encoding
+    kmd --> encoding
+    core --> encoding
+    transaction --> encoding
+    algod --> model
+    transaction --> model
+    kmd --> model
+    abi --> core
+    transaction --> core
+    transaction --> abi
+```
+
 ## Useful Resources
 
 - [Git Style Guide](https://github.com/agis/git-style-guide)
