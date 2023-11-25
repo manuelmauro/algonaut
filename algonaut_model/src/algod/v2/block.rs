@@ -75,4 +75,28 @@ pub struct BlockHeader {
     pub ts: Option<u64>,
     #[serde(default)]
     pub txn256: Option<String>,
+    #[serde(default)]
+    pub txns: Option<Vec<TransactionHeader>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TransactionHeader {
+    pub hgi: Option<bool>,
+    pub sig: Option<String>,
+    pub txn: Option<Transaction>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Transaction {
+    #[serde(rename = "type")]
+    pub txn_type: Option<String>,
+    pub amt: Option<u64>,
+    pub fee: Option<u64>,
+    pub fv: Option<u64>,
+    pub gen: Option<String>,
+    pub gh: Option<String>,
+    pub lv: Option<u64>,
+    pub note: Option<String>,
+    pub rcv: Option<String>,
+    pub snd: Option<String>,
 }
