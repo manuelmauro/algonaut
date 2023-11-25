@@ -50,12 +50,14 @@ stateDiagram-v2
     kmd --> crypto
     kmd --> encoding
     kmd --> model
-    transaction --> abi
+    model --> core
+    model --> crypto
+    model --> encoding
     transaction --> core
+    transaction --> abi
     transaction --> crypto
     transaction --> encoding
     transaction --> model
-
 ```
 
 ## Useful Resources
