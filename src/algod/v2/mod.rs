@@ -4,7 +4,7 @@ use algonaut_algod::{
     apis::configuration::{ApiKey, Configuration},
     models::{
         self, Account, AccountApplicationInformation200Response, Application, Asset, DryrunRequest,
-        GetApplicationBoxes200Response, GetBlock200Response, GetBlockHash200Response,
+        GetApplicationBoxes200Response, GetBlockHash200Response,
         GetPendingTransactionsByAddress200Response, GetStatus200Response, GetSupply200Response,
         GetSyncRound200Response, GetTransactionProof200Response, LightBlockHeaderProof,
         PendingTransactionResponse, RawTransaction200Response, SimulateRequest,
@@ -14,6 +14,7 @@ use algonaut_algod::{
 };
 use algonaut_core::{CompiledTeal, ToMsgPack};
 use algonaut_encoding::decode_base64;
+use algonaut_model::algod::v2::block::Block;
 use algonaut_transaction::SignedTransaction;
 
 /// Error class wrapping errors from algonaut_algod
@@ -132,7 +133,7 @@ impl Algod {
     }
 
     /// Get the block for the given round.
-    pub async fn block(&self, round: u64) -> Result<GetBlock200Response, Error> {
+    pub async fn block(&self, round: u64) -> Result<Block, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block(&self.configuration, round, None)
                 .await
