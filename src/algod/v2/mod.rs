@@ -2,6 +2,7 @@ use self::error::AlgodError;
 use crate::Error;
 use algonaut_algod::{
     apis::configuration::{ApiKey, Configuration},
+    ext::block::Block,
     models::{
         self, Account, AccountApplicationInformation200Response, Application, Asset, DryrunRequest,
         GetApplicationBoxes200Response, GetBlockHash200Response,
@@ -14,7 +15,6 @@ use algonaut_algod::{
 };
 use algonaut_core::{CompiledTeal, ToMsgPack};
 use algonaut_encoding::decode_base64;
-use algonaut_model::algod::v2::block::Block;
 use algonaut_transaction::SignedTransaction;
 
 /// Error class wrapping errors from algonaut_algod
