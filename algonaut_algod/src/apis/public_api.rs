@@ -11,7 +11,7 @@
 use reqwest;
 
 use super::{configuration, Error};
-use crate::apis::ResponseContent;
+use crate::{apis::ResponseContent, ext::block::Block};
 
 /// struct for typed errors of method [`account_application_information`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -830,7 +830,7 @@ pub async fn get_block(
     configuration: &configuration::Configuration,
     round: u64,
     format: Option<&str>,
-) -> Result<crate::models::GetBlock200Response, Error<GetBlockError>> {
+) -> Result<Block, Error<GetBlockError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
