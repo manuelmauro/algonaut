@@ -1,7 +1,6 @@
+use super::transaction::TransactionHeader;
 use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize};
-
-use super::transaction::TransactionHeader;
 
 /// Block
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -36,47 +35,36 @@ pub struct BlockCertificateProp {
     pub hash: HashDigest,
 }
 
-/// BlockHeader
-///
-/// Note: fields seem to be managed as untyped map and currently not documented ([docs](https://developer.algorand.org/docs/rest-apis/algod/v2/#getblock-response-200)),
-/// so everything optional. Some may be outdated or missing.
-///
-/// For now, also, byte array representations as strings,
-/// different encodings and prefixes are used, hindering a standarized deserialization.
-///
-/// It probably makes sense to deserialize this and [BlockHeaderMsgPack]
-/// to the same struct, but above makes it currently not possible.
-///
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockHeader {
-    #[serde(default)]
-    pub earn: Option<u64>,
-    #[serde(default)]
-    pub fees: Option<String>,
-    #[serde(default)]
-    pub frac: Option<u64>,
-    #[serde(default)]
-    pub gen: Option<String>,
-    #[serde(default)]
-    pub gh: Option<String>,
-    #[serde(default)]
-    pub prev: Option<String>,
-    #[serde(default)]
-    pub proto: Option<String>,
-    #[serde(default)]
-    pub rate: Option<u64>,
-    #[serde(default)]
-    pub rnd: Option<u64>,
-    #[serde(default)]
-    pub rwcalr: Option<u64>,
-    #[serde(default)]
-    pub rwd: Option<String>,
-    #[serde(default)]
+    #[serde(rename = "earn")]
+    pub rewards_level: Option<u64>,
+    #[serde(rename = "fees")]
+    pub fee_sink: Option<String>,
+    #[serde(rename = "frac")]
+    pub rewards_residue: Option<u64>,
+    #[serde(rename = "gen")]
+    pub genesis_id: Option<String>,
+    #[serde(rename = "gh")]
+    pub genesis_hash: Option<String>,
+    #[serde(rename = "prev")]
+    pub branch: Option<String>,
+    #[serde(rename = "proto")]
+    pub current_protocol: Option<String>,
+    #[serde(rename = "rate")]
+    pub rewards_rate: Option<u64>,
+    #[serde(rename = "rnd")]
+    pub round: Option<u64>,
+    #[serde(rename = "rwcalr")]
+    pub rewards_recalculation_round: Option<u64>,
+    #[serde(rename = "rwd")]
+    pub rewards_pool: Option<String>,
+    #[serde(rename = "seed")]
     pub seed: Option<String>,
-    #[serde(default)]
-    pub ts: Option<u64>,
-    #[serde(default)]
-    pub txn256: Option<String>,
-    #[serde(default)]
+    #[serde(rename = "ts")]
+    pub timestamp: Option<u64>,
+    #[serde(rename = "txn256")]
+    pub txn_commitment: Option<String>,
+    #[serde(rename = "txns")]
     pub txns: Option<Vec<TransactionHeader>>,
 }
