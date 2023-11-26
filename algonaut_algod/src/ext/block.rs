@@ -4,21 +4,21 @@ use serde::{Deserialize, Serialize};
 
 /// Block
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Block {
+pub struct BlockResponse {
     /// Block header data.
-    pub block: BlockHeader,
+    pub block: Block,
 }
 
 /// Block with certificate
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BlockWithCertificate {
+pub struct BlockWithCertificateResponse {
     /// Block header data
-    pub block: BlockHeader,
+    pub block: Block,
     /// Certificate
     pub cert: BlockCertificate,
 }
 
-impl BlockWithCertificate {
+impl BlockWithCertificateResponse {
     pub fn hash(&self) -> HashDigest {
         self.cert.prop.hash
     }
@@ -36,7 +36,7 @@ pub struct BlockCertificateProp {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BlockHeader {
+pub struct Block {
     #[serde(rename = "earn")]
     pub rewards_level: Option<u64>,
     #[serde(rename = "fees")]

@@ -2,7 +2,7 @@ use self::error::AlgodError;
 use crate::Error;
 use algonaut_algod::{
     apis::configuration::{ApiKey, Configuration},
-    ext::block::Block,
+    ext::block::BlockResponse,
     models::{
         self, Account, AccountApplicationInformation200Response, Application, Asset, DryrunRequest,
         GetApplicationBoxes200Response, GetBlockHash200Response,
@@ -133,7 +133,7 @@ impl Algod {
     }
 
     /// Get the block for the given round.
-    pub async fn block(&self, round: u64) -> Result<Block, Error> {
+    pub async fn block(&self, round: u64) -> Result<BlockResponse, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block(&self.configuration, round, None)
                 .await
