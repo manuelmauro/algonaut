@@ -14,7 +14,7 @@ jobs:
       - run: cargo check
 
   wasm-check:
-    name: cargo-check
+    name: cargo-check-wasm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
