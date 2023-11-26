@@ -1,6 +1,8 @@
 use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize};
 
+use super::transaction::TransactionHeader;
+
 /// Block
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Block {
@@ -77,58 +79,4 @@ pub struct BlockHeader {
     pub txn256: Option<String>,
     #[serde(default)]
     pub txns: Option<Vec<TransactionHeader>>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TransactionHeader {
-    pub hgi: Option<bool>,
-    pub sig: Option<String>,
-    pub txn: Option<Transaction>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Transaction {
-    // Header
-    pub fee: Option<u64>,
-    pub fv: Option<u64>,
-    pub gh: Option<String>,
-    pub lv: Option<u64>,
-    pub snd: Option<String>,
-    #[serde(rename = "type")]
-    pub t: Option<TransactionType>,
-    pub gen: Option<String>,
-    pub grp: Option<String>,
-    pub lx: Option<String>,
-    pub note: Option<String>,
-    pub rekey: Option<String>,
-
-    // Payment
-    pub rcv: Option<String>,
-    pub amt: Option<u64>,
-    pub close: Option<String>,
-
-    // Key Registration
-    pub votekey: Option<String>,
-    pub selkey: Option<String>,
-    pub sprfkey: Option<String>,
-    pub votefst: Option<u64>,
-    pub votelst: Option<u64>,
-    pub votekd: Option<u64>,
-    pub nonpart: Option<bool>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum TransactionType {
-    #[serde(rename = "pay")]
-    Payment,
-    #[serde(rename = "keyreg")]
-    KeyRegistration,
-    #[serde(rename = "acfg")]
-    AssetConfig,
-    #[serde(rename = "axfer")]
-    AssetTransfer,
-    #[serde(rename = "afrz")]
-    AssetFreeze,
-    #[serde(rename = "appl")]
-    Application,
 }
