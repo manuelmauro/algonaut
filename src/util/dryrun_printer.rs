@@ -83,6 +83,11 @@ pub async fn create_dryrun_with_settings(
         acct_infos.push(acc);
     }
 
+    let mut txns = Vec::new();
+    for signed_txn in signed_txs {
+        txns.push(signed_txn.clone().try_into()?);
+    }
+
     Ok(DryrunRequest {
         accounts: acct_infos,
         apps: app_infos,
@@ -90,7 +95,7 @@ pub async fn create_dryrun_with_settings(
         protocol_version: protocol_version.to_owned(),
         round,
         sources: vec![],
-        txns: signed_txs.iter().map(|t| t.clone().into()).collect(),
+        txns,
     })
 }
 

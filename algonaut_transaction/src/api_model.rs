@@ -5,22 +5,25 @@ use crate::{
     transaction::{
         to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction,
         AssetAcceptTransaction, AssetClawbackTransaction, AssetConfigurationTransaction,
-        AssetFreezeTransaction, AssetParams, AssetTransferTransaction, KeyRegistration, Payment,
-        SignedLogic, StateProofTransaction, StateSchema, TransactionSignature,
+        AssetFreezeTransaction, AssetParams, AssetTransferTransaction, BoxReference,
+        KeyRegistration, Payment, SignedLogic, StateProofTransaction, StateSchema,
+        TransactionSignature,
     },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
 };
 use algonaut_core::{CompiledTeal, LogicSignature, MicroAlgos, Round, ToMsgPack};
 use algonaut_model::transaction::{
-    ApiAssetParams, ApiSignedLogic, ApiSignedLogicArg, ApiSignedTransaction, ApiStateSchema,
-    ApiTransaction, AppArgument,
+    ApiAssetParams, ApiBoxReference, ApiSignedLogic, ApiSignedLogicArg, ApiSignedTransaction,
+    ApiStateSchema, ApiTransaction, AppArgument,
 };
 use num_traits::Num;
 use serde::{Deserialize, Serialize};
 
-impl From<Transaction> for ApiTransaction {
-    fn from(t: Transaction) -> Self {
+impl TryFrom<Transaction> for ApiTransaction {
+    type Error = TransactionError;
+
+    fn try_from(t: Transaction) -> Result<Self, Self::Error> {
         let mut api_t = ApiTransaction {
             // Common fields
             fee: num_as_api_option(t.fee.0).map(MicroAlgos),
@@ -64,6 +67,7 @@ impl From<Transaction> for ApiTransaction {
             vote_last: None,
             xfer: None,
             nonparticipating: None,
+            boxes: None,
             extra_pages: None,
             state_proof_type: None,
             state_proof: None,
@@ -137,10 +141,16 @@ impl From<Transaction> for ApiTransaction {
                 api_t.local_state_schema =
                     call.to_owned().local_state_schema.and_then(|s| s.into());
                 api_t.extra_pages = num_as_api_option(call.extra_pages);
+                api_t.boxes = api_box_references_from_box_references(
+                    call.boxes.as_ref(),
+                    call.foreign_apps.as_ref(),
+                    call.app_id,
+                )?
+                .and_then(vec_as_api_option);
             }
             TransactionType::StateProofTransaction(_) => todo!(),
         }
-        api_t
+        Ok(api_t)
     }
 }
 
@@ -198,6 +208,14 @@ impl TryFrom<ApiTransaction> for Transaction {
                         .app_arguments
                         .map(|args| args.into_iter().map(|a| a.0).collect()),
                     clear_state_program: api_t.clear_state_program.map(CompiledTeal),
+
+                    boxes: box_references_from_api_box_references(
+                        api_t.boxes.as_ref(),
+                        api_t.foreign_apps.as_ref(),
+                        api_t.app_id,
+                    )?
+                    .and_then(vec_as_api_option),
+
                     foreign_apps: api_t.foreign_apps,
                     foreign_assets: api_t.foreign_assets,
 
@@ -386,21 +404,23 @@ impl From<ApiAssetParams> for AssetParams {
     }
 }
 
-impl From<SignedTransaction> for ApiSignedTransaction {
-    fn from(t: SignedTransaction) -> Self {
+impl TryFrom<SignedTransaction> for ApiSignedTransaction {
+    type Error = TransactionError;
+
+    fn try_from(t: SignedTransaction) -> Result<Self, Self::Error> {
         let (sig, msig, lsig) = match t.sig {
             TransactionSignature::Single(sig) => (Some(sig), None, None),
             TransactionSignature::Multi(msig) => (None, Some(msig), None),
             TransactionSignature::Logic(lsig) => (None, None, Some(lsig)),
         };
-        ApiSignedTransaction {
+        Ok(ApiSignedTransaction {
             sig,
             msig,
             lsig: lsig.map(|l| l.into()),
-            transaction: t.transaction.into(),
+            transaction: t.transaction.try_into()?,
             transaction_id: t.transaction_id,
             auth_address: t.auth_address,
-        }
+        })
     }
 }
 
@@ -438,7 +458,10 @@ impl Serialize for Transaction {
     where
         S: serde::Serializer,
     {
-        let api_transaction: ApiTransaction = self.to_owned().into();
+        let api_transaction: ApiTransaction = self
+            .to_owned()
+            .try_into()
+            .map_err(|_| serde::ser::Error::custom("Serialization error for Transaction"))?;
         api_transaction.serialize(serializer)
     }
 }
@@ -460,7 +483,10 @@ impl Serialize for SignedTransaction {
     where
         S: serde::Serializer,
     {
-        let api_transaction: ApiSignedTransaction = self.to_owned().into();
+        let api_transaction: ApiSignedTransaction = self
+            .to_owned()
+            .try_into()
+            .map_err(|_| serde::ser::Error::custom("Serialization error for SignedTransaction"))?;
         api_transaction.serialize(serializer)
     }
 }
@@ -567,6 +593,99 @@ fn int_to_application_call_on_complete(
     }
 }
 
+fn api_box_references_from_box_references(
+    boxes: Option<&Vec<BoxReference>>,
+    foreign_apps: Option<&Vec<u64>>,
+    current_app_id: Option<u64>,
+) -> Result<Option<Vec<ApiBoxReference>>, TransactionError> {
+    boxes
+        .map(|boxes_| {
+            boxes_
+                .iter()
+                .map(|box_| {
+                    api_box_reference_from_box_references(box_, foreign_apps, current_app_id)
+                })
+                .collect::<Result<Vec<ApiBoxReference>, TransactionError>>()
+        })
+        .map_or(Ok(None), |v| v.map(Some))
+}
+
+fn api_box_reference_from_box_references(
+    box_: &BoxReference,
+    foreign_apps: Option<&Vec<u64>>,
+    current_app_id: Option<u64>,
+) -> Result<ApiBoxReference, TransactionError> {
+    let mut index = None;
+    if let Some(app_id) = box_.app_id {
+        if Some(app_id) == current_app_id {
+            // the current app ID is implicitly at index 0 in the
+            // foreign apps array
+            index = num_as_api_option(0);
+        } else {
+            let mut idx = 0;
+            if app_id > 0 {
+                let pos = foreign_apps
+                    .as_ref()
+                    .and_then(|fa| fa.iter().position(|&id| id == app_id))
+                    .ok_or_else(|| {
+                        TransactionError::Msg(format!(
+                            "app_id {} not found in foreign apps array",
+                            app_id
+                        ))
+                    })?;
+                // the foreign apps array starts at index 1 since index 0 is
+                // always occupied by the current app ID
+                idx = pos + 1;
+            }
+            index = num_as_api_option(idx as u64);
+        }
+    }
+    Ok(ApiBoxReference {
+        index,
+        name: box_.name.clone(),
+    })
+}
+
+fn box_references_from_api_box_references(
+    api_boxes: Option<&Vec<ApiBoxReference>>,
+    foreign_apps: Option<&Vec<u64>>,
+    current_app_id: Option<u64>,
+) -> Result<Option<Vec<BoxReference>>, TransactionError> {
+    api_boxes
+        .map(|boxes| {
+            boxes
+                .iter()
+                .map(|api_box| {
+                    box_reference_from_api_box_references(api_box, foreign_apps, current_app_id)
+                })
+                .collect::<Result<Vec<BoxReference>, TransactionError>>()
+        })
+        .map_or(Ok(None), |v| v.map(Some))
+}
+
+fn box_reference_from_api_box_references(
+    api_box: &ApiBoxReference,
+    foreign_apps: Option<&Vec<u64>>,
+    current_app_id: Option<u64>,
+) -> Result<BoxReference, TransactionError> {
+    let app_id = match api_box.index {
+        Some(index) => {
+            if index == 0 {
+                current_app_id
+            } else {
+                foreign_apps
+                    .and_then(|fa| fa.get((index - 1) as usize))
+                    .copied()
+            }
+        }
+        None => None,
+    };
+    Ok(BoxReference {
+        app_id,
+        name: api_box.name.clone(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -613,5 +732,58 @@ mod tests {
         let lsig_deserialized: SignedLogic = deserialized.try_into().unwrap();
 
         assert_eq!(lsig, lsig_deserialized);
+    }
+
+    #[test]
+    fn test_api_box_references_from_box_references() {
+        let box_name = vec![1, 2, 3, 4];
+        let current_app_id = 6355;
+        let foreign_apps = vec![8577, 7466];
+        let boxes = vec![
+            BoxReference {
+                app_id: Some(6355),
+                name: box_name.clone(),
+            },
+            BoxReference {
+                app_id: Some(7466),
+                name: box_name.clone(),
+            },
+            BoxReference {
+                app_id: Some(8577),
+                name: box_name.clone(),
+            },
+        ];
+
+        let api_boxes = api_box_references_from_box_references(
+            Some(&boxes),
+            Some(&foreign_apps),
+            Some(current_app_id),
+        )
+        .expect("api box references can be created");
+
+        assert!(api_boxes.is_some());
+        let api_boxes = api_boxes.unwrap();
+
+        assert_eq!(None, api_boxes[0].index);
+        assert_eq!(Some(2), api_boxes[1].index);
+        assert_eq!(Some(1), api_boxes[2].index);
+    }
+
+    #[test]
+    fn test_api_box_references_from_box_references_invalid_reference() {
+        let box_name = vec![1, 2, 3, 4];
+        let current_app_id = 6355;
+        let foreign_apps = vec![8577, 7466];
+        let boxes = vec![BoxReference {
+            app_id: Some(1234),
+            name: box_name.clone(),
+        }];
+
+        assert!(api_box_references_from_box_references(
+            Some(&boxes),
+            Some(&foreign_apps),
+            Some(current_app_id),
+        )
+        .is_err());
     }
 }
