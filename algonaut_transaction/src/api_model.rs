@@ -141,11 +141,10 @@ impl TryFrom<Transaction> for ApiTransaction {
                 api_t.local_state_schema =
                     call.to_owned().local_state_schema.and_then(|s| s.into());
                 api_t.extra_pages = num_as_api_option(call.extra_pages);
-                api_t.boxes = api_box_references_from_box_references(
-                    call.boxes.as_ref(),
-                    call.foreign_apps.as_ref(),
-                    call.app_id,
-                )?
+                api_t.boxes = TryInto::<Option<Vec<ApiBoxReference>>>::try_into(BoxesInfo {
+                    boxes: call.boxes.as_ref(),
+                    call_metadata: call,
+                })?
                 .and_then(vec_as_api_option);
             }
             TransactionType::StateProofTransaction(_) => todo!(),
@@ -199,6 +198,11 @@ impl TryFrom<ApiTransaction> for Transaction {
                 let on_complete =
                     int_to_application_call_on_complete(num_from_api_option(api_t.on_complete))?;
                 TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+                    boxes: TryInto::<Option<Vec<BoxReference>>>::try_into(ApiBoxesInfo {
+                        boxes: api_t.boxes.as_ref(),
+                        call_metadata: &api_t,
+                    })?
+                    .and_then(vec_as_api_option),
                     sender: api_t.sender,
                     app_id: api_t.app_id,
                     on_complete: on_complete.clone(),
@@ -208,17 +212,8 @@ impl TryFrom<ApiTransaction> for Transaction {
                         .app_arguments
                         .map(|args| args.into_iter().map(|a| a.0).collect()),
                     clear_state_program: api_t.clear_state_program.map(CompiledTeal),
-
-                    boxes: box_references_from_api_box_references(
-                        api_t.boxes.as_ref(),
-                        api_t.foreign_apps.as_ref(),
-                        api_t.app_id,
-                    )?
-                    .and_then(vec_as_api_option),
-
                     foreign_apps: api_t.foreign_apps,
                     foreign_assets: api_t.foreign_assets,
-
                     global_state_schema: parse_state_schema(
                         on_complete.clone(),
                         api_t.app_id,
@@ -229,7 +224,6 @@ impl TryFrom<ApiTransaction> for Transaction {
                         api_t.app_id,
                         api_t.local_state_schema,
                     ),
-
                     extra_pages: num_from_api_option(api_t.extra_pages),
                 })
             }
@@ -593,102 +587,177 @@ fn int_to_application_call_on_complete(
     }
 }
 
-fn api_box_references_from_box_references(
-    boxes: Option<&Vec<BoxReference>>,
-    foreign_apps: Option<&Vec<u64>>,
-    current_app_id: Option<u64>,
-) -> Result<Option<Vec<ApiBoxReference>>, TransactionError> {
-    boxes
-        .map(|boxes_| {
-            boxes_
-                .iter()
-                .map(|box_| {
-                    api_box_reference_from_box_references(box_, foreign_apps, current_app_id)
-                })
-                .collect::<Result<Vec<ApiBoxReference>, TransactionError>>()
-        })
-        .map_or(Ok(None), |v| v.map(Some))
+trait AppCallMetadata {
+    fn current_app_id(&self) -> Option<u64>;
+    fn foreign_apps(&self) -> Option<&Vec<u64>>;
 }
 
-fn api_box_reference_from_box_references(
-    box_: &BoxReference,
-    foreign_apps: Option<&Vec<u64>>,
-    current_app_id: Option<u64>,
-) -> Result<ApiBoxReference, TransactionError> {
-    let mut index = None;
-    if let Some(app_id) = box_.app_id {
-        if Some(app_id) == current_app_id {
-            // the current app ID is implicitly at index 0 in the
-            // foreign apps array
-            index = num_as_api_option(0);
-        } else {
-            let mut idx = 0;
-            if app_id > 0 {
-                let pos = foreign_apps
-                    .as_ref()
-                    .and_then(|fa| fa.iter().position(|&id| id == app_id))
-                    .ok_or_else(|| {
-                        TransactionError::Msg(format!(
-                            "app_id {} not found in foreign apps array",
-                            app_id
-                        ))
-                    })?;
-                // the foreign apps array starts at index 1 since index 0 is
-                // always occupied by the current app ID
-                idx = pos + 1;
-            }
-            index = num_as_api_option(idx as u64);
-        }
+impl AppCallMetadata for &ApplicationCallTransaction {
+    fn current_app_id(&self) -> Option<u64> {
+        self.app_id
     }
-    Ok(ApiBoxReference {
-        index,
-        name: box_.name.clone(),
-    })
+
+    fn foreign_apps(&self) -> Option<&Vec<u64>> {
+        self.foreign_apps.as_ref()
+    }
 }
 
-fn box_references_from_api_box_references(
-    api_boxes: Option<&Vec<ApiBoxReference>>,
-    foreign_apps: Option<&Vec<u64>>,
-    current_app_id: Option<u64>,
-) -> Result<Option<Vec<BoxReference>>, TransactionError> {
-    api_boxes
-        .map(|boxes| {
-            boxes
-                .iter()
-                .map(|api_box| {
-                    box_reference_from_api_box_references(api_box, foreign_apps, current_app_id)
-                })
-                .collect::<Result<Vec<BoxReference>, TransactionError>>()
-        })
-        .map_or(Ok(None), |v| v.map(Some))
+impl AppCallMetadata for &ApiTransaction {
+    fn current_app_id(&self) -> Option<u64> {
+        self.app_id
+    }
+
+    fn foreign_apps(&self) -> Option<&Vec<u64>> {
+        self.foreign_apps.as_ref()
+    }
 }
 
-fn box_reference_from_api_box_references(
-    api_box: &ApiBoxReference,
-    foreign_apps: Option<&Vec<u64>>,
-    current_app_id: Option<u64>,
-) -> Result<BoxReference, TransactionError> {
-    let app_id = match api_box.index {
-        Some(index) => {
-            if index == 0 {
-                current_app_id
+struct BoxInfo<T: AppCallMetadata> {
+    box_: BoxReference,
+    call_metadata: T,
+}
+
+impl<'a, T> TryFrom<BoxInfo<&'a T>> for ApiBoxReference
+where
+    &'a T: AppCallMetadata,
+{
+    type Error = TransactionError;
+
+    fn try_from(info: BoxInfo<&'a T>) -> Result<Self, Self::Error> {
+        let mut index = None;
+        if let Some(app_id) = info.box_.app_id {
+            if Some(app_id) == info.call_metadata.current_app_id() {
+                // the current app ID is implicitly at index 0 in the
+                // foreign apps array
+                index = num_as_api_option(0);
             } else {
-                foreign_apps
-                    .and_then(|fa| fa.get((index - 1) as usize))
-                    .copied()
+                let mut idx = 0;
+                if app_id > 0 {
+                    let pos = info
+                        .call_metadata
+                        .foreign_apps()
+                        .as_ref()
+                        .and_then(|fa| fa.iter().position(|&id| id == app_id))
+                        .ok_or_else(|| {
+                            TransactionError::Msg(format!(
+                                "app_id {} not found in foreign apps array",
+                                app_id
+                            ))
+                        })?;
+                    // the foreign apps array starts at index 1 since index 0 is
+                    // always occupied by the current app ID
+                    idx = pos + 1;
+                }
+                index = num_as_api_option(idx as u64);
             }
         }
-        None => None,
-    };
-    Ok(BoxReference {
-        app_id,
-        name: api_box.name.clone(),
-    })
+        Ok(ApiBoxReference {
+            index,
+            name: info.box_.name.clone(),
+        })
+    }
+}
+
+struct BoxesInfo<'a, T: AppCallMetadata> {
+    boxes: Option<&'a Vec<BoxReference>>,
+    call_metadata: T,
+}
+
+impl<'a, 'b, T> TryFrom<BoxesInfo<'a, &'b T>> for Option<Vec<ApiBoxReference>>
+where
+    &'b T: AppCallMetadata,
+{
+    type Error = TransactionError;
+
+    fn try_from(info: BoxesInfo<&'b T>) -> Result<Self, Self::Error> {
+        info.boxes
+            .map(|boxes| {
+                boxes
+                    .iter()
+                    .map(|box_| {
+                        TryInto::<ApiBoxReference>::try_into(BoxInfo {
+                            box_: box_.clone(),
+                            call_metadata: info.call_metadata,
+                        })
+                    })
+                    .collect::<Result<Vec<ApiBoxReference>, TransactionError>>()
+            })
+            .map_or(Ok(None), |v| v.map(Some))
+    }
+}
+
+struct ApiBoxInfo<T: AppCallMetadata> {
+    box_: ApiBoxReference,
+    call_metadata: T,
+}
+
+impl TryFrom<ApiBoxInfo<&ApiTransaction>> for BoxReference {
+    type Error = TransactionError;
+
+    fn try_from(info: ApiBoxInfo<&ApiTransaction>) -> Result<Self, Self::Error> {
+        let app_id = match info.box_.index {
+            Some(index) => {
+                if index == 0 {
+                    info.call_metadata.current_app_id()
+                } else {
+                    info.call_metadata
+                        .foreign_apps()
+                        .and_then(|fa| fa.get((index - 1) as usize))
+                        .copied()
+                }
+            }
+            None => None,
+        };
+        Ok(BoxReference {
+            app_id,
+            name: info.box_.name.clone(),
+        })
+    }
+}
+
+struct ApiBoxesInfo<'a, T: AppCallMetadata> {
+    boxes: Option<&'a Vec<ApiBoxReference>>,
+    call_metadata: T,
+}
+
+impl<'a> TryFrom<ApiBoxesInfo<'a, &ApiTransaction>> for Option<Vec<BoxReference>> {
+    type Error = TransactionError;
+
+    fn try_from(info: ApiBoxesInfo<&ApiTransaction>) -> Result<Self, Self::Error> {
+        info.boxes
+            .map(|boxes| {
+                boxes
+                    .iter()
+                    .map(|api_box| {
+                        TryInto::<BoxReference>::try_into(ApiBoxInfo {
+                            box_: api_box.clone(),
+                            call_metadata: info.call_metadata,
+                        })
+                    })
+                    .collect::<Result<Vec<BoxReference>, TransactionError>>()
+            })
+            .map_or(Ok(None), |v| v.map(Some))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct DummyAppCall {
+        app_id: Option<u64>,
+        foreign_apps: Option<Vec<u64>>,
+    }
+
+    impl AppCallMetadata for &DummyAppCall {
+        fn current_app_id(&self) -> Option<u64> {
+            self.app_id
+        }
+
+        fn foreign_apps(&self) -> Option<&Vec<u64>> {
+            self.foreign_apps.as_ref()
+        }
+    }
 
     #[test]
     fn test_serialize_signed_logic_contract_account() {
@@ -737,8 +806,11 @@ mod tests {
     #[test]
     fn test_api_box_references_from_box_references() {
         let box_name = vec![1, 2, 3, 4];
-        let current_app_id = 6355;
-        let foreign_apps = vec![8577, 7466];
+        let dummy_app_call = DummyAppCall {
+            app_id: Some(6355),
+            foreign_apps: Some(vec![8577, 7466]),
+        };
+
         let boxes = vec![
             BoxReference {
                 app_id: Some(6355),
@@ -754,12 +826,11 @@ mod tests {
             },
         ];
 
-        let api_boxes = api_box_references_from_box_references(
-            Some(&boxes),
-            Some(&foreign_apps),
-            Some(current_app_id),
-        )
-        .expect("api box references can be created");
+        let api_boxes = TryInto::<Option<Vec<ApiBoxReference>>>::try_into(BoxesInfo {
+            boxes: Some(&boxes),
+            call_metadata: &dummy_app_call,
+        })
+        .expect("api box references should be created");
 
         assert!(api_boxes.is_some());
         let api_boxes = api_boxes.unwrap();
@@ -772,18 +843,22 @@ mod tests {
     #[test]
     fn test_api_box_references_from_box_references_invalid_reference() {
         let box_name = vec![1, 2, 3, 4];
-        let current_app_id = 6355;
-        let foreign_apps = vec![8577, 7466];
+
+        let dummy_app_call = DummyAppCall {
+            app_id: Some(6355),
+            foreign_apps: Some(vec![8577, 7466]),
+        };
         let boxes = vec![BoxReference {
             app_id: Some(1234),
             name: box_name.clone(),
         }];
 
-        assert!(api_box_references_from_box_references(
-            Some(&boxes),
-            Some(&foreign_apps),
-            Some(current_app_id),
-        )
-        .is_err());
+        assert!(
+            TryInto::<Option<Vec<ApiBoxReference>>>::try_into(BoxesInfo {
+                boxes: Some(&boxes),
+                call_metadata: &dummy_app_call,
+            })
+            .is_err()
+        );
     }
 }
