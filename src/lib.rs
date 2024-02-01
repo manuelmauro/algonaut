@@ -21,8 +21,11 @@ pub mod indexer;
 pub mod kmd;
 
 pub mod atomic_transaction_composer;
+pub mod constant;
 
 pub mod error;
 pub use error::Error;
+
+pub mod logic;
 
 pub mod util;

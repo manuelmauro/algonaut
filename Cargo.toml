@@ -52,12 +52,19 @@ gloo-timers = { version = "0.2.4", features = ["futures"] }
 instant = { version = "0.1", features = ["now", "wasm-bindgen"] }
 
 [dev-dependencies]
-dotenv = "0.15.0"
-tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
-rand = "0.8.3"
-getrandom = { version = "0.2.2", features = ["js"] }
-cucumber = "0.19.0"
 async-trait = "0.1.51"
+cucumber = "0.19.0"
+dotenv = "0.15.0"
+getrandom = { version = "0.2.2", features = ["js"] }
+insta = { version = "1.29.0", features = ["yaml"] }
+rand = "0.8.3"
+tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
+
+[profile.dev.package.insta]
+opt-level = 3
+
+[profile.dev.package.similar]
+opt-level = 3
 
 [features]
 default = ["native"]
@@ -65,7 +72,7 @@ native = ["algonaut_kmd/native"]
 rustls = ["algonaut_kmd/rustls"]
 
 [[test]]
-name = "features_runner"
+name = "cucumber"
 # Allows Cucumber to print output instead of libtest
 harness = false
 test = false
