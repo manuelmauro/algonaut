@@ -5,22 +5,25 @@ use crate::{
     transaction::{
         to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction,
         AssetAcceptTransaction, AssetClawbackTransaction, AssetConfigurationTransaction,
-        AssetFreezeTransaction, AssetParams, AssetTransferTransaction, KeyRegistration, Payment,
-        SignedLogic, StateProofTransaction, StateSchema, TransactionSignature,
+        AssetFreezeTransaction, AssetParams, AssetTransferTransaction, BoxReference,
+        KeyRegistration, Payment, SignedLogic, StateProofTransaction, StateSchema,
+        TransactionSignature,
     },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType,
 };
 use algonaut_core::{CompiledTeal, LogicSignature, MicroAlgos, Round, ToMsgPack};
 use algonaut_model::transaction::{
-    ApiAssetParams, ApiSignedLogic, ApiSignedLogicArg, ApiSignedTransaction, ApiStateSchema,
-    ApiTransaction, AppArgument,
+    ApiAssetParams, ApiBoxReference, ApiSignedLogic, ApiSignedLogicArg, ApiSignedTransaction,
+    ApiStateSchema, ApiTransaction, AppArgument,
 };
 use num_traits::Num;
 use serde::{Deserialize, Serialize};
 
-impl From<Transaction> for ApiTransaction {
-    fn from(t: Transaction) -> Self {
+impl TryFrom<Transaction> for ApiTransaction {
+    type Error = TransactionError;
+
+    fn try_from(t: Transaction) -> Result<Self, Self::Error> {
         let mut api_t = ApiTransaction {
             // Common fields
             fee: num_as_api_option(t.fee.0).map(MicroAlgos),
@@ -64,6 +67,7 @@ impl From<Transaction> for ApiTransaction {
             vote_last: None,
             xfer: None,
             nonparticipating: None,
+            boxes: None,
             extra_pages: None,
             state_proof_type: None,
             state_proof: None,
@@ -137,10 +141,15 @@ impl From<Transaction> for ApiTransaction {
                 api_t.local_state_schema =
                     call.to_owned().local_state_schema.and_then(|s| s.into());
                 api_t.extra_pages = num_as_api_option(call.extra_pages);
+                api_t.boxes = TryInto::<Option<Vec<ApiBoxReference>>>::try_into(BoxesInfo {
+                    boxes: call.boxes.as_ref(),
+                    call_metadata: call,
+                })?
+                .and_then(vec_as_api_option);
             }
             TransactionType::StateProofTransaction(_) => todo!(),
         }
-        api_t
+        Ok(api_t)
     }
 }
 
@@ -189,6 +198,11 @@ impl TryFrom<ApiTransaction> for Transaction {
                 let on_complete =
                     int_to_application_call_on_complete(num_from_api_option(api_t.on_complete))?;
                 TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+                    boxes: TryInto::<Option<Vec<BoxReference>>>::try_into(ApiBoxesInfo {
+                        boxes: api_t.boxes.as_ref(),
+                        call_metadata: &api_t,
+                    })?
+                    .and_then(vec_as_api_option),
                     sender: api_t.sender,
                     app_id: api_t.app_id,
                     on_complete: on_complete.clone(),
@@ -200,7 +214,6 @@ impl TryFrom<ApiTransaction> for Transaction {
                     clear_state_program: api_t.clear_state_program.map(CompiledTeal),
                     foreign_apps: api_t.foreign_apps,
                     foreign_assets: api_t.foreign_assets,
-
                     global_state_schema: parse_state_schema(
                         on_complete.clone(),
                         api_t.app_id,
@@ -211,7 +224,6 @@ impl TryFrom<ApiTransaction> for Transaction {
                         api_t.app_id,
                         api_t.local_state_schema,
                     ),
-
                     extra_pages: num_from_api_option(api_t.extra_pages),
                 })
             }
@@ -386,21 +398,23 @@ impl From<ApiAssetParams> for AssetParams {
     }
 }
 
-impl From<SignedTransaction> for ApiSignedTransaction {
-    fn from(t: SignedTransaction) -> Self {
+impl TryFrom<SignedTransaction> for ApiSignedTransaction {
+    type Error = TransactionError;
+
+    fn try_from(t: SignedTransaction) -> Result<Self, Self::Error> {
         let (sig, msig, lsig) = match t.sig {
             TransactionSignature::Single(sig) => (Some(sig), None, None),
             TransactionSignature::Multi(msig) => (None, Some(msig), None),
             TransactionSignature::Logic(lsig) => (None, None, Some(lsig)),
         };
-        ApiSignedTransaction {
+        Ok(ApiSignedTransaction {
             sig,
             msig,
             lsig: lsig.map(|l| l.into()),
-            transaction: t.transaction.into(),
+            transaction: t.transaction.try_into()?,
             transaction_id: t.transaction_id,
             auth_address: t.auth_address,
-        }
+        })
     }
 }
 
@@ -438,7 +452,10 @@ impl Serialize for Transaction {
     where
         S: serde::Serializer,
     {
-        let api_transaction: ApiTransaction = self.to_owned().into();
+        let api_transaction: ApiTransaction = self
+            .to_owned()
+            .try_into()
+            .map_err(|_| serde::ser::Error::custom("Serialization error for Transaction"))?;
         api_transaction.serialize(serializer)
     }
 }
@@ -460,7 +477,10 @@ impl Serialize for SignedTransaction {
     where
         S: serde::Serializer,
     {
-        let api_transaction: ApiSignedTransaction = self.to_owned().into();
+        let api_transaction: ApiSignedTransaction = self
+            .to_owned()
+            .try_into()
+            .map_err(|_| serde::ser::Error::custom("Serialization error for SignedTransaction"))?;
         api_transaction.serialize(serializer)
     }
 }
@@ -567,9 +587,177 @@ fn int_to_application_call_on_complete(
     }
 }
 
+trait AppCallMetadata {
+    fn current_app_id(&self) -> Option<u64>;
+    fn foreign_apps(&self) -> Option<&Vec<u64>>;
+}
+
+impl AppCallMetadata for &ApplicationCallTransaction {
+    fn current_app_id(&self) -> Option<u64> {
+        self.app_id
+    }
+
+    fn foreign_apps(&self) -> Option<&Vec<u64>> {
+        self.foreign_apps.as_ref()
+    }
+}
+
+impl AppCallMetadata for &ApiTransaction {
+    fn current_app_id(&self) -> Option<u64> {
+        self.app_id
+    }
+
+    fn foreign_apps(&self) -> Option<&Vec<u64>> {
+        self.foreign_apps.as_ref()
+    }
+}
+
+struct BoxInfo<T: AppCallMetadata> {
+    box_: BoxReference,
+    call_metadata: T,
+}
+
+impl<'a, T> TryFrom<BoxInfo<&'a T>> for ApiBoxReference
+where
+    &'a T: AppCallMetadata,
+{
+    type Error = TransactionError;
+
+    fn try_from(info: BoxInfo<&'a T>) -> Result<Self, Self::Error> {
+        let mut index = None;
+        if let Some(app_id) = info.box_.app_id {
+            if Some(app_id) == info.call_metadata.current_app_id() {
+                // the current app ID is implicitly at index 0 in the
+                // foreign apps array
+                index = num_as_api_option(0);
+            } else {
+                let mut idx = 0;
+                if app_id > 0 {
+                    let pos = info
+                        .call_metadata
+                        .foreign_apps()
+                        .as_ref()
+                        .and_then(|fa| fa.iter().position(|&id| id == app_id))
+                        .ok_or_else(|| {
+                            TransactionError::Msg(format!(
+                                "app_id {} not found in foreign apps array",
+                                app_id
+                            ))
+                        })?;
+                    // the foreign apps array starts at index 1 since index 0 is
+                    // always occupied by the current app ID
+                    idx = pos + 1;
+                }
+                index = num_as_api_option(idx as u64);
+            }
+        }
+        Ok(ApiBoxReference {
+            index,
+            name: info.box_.name.clone(),
+        })
+    }
+}
+
+struct BoxesInfo<'a, T: AppCallMetadata> {
+    boxes: Option<&'a Vec<BoxReference>>,
+    call_metadata: T,
+}
+
+impl<'a, 'b, T> TryFrom<BoxesInfo<'a, &'b T>> for Option<Vec<ApiBoxReference>>
+where
+    &'b T: AppCallMetadata,
+{
+    type Error = TransactionError;
+
+    fn try_from(info: BoxesInfo<&'b T>) -> Result<Self, Self::Error> {
+        info.boxes
+            .map(|boxes| {
+                boxes
+                    .iter()
+                    .map(|box_| {
+                        TryInto::<ApiBoxReference>::try_into(BoxInfo {
+                            box_: box_.clone(),
+                            call_metadata: info.call_metadata,
+                        })
+                    })
+                    .collect::<Result<Vec<ApiBoxReference>, TransactionError>>()
+            })
+            .map_or(Ok(None), |v| v.map(Some))
+    }
+}
+
+struct ApiBoxInfo<T: AppCallMetadata> {
+    box_: ApiBoxReference,
+    call_metadata: T,
+}
+
+impl TryFrom<ApiBoxInfo<&ApiTransaction>> for BoxReference {
+    type Error = TransactionError;
+
+    fn try_from(info: ApiBoxInfo<&ApiTransaction>) -> Result<Self, Self::Error> {
+        let app_id = match info.box_.index {
+            Some(index) => {
+                if index == 0 {
+                    info.call_metadata.current_app_id()
+                } else {
+                    info.call_metadata
+                        .foreign_apps()
+                        .and_then(|fa| fa.get((index - 1) as usize))
+                        .copied()
+                }
+            }
+            None => None,
+        };
+        Ok(BoxReference {
+            app_id,
+            name: info.box_.name.clone(),
+        })
+    }
+}
+
+struct ApiBoxesInfo<'a, T: AppCallMetadata> {
+    boxes: Option<&'a Vec<ApiBoxReference>>,
+    call_metadata: T,
+}
+
+impl<'a> TryFrom<ApiBoxesInfo<'a, &ApiTransaction>> for Option<Vec<BoxReference>> {
+    type Error = TransactionError;
+
+    fn try_from(info: ApiBoxesInfo<&ApiTransaction>) -> Result<Self, Self::Error> {
+        info.boxes
+            .map(|boxes| {
+                boxes
+                    .iter()
+                    .map(|api_box| {
+                        TryInto::<BoxReference>::try_into(ApiBoxInfo {
+                            box_: api_box.clone(),
+                            call_metadata: info.call_metadata,
+                        })
+                    })
+                    .collect::<Result<Vec<BoxReference>, TransactionError>>()
+            })
+            .map_or(Ok(None), |v| v.map(Some))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct DummyAppCall {
+        app_id: Option<u64>,
+        foreign_apps: Option<Vec<u64>>,
+    }
+
+    impl AppCallMetadata for &DummyAppCall {
+        fn current_app_id(&self) -> Option<u64> {
+            self.app_id
+        }
+
+        fn foreign_apps(&self) -> Option<&Vec<u64>> {
+            self.foreign_apps.as_ref()
+        }
+    }
 
     #[test]
     fn test_serialize_signed_logic_contract_account() {
@@ -613,5 +801,64 @@ mod tests {
         let lsig_deserialized: SignedLogic = deserialized.try_into().unwrap();
 
         assert_eq!(lsig, lsig_deserialized);
+    }
+
+    #[test]
+    fn test_api_box_references_from_box_references() {
+        let box_name = vec![1, 2, 3, 4];
+        let dummy_app_call = DummyAppCall {
+            app_id: Some(6355),
+            foreign_apps: Some(vec![8577, 7466]),
+        };
+
+        let boxes = vec![
+            BoxReference {
+                app_id: Some(6355),
+                name: box_name.clone(),
+            },
+            BoxReference {
+                app_id: Some(7466),
+                name: box_name.clone(),
+            },
+            BoxReference {
+                app_id: Some(8577),
+                name: box_name.clone(),
+            },
+        ];
+
+        let api_boxes = TryInto::<Option<Vec<ApiBoxReference>>>::try_into(BoxesInfo {
+            boxes: Some(&boxes),
+            call_metadata: &dummy_app_call,
+        })
+        .expect("api box references should be created");
+
+        assert!(api_boxes.is_some());
+        let api_boxes = api_boxes.unwrap();
+
+        assert_eq!(None, api_boxes[0].index);
+        assert_eq!(Some(2), api_boxes[1].index);
+        assert_eq!(Some(1), api_boxes[2].index);
+    }
+
+    #[test]
+    fn test_api_box_references_from_box_references_invalid_reference() {
+        let box_name = vec![1, 2, 3, 4];
+
+        let dummy_app_call = DummyAppCall {
+            app_id: Some(6355),
+            foreign_apps: Some(vec![8577, 7466]),
+        };
+        let boxes = vec![BoxReference {
+            app_id: Some(1234),
+            name: box_name.clone(),
+        }];
+
+        assert!(
+            TryInto::<Option<Vec<ApiBoxReference>>>::try_into(BoxesInfo {
+                boxes: Some(&boxes),
+                call_metadata: &dummy_app_call,
+            })
+            .is_err()
+        );
     }
 }

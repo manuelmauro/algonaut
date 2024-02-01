@@ -54,6 +54,9 @@ pub struct ApiTransaction {
     #[serde(rename = "apat", skip_serializing_if = "Option::is_none")]
     pub accounts: Option<Vec<Address>>,
 
+    #[serde(rename = "apbx", skip_serializing_if = "Option::is_none")]
+    pub boxes: Option<Vec<ApiBoxReference>>,
+
     #[serde(rename = "apep", skip_serializing_if = "Option::is_none")]
     pub extra_pages: Option<u32>,
 
@@ -249,6 +252,15 @@ pub struct ApiStateSchema {
 
     #[serde(rename = "nui", skip_serializing_if = "Option::is_none")]
     pub number_ints: Option<u64>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ApiBoxReference {
+    #[serde(rename = "i", skip_serializing_if = "Option::is_none")]
+    pub index: Option<u64>,
+
+    #[serde(rename = "n", with = "serde_bytes")]
+    pub name: Vec<u8>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

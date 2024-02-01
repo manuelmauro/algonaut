@@ -9,6 +9,7 @@
  */
 
 use algonaut_crypto::{deserialize_hash, HashDigest};
+use algonaut_transaction::builder::TransactionParams;
 
 /// TransactionParams200Response : TransactionParams contains the parameters that help a client construct a new transaction.
 
@@ -52,5 +53,23 @@ impl TransactionParams200Response {
             last_round,
             min_fee,
         }
+    }
+}
+
+impl TransactionParams for TransactionParams200Response {
+    fn last_round(&self) -> u64 {
+        self.last_round
+    }
+
+    fn min_fee(&self) -> u64 {
+        self.min_fee
+    }
+
+    fn genesis_hash(&self) -> HashDigest {
+        self.genesis_hash
+    }
+
+    fn genesis_id(&self) -> &String {
+        &self.genesis_id
     }
 }

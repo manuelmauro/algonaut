@@ -3,13 +3,19 @@ use crate::{
     transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, AssetAcceptTransaction,
         AssetClawbackTransaction, AssetConfigurationTransaction, AssetFreezeTransaction,
-        AssetParams, AssetTransferTransaction, KeyRegistration, Payment, StateSchema, Transaction,
-        TransactionType,
+        AssetParams, AssetTransferTransaction, BoxReference, KeyRegistration, Payment, StateSchema,
+        Transaction, TransactionType,
     },
 };
-use algonaut_algod::models::TransactionParams200Response;
 use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
+
+pub trait TransactionParams {
+    fn last_round(&self) -> u64;
+    fn min_fee(&self) -> u64;
+    fn genesis_hash(&self) -> HashDigest;
+    fn genesis_id(&self) -> &String;
+}
 
 /// A builder for [Transaction].
 pub struct TxnBuilder {
@@ -29,26 +35,26 @@ impl TxnBuilder {
     /// Convenience to initialize builder with suggested transaction params
     ///
     /// The txn fee is estimated, based on params. To set the fee manually, use [with_fee](Self::with_fee) or [new](Self::new).
-    pub fn with(params: &TransactionParams200Response, txn_type: TransactionType) -> Self {
-        Self::with_fee(params, MicroAlgos(params.min_fee), txn_type)
+    pub fn with(params: &impl TransactionParams, txn_type: TransactionType) -> Self {
+        Self::with_fee(params, MicroAlgos(params.min_fee()), txn_type)
     }
 
     /// Convenience to initialize builder with suggested transaction params, and set the fee manually (ignoring the fee fields in params).
     ///
     /// Useful e.g. in txns groups where one txn pays the fee for others.
     pub fn with_fee(
-        params: &TransactionParams200Response,
+        params: &impl TransactionParams,
         fee: MicroAlgos,
         txn_type: TransactionType,
     ) -> Self {
         Self::new(
             fee,
-            Round(params.last_round),
-            Round(params.last_round + 1000),
-            params.genesis_hash,
+            Round(params.last_round()),
+            Round(params.last_round() + 1000),
+            params.genesis_hash(),
             txn_type,
         )
-        .genesis_id(params.genesis_id.clone())
+        .genesis_id(params.genesis_id().clone())
     }
 
     pub fn new(
@@ -585,6 +591,7 @@ pub struct CreateApplication {
     global_state_schema: Option<StateSchema>,
     local_state_schema: Option<StateSchema>,
     extra_pages: u32,
+    boxes: Option<Vec<BoxReference>>,
 }
 
 impl CreateApplication {
@@ -606,6 +613,7 @@ impl CreateApplication {
             global_state_schema: Some(global_state_schema),
             local_state_schema: Some(local_state_schema),
             extra_pages: 0,
+            boxes: None,
         }
     }
 
@@ -634,6 +642,11 @@ impl CreateApplication {
         self
     }
 
+    pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
+        self.boxes = Some(boxes);
+        self
+    }
+
     pub fn build(self) -> TransactionType {
         TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
@@ -648,6 +661,7 @@ impl CreateApplication {
             global_state_schema: self.global_state_schema,
             local_state_schema: self.local_state_schema,
             extra_pages: self.extra_pages,
+            boxes: self.boxes,
         })
     }
 }
@@ -662,6 +676,7 @@ pub struct UpdateApplication {
     clear_state_program: Option<CompiledTeal>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
+    boxes: Option<Vec<BoxReference>>,
 }
 
 impl UpdateApplication {
@@ -680,6 +695,7 @@ impl UpdateApplication {
             clear_state_program: Some(clear_state_program),
             foreign_apps: None,
             foreign_assets: None,
+            boxes: None,
         }
     }
 
@@ -700,6 +716,11 @@ impl UpdateApplication {
 
     pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
+        self.boxes = Some(boxes);
         self
     }
 
@@ -717,6 +738,7 @@ impl UpdateApplication {
             global_state_schema: None,
             local_state_schema: None,
             extra_pages: 0,
+            boxes: self.boxes,
         })
     }
 }
@@ -729,6 +751,7 @@ pub struct CallApplication {
     app_arguments: Option<Vec<Vec<u8>>>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
+    boxes: Option<Vec<BoxReference>>,
 }
 
 impl CallApplication {
@@ -740,6 +763,7 @@ impl CallApplication {
             app_arguments: None,
             foreign_apps: None,
             foreign_assets: None,
+            boxes: None,
         }
     }
 
@@ -760,6 +784,11 @@ impl CallApplication {
 
     pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
+        self.boxes = Some(boxes);
         self
     }
 
@@ -777,6 +806,7 @@ impl CallApplication {
             global_state_schema: None,
             local_state_schema: None,
             extra_pages: 0,
+            boxes: self.boxes,
         })
     }
 }
@@ -789,6 +819,7 @@ pub struct ClearApplication {
     app_arguments: Option<Vec<Vec<u8>>>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
+    boxes: Option<Vec<BoxReference>>,
 }
 
 impl ClearApplication {
@@ -800,6 +831,7 @@ impl ClearApplication {
             app_arguments: None,
             foreign_apps: None,
             foreign_assets: None,
+            boxes: None,
         }
     }
 
@@ -820,6 +852,11 @@ impl ClearApplication {
 
     pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
+        self.boxes = Some(boxes);
         self
     }
 
@@ -837,6 +874,7 @@ impl ClearApplication {
             global_state_schema: None,
             local_state_schema: None,
             extra_pages: 0,
+            boxes: self.boxes,
         })
     }
 }
@@ -849,6 +887,7 @@ pub struct CloseApplication {
     app_arguments: Option<Vec<Vec<u8>>>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
+    boxes: Option<Vec<BoxReference>>,
 }
 
 impl CloseApplication {
@@ -860,6 +899,7 @@ impl CloseApplication {
             app_arguments: None,
             foreign_apps: None,
             foreign_assets: None,
+            boxes: None,
         }
     }
 
@@ -880,6 +920,11 @@ impl CloseApplication {
 
     pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
+        self.boxes = Some(boxes);
         self
     }
 
@@ -897,6 +942,7 @@ impl CloseApplication {
             global_state_schema: None,
             local_state_schema: None,
             extra_pages: 0,
+            boxes: self.boxes,
         })
     }
 }
@@ -909,6 +955,7 @@ pub struct DeleteApplication {
     app_arguments: Option<Vec<Vec<u8>>>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
+    boxes: Option<Vec<BoxReference>>,
 }
 
 impl DeleteApplication {
@@ -920,6 +967,7 @@ impl DeleteApplication {
             app_arguments: None,
             foreign_apps: None,
             foreign_assets: None,
+            boxes: None,
         }
     }
 
@@ -940,6 +988,11 @@ impl DeleteApplication {
 
     pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
         self.foreign_assets = Some(foreign_assets);
+        self
+    }
+
+    pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
+        self.boxes = Some(boxes);
         self
     }
 
@@ -957,6 +1010,7 @@ impl DeleteApplication {
             global_state_schema: None,
             local_state_schema: None,
             extra_pages: 0,
+            boxes: self.boxes,
         })
     }
 }
@@ -969,6 +1023,7 @@ pub struct OptInApplication {
     app_arguments: Option<Vec<Vec<u8>>>,
     foreign_apps: Option<Vec<u64>>,
     foreign_assets: Option<Vec<u64>>,
+    boxes: Option<Vec<BoxReference>>,
 }
 
 impl OptInApplication {
@@ -980,6 +1035,7 @@ impl OptInApplication {
             app_arguments: None,
             foreign_apps: None,
             foreign_assets: None,
+            boxes: None,
         }
     }
 
@@ -1003,6 +1059,11 @@ impl OptInApplication {
         self
     }
 
+    pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
+        self.boxes = Some(boxes);
+        self
+    }
+
     pub fn build(self) -> TransactionType {
         TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
@@ -1017,6 +1078,7 @@ impl OptInApplication {
             global_state_schema: None,
             local_state_schema: None,
             extra_pages: 0,
+            boxes: self.boxes,
         })
     }
 }

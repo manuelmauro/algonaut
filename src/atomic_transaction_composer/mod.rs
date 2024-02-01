@@ -14,7 +14,8 @@ use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
     error::TransactionError,
     transaction::{
-        to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction, StateSchema,
+        to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference,
+        StateSchema,
     },
     tx_group::TxGroup,
     SignedTransaction, Transaction, TransactionType, TxnBuilder,
@@ -105,6 +106,8 @@ pub struct AddMethodCallParams {
     pub rekey_to: Option<Address>,
     /// A transaction Signer that can authorize this application call from sender
     pub signer: TransactionSigner,
+    /// A list of boxes that the app call has access to
+    pub boxes: Option<Vec<BoxReference>>,
 }
 
 #[derive(Debug, Clone)]
@@ -325,6 +328,7 @@ impl AtomicTransactionComposer {
             global_state_schema: params.global_schema.clone(),
             local_state_schema: params.local_schema.clone(),
             extra_pages: params.extra_pages,
+            boxes: params.boxes.clone(),
         });
 
         let mut tx_builder = TxnBuilder::with_fee(&params.suggested_params, params.fee, app_call);

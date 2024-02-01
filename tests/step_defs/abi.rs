@@ -14,7 +14,7 @@ use algonaut_abi::{
 use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{to_app_address, Address, MicroAlgos};
 use algonaut_transaction::{
-    transaction::{ApplicationCallOnComplete, StateSchema},
+    transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
     Pay, TxnBuilder,
 };
 use cucumber::{codegen::Regex, given, then, when};
@@ -230,6 +230,7 @@ async fn i_add_a_method_call(w: &mut World, account_type: String, on_complete: S
         None,
         None,
         false,
+        None,
     )
     .await;
 }
@@ -256,6 +257,7 @@ async fn i_add_a_method_call_for_update(
         None,
         None,
         false,
+        None,
     )
     .await;
 }
@@ -287,6 +289,7 @@ async fn i_add_a_method_call_for_create(
         Some(local_ints),
         Some(extra_pages),
         false,
+        None,
     )
     .await;
 }
@@ -307,6 +310,7 @@ async fn i_add_method_call_with_nonce(w: &mut World, account_type: String, on_co
         None,
         None,
         true,
+        None,
     )
     .await;
 }
@@ -323,6 +327,7 @@ async fn add_method_call(
     local_ints: Option<u64>,
     extra_pages: Option<u32>,
     use_nonce: bool,
+    boxes: Option<Vec<BoxReference>>,
 ) {
     let algod = w.algod.as_ref().unwrap();
     let transient_account = w.transient_account.clone().unwrap();
@@ -414,6 +419,7 @@ async fn add_method_call(
         lease: None,
         rekey_to: None,
         signer: tx_signer,
+        boxes,
     };
 
     tx_composer_methods.push(abi_method.to_owned());

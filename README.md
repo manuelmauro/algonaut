@@ -73,7 +73,7 @@ cargo run --example quickstart
 If your environment variables are not properly set, you will read the message `Error: NotPresent`. If this is the case, just run:
 
 ```bash
-ln -s examples.env .env
+cp examples.env .env
 ```
 
 ## External utilities
