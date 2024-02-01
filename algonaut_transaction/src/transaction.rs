@@ -371,6 +371,18 @@ pub struct ApplicationCallTransaction {
 
     // Number of additional pages allocated to the application's approval and clear state programs. Each ExtraProgramPages is 2048 bytes. The sum of ApprovalProgram and ClearStateProgram may not exceed 2048*(1+ExtraProgramPages) bytes.
     pub extra_pages: u32,
+
+    // Lists all boxes that the application may access
+    pub boxes: Option<Vec<BoxReference>>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BoxReference {
+    /// The ID of the application that this box belongs to
+    pub app_id: Option<u64>,
+
+    /// The name of the box as bytes
+    pub name: Vec<u8>,
 }
 
 ///
