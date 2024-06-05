@@ -37,7 +37,8 @@ pub struct AssetParams {
     #[serde(
         rename = "metadata-hash",
         skip_serializing_if = "Option::is_none",
-        deserialize_with = "deserialize_opt_hash"
+        deserialize_with = "deserialize_opt_hash",
+        default
     )]
     pub metadata_hash: Option<HashDigest>,
     /// \\[an\\] Name of this asset, as supplied by the creator. Included only when the asset name is composed of printable utf-8 characters.
