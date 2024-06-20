@@ -1,15 +1,15 @@
 use crate::step_defs::{
-    integration::world::World,
     util::{account_from_kmd_response, wait_for_pending_transaction},
+    world::World,
 };
-use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
+use algonaut::{algod::v2::Algod, indexer::v2::Indexer, kmd::v1::Kmd};
 use algonaut_core::MicroAlgos;
 use algonaut_transaction::{Pay, TxnBuilder};
 use cucumber::{given, then, when};
 use rand::Rng;
 use std::error::Error;
 
-#[given(regex = "an algod v2 client")]
+#[given("an algod v2 client")]
 async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(
         "http://localhost:60000",
@@ -19,6 +19,15 @@ async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
 
     algod.status_after_block(1).await?;
     w.algod = Some(algod);
+
+    Ok(())
+}
+
+#[given("an indexer v2 client")]
+async fn an_indexer_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
+    let indexer = Indexer::new("http://localhost:59999", "").unwrap();
+
+    w.indexer = Some(indexer);
 
     Ok(())
 }
