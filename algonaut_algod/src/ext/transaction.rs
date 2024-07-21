@@ -1,9 +1,15 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TransactionHeader {
     pub hgi: Option<bool>,
     pub sig: Option<String>,
+    pub msig: Option<String>,
+    pub lsig: Option<String>,
+
+    #[serde(flatten)]
+    pub apply_data: Option<ApplyData>,
     pub txn: Option<Transaction>,
 }
 
@@ -200,7 +206,7 @@ pub enum Transaction {
         #[serde(rename = "apat")]
         accounts: Option<Vec<String>>,
         #[serde(rename = "apap")]
-        approval_program: Option<Vec<String>>,
+        approval_program: Option<String>,
         #[serde(rename = "apaa")]
         app_arguments: Option<Vec<String>>,
         #[serde(rename = "apsu")]
@@ -215,9 +221,8 @@ pub enum Transaction {
         local_state_schema: Option<StateSchema>,
         #[serde(rename = "apep")]
         extra_program_pages: Option<u64>,
-        // TODO
-        // #[serde(rename = "apbx")]
-        // boxes: Option<Vec<String>>,
+        #[serde(rename = "apbx")]
+        boxes: Option<Vec<BoxReference>>,
     },
 }
 
@@ -248,9 +253,56 @@ pub struct AssetParams {
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct BoxReference {
+    #[serde(rename = "n")]
+    name: String
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct StateSchema {
     #[serde(rename = "nui")]
     pub ints: Option<u64>,
     #[serde(rename = "nbs")]
     pub byte_slices: Option<u64>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub enum DeltaAction {
+    SetBytesAction = 1,
+    SetUintAction = 2,
+    DeleteAction = 3,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct ValueDelta {
+    #[serde(rename = "at")]
+    pub action: Option<DeltaAction>,
+    #[serde(rename = "bs")]
+    pub bytes: Option<String>,
+    #[serde(rename = "ui")]
+    pub uint: Option<u64>,
+}
+
+type StateDelta = HashMap<String, ValueDelta>;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EvalDelta {
+    #[serde(rename = "gd")]
+    pub global_delta: Option<StateDelta>,
+    #[serde(rename = "ld")]
+    pub local_deltas: Option<HashMap<String, StateDelta>>,
+    #[serde(rename = "lg")]
+    pub logs: Option<Vec<String>>,
+    #[serde(rename = "itx")]
+    pub inner_txns: Option<Vec<TransactionHeader>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ApplyData {
+    #[serde(rename = "dt")]
+    pub delta: Option<EvalDelta>,
+    #[serde(rename = "ca")]
+    pub closing_amount: Option<u64>,
+    #[serde(rename = "aca")]
+    pub asset_closing_amount: Option<u64>
 }
