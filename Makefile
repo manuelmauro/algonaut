@@ -1,5 +1,5 @@
 integration:
-	cargo test --test features_runner --
+	cargo test --test cucumber -- -vv
 
 harness:
 	./test-harness.sh up

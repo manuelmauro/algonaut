@@ -1,5 +1,7 @@
-use crate::step_defs::integration::world::World;
-use crate::step_defs::util::{parse_app_args, read_teal, split_addresses, split_uint64};
+use crate::step_defs::util::{
+    read_teal, split_addresses, split_and_process_app_args, split_uint64,
+};
+use crate::step_defs::world::World;
 use algonaut_algod::models::{Application, ApplicationLocalState};
 use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,
@@ -12,13 +14,13 @@ use data_encoding::BASE64;
 use std::error::Error;
 
 #[given(
-    regex = r#"^I build an application transaction with the transient account, the current application, suggested params, operation "([^"]*)", approval-program "([^"]*)", clear-program "([^"]*)", global-bytes (\d+), global-ints (\d+), local-bytes (\d+), local-ints (\d+), app-args "([^"]*)", foreign-apps "([^"]*)", foreign-assets "([^"]*)", app-accounts "([^"]*)", extra-pages (\d+)$"#
+    regex = r#"^I build an application transaction with the transient account, the current application, suggested params, operation "([^"]*)", approval-program "([^"]*)", clear-program "([^"]*)", global-bytes (\d+), global-ints (\d+), local-bytes (\d+), local-ints (\d+), app-args "([^"]*)", foreign-apps "([^"]*)", foreign-assets "([^"]*)", app-accounts "([^"]*)", extra-pages (\d+), boxes "([^"]*)"$"#
 )]
 #[then(
-    regex = r#"^I build an application transaction with the transient account, the current application, suggested params, operation "([^"]*)", approval-program "([^"]*)", clear-program "([^"]*)", global-bytes (\d+), global-ints (\d+), local-bytes (\d+), local-ints (\d+), app-args "([^"]*)", foreign-apps "([^"]*)", foreign-assets "([^"]*)", app-accounts "([^"]*)", extra-pages (\d+)$"#
+    regex = r#"^I build an application transaction with the transient account, the current application, suggested params, operation "([^"]*)", approval-program "([^"]*)", clear-program "([^"]*)", global-bytes (\d+), global-ints (\d+), local-bytes (\d+), local-ints (\d+), app-args "([^"]*)", foreign-apps "([^"]*)", foreign-assets "([^"]*)", app-accounts "([^"]*)", extra-pages (\d+), boxes "([^"]*)"$"#
 )]
 #[when(
-    regex = r#"^I build an application transaction with the transient account, the current application, suggested params, operation "([^"]*)", approval-program "([^"]*)", clear-program "([^"]*)", global-bytes (\d+), global-ints (\d+), local-bytes (\d+), local-ints (\d+), app-args "([^"]*)", foreign-apps "([^"]*)", foreign-assets "([^"]*)", app-accounts "([^"]*)", extra-pages (\d+)$"#
+    regex = r#"^I build an application transaction with the transient account, the current application, suggested params, operation "([^"]*)", approval-program "([^"]*)", clear-program "([^"]*)", global-bytes (\d+), global-ints (\d+), local-bytes (\d+), local-ints (\d+), app-args "([^"]*)", foreign-apps "([^"]*)", foreign-assets "([^"]*)", app-accounts "([^"]*)", extra-pages (\d+), boxes "([^"]*)"$"#
 )]
 async fn i_build_an_application_transaction(
     w: &mut World,
@@ -34,11 +36,12 @@ async fn i_build_an_application_transaction(
     foreign_assets: String,
     app_accounts: String,
     extra_pages: u32,
+    _boxes: String, // TODO implement boxes
 ) -> Result<(), Box<dyn Error>> {
     let algod = w.algod.as_ref().unwrap();
     let transient_account = w.transient_account.as_ref().unwrap();
 
-    let args = parse_app_args(app_args)?;
+    let args = split_and_process_app_args(app_args);
 
     let accounts = split_addresses(app_accounts)?;
 
@@ -282,4 +285,29 @@ async fn the_transient_account_should_have(
     }
 
     Ok(())
+}
+
+#[then(
+    regex = r#"according to "([^"]*)", the contents of the box with name "([^"]*)" in the current application should be "([^"]*)". If there is an error it is "([^"]*)"."#
+)]
+async fn check_box_contents(
+    _w: &mut World,
+    _context: String,
+    _from_client: String,
+    box_name: String,
+    _box_value: String,
+    _error_string: String,
+) {
+    let _box_name = split_and_process_app_args(box_name);
+
+    // TODO
+    // if from_client == "algod" {
+    //     let box_response = w
+    //         .algod
+    //         .as_ref()
+    //         .unwrap()
+    //         .app_box(w.app_id.unwrap(), &box_name)
+    //         .await
+    //         .ok();
+    // }
 }

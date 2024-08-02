@@ -4,6 +4,7 @@ use algonaut::{
     atomic_transaction_composer::{
         transaction_signer::TransactionSigner, AbiArgValue, ExecuteResult, TransactionWithSigner,
     },
+    indexer::v2::Indexer,
     kmd::v1::Kmd,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
@@ -15,6 +16,7 @@ use cucumber;
 #[derive(Default, Debug, cucumber::World)]
 pub struct World {
     pub algod: Option<Algod>,
+    pub indexer: Option<Indexer>,
 
     pub kmd: Option<Kmd>,
     pub handle: Option<String>,
