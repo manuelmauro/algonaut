@@ -22,38 +22,11 @@ step-defs before they can run.
 
 ---
 
-## 2. Add `AtomicTransactionComposer::simulate`
+## ~~2. Add `AtomicTransactionComposer::simulate`~~
 
-**Labels:** `area/atomic-composer`, `kind/feature`, `cucumber-blocker`
-**ADR:** [`atomictransactioncomposer-simulate-convenience`](atomictransactioncomposer-simulate-convenience.md)
-
-```markdown
-`AtomicTransactionComposer` exposes `build_group`, `gather_signatures`,
-`submit`, and `execute`, but not `simulate`. Reference SDKs (java, go,
-py) all expose a composer-level simulate.
-
-`tests/features/integration/simulate.feature` has the step
-`I simulate the current transaction group with the composer`, and
-`c2c.feature` scenarios benefit from the same surface for inspecting
-inner-txn trees without committing.
-
-Proposed surface (see ADR for detail):
-
-```rust
-pub async fn simulate(&mut self, algod: &Algod)
-    -> Result<AtcSimulateResult, Error>;
-
-pub async fn simulate_with(&mut self, algod: &Algod, request: SimulateRequest)
-    -> Result<AtcSimulateResult, Error>;
-```
-
-### Acceptance
-- [ ] `AtcSimulateResult` mirrors `ExecuteResult` plus
-      `SimulateTransactionGroupResult` and parsed ABI returns.
-- [ ] A new `Simulated` composer-status variant is added.
-- [ ] At least one example exercises the new method.
-- [ ] Depends on the power-pack ticket above.
-```
+Landed — see ADR
+[`atomictransactioncomposer-simulate-convenience`](adr/atomictransactioncomposer-simulate-convenience.md)
+(status: accepted).
 
 ---
 
