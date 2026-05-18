@@ -5,7 +5,7 @@ use algonaut_core::SuggestedTransactionParams;
 use algonaut_core::ToMsgPack;
 use algonaut_core::TransactionTypeEnum;
 use algonaut_core::{Address, MultisigSignature};
-use algonaut_core::{MicroAlgos, Round, VotePk, VrfPk};
+use algonaut_core::{MicroAlgos, Round, StateProofPk, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
 use algonaut_model::transaction::ApiSignedLogic;
@@ -187,6 +187,11 @@ pub struct KeyRegistration {
 
     /// This is the dilution for the 2-level participation key.
     pub vote_key_dilution: Option<u64>,
+
+    /// The 64-byte state-proof (BLS) public key. Required for online key
+    /// registration since the v34 consensus upgrade; omit for offline or
+    /// nonparticipation registrations.
+    pub state_proof_key: Option<StateProofPk>,
 
     /// All new Algorand accounts are participating by default. This means that they earn rewards.
     /// Mark an account nonparticipating by setting this value to true and this account will no

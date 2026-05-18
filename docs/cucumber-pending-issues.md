@@ -139,25 +139,11 @@ Three features need it:
 
 ---
 
-## 5. Add `state_proof_key` to `KeyRegistration`
+## ~~5. Add `state_proof_key` to `KeyRegistration`~~
 
-**Labels:** `area/transaction`, `kind/feature`, `cucumber-blocker`
-**ADR:** [`keyregistration-v2-state-proof-key`](adr/keyregistration-v2-state-proof-key.md)
-
-```markdown
-`tests/features/integration/send.feature` has a `@send.keyregtxn`
-scenario that exercises V2 online key registration. Since the v34
-consensus upgrade, online registration requires `sprfkey` (a 64-byte
-BLS public key). Our `KeyRegistration` model omits it.
-
-### Acceptance
-- [ ] `algonaut_transaction::transaction::KeyRegistration` gains
-      `state_proof_key: Option<StateProofPk>`.
-- [ ] `RegisterKey::online` accepts the state-proof key (additive
-      breaking change to its signature).
-- [ ] Msgpack serialization writes `sprfkey` when present.
-- [ ] `@send.keyregtxn` runs green and the runner exclusion is dropped.
-```
+Landed — see ADR
+[`keyregistration-v2-state-proof-key`](adr/keyregistration-v2-state-proof-key.md)
+(status: accepted).
 
 ---
 

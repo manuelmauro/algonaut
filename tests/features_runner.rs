@@ -99,9 +99,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     Feature {
         path: "tests/features/integration/send.feature",
         gate: None,
-        // Online keyreg requires sprfkey — blocked on ADR
-        // keyregistration-v2-state-proof-key.
-        excluded_tags: &["send.keyregtxn"],
+        excluded_tags: &[],
     },
     Feature {
         path: "tests/features/integration/simulate.feature",

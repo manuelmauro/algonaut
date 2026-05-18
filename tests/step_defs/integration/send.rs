@@ -1,9 +1,16 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
-use algonaut_core::{MicroAlgos, MultisigAddress};
-use algonaut_transaction::{Pay, SignedTransaction, TxnBuilder, transaction::TransactionSignature};
+use algonaut_core::{MicroAlgos, MultisigAddress, Round, StateProofPk, VotePk, VrfPk};
+use algonaut_transaction::{
+    Pay, RegisterKey, SignedTransaction, TxnBuilder, transaction::TransactionSignature,
+};
 use cucumber::{given, then, when};
 use data_encoding::BASE64;
 use std::error::Error;
+
+const TEST_VOTE_PK: &str = "9PYsmlBevatTWVRcfDLqzpyaURRTbjPo+oTrFkXgKHE=";
+const TEST_SELECTION_PK: &str = "UkpZx9Vfo0Q1+/8mE2KCDdQ72Y0AKEK9DnFvL3yWZ2c=";
+const TEST_STATE_PROOF_PK: &str =
+    "WaA5UWiVDzD6QY/ZxNi0Pc4xL4FxQa3kjlrZmkSMcEUjGFQqRGo3CSNZ9D8GAr+5e7TgQHM2RfsdJ4yLpcfkRA==";
 
 async fn build_default_payment(
     w: &mut World,
@@ -139,6 +146,35 @@ async fn i_send_the_transaction(w: &mut World) {
             w.last_send_succeeded = Some(false);
         }
     }
+}
+
+#[given(regex = r#"^default V2 key registration transaction "([^"]+)"$"#)]
+async fn default_v2_key_registration_transaction(
+    w: &mut World,
+    variant: String,
+) -> Result<(), Box<dyn Error>> {
+    let algod = w.algod.as_ref().expect("algod not set");
+    let accounts = w.accounts.as_ref().expect("accounts not set");
+    let params = algod.txn_params().await?;
+    let sender = accounts[0];
+
+    let keyreg = match variant.as_str() {
+        "online" => RegisterKey::online(
+            sender,
+            VotePk::from_base64_str(TEST_VOTE_PK)?,
+            VrfPk::from_base64_str(TEST_SELECTION_PK)?,
+            StateProofPk::from_base64_str(TEST_STATE_PROOF_PK)?,
+            Round(0),
+            Round(30_001),
+            10_000,
+        ),
+        "offline" => RegisterKey::offline(sender),
+        "nonparticipation" => RegisterKey::nonpartipating(sender, true),
+        other => return Err(format!("unknown keyreg variant: {other}").into()),
+    };
+
+    w.tx = Some(TxnBuilder::with(&params, keyreg.build()).build()?);
+    Ok(())
 }
 
 #[then(expr = "the transaction should not go through")]

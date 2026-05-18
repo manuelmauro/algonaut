@@ -12,10 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ADR collection at `docs/adr/` managed by [`arkouda`](https://github.com/manuelmauro/arkouda); seeded with `cucumber-test-suite-coverage-strategy`, `simulaterequest-model-needs-power-pack-fields`, `atomictransactioncomposer-simulate-convenience`, `teal-source-map-decoder`, `dryrun-request-builder`, and `cucumber-unit-test-scaffolding`
 - `tests/features_runner.rs` now enumerates every `.feature` file in the algorand-sdk-testing suite (13 integration + 17 unit), gating un-implemented features behind explicit ADR references
 - Drafted upstream tickets in `docs/cucumber-pending-issues.md` ready for `gh issue create`
+- `algonaut_core::StateProofPk` (64-byte BLS public key) plus `algonaut_encoding::U8_64Visitor`
+- `state_proof_key: Option<StateProofPk>` field on `algonaut_transaction::transaction::KeyRegistration`, serialised as the `sprfkey` msgpack field
+- `@send.keyregtxn` scenarios (online, offline, nonparticipation) are now live in the cucumber runner
 
 ### Changed
 
 - The runner's "v1 only" comment for `algod`/`assets` is replaced with an accurate matrix — both features actually target v2 endpoints and only need step-def coverage
+- **Breaking:** `algonaut_transaction::RegisterKey::online` now takes a `StateProofPk` argument between `selection_pk` and `vote_first`. v34 consensus rejects online registrations without it
 
 ## [0.5.0] - 2026-05-18
 

@@ -1,5 +1,5 @@
 use algonaut::algod::v2::Algod;
-use algonaut::core::{Round, VotePk, VrfPk};
+use algonaut::core::{Round, StateProofPk, VotePk, VrfPk};
 use algonaut::transaction::RegisterKey;
 use algonaut::transaction::{TxnBuilder, account::Account};
 use dotenv::dotenv;
@@ -21,6 +21,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let vote_pk_str = "KgL5qW1jtHAQb1lQNIKuqHBqDWXRmb7GTmBN92a/sOQ=";
     let selection_pk_str = "A3s+2bgKlbG9qIaA4wJsrrJl8mVKGzTp/h6gGEyZmAg=";
+    // 64-byte BLS public key required since the v34 consensus upgrade.
+    let state_proof_key_str =
+        "WaA5UWiVDzD6QY/ZxNi0Pc4xL4FxQa3kjlrZmkSMcEUjGFQqRGo3CSNZ9D8GAr+5e7TgQHM2RfsdJ4yLpcfkRA==";
 
     info!("retrieving suggested params");
     let params = algod.txn_params().await?;
@@ -32,6 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             alice.address(),
             VotePk::from_base64_str(vote_pk_str)?,
             VrfPk::from_base64_str(selection_pk_str)?,
+            StateProofPk::from_base64_str(state_proof_key_str)?,
             Round(params.last_round),
             Round(params.last_round + 3_000_000),
             10_000,
