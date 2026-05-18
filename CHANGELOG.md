@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `algonaut_abi::sourcemap::SourceMap`: a V3 TEAL source-map decoder with `pc_to_line` / `line_to_pcs` / `last_pc_for_line` / `source_line_to_pc` accessors. `Algod::teal_compile_with_sourcemap` returns a parsed map alongside the bytes
+- The `@compile.sourcemap` cucumber scenario now runs
 - ADR collection at `docs/adr/` managed by [`arkouda`](https://github.com/manuelmauro/arkouda); seeded with `cucumber-test-suite-coverage-strategy`, `simulaterequest-model-needs-power-pack-fields`, `atomictransactioncomposer-simulate-convenience`, `teal-source-map-decoder`, `dryrun-request-builder`, and `cucumber-unit-test-scaffolding`
 - `tests/features_runner.rs` now enumerates every `.feature` file in the algorand-sdk-testing suite (13 integration + 17 unit), gating un-implemented features behind explicit ADR references
 - Drafted upstream tickets in `docs/cucumber-pending-issues.md` ready for `gh issue create`

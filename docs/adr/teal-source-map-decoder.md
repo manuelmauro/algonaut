@@ -2,7 +2,7 @@
 id: teal-source-map-decoder
 title: TEAL source-map decoder
 abstract: Add a parser for the source-map produced by algod TEAL compile with sourcemap=true to satisfy sourcemap.feature.
-status: proposed
+status: accepted
 date: 2026-05-18
 deciders: []
 tags: []
@@ -12,7 +12,7 @@ tags: []
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 

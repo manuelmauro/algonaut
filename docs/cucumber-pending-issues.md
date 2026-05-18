@@ -83,32 +83,13 @@ pub async fn simulate_with(&mut self, algod: &Algod, request: SimulateRequest)
 
 ---
 
-## 3. Add a TEAL source-map decoder
+## ~~3. Add a TEAL source-map decoder~~
 
-**Labels:** `area/abi`, `area/algod`, `kind/feature`, `cucumber-blocker`
-**ADR:** [`teal-source-map-decoder`](teal-source-map-decoder.md)
-
-```markdown
-`POST /v2/teal/compile?sourcemap=true` returns a V3 source-map. The
-SDK currently passes the field through as `serde_json::Value`, leaving
-parsing to the caller.
-
-Three Gherkin features depend on a decoder:
-
-- `tests/features/unit/sourcemap.feature` (6 scenarios)
-- `tests/features/integration/compile.feature` (mapping-enabled
-  scenario)
-- `tests/features/unit/dryrun_trace.feature` (overlay)
-
-### Acceptance
-- [ ] Module `algonaut_abi::sourcemap` (or sibling crate) with
-      `SourceMap`, `from_json`, VLQ decoder for `mappings`.
-- [ ] `pc_to_line(pc)` and `line_to_pcs(line)` accessors.
-- [ ] `Algod::teal_compile` exposes a typed `CompiledTealWithMap`
-      opt-in path.
-- [ ] Unit tests cover the fixtures shipped in
-      `algorand-sdk-testing/features/resources`.
-```
+Landed — see ADR
+[`teal-source-map-decoder`](adr/teal-source-map-decoder.md)
+(status: accepted). The integration `@compile.sourcemap` scenario is
+live; the unit `sourcemap.feature` scenarios remain gated on
+`cucumber-unit-test-scaffolding`.
 
 ---
 

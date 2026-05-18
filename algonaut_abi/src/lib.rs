@@ -7,6 +7,7 @@ mod abi_json_tests;
 pub mod abi_type;
 mod abi_type_test;
 mod biguint_ext;
+pub mod sourcemap;
 
 use crate::abi_error::AbiError;
 use abi_type::AbiType;

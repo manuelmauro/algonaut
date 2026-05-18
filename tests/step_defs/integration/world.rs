@@ -6,7 +6,7 @@ use algonaut::{
     },
     kmd::v1::Kmd,
 };
-use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
+use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::SourceMap};
 use algonaut_algod::models::{AssetParams, TransactionParams200Response};
 use algonaut_core::{Address, MultisigAddress};
 use algonaut_crypto::Ed25519PublicKey;
@@ -54,6 +54,7 @@ pub struct World {
     pub compile_result: Option<String>,
     pub compile_hash: Option<String>,
     pub compiled_program: Option<Vec<u8>>,
+    pub compiled_sourcemap: Option<SourceMap>,
 
     pub sender_account: Option<Account>,
     pub signed_tx: Option<SignedTransaction>,

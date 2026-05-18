@@ -63,8 +63,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     Feature {
         path: "tests/features/integration/compile.feature",
         gate: None,
-        // Source-map scenario is blocked on ADR teal-source-map-decoder.
-        excluded_tags: &["compile.sourcemap"],
+        excluded_tags: &[],
     },
     Feature {
         path: "tests/features/integration/assets.feature",
