@@ -93,8 +93,12 @@ async fn test_logic_sig_multisig_signature() -> Result<(), Box<dyn Error>> {
 
     let ma = MultisigAddress::new(1, 2, &[one, two, three])?;
 
-    let acc1 = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
-    let acc2 = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?;
+    let acc1 = Account::from_mnemonic(
+        "auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch",
+    )?;
+    let acc2 = Account::from_mnemonic(
+        "since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left",
+    )?;
     let account = Account::generate();
 
     let msig = acc1.init_logic_msig(&program, &ma)?;

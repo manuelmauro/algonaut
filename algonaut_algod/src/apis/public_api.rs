@@ -10,7 +10,7 @@
 
 use reqwest;
 
-use super::{configuration, Error};
+use super::{Error, configuration};
 use crate::{apis::ResponseContent, ext::block::BlockResponse};
 
 /// struct for typed errors of method [`account_application_information`]

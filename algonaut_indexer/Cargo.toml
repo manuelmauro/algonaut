@@ -5,7 +5,7 @@ authors = ["OpenAPI Generator team and contributors"]
 description = "Algorand ledger analytics API."
 # Override this license by providing a License Object in the OpenAPI.
 license = "MIT"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }

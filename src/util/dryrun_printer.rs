@@ -1,13 +1,13 @@
-use crate::{algod::v2::Algod, Error};
+use crate::{Error, algod::v2::Algod};
 use algonaut_algod::models::{
     Application, ApplicationParams, ApplicationStateSchema, DryrunRequest, DryrunState,
     DryrunTxnResult, TealValue,
 };
-use algonaut_core::{to_app_address, Address};
+use algonaut_core::{Address, to_app_address};
 use algonaut_encoding::Bytes;
 use algonaut_transaction::{
-    transaction::{ApplicationCallTransaction, StateSchema},
     SignedTransaction, TransactionType,
+    transaction::{ApplicationCallTransaction, StateSchema},
 };
 use data_encoding::{DecodeError, HEXLOWER};
 use std::{collections::HashSet, convert::TryInto};

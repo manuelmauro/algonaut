@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::{Round, VotePk, VrfPk};
 use algonaut::transaction::RegisterKey;
-use algonaut::transaction::{account::Account, TxnBuilder};
+use algonaut::transaction::{TxnBuilder, account::Account};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

@@ -12,20 +12,20 @@ use algonaut_algod::models::{PendingTransactionResponse, TransactionParams200Res
 use algonaut_core::{Address, CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
+    SignedTransaction, Transaction, TransactionType, TxnBuilder,
     error::TransactionError,
     transaction::{
-        to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference,
-        StateSchema,
+        ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
+        to_tx_type_enum,
     },
     tx_group::TxGroup,
-    SignedTransaction, Transaction, TransactionType, TxnBuilder,
 };
 use data_encoding::BASE64;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use std::collections::HashMap;
 
-use crate::{algod::v2::Algod, util::wait_for_pending_tx::wait_for_pending_transaction, Error};
+use crate::{Error, algod::v2::Algod, util::wait_for_pending_tx::wait_for_pending_transaction};
 
 use self::transaction_signer::TransactionSigner;
 
@@ -718,10 +718,10 @@ fn populate_foreign_array<T: Eq>(
     obj_array: &mut Vec<T>,
     zeroth_obj: Option<T>,
 ) -> usize {
-    if let Some(o) = &zeroth_obj {
-        if &obj_to_add == o {
-            return 0;
-        }
+    if let Some(o) = &zeroth_obj
+        && &obj_to_add == o
+    {
+        return 0;
     }
 
     let start_from: usize = zeroth_obj.map(|_| 1).unwrap_or(0);

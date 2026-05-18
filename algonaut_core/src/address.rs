@@ -166,7 +166,7 @@ impl MultisigAddress {
 
 #[cfg(test)]
 mod tests {
-    use rand::{rngs::OsRng, Rng};
+    use rand::{Rng, rngs::OsRng};
 
     use super::*;
 
@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn encode_decode_str() {
         for _ in 0..1_000 {
-            let bytes: [u8; 32] = OsRng.gen();
+            let bytes: [u8; 32] = OsRng.r#gen();
             let addr = Address(bytes);
             let addr_str = addr.to_string();
             let reenc_addr = Address::from_str(&addr_str).unwrap();
@@ -208,7 +208,7 @@ mod tests {
 
     #[test]
     fn serializes_deserializes() {
-        let addr = Address(OsRng.gen());
+        let addr = Address(OsRng.r#gen());
         // arbitrary serde serializer
         let bytes = rmp_serde::to_vec_named(&addr).unwrap();
         let deserialized: Address = rmp_serde::from_slice(&bytes).unwrap();

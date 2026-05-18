@@ -1,13 +1,13 @@
 use std::str::FromStr;
 
 use crate::{
-    error::{ClientError, RequestError, RequestErrorDetails},
     Headers,
+    error::{ClientError, RequestError, RequestErrorDetails},
 };
 use async_trait::async_trait;
 use reqwest::{
-    header::{HeaderMap, HeaderName, HeaderValue},
     Response,
+    header::{HeaderMap, HeaderName, HeaderValue},
 };
 use serde::Deserialize;
 

@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
+use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::OptInApplication;
-use algonaut::transaction::TxnBuilder;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

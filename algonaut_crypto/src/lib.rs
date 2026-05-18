@@ -1,4 +1,4 @@
-use algonaut_encoding::{deserialize_bytes32, SignatureVisitor, U8_32Visitor};
+use algonaut_encoding::{SignatureVisitor, U8_32Visitor, deserialize_bytes32};
 use data_encoding::{BASE32_NOPAD, BASE64};
 use fmt::Debug;
 use ring::signature::UnparsedPublicKey;

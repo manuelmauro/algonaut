@@ -1,6 +1,6 @@
 use crate::{
     abi_error::AbiError,
-    abi_type::{AbiType, AbiValue, ADDRESS_BYTE_SIZE, LENGTH_ENCODE_BYTE_SIZE, SINGLE_BYTE_SIZE},
+    abi_type::{ADDRESS_BYTE_SIZE, AbiType, AbiValue, LENGTH_ENCODE_BYTE_SIZE, SINGLE_BYTE_SIZE},
     biguint_ext::BigUintExt,
 };
 use algonaut_core::Address;
@@ -106,7 +106,7 @@ impl AbiType {
             _ => {
                 return Err(AbiError::Msg(format!(
                     "Can't encode tuple: value: {value:?} is not an array."
-                )))
+                )));
             }
         };
 
@@ -332,7 +332,7 @@ impl AbiType {
             _ => {
                 return Err(AbiError::Msg(
                     "type cannot support conversion to tuple".to_owned(),
-                ))
+                ));
             }
         };
 
@@ -463,7 +463,13 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
                     let curr_len = children[i].byte_len()?;
 
                     if iter_index + curr_len > encoded.len() {
-                        return Err(AbiError::Msg(format!("ill formed tuple static typed element encoding: not enough bytes. child: {:?} --- iter_index: {}, current_len: {}, encoded len: {}", children[i], iter_index, curr_len, &encoded.len())));
+                        return Err(AbiError::Msg(format!(
+                            "ill formed tuple static typed element encoding: not enough bytes. child: {:?} --- iter_index: {}, current_len: {}, encoded len: {}",
+                            children[i],
+                            iter_index,
+                            curr_len,
+                            &encoded.len()
+                        )));
                     }
 
                     value_partition.push(encoded[iter_index..iter_index + curr_len].to_vec());

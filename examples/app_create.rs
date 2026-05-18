@@ -1,8 +1,8 @@
 use algonaut::algod::v2::Algod;
-use algonaut::transaction::account::Account;
-use algonaut::transaction::transaction::StateSchema;
 use algonaut::transaction::CreateApplication;
 use algonaut::transaction::TxnBuilder;
+use algonaut::transaction::account::Account;
+use algonaut::transaction::transaction::StateSchema;
 use algonaut_algod::models::PendingTransactionResponse;
 use dotenv::dotenv;
 use std::env;

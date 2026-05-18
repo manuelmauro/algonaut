@@ -6,9 +6,9 @@ use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 use algonaut_core::{
     Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
 };
-use algonaut_crypto::{mnemonic, Signature};
-use rand::rngs::OsRng;
+use algonaut_crypto::{Signature, mnemonic};
 use rand::Rng;
+use rand::rngs::OsRng;
 use ring::signature::{Ed25519KeyPair, KeyPair};
 
 #[derive(Debug)]
@@ -34,7 +34,7 @@ impl Eq for Account {}
 
 impl Account {
     pub fn generate() -> Account {
-        let seed: [u8; 32] = OsRng.gen();
+        let seed: [u8; 32] = OsRng.r#gen();
         Self::from_seed(seed)
     }
 
@@ -265,7 +265,7 @@ pub(crate) fn auth_address(tx: &Transaction, signing_account_address: &Address) 
 mod tests {
     use crate::account::Account;
     use algonaut_core::Address;
-    use algonaut_crypto::{mnemonic, Signature};
+    use algonaut_crypto::{Signature, mnemonic};
     use data_encoding::BASE64;
     use rand::Rng;
     use std::convert::TryInto;
@@ -302,7 +302,7 @@ mod tests {
 
     #[test]
     fn test_sign_bytes() {
-        let mut b = rand::thread_rng().gen::<[u8; 15]>();
+        let mut b = rand::thread_rng().r#gen::<[u8; 15]>();
         let account = Account::generate();
         let signature = account.generate_sig(&b);
 
