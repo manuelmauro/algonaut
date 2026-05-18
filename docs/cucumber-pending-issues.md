@@ -139,10 +139,32 @@ Three features need it:
 
 ---
 
-## 5. Scaffold a cucumber unit-test World
+## 5. Add `state_proof_key` to `KeyRegistration`
+
+**Labels:** `area/transaction`, `kind/feature`, `cucumber-blocker`
+**ADR:** [`keyregistration-v2-state-proof-key`](adr/keyregistration-v2-state-proof-key.md)
+
+```markdown
+`tests/features/integration/send.feature` has a `@send.keyregtxn`
+scenario that exercises V2 online key registration. Since the v34
+consensus upgrade, online registration requires `sprfkey` (a 64-byte
+BLS public key). Our `KeyRegistration` model omits it.
+
+### Acceptance
+- [ ] `algonaut_transaction::transaction::KeyRegistration` gains
+      `state_proof_key: Option<StateProofPk>`.
+- [ ] `RegisterKey::online` accepts the state-proof key (additive
+      breaking change to its signature).
+- [ ] Msgpack serialization writes `sprfkey` when present.
+- [ ] `@send.keyregtxn` runs green and the runner exclusion is dropped.
+```
+
+---
+
+## 6. Scaffold a cucumber unit-test World
 
 **Labels:** `area/tests`, `kind/infra`, `cucumber-blocker`
-**ADR:** [`cucumber-unit-test-scaffolding`](cucumber-unit-test-scaffolding.md)
+**ADR:** [`cucumber-unit-test-scaffolding`](adr/cucumber-unit-test-scaffolding.md)
 
 ```markdown
 The 17 features under `tests/features/unit/` don't need a live algod
@@ -167,7 +189,7 @@ Proposed work:
 
 ---
 
-## 6. (No issue) Expand step-def coverage for already-supported features
+## 7. (No issue) Expand step-def coverage for already-supported features
 
 The remaining work is mechanical step-def writing for features where
 the SDK already covers the underlying capability. These do **not**

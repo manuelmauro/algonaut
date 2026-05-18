@@ -98,8 +98,10 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/send.feature",
-        gate: Some("step-defs pending; SDK supports send_txn/send_txns"),
-        excluded_tags: &[],
+        gate: None,
+        // Online keyreg requires sprfkey — blocked on ADR
+        // keyregistration-v2-state-proof-key.
+        excluded_tags: &["send.keyregtxn"],
     },
     Feature {
         path: "tests/features/integration/simulate.feature",
