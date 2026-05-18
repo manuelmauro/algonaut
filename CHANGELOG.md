@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- ADR collection at `docs/adr/` managed by [`arkouda`](https://github.com/manuelmauro/arkouda); seeded with `cucumber-test-suite-coverage-strategy`, `simulaterequest-model-needs-power-pack-fields`, `atomictransactioncomposer-simulate-convenience`, `teal-source-map-decoder`, `dryrun-request-builder`, and `cucumber-unit-test-scaffolding`
+- `tests/features_runner.rs` now enumerates every `.feature` file in the algorand-sdk-testing suite (13 integration + 17 unit), gating un-implemented features behind explicit ADR references
+- Drafted upstream tickets in `docs/cucumber-pending-issues.md` ready for `gh issue create`
+
+### Changed
+
+- The runner's "v1 only" comment for `algod`/`assets` is replaced with an accurate matrix — both features actually target v2 endpoints and only need step-def coverage
+
 ## [0.5.0] - 2026-05-18
 
 ### Added
