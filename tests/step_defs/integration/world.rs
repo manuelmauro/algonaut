@@ -54,4 +54,6 @@ pub struct World {
     pub signed_tx: Option<SignedTransaction>,
     pub multisig: Option<MultisigAddress>,
     pub last_send_succeeded: Option<bool>,
+
+    pub rekey_target: Option<Address>,
 }
