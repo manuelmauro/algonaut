@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Hoist every external dependency version into the root `[workspace.dependencies]` table; subcrates inherit via `{ workspace = true }` (#244)
+- Add `lefthook.yml` running `make ci` on pre-commit and enforcing Conventional Commits on commit-msg (#242)
+- Expand the `Makefile` with `setup`, `fmt[-check]`, `clippy`, `check[-release]`, `check-wasm`, `build[-release]`, `test[-release]`, `ci`, `doc`, and `help` targets while preserving the existing integration/harness/docker targets (#242)
+
+### Changed
+
+- Bump the Rust edition of every workspace crate to 2024 — raises the MSRV to 1.85 (#246)
+- Bump dependencies to the latest compatible versions: `thiserror` 2, `derive_more` 2, `reqwest` 0.13, `sha2` 0.11, `cucumber` 0.23, `serde_with` 3, `env_logger` 0.11, `gloo-timers` 0.4, `indexmap` 2, and various minor bumps (#242)
+- Replace `ring` with `ed25519-dalek` 2 for Ed25519 sign/verify, removing the C-compiler dependency for `wasm32-unknown-unknown` builds (#245)
+- `Account` internal field `key_pair: Ed25519KeyPair` → `signing_key: ed25519_dalek::SigningKey` (private)
+
+### Fixed
+
+- `cargo check --target wasm32-unknown-unknown` now builds on stock toolchains (no `brew install llvm` required on macOS) (#245)
+- Pre-existing clippy warnings (empty doc comments, doc-list indentation, deprecated `impl ToString`, `push`-in-loop, etc.) across the workspace (#242)
+
+### Pinned
+
+- `rand` stays on 0.8 and `getrandom` on 0.2 because `num-bigint` 0.4.6's `RandBigInt` trait is built against rand 0.8
+
 ## [0.4.2] - 2022-10-06
 
 - Add state proof transaction type and fields
