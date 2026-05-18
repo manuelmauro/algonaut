@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-05-18
 
 ### Added
 
 - Hoist every external dependency version into the root `[workspace.dependencies]` table; subcrates inherit via `{ workspace = true }` (#244)
 - Add `lefthook.yml` running `make ci` on pre-commit and enforcing Conventional Commits on commit-msg (#242)
 - Expand the `Makefile` with `setup`, `fmt[-check]`, `clippy`, `check[-release]`, `check-wasm`, `build[-release]`, `test[-release]`, `ci`, `doc`, and `help` targets while preserving the existing integration/harness/docker targets (#242)
+- GitHub Actions runs the cucumber integration tests against an algorand sandbox harness, replacing the retired CircleCI job; promoted to a required check on `main` (#247, #248)
 
 ### Changed
 
