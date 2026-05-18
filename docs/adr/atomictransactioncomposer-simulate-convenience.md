@@ -2,7 +2,7 @@
 id: atomictransactioncomposer-simulate-convenience
 title: AtomicTransactionComposer simulate convenience
 abstract: Add a simulate method on AtomicTransactionComposer that wraps algod.simulate_txns, mirroring the execute path.
-status: proposed
+status: accepted
 date: 2026-05-18
 deciders: []
 tags: []
@@ -12,7 +12,7 @@ tags: []
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 

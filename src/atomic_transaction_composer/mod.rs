@@ -8,7 +8,11 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
     make_tuple_type,
 };
-use algonaut_algod::models::{PendingTransactionResponse, TransactionParams200Response};
+use algonaut_algod::models::{
+    PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
+    SimulateTransaction200Response, TransactionParams200Response,
+};
+use algonaut_core::ToMsgPack;
 use algonaut_core::{Address, CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
@@ -123,6 +127,23 @@ pub struct ExecuteResult {
     pub method_results: Vec<AbiMethodResult>,
 }
 
+/// AtcSimulateResult is the result of calling `simulate` on an
+/// AtomicTransactionComposer. Mirrors `ExecuteResult` with the raw
+/// simulate response attached, but the composer is not transitioned to
+/// `Committed` — a subsequent `execute()` is still legal.
+#[derive(Debug, Clone)]
+pub struct AtcSimulateResult {
+    /// TxIDs for each transaction in the simulated group.
+    pub tx_ids: Vec<String>,
+    /// ABI return values per method call. Errors are surfaced
+    /// per-result (the same way `ExecuteResult` does it) so callers can
+    /// inspect partial successes.
+    pub method_results: Vec<AbiMethodResult>,
+    /// Raw simulate response from algod, including failure messages,
+    /// budget consumed, eval-overrides, and exec-trace when requested.
+    pub simulate_response: algonaut_algod::models::SimulateTransaction200Response,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AtomicTransactionComposerStatus {
     /// The atomic group is still under construction.
@@ -131,6 +152,11 @@ pub enum AtomicTransactionComposerStatus {
     Built,
     /// The atomic group has been finalized and signed, but not yet submitted to the network.
     Signed,
+    /// The atomic group has been finalized and signed, then simulated against the simulate
+    /// endpoint. Simulate is non-destructive: the composer can still be submitted/executed
+    /// afterwards, which is why this variant sits between Signed and Submitted in the
+    /// monotonic chain.
+    Simulated,
     /// The atomic group has been finalized, signed, and submitted to the network.
     Submitted,
     /// The atomic group has been finalized, signed, submitted, and successfully committed to a block.
@@ -508,6 +534,74 @@ impl AtomicTransactionComposer {
             confirmed_round: pending_tx.confirmed_round,
             tx_ids: self.get_txs_ids(),
             method_results: return_list,
+        })
+    }
+
+    /// Simulate the composed group through algod's `/v2/transactions/simulate`
+    /// endpoint with no power-pack overrides. Equivalent to:
+    /// `simulate_with(algod, SimulateRequest::new(vec![default_group]))`.
+    pub async fn simulate(&mut self, algod: &Algod) -> Result<AtcSimulateResult, Error> {
+        let default = SimulateRequest::new(vec![]);
+        self.simulate_with(algod, default).await
+    }
+
+    /// Simulate the composed group with a caller-supplied
+    /// [`SimulateRequest`] — use this when you need to toggle the
+    /// power-pack fields (extra opcode budget, allow-more-logging,
+    /// exec-trace-config, etc.).
+    ///
+    /// The request's `txn_groups` is ignored; this method always
+    /// substitutes the composer's own signed group. Any other field on
+    /// the request (toggles, exec-trace config, round) is forwarded as
+    /// given.
+    pub async fn simulate_with(
+        &mut self,
+        algod: &Algod,
+        mut request: SimulateRequest,
+    ) -> Result<AtcSimulateResult, Error> {
+        if self.status >= AtomicTransactionComposerStatus::Submitted {
+            return Err(Error::Msg(
+                "Atomic Transaction Composer cannot simulate after submit/execute".to_owned(),
+            ));
+        }
+
+        self.gather_signatures()?;
+
+        let encoded: Vec<String> = self
+            .signed_txs
+            .iter()
+            .map(|tx| tx.to_msg_pack().map(|b| BASE64.encode(&b)))
+            .collect::<Result<_, _>>()
+            .map_err(|e| Error::Internal(e.to_string()))?;
+        request.txn_groups = vec![SimulateRequestTransactionGroup::new(encoded)];
+
+        let response: SimulateTransaction200Response = algod.simulate_txns(request).await?;
+
+        // Build per-method ABI return values from the pending-txn
+        // payloads embedded in the simulate response (mirrors execute()).
+        let mut return_list: Vec<AbiMethodResult> = Vec::new();
+        if let Some(group) = response.txn_groups.first() {
+            for (i, txn_result) in group.txn_results.iter().enumerate() {
+                if !self.method_map.contains_key(&i) {
+                    continue;
+                }
+                let tx_id = self.signed_txs[i].transaction_id.clone();
+                let pending_tx = (*txn_result.txn_result).clone();
+                let return_type = self.method_map[&i].returns.clone().type_()?;
+                return_list.push(get_return_value_with_return_type(
+                    &pending_tx,
+                    &tx_id,
+                    return_type,
+                )?);
+            }
+        }
+
+        self.status = AtomicTransactionComposerStatus::Simulated;
+
+        Ok(AtcSimulateResult {
+            tx_ids: self.get_txs_ids(),
+            method_results: return_list,
+            simulate_response: response,
         })
     }
 }
