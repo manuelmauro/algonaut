@@ -2,7 +2,7 @@
 id: simulaterequest-model-needs-power-pack-fields
 title: SimulateRequest model needs power-pack fields
 abstract: Extend the algod SimulateRequest model with allow-more-logging, extra-opcode-budget, allow-unnamed-resources, and exec-trace-config so simulate.feature can drive the endpoint.
-status: proposed
+status: accepted
 date: 2026-05-18
 deciders: []
 tags: []
@@ -12,7 +12,7 @@ tags: []
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
