@@ -102,6 +102,7 @@ cucumber = { workspace = true }
 dotenv = { workspace = true }
 getrandom = { workspace = true, features = ["js"] }
 rand = { workspace = true }
+regex = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 
 [features]
