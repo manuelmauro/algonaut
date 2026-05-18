@@ -44,4 +44,9 @@ pub struct World {
     pub tx_composer_res: Option<ExecuteResult>,
 
     pub versions: Option<Vec<String>>,
+
+    pub compile_status: Option<u16>,
+    pub compile_result: Option<String>,
+    pub compile_hash: Option<String>,
+    pub compiled_program: Option<Vec<u8>>,
 }
