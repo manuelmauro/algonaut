@@ -9,6 +9,7 @@ use algonaut::{
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
 use algonaut_algod::models::TransactionParams200Response;
 use algonaut_core::{Address, MultisigAddress};
+use algonaut_crypto::Ed25519PublicKey;
 use algonaut_transaction::{
     SignedTransaction, Transaction,
     account::Account,
@@ -64,4 +65,13 @@ pub struct World {
     pub bid: Option<Bid>,
     pub signed_bid: Option<SignedBid>,
     pub signed_bid_roundtrip: Option<SignedBid>,
+
+    pub generated_account: Option<Account>,
+    pub generated_kmd_address: Option<Address>,
+    pub created_wallet_id: Option<String>,
+    pub created_wallet_handle: Option<String>,
+    pub created_wallet_name: Option<String>,
+    pub kmd_signed_tx_bytes: Option<Vec<u8>>,
+    pub kmd_signed_multisig_bytes: Option<Vec<u8>>,
+    pub exported_multisig_pks: Option<Vec<Ed25519PublicKey>>,
 }
