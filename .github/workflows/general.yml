@@ -79,6 +79,12 @@ jobs:
           key: integration
       - name: Bring up the algorand test harness
         run: ./test-harness.sh up
+      - name: Dump sandbox.log on harness failure
+        if: failure()
+        run: |
+          test -f test-harness/.sandbox/sandbox.log \
+            && cat test-harness/.sandbox/sandbox.log \
+            || echo "No sandbox.log to dump."
       - name: Run cucumber integration tests
         run: cargo test --test features_runner --
       - name: Tear down the algorand test harness
