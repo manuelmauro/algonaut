@@ -1,6 +1,6 @@
 [package]
 name = "algonaut_algod"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["contact@algorand.com"]
 description = "API endpoint for algod operations."
 # Override this license by providing a License Object in the OpenAPI.
