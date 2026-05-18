@@ -298,11 +298,3 @@ async fn local_delta_succeed(
     // silence dead-code warnings when the index path succeeds.
     let _ = addr;
 }
-
-#[then(regex = r#"^it is compiled with (\d+) and "([^"]*)" and "([^"]*)"$"#)]
-#[allow(dead_code)]
-async fn dryrun_it_is_compiled_with(_w: &mut World, _status: u16, _result: String, _hash: String) {
-    // Covered by compile.feature; this is a no-op here so the regex
-    // overlaps between the two features don't cause unmatched-step
-    // failures.
-}

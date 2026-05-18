@@ -3,13 +3,35 @@ use crate::step_defs::{
     util::{account_from_kmd_response, wait_for_pending_transaction},
 };
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
-use algonaut_core::MicroAlgos;
+use algonaut_core::{Address, MicroAlgos};
 use algonaut_transaction::{Pay, TxnBuilder};
 use cucumber::{given, then, when};
 use rand::Rng;
 use std::error::Error;
 
-#[given(regex = "an algod v2 client")]
+/// Find the wallet account with the highest microalgos balance.
+/// kmd's list_keys ordering is unstable across sandbox runs, so the
+/// pre-funded "creator" account is not guaranteed to land at any
+/// particular index.
+pub async fn pick_funded_account(
+    algod: &Algod,
+    accounts: &[Address],
+) -> Result<Address, Box<dyn Error>> {
+    let mut best: Option<(Address, u64)> = None;
+    for addr in accounts {
+        let info = algod.account(&addr.to_string()).await?;
+        if best.is_none_or(|(_, bal)| info.amount > bal) {
+            best = Some((*addr, info.amount));
+        }
+    }
+    let (addr, bal) = best.ok_or("wallet has no accounts")?;
+    if bal == 0 {
+        return Err("no funded account found in the wallet".into());
+    }
+    Ok(addr)
+}
+
+#[given(regex = r"^an algod v2 client$")]
 async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(
         "http://localhost:60000",
@@ -27,6 +49,12 @@ async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
 async fn an_algod_v2_client_connected_to(w: &mut World, host: String, port: String, token: String) {
     let algod = Algod::new(&format!("http://{}:{}", host, port), &token).unwrap();
     w.algod = Some(algod)
+}
+
+#[given(regex = r"^an indexer v2 client$")]
+async fn an_indexer_v2_client(w: &mut World) {
+    let indexer = algonaut::indexer::v2::Indexer::new("http://localhost:60002", "").unwrap();
+    w.indexer = Some(indexer);
 }
 
 #[given(expr = "a kmd client")]
@@ -71,7 +99,7 @@ async fn wallet_information(w: &mut World) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[given(regex = "suggested transaction parameters from the algod v2 client")]
+#[given(regex = r"^suggested transaction parameters from the algod v2 client$")]
 async fn suggested_params(w: &mut World) -> Result<(), Box<dyn Error>> {
     let algod = w.algod.as_ref().unwrap();
 
@@ -94,7 +122,10 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     let mut rng = rand::thread_rng();
     let dust: u64 = rng.gen_range(1..1_000_000);
 
-    let sender_address = accounts[1];
+    // kmd's list_keys ordering is unstable across sandbox runs — pick
+    // the wallet account with the highest balance instead of an
+    // arbitrary index.
+    let sender_address = pick_funded_account(algod, accounts).await?;
 
     let sender_key = kmd.export_key(handle, password, &sender_address).await?;
 
@@ -104,7 +135,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     let tx = TxnBuilder::with(
         &params,
         Pay::new(
-            accounts[1],
+            sender_address,
             sender_account.address(),
             MicroAlgos(micro_algos + dust),
         )
@@ -115,7 +146,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     let s_tx = sender_account.sign_transaction(tx)?;
 
     let send_response = algod.send_txn(&s_tx).await?;
-    let _ = wait_for_pending_transaction(&algod, &send_response.tx_id);
+    wait_for_pending_transaction(algod, &send_response.tx_id).await?;
 
     w.transient_account = Some(sender_account);
 

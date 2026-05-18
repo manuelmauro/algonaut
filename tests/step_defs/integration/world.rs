@@ -4,6 +4,7 @@ use algonaut::{
     atomic_transaction_composer::{
         AbiArgValue, ExecuteResult, TransactionWithSigner, transaction_signer::TransactionSigner,
     },
+    indexer::v2::Indexer,
     kmd::v1::Kmd,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::SourceMap};
@@ -20,6 +21,7 @@ use cucumber;
 #[derive(Default, Debug, cucumber::World)]
 pub struct World {
     pub algod: Option<Algod>,
+    pub indexer: Option<Indexer>,
 
     pub kmd: Option<Kmd>,
     pub handle: Option<String>,
@@ -79,6 +81,8 @@ pub struct World {
     pub asset_id: Option<u64>,
     pub asset_info: Option<AssetParams>,
     pub expected_asset_params: Option<AssetParams>,
+    pub asset_creator: Option<Address>,
+    pub asset_second: Option<Address>,
 
     pub dryrun_response: Option<TealDryrun200Response>,
 }
