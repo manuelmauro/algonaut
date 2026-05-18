@@ -73,7 +73,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/auction.feature",
-        gate: Some("step-defs pending; SDK ships algonaut_transaction::auction::Bid"),
+        gate: None,
         excluded_tags: &[],
     },
     Feature {

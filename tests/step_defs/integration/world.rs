@@ -9,7 +9,11 @@ use algonaut::{
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
 use algonaut_algod::models::TransactionParams200Response;
 use algonaut_core::{Address, MultisigAddress};
-use algonaut_transaction::{SignedTransaction, Transaction, account::Account};
+use algonaut_transaction::{
+    SignedTransaction, Transaction,
+    account::Account,
+    auction::{Bid, SignedBid},
+};
 use cucumber;
 
 #[derive(Default, Debug, cucumber::World)]
@@ -56,4 +60,8 @@ pub struct World {
     pub last_send_succeeded: Option<bool>,
 
     pub rekey_target: Option<Address>,
+
+    pub bid: Option<Bid>,
+    pub signed_bid: Option<SignedBid>,
+    pub signed_bid_roundtrip: Option<SignedBid>,
 }
