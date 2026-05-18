@@ -58,31 +58,15 @@ Landed — see ADR
 
 ---
 
-## 6. Scaffold a cucumber unit-test World
+## ~~6. Scaffold a cucumber unit-test World~~
 
-**Labels:** `area/tests`, `kind/infra`, `cucumber-blocker`
-**ADR:** [`cucumber-unit-test-scaffolding`](adr/cucumber-unit-test-scaffolding.md)
-
-```markdown
-The 17 features under `tests/features/unit/` don't need a live algod
-or kmd. Today our cucumber `World` is built for the integration suite
-and is the wrong container for unit-only state.
-
-Proposed work:
-
-- Add `tests/step_defs/unit/` mirroring the integration tree, with a
-  `UnitWorld` containing only fixture/parser state.
-- Drive the unit features from `tests/features_runner.rs` with a
-  second `World::cucumber()` builder.
-- Use `@unit` / `@integration` tags so CI jobs can filter
-  declaratively.
-
-### Acceptance
-- [ ] `cargo test --test features_runner --` runs both worlds in
-      sequence on a clean checkout (no harness needed for `@unit`).
-- [ ] At least one unit feature is exercised end-to-end as a smoke
-      test (`feetest.feature` is a good candidate — pure maths, no IO).
-```
+Landed — see ADR
+[`cucumber-unit-test-scaffolding`](adr/cucumber-unit-test-scaffolding.md)
+(status: accepted). The scaffold is in place plus a smoke-test pass on
+the address / mnemonic / microalgos round-trip scenarios of
+`offline.feature`. The remaining 16 unit features keep their stub
+entries in the runner; each is now mechanical step-def work and can
+land as ordinary follow-up PRs.
 
 ---
 
