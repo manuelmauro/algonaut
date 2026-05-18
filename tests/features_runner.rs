@@ -102,11 +102,16 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/simulate.feature",
-        gate: Some(
-            "blocked on ADRs simulaterequest-model-needs-power-pack-fields and \
-             atomictransactioncomposer-simulate-convenience",
-        ),
-        excluded_tags: &[],
+        gate: None,
+        // `simulate.exec_trace_with_stack_scratch` trips the same ATC
+        // base64-decode issue tracked in #266; the
+        // `simulate.exec_trace_with_state_change_and_hash` scenarios
+        // need a `create-and-optin` on-complete combo on the
+        // `CreateApplication` builder that we haven't added yet.
+        excluded_tags: &[
+            "simulate.exec_trace_with_stack_scratch",
+            "simulate.exec_trace_with_state_change_and_hash",
+        ],
     },
 ];
 

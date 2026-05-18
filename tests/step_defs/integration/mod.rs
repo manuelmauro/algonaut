@@ -9,4 +9,5 @@ pub mod general;
 pub mod kmd;
 pub mod rekey;
 pub mod send;
+pub mod simulate;
 pub mod world;

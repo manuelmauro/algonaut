@@ -12,7 +12,6 @@ use algonaut_algod::models::{
     PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
     SimulateTransaction200Response, TransactionParams200Response,
 };
-use algonaut_core::ToMsgPack;
 use algonaut_core::{Address, CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
@@ -567,13 +566,9 @@ impl AtomicTransactionComposer {
 
         self.gather_signatures()?;
 
-        let encoded: Vec<String> = self
-            .signed_txs
-            .iter()
-            .map(|tx| tx.to_msg_pack().map(|b| BASE64.encode(&b)))
-            .collect::<Result<_, _>>()
-            .map_err(|e| Error::Internal(e.to_string()))?;
-        request.txn_groups = vec![SimulateRequestTransactionGroup::new(encoded)];
+        request.txn_groups = vec![SimulateRequestTransactionGroup::new(
+            self.signed_txs.clone(),
+        )];
 
         let response: SimulateTransaction200Response = algod.simulate_txns(request).await?;
 
