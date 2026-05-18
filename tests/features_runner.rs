@@ -68,7 +68,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/assets.feature",
-        gate: Some("step-defs pending; SDK supports asset create/transfer/freeze/destroy"),
+        gate: None,
         excluded_tags: &[],
     },
     Feature {

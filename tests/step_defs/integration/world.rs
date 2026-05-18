@@ -7,7 +7,7 @@ use algonaut::{
     kmd::v1::Kmd,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
-use algonaut_algod::models::TransactionParams200Response;
+use algonaut_algod::models::{AssetParams, TransactionParams200Response};
 use algonaut_core::{Address, MultisigAddress};
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_transaction::{
@@ -74,4 +74,8 @@ pub struct World {
     pub kmd_signed_tx_bytes: Option<Vec<u8>>,
     pub kmd_signed_multisig_bytes: Option<Vec<u8>>,
     pub exported_multisig_pks: Option<Vec<Ed25519PublicKey>>,
+
+    pub asset_id: Option<u64>,
+    pub asset_info: Option<AssetParams>,
+    pub expected_asset_params: Option<AssetParams>,
 }

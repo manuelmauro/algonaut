@@ -1,6 +1,7 @@
 pub mod abi;
 pub mod algod;
 pub mod applications;
+pub mod assets;
 pub mod auction;
 pub mod compile;
 pub mod general;
