@@ -72,7 +72,7 @@ fn checksum(data: &[u8]) -> &str {
 fn to_u11_array(bytes: &[u8]) -> Vec<u32> {
     let mut buf = 0u32;
     let mut bit_count = 0;
-    let mut out = Vec::with_capacity((bytes.len() * 8 + BITS_PER_WORD - 1) / BITS_PER_WORD);
+    let mut out = Vec::with_capacity((bytes.len() * 8).div_ceil(BITS_PER_WORD));
     for &b in bytes {
         buf |= (u32::from(b)) << bit_count;
         bit_count += 8;
@@ -92,7 +92,7 @@ fn to_u11_array(bytes: &[u8]) -> Vec<u32> {
 fn to_byte_array(nums: &[u32]) -> Vec<u8> {
     let mut buf = 0;
     let mut bit_count = 0;
-    let mut out = Vec::with_capacity((nums.len() * BITS_PER_WORD + 8 - 1) / 8);
+    let mut out = Vec::with_capacity((nums.len() * BITS_PER_WORD).div_ceil(8));
     for &n in nums {
         buf |= n << bit_count;
         bit_count += BITS_PER_WORD as u32;

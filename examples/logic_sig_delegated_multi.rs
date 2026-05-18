@@ -37,7 +37,7 @@ int 1
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("creating account for casey");
-    let casey = (&env::var("CASEY_ADDRESS")?).parse()?;
+    let casey = env::var("CASEY_ADDRESS")?.parse()?;
 
     info!("creating multisig address");
     let multisig_address = MultisigAddress::new(1, 2, &[alice.address(), bob.address()])?;

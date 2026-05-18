@@ -1,0 +1,11 @@
+pre-commit:
+  commands:
+    ci:
+      run: make ci
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: >
+        head -1 {1} | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'
+        || { echo "Commit message must follow Conventional Commits: <type>(scope): <description>"; exit 1; }

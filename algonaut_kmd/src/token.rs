@@ -3,7 +3,7 @@ use derive_more::Display;
 
 /// An API token.
 #[derive(Display)]
-#[display(fmt = "{}", token)]
+#[display("{}", token)]
 pub struct ApiToken {
     token: String,
 }

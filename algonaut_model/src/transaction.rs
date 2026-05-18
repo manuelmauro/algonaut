@@ -7,8 +7,9 @@ use std::collections::HashMap;
 /// IMPORTANT:
 /// When serializing:
 /// - Fields have to be sorted alphabetically.
-/// - Keys must be excluded if they've a "zero value" (e.g. the number 0 or an empty vector).
-/// otherwise the node's signature validation will fail.
+/// - Keys must be excluded if they've a "zero value" (e.g. the number 0 or an empty vector),
+///   otherwise the node's signature validation will fail.
+///
 /// When deserializing:
 /// - Non existent keys can mean None or a semantic zero value, depending on context.
 ///
@@ -16,7 +17,6 @@ use std::collections::HashMap;
 /// <https://github.com/algorand/docs/pull/454>, <https://github.com/algorand/docs/issues/415> (not comprehensive)
 ///
 /// We intentionally don't use `skip_serializing_if` for values other than `Option` for a consistent representation of optionals.
-///
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ApiTransaction {
     #[serde(rename = "aamt", skip_serializing_if = "Option::is_none")]

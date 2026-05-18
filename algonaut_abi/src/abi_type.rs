@@ -58,7 +58,7 @@ impl AbiType {
     /// Determines whether the ABI type is dynamic or static.
     pub fn is_dynamic(&self) -> bool {
         match self {
-            AbiType::DynamicArray { .. } | AbiType::String { .. } => true,
+            AbiType::DynamicArray { .. } | AbiType::String => true,
             _ => self.has_dynamic_child(),
         }
     }
@@ -110,7 +110,7 @@ impl AbiType {
     /// Makes `Uint` ABI type by taking a type bitSize argument.
     /// The range of type bitSize is [8, 512] and type bitSize % 8 == 0.
     pub fn uint(type_size: usize) -> Result<AbiType, AbiError> {
-        if type_size % 8 != 0 || !(8..=512).contains(&type_size) {
+        if !type_size.is_multiple_of(8) || !(8..=512).contains(&type_size) {
             return Err(AbiError::Msg(format!(
                 "unsupported uint type bitSize: {type_size}"
             )));
@@ -141,7 +141,7 @@ impl AbiType {
     /// The range of type bitSize is [8, 512] and type bitSize % 8 == 0.
     /// The range of type precision is [1, 160].
     pub fn ufixed(type_size: usize, type_precision: usize) -> Result<AbiType, AbiError> {
-        if type_size % 8 != 0 || !(8..=512).contains(&type_size) {
+        if !type_size.is_multiple_of(8) || !(8..=512).contains(&type_size) {
             return Err(AbiError::Msg(format!(
                 "unsupported ufixed type bitSize: {type_size}"
             )));

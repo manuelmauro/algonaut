@@ -39,7 +39,7 @@ impl Client {
     pub async fn versions(&self) -> Result<VersionsResponse, ClientError> {
         let response = self
             .http_client
-            .get(&format!("{}versions", self.address))
+            .get(format!("{}versions", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .send()
@@ -54,7 +54,7 @@ impl Client {
     pub async fn list_wallets(&self) -> Result<ListWalletsResponse, ClientError> {
         let response = self
             .http_client
-            .get(&format!("{}v1/wallets", self.address))
+            .get(format!("{}v1/wallets", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .send()
@@ -82,7 +82,7 @@ impl Client {
 
         let response = self
             .http_client
-            .post(&format!("{}v1/wallet", self.address))
+            .post(format!("{}v1/wallet", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -106,7 +106,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/wallet/init", self.address))
+            .post(format!("{}v1/wallet/init", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -128,7 +128,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/wallet/release", self.address))
+            .post(format!("{}v1/wallet/release", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -150,7 +150,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/wallet/renew", self.address))
+            .post(format!("{}v1/wallet/renew", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -176,7 +176,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/wallet/rename", self.address))
+            .post(format!("{}v1/wallet/rename", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -198,7 +198,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/wallet/info", self.address))
+            .post(format!("{}v1/wallet/info", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -222,7 +222,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/master-key/export", self.address))
+            .post(format!("{}v1/master-key/export", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -246,7 +246,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/key/import", self.address))
+            .post(format!("{}v1/key/import", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -272,7 +272,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/key/export", self.address))
+            .post(format!("{}v1/key/export", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -295,7 +295,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/key", self.address))
+            .post(format!("{}v1/key", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -321,7 +321,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .delete(&format!("{}v1/key", self.address))
+            .delete(format!("{}v1/key", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -340,7 +340,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/key/list", self.address))
+            .post(format!("{}v1/key/list", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -366,7 +366,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/transaction/sign", self.address))
+            .post(format!("{}v1/transaction/sign", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -388,7 +388,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/multisig/list", self.address))
+            .post(format!("{}v1/multisig/list", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -416,7 +416,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/multisig/import", self.address))
+            .post(format!("{}v1/multisig/import", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -440,7 +440,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/multisig/export", self.address))
+            .post(format!("{}v1/multisig/export", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -466,7 +466,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .delete(&format!("{}v1/multisig", self.address))
+            .delete(format!("{}v1/multisig", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
@@ -496,7 +496,7 @@ impl Client {
         };
         let response = self
             .http_client
-            .post(&format!("{}v1/multisig/sign", self.address))
+            .post(format!("{}v1/multisig/sign", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)

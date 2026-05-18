@@ -1,6 +1,4 @@
-///
 pub mod error;
-///
 mod extensions;
 /// Key management daemon
 pub mod kmd;

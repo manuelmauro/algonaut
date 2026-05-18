@@ -706,10 +706,10 @@ fn wrap_overflowing_values(
 /// # Arguments
 ///
 /// * `obj_to_add` - The value to add to the array. If this value is already present in the array,
-///    it will not be added again. Instead, the existing index will be returned.
+///   it will not be added again. Instead, the existing index will be returned.
 /// * `obj_array` - The existing foreign array. This input may be modified to append `obj_to_add`.
 /// * `zeroth_obj` - If provided, this value indicated two things: the 0 value is special for this
-///    array, so all indexes into `obj_array` must start at 1; additionally, if `obj_to_add` equals
+///   array, so all indexes into `obj_array` must start at 1; additionally, if `obj_to_add` equals
 ///   `zeroth_obj`, then `obj_to_add` will not be added to the array, and instead the 0 indexes will be returned.
 ///
 /// Returns an index that can be used to reference `obj_to_add` in `obj_array`.

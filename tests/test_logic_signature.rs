@@ -91,7 +91,7 @@ async fn test_logic_sig_multisig_signature() -> Result<(), Box<dyn Error>> {
     let two = "BFRTECKTOOE7A5LHCF3TTEOH2A7BW46IYT2SX5VP6ANKEXHZYJY77SJTVM".parse()?;
     let three = "47YPQTIGQEO7T4Y4RWDYWEKV6RTR2UNBQXBABEEGM72ESWDQNCQ52OPASU".parse()?;
 
-    let ma = MultisigAddress::new(1, 2, &vec![one, two, three])?;
+    let ma = MultisigAddress::new(1, 2, &[one, two, three])?;
 
     let acc1 = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
     let acc2 = Account::from_mnemonic("since during average anxiety protect cherry club long lawsuit loan expand embark forum theory winter park twenty ball kangaroo cram burst board host ability left")?;
