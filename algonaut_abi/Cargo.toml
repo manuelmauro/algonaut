@@ -14,11 +14,11 @@ derive_more = { workspace = true, features = ["display", "from"] }
 lazy_static = { workspace = true }
 num-bigint = { workspace = true }
 regex = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
 num-bigint = { workspace = true, features = ["rand"] }
 rand = { workspace = true }
-serde_json = { workspace = true }

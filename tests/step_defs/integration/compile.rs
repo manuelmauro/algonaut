@@ -69,3 +69,33 @@ async fn disassembly_matches(w: &mut World, bytecode_filename: String, source_fi
         .expect("teal_disassemble failed");
     assert_eq!(resp.result, expected_source, "disassembly mismatch");
 }
+
+#[when(regex = r#"^I compile a teal program "([^"]+)" with mapping enabled$"#)]
+async fn i_compile_a_teal_program_with_mapping_enabled(w: &mut World, program: String) {
+    let algod = w.algod.as_ref().expect("algod not set");
+    let source = read_resource(&program);
+    let (_compiled, map) = algod
+        .teal_compile_with_sourcemap(&source)
+        .await
+        .expect("teal_compile_with_sourcemap failed");
+    w.compiled_sourcemap = Some(map);
+}
+
+#[then(regex = r#"^the resulting source map is the same as the json "([^"]+)"$"#)]
+async fn the_resulting_source_map_is_the_same_as_the_json(w: &mut World, fixture: String) {
+    let actual = w
+        .compiled_sourcemap
+        .as_ref()
+        .expect("source map not produced");
+    let expected_bytes = read_resource(&fixture);
+    let expected_json =
+        String::from_utf8(expected_bytes).expect("fixture sourcemap is not valid UTF-8");
+    let expected = algonaut_abi::sourcemap::SourceMap::from_json(&expected_json)
+        .expect("failed to parse fixture sourcemap");
+
+    assert_eq!(
+        actual.pc_line_string(),
+        expected.pc_line_string(),
+        "compiled source map differs from fixture"
+    );
+}

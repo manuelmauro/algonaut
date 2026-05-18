@@ -401,6 +401,26 @@ impl Algod {
         )?))
     }
 
+    /// Compile TEAL with `sourcemap=true` and return the compiled bytes
+    /// plus the parsed [`SourceMap`].
+    pub async fn teal_compile_with_sourcemap(
+        &self,
+        source: &[u8],
+    ) -> Result<(CompiledTeal, algonaut_abi::sourcemap::SourceMap), Error> {
+        let api_compiled_teal =
+            algonaut_algod::apis::public_api::teal_compile(&self.configuration, source, Some(true))
+                .await
+                .map_err(Into::<AlgodError>::into)?;
+        let bytes = decode_base64(api_compiled_teal.result.as_bytes())?;
+        let raw = api_compiled_teal
+            .sourcemap
+            .ok_or_else(|| Error::Msg("algod did not return a sourcemap".to_string()))?;
+        let json = serde_json::to_string(&raw).map_err(|e| Error::Msg(e.to_string()))?;
+        let map = algonaut_abi::sourcemap::SourceMap::from_json(&json)
+            .map_err(|e| Error::Msg(e.to_string()))?;
+        Ok((CompiledTeal(bytes), map))
+    }
+
     /// Given the program bytes, return the TEAL source code in plain text. This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
     pub async fn teal_disassemble(
         &self,
