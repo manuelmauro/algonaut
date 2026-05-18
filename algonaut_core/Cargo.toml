@@ -9,16 +9,16 @@ repository = "https://github.com/manuelmauro/algonaut"
 version = "0.4.2"
 
 [dependencies]
-algonaut_crypto = {path = "../algonaut_crypto", version = "0.4.2"}
-algonaut_encoding = {path = "../algonaut_encoding", version = "0.4.2"}
-data-encoding = "2.11.0"
-derive_more = { version = "2.1.1", features = ["add", "display", "from"] }
-serde = {version = "1.0", features = ["derive"]}
-sha2 = "0.11.0"
-static_assertions = "1.1.0"
-rmp-serde = "1.3.1"
-thiserror = "2.0.18"
-ring = "0.17.14"
+algonaut_crypto = { workspace = true }
+algonaut_encoding = { workspace = true }
+data-encoding = { workspace = true }
+derive_more = { workspace = true, features = ["add", "display", "from"] }
+ring = { workspace = true }
+rmp-serde = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
+static_assertions = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
-rand = "0.8.5"
+rand = { workspace = true }

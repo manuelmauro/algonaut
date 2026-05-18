@@ -9,16 +9,16 @@ repository = "https://github.com/manuelmauro/algonaut"
 version = "0.4.2"
 
 [dependencies]
-algonaut_core = {path = "../algonaut_core", version = "0.4.2"}
-serde = {version = "1.0", features = ["derive"]}
-regex = "1.12.3"
-lazy_static = "1.5.0"
-sha2 = "0.11.0"
-derive_more = { version = "2.1.1", features = ["display", "from"] }
-thiserror = "2.0.18"
-num-bigint = "0.4.6"
+algonaut_core = { workspace = true }
+derive_more = { workspace = true, features = ["display", "from"] }
+lazy_static = { workspace = true }
+num-bigint = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
-serde_json = "1.0.149"
-rand = "0.8.5"
-num-bigint = { version = "0.4.6", features = ["rand"] }
+num-bigint = { workspace = true, features = ["rand"] }
+rand = { workspace = true }
+serde_json = { workspace = true }
