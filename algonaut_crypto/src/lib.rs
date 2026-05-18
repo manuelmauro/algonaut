@@ -1,7 +1,7 @@
 use algonaut_encoding::{SignatureVisitor, U8_32Visitor, deserialize_bytes32};
 use data_encoding::{BASE32_NOPAD, BASE64};
+use ed25519_dalek::{Verifier, VerifyingKey};
 use fmt::Debug;
-use ring::signature::UnparsedPublicKey;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
@@ -46,14 +46,12 @@ pub struct Ed25519PublicKey(pub [u8; 32]);
 
 impl Ed25519PublicKey {
     pub fn verify(&self, message: &[u8], signature: &Signature) -> bool {
-        let peer_public_key = UnparsedPublicKey::new(&ring::signature::ED25519, self.0);
-        match peer_public_key.verify(message, signature.0.as_ref()) {
-            Ok(()) => true,
-            Err(_e) => {
-                println!("Signature verification failed");
-                false
-            }
-        }
+        let Ok(verifying_key) = VerifyingKey::from_bytes(&self.0) else {
+            return false;
+        };
+        verifying_key
+            .verify(message, &ed25519_dalek::Signature::from_bytes(&signature.0))
+            .is_ok()
     }
 }
 

@@ -7,15 +7,15 @@ use algonaut_core::{
     Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
 };
 use algonaut_crypto::{Signature, mnemonic};
+use ed25519_dalek::{Signer, SigningKey};
 use rand::Rng;
 use rand::rngs::OsRng;
-use ring::signature::{Ed25519KeyPair, KeyPair};
 
 #[derive(Debug)]
 pub struct Account {
     seed: [u8; 32],
     address: Address,
-    key_pair: Ed25519KeyPair,
+    signing_key: SigningKey,
 }
 
 impl Clone for Account {
@@ -46,18 +46,12 @@ impl Account {
 
     /// Create account from 32-byte seed
     pub fn from_seed(seed: [u8; 32]) -> Account {
-        let key_pair = Ed25519KeyPair::from_seed_unchecked(&seed).unwrap();
-        let public_key = key_pair.public_key().as_ref();
-        let public_key_byte_array = key_pair
-            .public_key()
-            .as_ref()
-            .try_into()
-            .unwrap_or_else(|_| panic!("Invalid public key length: {}", public_key.len()));
-        let address = Address::new(public_key_byte_array);
+        let signing_key = SigningKey::from_bytes(&seed);
+        let address = Address::new(signing_key.verifying_key().to_bytes());
         Account {
             seed,
             address,
-            key_pair,
+            signing_key,
         }
     }
 
@@ -71,8 +65,8 @@ impl Account {
     }
 
     #[cfg(test)]
-    pub(crate) fn raw_public_key(&self) -> &[u8] {
-        self.key_pair.public_key().as_ref()
+    pub(crate) fn raw_public_key(&self) -> [u8; 32] {
+        self.signing_key.verifying_key().to_bytes()
     }
 
     /// Get the public key address of the account
@@ -92,13 +86,7 @@ impl Account {
 
     /// Sign the given bytes, and wrap in Signature.
     fn generate_raw_sig(&self, bytes: &[u8]) -> Signature {
-        let signature = self.key_pair.sign(bytes);
-        // ring returns a signature with padding at the end to make it 105 bytes, only 64 bytes are actually used
-        let stripped_signature: [u8; 64] = signature.as_ref()[..64]
-            .try_into()
-            // unwrap: we passed ..64, try_into() always succeeds
-            .unwrap();
-        Signature(stripped_signature)
+        Signature(self.signing_key.sign(bytes).to_bytes())
     }
 
     /// Sign the given bytes, and wrap in signature. The message is prepended with an identifier for domain separation.
@@ -278,18 +266,14 @@ mod tests {
             .unwrap();
 
         let account = Account::from_mnemonic(mnemonic).unwrap();
-        let public_key_slice = account.raw_public_key();
-        let public_key_bytes: [u8; 32] = public_key_slice.try_into().unwrap();
-        assert_eq!(Address(public_key_bytes), address);
+        assert_eq!(Address(account.raw_public_key()), address);
     }
 
     #[test]
     fn test_key_gen() {
         for _ in 0..100 {
             let account = Account::generate();
-            let public_key_slice = account.raw_public_key();
-            let public_key_bytes: [u8; 32] = public_key_slice.try_into().unwrap();
-            assert_eq!(Address(public_key_bytes), account.address());
+            assert_eq!(Address(account.raw_public_key()), account.address());
         }
     }
 
