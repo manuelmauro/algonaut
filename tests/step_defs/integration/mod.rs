@@ -4,6 +4,7 @@ pub mod applications;
 pub mod auction;
 pub mod compile;
 pub mod general;
+pub mod kmd;
 pub mod rekey;
 pub mod send;
 pub mod world;

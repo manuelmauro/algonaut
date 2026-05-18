@@ -88,7 +88,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/kmd.feature",
-        gate: Some("step-defs pending; SDK has the kmd v1 surface"),
+        gate: None,
         excluded_tags: &[],
     },
     Feature {
