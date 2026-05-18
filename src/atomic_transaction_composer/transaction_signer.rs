@@ -4,6 +4,7 @@ use algonaut_transaction::{
     error::TransactionError, transaction::TransactionSignature,
 };
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransactionSigner {
     BasicAccount(Account),

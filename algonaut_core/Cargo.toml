@@ -13,7 +13,6 @@ algonaut_crypto = { workspace = true }
 algonaut_encoding = { workspace = true }
 data-encoding = { workspace = true }
 derive_more = { workspace = true, features = ["add", "display", "from"] }
-ring = { workspace = true }
 rmp-serde = { workspace = true }
 serde = { workspace = true }
 sha2 = { workspace = true }
