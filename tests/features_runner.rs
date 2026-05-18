@@ -77,12 +77,12 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/dryrun.feature",
-        gate: Some("blocked on ADR dryrun-request-builder"),
+        gate: None,
         excluded_tags: &[],
     },
     Feature {
         path: "tests/features/integration/dryrun_testing.feature",
-        gate: Some("blocked on ADR dryrun-request-builder"),
+        gate: None,
         excluded_tags: &[],
     },
     Feature {

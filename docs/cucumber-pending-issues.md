@@ -93,30 +93,13 @@ live; the unit `sourcemap.feature` scenarios remain gated on
 
 ---
 
-## 4. Add a `DryrunRequestBuilder`
+## ~~4. Add a `DryrunRequestBuilder`~~
 
-**Labels:** `area/transaction`, `kind/feature`, `cucumber-blocker`
-**ADR:** [`dryrun-request-builder`](dryrun-request-builder.md)
-
-```markdown
-Constructing a `DryrunRequest` today is manual and noisy — callers
-have to assemble accounts, apps, assets, sources, and txns by hand.
-Reference SDKs provide a builder that turns a (signed-txn-group,
-source-list) pair into a self-contained `DryrunRequest`.
-
-Three features need it:
-
-- `tests/features/integration/dryrun.feature`
-- `tests/features/integration/dryrun_testing.feature`
-- `tests/features/unit/dryrun_trace.feature`
-
-### Acceptance
-- [ ] Module `algonaut_transaction::dryrun` with
-      `DryrunRequestBuilder`, `from_signed_txns`, `from_sources`.
-- [ ] Helpers on the response side (`DryrunResponse::txn`,
-      `DryrunTxnResult::approve_messages`, `::cost`, etc.).
-- [ ] At least one example exercises the new builder.
-```
+Landed — see ADR
+[`dryrun-request-builder`](adr/dryrun-request-builder.md)
+(status: accepted). The integration scenarios in `dryrun.feature` and
+`dryrun_testing.feature` are now live; the unit
+`dryrun_trace.feature` still waits on `cucumber-unit-test-scaffolding`.
 
 ---
 

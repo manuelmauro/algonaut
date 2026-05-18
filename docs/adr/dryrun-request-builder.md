@@ -2,7 +2,7 @@
 id: dryrun-request-builder
 title: Dryrun request builder
 abstract: Add a high-level DryrunRequest builder that wires programs, ledger context, and transactions for the dryrun and dryrun_testing features.
-status: proposed
+status: accepted
 date: 2026-05-18
 deciders: []
 tags: []
@@ -12,7 +12,7 @@ tags: []
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
