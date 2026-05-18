@@ -7,7 +7,7 @@
 [![Crate](https://img.shields.io/crates/v/algonaut.svg)](https://crates.io/crates/algonaut)
 [![Docs](https://docs.rs/algonaut/badge.svg)](https://docs.rs/algonaut)
 [![CI](https://github.com/manuelmauro/algonaut/actions/workflows/general.yml/badge.svg?branch=main)](https://github.com/manuelmauro/algonaut/actions/workflows/general.yml)
-[![License](https://img.shields.io/crates/l/algonaut.svg)](https://github.com/manuelmauro/algonaut/blob/main/LICENSE)
+[![License: MIT OR Apache-2.0](https://img.shields.io/crates/l/algonaut.svg)](#license)
 
 A Rust SDK for the [Algorand](https://www.algorand.com/) blockchain. Pre-1.0 — the API is stabilising but still moves between minor versions.
 
@@ -108,7 +108,18 @@ This crate is based on the work of [@mraof](https://github.com/mraof/rust-algora
 
 [![Ferris Algonaut](assets/ferris-algonaut.svg)](https://crates.io/crates/algonaut)
 
-Licensed under the [MIT License](./LICENSE). Unless explicitly stated otherwise, any contribution intentionally submitted for inclusion in this crate shall be licensed as above, without any additional terms or conditions.
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](./LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](./LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+
+### Asset attribution
 
 [Ferris Algonaut](assets/ferris-algonaut.svg) is licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
 [Rust `algonaut`'s logo](assets/rocket-solid.svg) is based on [Font Awesome](https://fontawesome.com/v5.15/icons/rocket)'s icon and licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).

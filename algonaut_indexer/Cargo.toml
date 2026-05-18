@@ -4,7 +4,7 @@ version = "0.6.0"
 authors = ["OpenAPI Generator team and contributors"]
 description = "Algorand ledger analytics API."
 # Override this license by providing a License Object in the OpenAPI.
-license = "MIT"
+license = "MIT OR Apache-2.0"
 edition = "2024"
 
 [dependencies]
