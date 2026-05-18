@@ -53,6 +53,12 @@ test-release:
 integration:
 	cargo test --test features_runner --
 
+# Compile-check the cucumber runner without invoking it (it would need
+# a live harness). Catches type errors that `cargo check` skips because
+# `[[test]] test = false` for features_runner.
+check-integration:
+	cargo test --test features_runner --no-run
+
 # Bring the integration test harness up
 harness:
 	./test-harness.sh up
@@ -70,8 +76,8 @@ docker-rustsdk-run:
 # Run the full docker test (harness + build + run)
 docker-test: harness docker-rustsdk-build docker-rustsdk-run
 
-# Run all CI checks (fmt-check, clippy, test, build)
-ci: fmt-check clippy test build
+# Run all CI checks (fmt-check, clippy, test, check-integration, build)
+ci: fmt-check clippy test check-integration build
 
 # Generate documentation
 doc:
