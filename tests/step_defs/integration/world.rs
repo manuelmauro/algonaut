@@ -8,7 +8,7 @@ use algonaut::{
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType};
 use algonaut_algod::models::TransactionParams200Response;
-use algonaut_core::Address;
+use algonaut_core::{Address, MultisigAddress};
 use algonaut_transaction::{SignedTransaction, Transaction, account::Account};
 use cucumber;
 
@@ -49,4 +49,9 @@ pub struct World {
     pub compile_result: Option<String>,
     pub compile_hash: Option<String>,
     pub compiled_program: Option<Vec<u8>>,
+
+    pub sender_account: Option<Account>,
+    pub signed_tx: Option<SignedTransaction>,
+    pub multisig: Option<MultisigAddress>,
+    pub last_send_succeeded: Option<bool>,
 }
