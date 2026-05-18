@@ -111,7 +111,13 @@ impl Serialize for VotePk {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        // JSON: base64; msgpack: raw bytes. See ADR
+        // domain-types-serialize-for-both-json-and-msgpack.
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&BASE64.encode(&self.0))
+        } else {
+            serializer.serialize_bytes(&self.0[..])
+        }
     }
 }
 
@@ -120,7 +126,12 @@ impl<'de> Deserialize<'de> for VotePk {
     where
         D: Deserializer<'de>,
     {
-        Ok(VotePk(deserializer.deserialize_bytes(U8_32Visitor)?))
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            VotePk::from_base64_str(&s).map_err(serde::de::Error::custom)
+        } else {
+            Ok(VotePk(deserializer.deserialize_bytes(U8_32Visitor)?))
+        }
     }
 }
 
@@ -149,7 +160,11 @@ impl Serialize for VrfPk {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&BASE64.encode(&self.0))
+        } else {
+            serializer.serialize_bytes(&self.0[..])
+        }
     }
 }
 
@@ -158,7 +173,12 @@ impl<'de> Deserialize<'de> for VrfPk {
     where
         D: Deserializer<'de>,
     {
-        Ok(VrfPk(deserializer.deserialize_bytes(U8_32Visitor)?))
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            VrfPk::from_base64_str(&s).map_err(serde::de::Error::custom)
+        } else {
+            Ok(VrfPk(deserializer.deserialize_bytes(U8_32Visitor)?))
+        }
     }
 }
 
@@ -189,7 +209,11 @@ impl Serialize for StateProofPk {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&BASE64.encode(&self.0))
+        } else {
+            serializer.serialize_bytes(&self.0[..])
+        }
     }
 }
 
@@ -198,7 +222,12 @@ impl<'de> Deserialize<'de> for StateProofPk {
     where
         D: Deserializer<'de>,
     {
-        Ok(StateProofPk(deserializer.deserialize_bytes(U8_64Visitor)?))
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            StateProofPk::from_base64_str(&s).map_err(serde::de::Error::custom)
+        } else {
+            Ok(StateProofPk(deserializer.deserialize_bytes(U8_64Visitor)?))
+        }
     }
 }
 
@@ -352,5 +381,46 @@ mod tests {
             "FV226NYVC44W5HUPHTPOVD5IIVF67A3QMBEU7LTY6W2SR3E65HVOQ7JV44",
             Address::new(digest.0).to_string()
         );
+    }
+
+    #[test]
+    fn votepk_json_round_trip_is_base64() {
+        let pk = VotePk([5; 32]);
+        let json = serde_json::to_string(&pk).unwrap();
+        assert_eq!(json, format!("\"{}\"", pk.to_base64_str()));
+        let parsed: VotePk = serde_json::from_str(&json).unwrap();
+        assert_eq!(pk, parsed);
+    }
+
+    #[test]
+    fn votepk_msgpack_is_raw_bytes() {
+        let pk = VotePk([5; 32]);
+        let bytes = rmp_serde::to_vec(&pk).unwrap();
+        // 0xc4 = bin8 header, 0x20 = 32 bytes
+        assert_eq!(bytes[0], 0xc4);
+        assert_eq!(bytes[1], 0x20);
+        assert_eq!(&bytes[2..], &[5u8; 32]);
+        let parsed: VotePk = rmp_serde::from_slice(&bytes).unwrap();
+        assert_eq!(pk, parsed);
+    }
+
+    #[test]
+    fn state_proof_pk_json_round_trip_is_base64() {
+        let pk = StateProofPk([9; 64]);
+        let json = serde_json::to_string(&pk).unwrap();
+        assert_eq!(json, format!("\"{}\"", pk.to_base64_str()));
+        let parsed: StateProofPk = serde_json::from_str(&json).unwrap();
+        assert_eq!(pk, parsed);
+    }
+
+    #[test]
+    fn state_proof_pk_msgpack_is_raw_bytes() {
+        let pk = StateProofPk([9; 64]);
+        let bytes = rmp_serde::to_vec(&pk).unwrap();
+        assert_eq!(bytes[0], 0xc4); // bin8
+        assert_eq!(bytes[1], 0x40); // 64 bytes
+        assert_eq!(&bytes[2..], &[9u8; 64]);
+        let parsed: StateProofPk = rmp_serde::from_slice(&bytes).unwrap();
+        assert_eq!(pk, parsed);
     }
 }

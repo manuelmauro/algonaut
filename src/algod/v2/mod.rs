@@ -434,48 +434,15 @@ impl Algod {
     }
 
     /// Executes TEAL program(s) in context and returns debugging information about the execution. This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
-    ///
-    /// The request is serialised as msgpack (`application/x-binary`)
-    /// rather than JSON. Our domain types (`Address`, `VotePk`, etc.)
-    /// implement `Serialize` as raw byte arrays for msgpack
-    /// compatibility — when sent via JSON they would render as JSON
-    /// integer arrays, which algod's JSON decoder rejects as "bad
-    /// addr". Msgpack avoids the mismatch entirely.
     pub async fn teal_dryrun(
         &self,
         request: Option<DryrunRequest>,
     ) -> Result<TealDryrun200Response, Error> {
-        let request = match request {
-            Some(r) => r,
-            None => DryrunRequest::new(
-                Vec::new(),
-                Vec::new(),
-                0,
-                String::new(),
-                0,
-                Vec::new(),
-                Vec::new(),
-            ),
-        };
-        let body = rmp_serde::to_vec_named(&request)
-            .map_err(|e| Error::Internal(format!("dryrun msgpack: {e}")))?;
-        let url = format!("{}/v2/teal/dryrun", self.configuration.base_path);
-        let mut req = self
-            .configuration
-            .client
-            .post(&url)
-            .header("Content-Type", "application/x-binary")
-            .body(body);
-        if let Some(ref api_key) = self.configuration.api_key {
-            req = req.header("X-Algo-API-Token", &api_key.key);
-        }
-        let resp = req.send().await.map_err(|e| Error::Msg(e.to_string()))?;
-        let status = resp.status();
-        let body = resp.text().await.map_err(|e| Error::Msg(e.to_string()))?;
-        if !status.is_success() {
-            return Err(Error::Msg(format!("dryrun status {status}: {body}")));
-        }
-        serde_json::from_str(&body).map_err(|e| Error::Msg(format!("dryrun decode: {e}")))
+        Ok(
+            algonaut_algod::apis::public_api::teal_dryrun(&self.configuration, request)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
     }
 
     /// Get parameters for constructing a new transaction.
