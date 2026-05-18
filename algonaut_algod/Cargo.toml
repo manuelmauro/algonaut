@@ -5,7 +5,7 @@ authors = ["contact@algorand.com"]
 description = "API endpoint for algod operations."
 # Override this license by providing a License Object in the OpenAPI.
 license = "MIT"
-edition = "2018"
+edition = "2024"
 
 [dependencies]
 algonaut_crypto = { path = "../algonaut_crypto", version = "0.4.2" }

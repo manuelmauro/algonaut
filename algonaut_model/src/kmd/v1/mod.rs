@@ -1,6 +1,6 @@
 use algonaut_core::MultisigSignature;
 use algonaut_crypto::{
-    deserialize_mdk, deserialize_public_keys, Ed25519PublicKey, MasterDerivationKey,
+    Ed25519PublicKey, MasterDerivationKey, deserialize_mdk, deserialize_public_keys,
 };
 use algonaut_encoding::{deserialize_bytes, deserialize_bytes64, serialize_bytes};
 use serde::{Deserialize, Serialize};

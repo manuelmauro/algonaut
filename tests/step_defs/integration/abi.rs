@@ -3,19 +3,19 @@ use crate::step_defs::{
     util::{read_teal, wait_for_pending_transaction},
 };
 use algonaut::atomic_transaction_composer::{
-    transaction_signer::TransactionSigner, AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError,
-    AddMethodCallParams, AtomicTransactionComposer, AtomicTransactionComposerStatus,
-    TransactionWithSigner,
+    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AddMethodCallParams,
+    AtomicTransactionComposer, AtomicTransactionComposerStatus, TransactionWithSigner,
+    transaction_signer::TransactionSigner,
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
     abi_type::{AbiType, AbiValue},
 };
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::{to_app_address, Address, MicroAlgos};
+use algonaut_core::{Address, MicroAlgos, to_app_address};
 use algonaut_transaction::{
-    transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
     Pay, TxnBuilder,
+    transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
 };
 use cucumber::{codegen::Regex, given, then, when};
 use data_encoding::BASE64;

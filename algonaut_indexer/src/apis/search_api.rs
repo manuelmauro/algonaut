@@ -10,7 +10,7 @@
 
 use reqwest;
 
-use super::{configuration, Error};
+use super::{Error, configuration};
 use crate::apis::ResponseContent;
 
 /// struct for typed errors of method [`search_for_accounts`]

@@ -1,7 +1,7 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
 description = "Application Binary Interface (ABI) to invoke smart contract methods with a standarized interface."
-edition = "2018"
+edition = "2024"
 keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut_abi"

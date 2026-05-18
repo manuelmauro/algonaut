@@ -4,7 +4,7 @@ authors = [
     "Ivan Schuetz <ivanhp978@gmail.com>",
 ]
 description = "API clients for the Algorand blockchain."
-edition = "2018"
+edition = "2024"
 keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut_kmd"

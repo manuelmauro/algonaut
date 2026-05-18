@@ -1,5 +1,5 @@
 use super::sleep;
-use crate::{algod::v2::Algod, Error};
+use crate::{Error, algod::v2::Algod};
 use algonaut_algod::models::PendingTransactionResponse;
 use instant::Instant;
 use std::time::Duration;

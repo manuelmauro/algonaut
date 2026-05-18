@@ -508,7 +508,7 @@ impl TryFrom<ApiSignedLogic> for SignedLogic {
             _ => {
                 return Err(TransactionError::Deserialization(
                     "Invalid sig/msig combination".to_owned(),
-                ))
+                ));
             }
         };
         Ok(SignedLogic {

@@ -3,7 +3,7 @@ use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize, Serializer};
 use sha2::Digest;
 
-use crate::{error::TransactionError, Transaction};
+use crate::{Transaction, error::TransactionError};
 
 #[derive(Debug, Clone, Eq, PartialEq, Deserialize)]
 pub struct TxGroup {

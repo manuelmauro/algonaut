@@ -1,5 +1,5 @@
-use crate::extensions::reqwest::ResponseExt;
 use crate::Headers;
+use crate::extensions::reqwest::ResponseExt;
 use crate::{error::ClientError, extensions::reqwest::to_header_map};
 use algonaut_core::{Address, MultisigSignature};
 use algonaut_crypto::{Ed25519PublicKey, MasterDerivationKey};
@@ -16,8 +16,8 @@ use algonaut_model::kmd::v1::{
     SignMultisigTransactionRequest, SignMultisigTransactionResponse, SignTransactionRequest,
     SignTransactionResponse, VersionsResponse,
 };
-use reqwest::header::HeaderMap;
 use reqwest::Url;
+use reqwest::header::HeaderMap;
 
 #[derive(Debug, Clone)]
 /// Client for interacting with the key management daemon
