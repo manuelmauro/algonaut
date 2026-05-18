@@ -1,5 +1,5 @@
 use algonaut::algod::v2::Algod;
-use algonaut::transaction::{account::Account, TxnBuilder};
+use algonaut::transaction::{TxnBuilder, account::Account};
 use algonaut::util::wait_for_pending_tx::wait_for_pending_transaction;
 use algonaut_core::MicroAlgos;
 use algonaut_transaction::Pay;
@@ -18,11 +18,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     info!("creating rekey-ed account");
-    let rekeyed_acc = Account::from_mnemonic("fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero")?;
+    let rekeyed_acc = Account::from_mnemonic(
+        "fire enlist diesel stamp nuclear chunk student stumble call snow flock brush example slab guide choice option recall south kangaroo hundred matrix school above zero",
+    )?;
     let rekeyed_acc_address = rekeyed_acc.address();
 
     info!("creating rekey-to account");
-    let rekey_to_acc = Account::from_mnemonic("auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch")?;
+    let rekey_to_acc = Account::from_mnemonic(
+        "auction inquiry lava second expand liberty glass involve ginger illness length room item discover ahead table doctor term tackle cement bonus profit right above catch",
+    )?;
     let rekey_to_acc_address = rekey_to_acc.address();
 
     info!("checking auth address");

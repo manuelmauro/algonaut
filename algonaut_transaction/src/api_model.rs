@@ -1,16 +1,15 @@
 use std::convert::{TryFrom, TryInto};
 
 use crate::{
+    SignedTransaction, Transaction, TransactionType,
     error::TransactionError,
     transaction::{
-        to_tx_type_enum, ApplicationCallOnComplete, ApplicationCallTransaction,
-        AssetAcceptTransaction, AssetClawbackTransaction, AssetConfigurationTransaction,
-        AssetFreezeTransaction, AssetParams, AssetTransferTransaction, BoxReference,
-        KeyRegistration, Payment, SignedLogic, StateProofTransaction, StateSchema,
-        TransactionSignature,
+        ApplicationCallOnComplete, ApplicationCallTransaction, AssetAcceptTransaction,
+        AssetClawbackTransaction, AssetConfigurationTransaction, AssetFreezeTransaction,
+        AssetParams, AssetTransferTransaction, BoxReference, KeyRegistration, Payment, SignedLogic,
+        StateProofTransaction, StateSchema, TransactionSignature, to_tx_type_enum,
     },
     tx_group::TxGroup,
-    SignedTransaction, Transaction, TransactionType,
 };
 use algonaut_core::{CompiledTeal, LogicSignature, MicroAlgos, Round, ToMsgPack};
 use algonaut_model::transaction::{
@@ -232,7 +231,7 @@ impl TryFrom<ApiTransaction> for Transaction {
                 return Err(TransactionError::Deserialization(format!(
                     "Not supported transaction type: {}",
                     unsupported_type
-                )))
+                )));
             }
         };
         Ok(Transaction {
@@ -515,38 +514,22 @@ impl From<SignedLogic> for ApiSignedLogic {
 
 /// See [ApiTransaction] doc
 fn num_as_api_option<T: Num>(n: T) -> Option<T> {
-    if n.is_zero() {
-        None
-    } else {
-        Some(n)
-    }
+    if n.is_zero() { None } else { Some(n) }
 }
 
 /// See [ApiTransaction] doc
 fn bool_as_api_option(b: bool) -> Option<bool> {
-    if b {
-        Some(b)
-    } else {
-        None
-    }
+    if b { Some(b) } else { None }
 }
 
 /// See [ApiTransaction] doc
 fn vec_as_api_option<T>(v: Vec<T>) -> Option<Vec<T>> {
-    if v.is_empty() {
-        None
-    } else {
-        Some(v)
-    }
+    if v.is_empty() { None } else { Some(v) }
 }
 
 /// See [ApiTransaction] doc
 fn str_as_api_option(s: String) -> Option<String> {
-    if s.is_empty() {
-        None
-    } else {
-        Some(s)
-    }
+    if s.is_empty() { None } else { Some(s) }
 }
 
 /// See [ApiTransaction] doc

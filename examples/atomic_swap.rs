@@ -1,9 +1,9 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::MicroAlgos;
-use algonaut::transaction::account::Account;
-use algonaut::transaction::tx_group::TxGroup;
 use algonaut::transaction::Pay;
 use algonaut::transaction::TxnBuilder;
+use algonaut::transaction::account::Account;
+use algonaut::transaction::tx_group::TxGroup;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

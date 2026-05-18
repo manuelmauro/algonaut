@@ -1,7 +1,7 @@
 use algonaut_core::MultisigAddress;
 use algonaut_transaction::{
-    account::Account, contract_account::ContractAccount, error::TransactionError,
-    transaction::TransactionSignature, SignedTransaction, Transaction,
+    SignedTransaction, Transaction, account::Account, contract_account::ContractAccount,
+    error::TransactionError, transaction::TransactionSignature,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]

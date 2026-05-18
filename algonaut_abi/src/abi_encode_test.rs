@@ -614,7 +614,9 @@ mod test_decode {
 
         assert_eq!(
             type_
-                .decode(&[0x00, 0x04, 0x00, 0x07, 0x00, 0x02, 0b11000000, 0x00, 0x02, 0b11000000,])
+                .decode(&[
+                    0x00, 0x04, 0x00, 0x07, 0x00, 0x02, 0b11000000, 0x00, 0x02, 0b11000000,
+                ])
                 .unwrap(),
             AbiValue::Array(elements)
         );
