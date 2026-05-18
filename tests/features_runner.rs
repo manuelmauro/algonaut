@@ -50,7 +50,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/algod.feature",
-        gate: Some("step-defs pending; SDK supports get_supply/version"),
+        gate: None,
     },
     Feature {
         path: "tests/features/integration/assets.feature",
