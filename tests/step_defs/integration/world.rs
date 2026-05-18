@@ -42,4 +42,6 @@ pub struct World {
     pub abi_method_arg_types: Option<Vec<AbiType>>,
     pub abi_method_arg_values: Option<Vec<AbiArgValue>>,
     pub tx_composer_res: Option<ExecuteResult>,
+
+    pub versions: Option<Vec<String>>,
 }
