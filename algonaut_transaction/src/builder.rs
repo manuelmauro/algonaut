@@ -7,7 +7,7 @@ use crate::{
         Transaction, TransactionType,
     },
 };
-use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round, VotePk, VrfPk};
+use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round, StateProofPk, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 
 pub trait TransactionParams {
@@ -164,14 +164,20 @@ pub struct RegisterKey {
     vote_first: Option<Round>,
     vote_last: Option<Round>,
     vote_key_dilution: Option<u64>,
+    state_proof_key: Option<StateProofPk>,
     nonparticipating: Option<bool>,
 }
 
 impl RegisterKey {
+    /// Build an **online** v2 key-registration transaction.
+    ///
+    /// Since the v34 consensus upgrade an online registration must carry
+    /// a state-proof (BLS) public key; pass it as `state_proof_key`.
     pub fn online(
         sender: Address,
         vote_pk: VotePk,
         selection_pk: VrfPk,
+        state_proof_key: StateProofPk,
         vote_first: Round,
         vote_last: Round,
         vote_key_dilution: u64,
@@ -183,6 +189,7 @@ impl RegisterKey {
             vote_first: Some(vote_first),
             vote_last: Some(vote_last),
             vote_key_dilution: Some(vote_key_dilution),
+            state_proof_key: Some(state_proof_key),
             nonparticipating: None,
         }
     }
@@ -195,6 +202,7 @@ impl RegisterKey {
             vote_first: None,
             vote_last: None,
             vote_key_dilution: None,
+            state_proof_key: None,
             nonparticipating: None,
         }
     }
@@ -207,6 +215,7 @@ impl RegisterKey {
             vote_first: None,
             vote_last: None,
             vote_key_dilution: None,
+            state_proof_key: None,
             nonparticipating: Some(nonparticipating),
         }
     }
@@ -219,6 +228,7 @@ impl RegisterKey {
             vote_first: self.vote_first,
             vote_last: self.vote_last,
             vote_key_dilution: self.vote_key_dilution,
+            state_proof_key: self.state_proof_key,
             nonparticipating: self.nonparticipating,
         })
     }

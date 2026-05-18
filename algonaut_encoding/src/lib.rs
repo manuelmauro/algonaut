@@ -60,6 +60,29 @@ impl<'de> Visitor<'de> for U8_32Visitor {
     }
 }
 
+pub struct U8_64Visitor;
+
+impl<'de> Visitor<'de> for U8_64Visitor {
+    type Value = [u8; 64];
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("a 64 byte array")
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        if v.len() == 64 {
+            let mut bytes = [0; 64];
+            bytes.copy_from_slice(v);
+            Ok(bytes)
+        } else {
+            Err(E::custom(format!("Invalid byte array length: {}", v.len())))
+        }
+    }
+}
+
 pub fn deserialize_bytes32<'de, D>(deserializer: D) -> Result<[u8; 32], D::Error>
 where
     D: Deserializer<'de>,

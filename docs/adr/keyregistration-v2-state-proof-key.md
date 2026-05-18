@@ -2,7 +2,7 @@
 id: keyregistration-v2-state-proof-key
 title: KeyRegistration v2 state-proof key
 abstract: Add state_proof_key to KeyRegistration so online key-registration transactions match the v2 consensus surface used by send.feature.
-status: proposed
+status: accepted
 date: 2026-05-18
 deciders: []
 tags: []
@@ -12,7 +12,7 @@ tags: []
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 

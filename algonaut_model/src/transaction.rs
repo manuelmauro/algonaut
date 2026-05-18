@@ -1,4 +1,6 @@
-use algonaut_core::{Address, MicroAlgos, MultisigSignature, Round, ToMsgPack, VotePk, VrfPk};
+use algonaut_core::{
+    Address, MicroAlgos, MultisigSignature, Round, StateProofPk, ToMsgPack, VotePk, VrfPk,
+};
 use algonaut_crypto::{HashDigest, HashType, Signature};
 use algonaut_encoding::{deserialize_bytes64, serialize_bytes};
 use serde::{Deserialize, Serialize};
@@ -141,6 +143,9 @@ pub struct ApiTransaction {
 
     #[serde(rename = "snd")]
     pub sender: Address,
+
+    #[serde(rename = "sprfkey", skip_serializing_if = "Option::is_none")]
+    pub state_proof_key: Option<StateProofPk>,
 
     #[serde(rename = "sp", skip_serializing_if = "Option::is_none")]
     pub state_proof: Option<StateProof>,

@@ -1,6 +1,6 @@
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
-use algonaut_encoding::U8_32Visitor;
+use algonaut_encoding::{U8_32Visitor, U8_64Visitor};
 use data_encoding::BASE64;
 use derive_more::{Add, Display, Sub};
 use error::CoreError;
@@ -171,6 +171,52 @@ impl Debug for VrfPk {
 impl VrfPk {
     pub fn from_base64_str(base64_str: &str) -> Result<VrfPk, CoreError> {
         Ok(VrfPk(base64_str_to_u8_array(base64_str)?))
+    }
+
+    pub fn to_base64_str(self) -> String {
+        BASE64.encode(&self.0)
+    }
+}
+
+/// State-proof (BLS) public key used in v2 online key registration
+/// transactions. Serialized as the 64-byte `sprfkey` field in msgpack
+/// and as base64 in JSON.
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct StateProofPk(pub [u8; 64]);
+
+impl Serialize for StateProofPk {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bytes(&self.0[..])
+    }
+}
+
+impl<'de> Deserialize<'de> for StateProofPk {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(StateProofPk(deserializer.deserialize_bytes(U8_64Visitor)?))
+    }
+}
+
+impl Debug for StateProofPk {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_base64_str())
+    }
+}
+
+impl StateProofPk {
+    pub fn from_base64_str(base64_str: &str) -> Result<StateProofPk, CoreError> {
+        let bytes = BASE64
+            .decode(base64_str.as_bytes())
+            .map_err(|e| CoreError::General(e.to_string()))?;
+        let arr: [u8; 64] = bytes.try_into().map_err(|v: Vec<u8>| {
+            CoreError::General(format!("expected 64 bytes, got {}", v.len()))
+        })?;
+        Ok(StateProofPk(arr))
     }
 
     pub fn to_base64_str(self) -> String {

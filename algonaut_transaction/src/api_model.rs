@@ -60,6 +60,7 @@ impl TryFrom<Transaction> for ApiTransaction {
             asset_id: None,
             receiver: None,
             selection_pk: None,
+            state_proof_key: None,
             vote_first: None,
             vote_key_dilution: None,
             vote_pk: None,
@@ -82,6 +83,7 @@ impl TryFrom<Transaction> for ApiTransaction {
             TransactionType::KeyRegistration(reg) => {
                 api_t.vote_pk = reg.vote_pk;
                 api_t.selection_pk = reg.selection_pk;
+                api_t.state_proof_key = reg.state_proof_key;
                 api_t.vote_first = reg.vote_first;
                 api_t.vote_last = reg.vote_last;
                 api_t.vote_key_dilution = reg.vote_key_dilution.and_then(num_as_api_option);
@@ -169,6 +171,7 @@ impl TryFrom<ApiTransaction> for Transaction {
                 sender: api_t.sender,
                 vote_pk: api_t.vote_pk,
                 selection_pk: api_t.selection_pk,
+                state_proof_key: api_t.state_proof_key,
                 vote_first: api_t.vote_first,
                 vote_last: api_t.vote_last,
                 vote_key_dilution: Some(num_from_api_option(api_t.vote_key_dilution)),
