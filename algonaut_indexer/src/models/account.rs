@@ -143,18 +143,15 @@ impl Account {
 }
 
 /// Indicates what type of signature is used by this account, must be one of: * sig * msig * lsig * or null if unknown
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, Default,
+)]
 pub enum SigType {
     #[serde(rename = "sig")]
+    #[default]
     Sig,
     #[serde(rename = "msig")]
     Msig,
     #[serde(rename = "lsig")]
     Lsig,
-}
-
-impl Default for SigType {
-    fn default() -> SigType {
-        Self::Sig
-    }
 }

@@ -255,7 +255,7 @@ pub struct AssetParams {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct BoxReference {
     #[serde(rename = "n")]
-    name: String
+    name: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
@@ -304,5 +304,5 @@ pub struct ApplyData {
     #[serde(rename = "ca")]
     pub closing_amount: Option<u64>,
     #[serde(rename = "aca")]
-    pub asset_closing_amount: Option<u64>
+    pub asset_closing_amount: Option<u64>,
 }

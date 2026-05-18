@@ -48,16 +48,13 @@ impl GetTransactionProof200Response {
 }
 
 /// The type of hash function used to create the proof, must be one of:  * sha512_256  * sha256
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, Default,
+)]
 pub enum Hashtype {
     #[serde(rename = "sha512_256")]
+    #[default]
     Sha512256,
     #[serde(rename = "sha256")]
     Sha256,
-}
-
-impl Default for Hashtype {
-    fn default() -> Hashtype {
-        Self::Sha512256
-    }
 }

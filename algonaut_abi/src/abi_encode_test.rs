@@ -18,11 +18,9 @@ mod test_encode {
             let uint_type = AbiType::uint(size).unwrap();
 
             for _ in 0..1000 {
-                let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
+                let random_int: BigUint = rng.gen_biguint(size.try_into().unwrap());
 
-                let expected = BigUint::from(random_int.clone())
-                    .to_bytes_be_padded(size / 8)
-                    .unwrap();
+                let expected = random_int.clone().to_bytes_be_padded(size / 8).unwrap();
 
                 let encoded_res = uint_type.encode(AbiValue::Int(random_int));
                 assert!(encoded_res.is_ok(), "encoding from uint type fail");
@@ -58,11 +56,9 @@ mod test_encode {
                 let ufixed_type = ufixed_type_res.unwrap();
 
                 for _ in 0..20 {
-                    let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
+                    let random_int: BigUint = rng.gen_biguint(size.try_into().unwrap());
 
-                    let expected = BigUint::from(random_int.clone())
-                        .to_bytes_be_padded(size / 8)
-                        .unwrap();
+                    let expected = random_int.clone().to_bytes_be_padded(size / 8).unwrap();
 
                     let encoded_res = ufixed_type.encode(AbiValue::Int(random_int));
                     assert!(encoded_res.is_ok(), "encoding from ufixed type fail");
@@ -92,7 +88,7 @@ mod test_encode {
         let mut rng = rand::thread_rng();
 
         let upper_limit: BigUint = BigUint::from(1u8).shl(256u16) - BigUint::from(1u8);
-        let upper_encoded = BigUint::from(upper_limit).to_bytes_be_padded(32).unwrap();
+        let upper_encoded = upper_limit.to_bytes_be_padded(32).unwrap();
 
         for _ in 0..1000 {
             let mut rand: BigUint = rng.gen_biguint(256);
@@ -171,7 +167,7 @@ mod test_encode {
     #[test]
     fn test_encode_bool_array0() {
         let inputs = &[true, false, false, true, true];
-        let input_values: Vec<AbiValue> = inputs.into_iter().map(|b| AbiValue::Bool(*b)).collect();
+        let input_values: Vec<AbiValue> = inputs.iter().map(|b| AbiValue::Bool(*b)).collect();
 
         let expected: &[u8] = &[0b10011000];
 
@@ -188,7 +184,7 @@ mod test_encode {
         let inputs = &[
             false, false, false, true, true, false, true, false, true, false, true,
         ];
-        let input_values: Vec<AbiValue> = inputs.into_iter().map(|b| AbiValue::Bool(*b)).collect();
+        let input_values: Vec<AbiValue> = inputs.iter().map(|b| AbiValue::Bool(*b)).collect();
 
         let expected: &[u8] = &[0b00011010, 0b10100000];
 
@@ -205,7 +201,7 @@ mod test_encode {
         let inputs = &[
             false, false, false, true, true, false, true, false, true, false, true,
         ];
-        let input_values: Vec<AbiValue> = inputs.into_iter().map(|b| AbiValue::Bool(*b)).collect();
+        let input_values: Vec<AbiValue> = inputs.iter().map(|b| AbiValue::Bool(*b)).collect();
 
         let expected: &[u8] = &[0x00, 0x0B, 0b00011010, 0b10100000];
 
@@ -221,7 +217,7 @@ mod test_encode {
     fn test_uint_array() {
         let inputs: &[u32] = &[1, 2, 3, 4, 5, 6, 7, 8];
         let input_values: Vec<AbiValue> = inputs
-            .into_iter()
+            .iter()
             .map(|i| AbiValue::Int(BigUint::from(*i)))
             .collect();
 
@@ -349,7 +345,7 @@ mod test_decode {
 
         for size in (8..512).step_by(8) {
             for _ in 0..1000 {
-                let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
+                let random_int: BigUint = rng.gen_biguint(size.try_into().unwrap());
                 let encoded_int = AbiType::uint(size)
                     .unwrap()
                     .encode(AbiValue::Int(random_int.clone()))
@@ -364,10 +360,7 @@ mod test_decode {
             // 2^[bitSize] - 1
             let largest: BigUint = BigUint::from(1u8).shl(size) - BigUint::from(1u8);
 
-            let mut expected = vec![];
-            for _ in 0..(size / 8) {
-                expected.push(0xff);
-            }
+            let expected = vec![0xff; size / 8];
 
             assert_eq!(
                 AbiValue::Int(largest),
@@ -383,7 +376,7 @@ mod test_decode {
         for size in (8..512).step_by(8) {
             for precision in 1..160 {
                 for _ in 0..20 {
-                    let random_int: BigUint = rng.gen_biguint(size.clone().try_into().unwrap());
+                    let random_int: BigUint = rng.gen_biguint(size.try_into().unwrap());
                     let encoded_int = AbiType::ufixed(size, precision)
                         .unwrap()
                         .encode(AbiValue::Int(random_int.clone()))
@@ -398,10 +391,7 @@ mod test_decode {
                 }
 
                 let largest: BigUint = BigUint::from(1u8).shl(size) - BigUint::from(1u8);
-                let mut expected = vec![];
-                for _ in 0..(size / 8) {
-                    expected.push(0xff);
-                }
+                let expected = vec![0xff; size / 8];
 
                 assert_eq!(
                     AbiValue::Int(largest),
@@ -419,7 +409,7 @@ mod test_decode {
         let mut rng = rand::thread_rng();
 
         let upper_limit: BigUint = BigUint::from(1u8).shl(256u16) - BigUint::from(1u8);
-        let upper_encoded = BigUint::from(upper_limit).to_bytes_be_padded(32).unwrap();
+        let upper_encoded = upper_limit.to_bytes_be_padded(32).unwrap();
 
         for _ in 0..1000 {
             let mut rand: BigUint = rng.gen_biguint(256);
@@ -491,7 +481,7 @@ mod test_decode {
     #[test]
     fn test_decode_bool_array0() {
         let inputs = &[true, false, false, true, true];
-        let input_values: Vec<AbiValue> = inputs.into_iter().map(|b| AbiValue::Bool(*b)).collect();
+        let input_values: Vec<AbiValue> = inputs.iter().map(|b| AbiValue::Bool(*b)).collect();
 
         let type_ = "bool[5]".parse::<AbiType>().unwrap();
 
@@ -506,7 +496,7 @@ mod test_decode {
         let inputs = &[
             false, false, false, true, true, false, true, false, true, false, true,
         ];
-        let input_values: Vec<AbiValue> = inputs.into_iter().map(|b| AbiValue::Bool(*b)).collect();
+        let input_values: Vec<AbiValue> = inputs.iter().map(|b| AbiValue::Bool(*b)).collect();
 
         let type_ = "bool[11]".parse::<AbiType>().unwrap();
 
@@ -521,7 +511,7 @@ mod test_decode {
         let inputs = &[
             false, false, false, true, true, false, true, false, true, false, true,
         ];
-        let input_values: Vec<AbiValue> = inputs.into_iter().map(|b| AbiValue::Bool(*b)).collect();
+        let input_values: Vec<AbiValue> = inputs.iter().map(|b| AbiValue::Bool(*b)).collect();
 
         let type_ = "bool[]".parse::<AbiType>().unwrap();
 
@@ -535,7 +525,7 @@ mod test_decode {
     fn test_decode_uint_array() {
         let inputs: &[u32] = &[1, 2, 3, 4, 5, 6, 7, 8];
         let input_values: Vec<AbiValue> = inputs
-            .into_iter()
+            .iter()
             .map(|i| AbiValue::Int(BigUint::from(*i)))
             .collect();
 
@@ -796,7 +786,7 @@ mod test_roundrip {
     fn generate_random_int(bit_size: u64) -> BigUint {
         let mut rng = rand::thread_rng();
         let random_int: BigUint = rng.gen_biguint(bit_size);
-        return random_int;
+        random_int
     }
 
     fn generate_static_array(test_value_pool: &mut [Vec<RawValueWithAbiType>]) {
@@ -814,10 +804,11 @@ mod test_roundrip {
             ));
         }
 
-        let mut value_byte_arr = vec![];
-        for i in 0..20 {
-            value_byte_arr.push(test_value_pool[2][i].value.clone());
-        }
+        let value_byte_arr: Vec<_> = test_value_pool[2]
+            .iter()
+            .take(20)
+            .map(|v| v.value.clone())
+            .collect();
         test_value_pool[6].push(RawValueWithAbiType::new(
             "byte[20]",
             AbiValue::Array(value_byte_arr),
@@ -833,19 +824,21 @@ mod test_roundrip {
             AbiValue::Array(bool_arr),
         ));
 
-        let mut address_arr = vec![];
-        for i in 0..20 {
-            address_arr.push(test_value_pool[4][i].value.clone());
-        }
+        let address_arr: Vec<_> = test_value_pool[4]
+            .iter()
+            .take(20)
+            .map(|v| v.value.clone())
+            .collect();
         test_value_pool[6].push(RawValueWithAbiType::new(
             "address[20]",
             AbiValue::Array(address_arr),
         ));
 
-        let mut string_arr = vec![];
-        for i in 0..20 {
-            string_arr.push(test_value_pool[5][i].value.clone());
-        }
+        let string_arr: Vec<_> = test_value_pool[5]
+            .iter()
+            .take(20)
+            .map(|v| v.value.clone())
+            .collect();
         test_value_pool[6].push(RawValueWithAbiType::new(
             "string[20]",
             AbiValue::Array(string_arr),
@@ -867,10 +860,11 @@ mod test_roundrip {
             ));
         }
 
-        let mut value_byte_arr = vec![];
-        for i in 0..20 {
-            value_byte_arr.push(test_value_pool[2][i].value.clone());
-        }
+        let value_byte_arr: Vec<_> = test_value_pool[2]
+            .iter()
+            .take(20)
+            .map(|v| v.value.clone())
+            .collect();
         test_value_pool[7].push(RawValueWithAbiType::new(
             "byte[]",
             AbiValue::Array(value_byte_arr),
@@ -886,19 +880,21 @@ mod test_roundrip {
             AbiValue::Array(bool_arr),
         ));
 
-        let mut address_arr = vec![];
-        for i in 0..20 {
-            address_arr.push(test_value_pool[4][i].value.clone());
-        }
+        let address_arr: Vec<_> = test_value_pool[4]
+            .iter()
+            .take(20)
+            .map(|v| v.value.clone())
+            .collect();
         test_value_pool[7].push(RawValueWithAbiType::new(
             "address[]",
             AbiValue::Array(address_arr),
         ));
 
-        let mut string_arr = vec![];
-        for i in 0..20 {
-            string_arr.push(test_value_pool[5][i].value.clone());
-        }
+        let string_arr: Vec<_> = test_value_pool[5]
+            .iter()
+            .take(20)
+            .map(|v| v.value.clone())
+            .collect();
         test_value_pool[7].push(RawValueWithAbiType::new(
             "string[]",
             AbiValue::Array(string_arr),
@@ -914,7 +910,7 @@ mod test_roundrip {
             let mut tuple_types: Vec<AbiType> = vec![];
 
             for _ in 0..tuple_len {
-                let value_type_slot: usize = rng.gen_range(0..index as usize + 1);
+                let value_type_slot: usize = rng.gen_range(0..index + 1);
                 let value_index = rng.gen_range(0..test_value_pool[value_type_slot].len());
                 tuple_values.push(test_value_pool[value_type_slot][value_index].value.clone());
                 tuple_types.push(

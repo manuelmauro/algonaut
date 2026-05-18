@@ -188,9 +188,12 @@ impl Transaction {
 }
 
 /// \\[type\\] Indicates what type of transaction this is. Different types have different fields.  Valid types, and where their fields are stored: * \\[pay\\] payment-transaction * \\[keyreg\\] keyreg-transaction * \\[acfg\\] asset-config-transaction * \\[axfer\\] asset-transfer-transaction * \\[afrz\\] asset-freeze-transaction * \\[appl\\] application-transaction * \\[stpf\\] state-proof-transaction
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, Default,
+)]
 pub enum TxType {
     #[serde(rename = "pay")]
+    #[default]
     Pay,
     #[serde(rename = "keyreg")]
     Keyreg,
@@ -204,10 +207,4 @@ pub enum TxType {
     Appl,
     #[serde(rename = "stpf")]
     Stpf,
-}
-
-impl Default for TxType {
-    fn default() -> TxType {
-        Self::Pay
-    }
 }

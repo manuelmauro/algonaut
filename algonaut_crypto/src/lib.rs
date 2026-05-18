@@ -9,7 +9,6 @@ use std::str::FromStr;
 /// Support for turning 32 byte keys into human-readable mnemonics and back
 pub mod mnemonic;
 
-///
 pub mod error;
 
 #[derive(Copy, Clone, Eq, Debug, PartialEq, Serialize, Deserialize)]

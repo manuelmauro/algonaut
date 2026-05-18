@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         &params,
         Pay::new(
             alice.address(),
-            (&env::var("BOB_ADDRESS")?).parse()?,
+            env::var("BOB_ADDRESS")?.parse()?,
             MicroAlgos(123_456),
         )
         .build(),

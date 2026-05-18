@@ -243,11 +243,9 @@ impl AbiType {
                 let casted_type = self.type_cast_to_tuple(&[])?;
                 casted_type.decode(encoded)
             }
-            AbiType::Address { .. } => {
-                Ok(AbiValue::Address(Address(encoded.try_into().map_err(
-                    |e| AbiError::Msg(format!("Address couldn't be decoded from: {e}")),
-                )?)))
-            }
+            AbiType::Address => Ok(AbiValue::Address(Address(encoded.try_into().map_err(
+                |e| AbiError::Msg(format!("Address couldn't be decoded from: {e}")),
+            )?))),
             AbiType::DynamicArray { .. } => {
                 if encoded.len() < LENGTH_ENCODE_BYTE_SIZE {
                     return Err(AbiError::Msg("dynamic array format corrupted".to_owned()));
@@ -351,8 +349,8 @@ impl AbiType {
             }
             AbiType::Bool => Ok(SINGLE_BYTE_SIZE),
             AbiType::StaticArray { len, child_type } => match child_type.as_ref() {
-                AbiType::Bool { .. } => {
-                    let byte_len = (*len as usize + 7) / 8;
+                AbiType::Bool => {
+                    let byte_len = (*len as usize).div_ceil(8);
                     Ok(byte_len)
                 }
                 _ => {
@@ -365,14 +363,14 @@ impl AbiType {
                 let mut i = 0;
                 while i < child_types.len() {
                     match child_types[i] {
-                        AbiType::Bool { .. } => {
+                        AbiType::Bool => {
                             // search after bool
                             let after = find_bool_lr(self.children(), i, 1)?;
                             // shift the index
                             i += after;
                             // get number of bool
                             let bool_num = after + 1;
-                            size += (bool_num + 7) / 8;
+                            size += bool_num.div_ceil(8);
                         }
                         _ => {
                             let child_byte_size = self.children()[i].byte_len()?;

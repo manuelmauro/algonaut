@@ -324,7 +324,6 @@ pub struct AssetFreezeTransaction {
     pub frozen: bool,
 }
 
-///
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApplicationCallTransaction {
     /// The address of the account that signs and pays the fee.
@@ -385,7 +384,6 @@ pub struct BoxReference {
     pub name: Vec<u8>,
 }
 
-///
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StateProofTransaction {
     /// The address of the account that signs and pays the fee.

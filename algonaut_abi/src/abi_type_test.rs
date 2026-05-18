@@ -19,7 +19,7 @@ mod test {
 
         for _ in 0..tuple_len {
             let base_or_tuple: i32 = rng.gen_range(0..5);
-            if base_or_tuple == 1 && tuple_testpool.len() > 0 {
+            if base_or_tuple == 1 && !tuple_testpool.is_empty() {
                 tuple_elems.push(tuple_testpool[rng.gen_range(0..tuple_testpool.len())].clone());
             } else {
                 tuple_elems.push(type_testpool[rng.gen_range(0..type_testpool.len())].clone());
@@ -80,7 +80,7 @@ mod test {
         for _ in 0..1000 {
             let mut size_rand = rng.gen_range(0..65536);
 
-            while size_rand % 8 == 0 && size_rand <= 512 && size_rand >= 8 {
+            while size_rand % 8 == 0 && (8..=512).contains(&size_rand) {
                 size_rand = rng.gen_range(0..1000);
             }
 
@@ -106,12 +106,12 @@ mod test {
         for _ in 0..1000 {
             let mut size_rand = rng.gen_range(0..65536);
 
-            while size_rand % 8 == 0 && size_rand <= 512 && size_rand >= 8 {
+            while size_rand % 8 == 0 && (8..=512).contains(&size_rand) {
                 size_rand = rng.gen_range(0..65536);
             }
 
             let mut precision_rand = rng.gen_range(0..1024);
-            while precision_rand >= 1 && precision_rand <= 160 {
+            while (1..=160).contains(&precision_rand) {
                 precision_rand = rng.gen_range(0..1024);
             }
 
@@ -181,7 +181,7 @@ mod test {
         for _ in 0..100 {
             let mut size_rand = rng.gen_range(0..65536);
 
-            while size_rand % 8 == 0 && size_rand <= 512 && size_rand >= 8 {
+            while size_rand % 8 == 0 && (8..=512).contains(&size_rand) {
                 size_rand = rng.gen_range(0..65536);
             }
 
@@ -208,12 +208,12 @@ mod test {
         for _ in 0..1000 {
             let mut size_rand = rng.gen_range(0..65536);
 
-            while size_rand % 8 == 0 && size_rand <= 512 && size_rand >= 8 {
+            while size_rand % 8 == 0 && (8..=512).contains(&size_rand) {
                 size_rand = rng.gen_range(0..65536);
             }
 
             let mut precision_rand = rng.gen_range(0..1024);
-            while precision_rand >= 1 && precision_rand <= 160 {
+            while (1..=160).contains(&precision_rand) {
                 precision_rand = rng.gen_range(0..1024);
             }
 
@@ -458,9 +458,9 @@ mod test {
                 for i in 0..ct_list.len() {
                     match ct_list[i] {
                         AbiType::Bool => {
-                            let bool_num = find_bool_lr(&ct_list, i, 1).unwrap() + 1;
+                            let bool_num = find_bool_lr(ct_list, i, 1).unwrap() + 1;
                             size += bool_num / 8;
-                            size += if bool_num % 8 != 0 { 1 } else { 0 };
+                            size += if !bool_num.is_multiple_of(8) { 1 } else { 0 };
                         }
                         _ => {
                             size += ct_list[i].byte_len().unwrap();
