@@ -12,13 +12,13 @@ repository = "https://github.com/manuelmauro/algonaut"
 version = "0.4.2"
 
 [dependencies]
-algonaut_encoding = { path = "../algonaut_encoding", version = "0.4.2" }
-data-encoding = "2.11.0"
-derive_more = { version = "2.1.1", features = ["display", "from"] }
-indexmap = "2.14.0"
-lazy_static = "1.5.0"
-serde = { version = "1.0", features = ["derive"] }
-sha2 = "0.11.0"
-static_assertions = "1.1.0"
-thiserror = "2.0.18"
-ring = "0.17.14"
+algonaut_encoding = { workspace = true }
+data-encoding = { workspace = true }
+derive_more = { workspace = true, features = ["display", "from"] }
+indexmap = { workspace = true }
+lazy_static = { workspace = true }
+ring = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
+static_assertions = { workspace = true }
+thiserror = { workspace = true }
