@@ -6,7 +6,7 @@ keywords = ["Algorand", "sdk"]
 license = "MIT"
 name = "algonaut_core"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.4.2"
+version = "0.5.0"
 
 [dependencies]
 algonaut_crypto = { workspace = true }
