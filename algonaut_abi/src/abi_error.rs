@@ -5,6 +5,6 @@ use thiserror::Error;
 
 #[derive(Debug, Display, Error, From, Clone)]
 pub enum AbiError {
-    #[display(fmt = "{}", self.0)]
+    #[display("{_0}")]
     Msg(String),
 }
