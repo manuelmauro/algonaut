@@ -65,3 +65,21 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --lib --examples --tests
+
+  cargo-test-integration:
+    name: cargo-test-integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: integration
+      - name: Bring up the algorand test harness
+        run: ./test-harness.sh up
+      - name: Run cucumber integration tests
+        run: cargo test --test features_runner --
+      - name: Tear down the algorand test harness
+        if: always()
+        run: ./test-harness.sh down
