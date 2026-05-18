@@ -93,7 +93,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/integration/rekey.feature",
-        gate: Some("step-defs pending; SDK supports rekey_to on TxnBuilder"),
+        gate: None,
         excluded_tags: &[],
     },
     Feature {
