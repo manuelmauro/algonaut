@@ -97,7 +97,13 @@ impl Serialize for Address {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        // JSON emits the base32-checksum string; msgpack emits the raw
+        // 32 bytes. See ADR domain-types-serialize-for-both-json-and-msgpack.
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.encode_as_string())
+        } else {
+            serializer.serialize_bytes(&self.0[..])
+        }
     }
 }
 
@@ -106,7 +112,12 @@ impl<'de> Deserialize<'de> for Address {
     where
         D: Deserializer<'de>,
     {
-        Ok(Address(deserializer.deserialize_bytes(U8_32Visitor)?))
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            s.parse().map_err(serde::de::Error::custom)
+        } else {
+            Ok(Address(deserializer.deserialize_bytes(U8_32Visitor)?))
+        }
     }
 }
 
@@ -213,5 +224,29 @@ mod tests {
         let bytes = rmp_serde::to_vec_named(&addr).unwrap();
         let deserialized: Address = rmp_serde::from_slice(&bytes).unwrap();
         assert_eq!(deserialized, addr);
+    }
+
+    #[test]
+    fn json_round_trip_is_base32() {
+        let addr = Address(OsRng.r#gen());
+        let json = serde_json::to_string(&addr).unwrap();
+        // JSON emits the canonical base32 string (with quotes), not an
+        // integer array.
+        assert_eq!(json, format!("\"{}\"", addr.encode_as_string()));
+        assert!(!json.starts_with('['), "JSON form must not be a byte array");
+        let parsed: Address = serde_json::from_str(&json).unwrap();
+        assert_eq!(addr, parsed);
+    }
+
+    #[test]
+    fn msgpack_layout_unchanged() {
+        // Regression guard: the msgpack form is a 32-byte bin value
+        // (header 0xc4 0x20 followed by 32 raw bytes). On-chain signing
+        // depends on this exact byte layout.
+        let addr = Address([7; 32]);
+        let bytes = rmp_serde::to_vec(&addr).unwrap();
+        assert_eq!(bytes[0], 0xc4);
+        assert_eq!(bytes[1], 0x20);
+        assert_eq!(&bytes[2..], &[7u8; 32]);
     }
 }

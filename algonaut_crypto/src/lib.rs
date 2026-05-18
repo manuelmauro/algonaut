@@ -73,7 +73,13 @@ impl Serialize for Signature {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        // JSON: base64; msgpack: raw bytes. See ADR
+        // domain-types-serialize-for-both-json-and-msgpack.
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&BASE64.encode(&self.0))
+        } else {
+            serializer.serialize_bytes(&self.0[..])
+        }
     }
 }
 
@@ -82,7 +88,18 @@ impl<'de> Deserialize<'de> for Signature {
     where
         D: Deserializer<'de>,
     {
-        Ok(Signature(deserializer.deserialize_bytes(SignatureVisitor)?))
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            let bytes = BASE64
+                .decode(s.as_bytes())
+                .map_err(serde::de::Error::custom)?;
+            let arr: [u8; 64] = bytes.try_into().map_err(|v: Vec<u8>| {
+                serde::de::Error::custom(format!("expected 64-byte signature, got {}", v.len()))
+            })?;
+            Ok(Signature(arr))
+        } else {
+            Ok(Signature(deserializer.deserialize_bytes(SignatureVisitor)?))
+        }
     }
 }
 
@@ -91,7 +108,11 @@ impl Serialize for HashDigest {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&BASE64.encode(&self.0))
+        } else {
+            serializer.serialize_bytes(&self.0[..])
+        }
     }
 }
 
@@ -100,7 +121,18 @@ impl<'de> Deserialize<'de> for HashDigest {
     where
         D: Deserializer<'de>,
     {
-        Ok(HashDigest(deserializer.deserialize_bytes(U8_32Visitor)?))
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            let bytes = BASE64
+                .decode(s.as_bytes())
+                .map_err(serde::de::Error::custom)?;
+            let arr: [u8; 32] = bytes.try_into().map_err(|v: Vec<u8>| {
+                serde::de::Error::custom(format!("expected 32-byte hash, got {}", v.len()))
+            })?;
+            Ok(HashDigest(arr))
+        } else {
+            Ok(HashDigest(deserializer.deserialize_bytes(U8_32Visitor)?))
+        }
     }
 }
 
@@ -121,7 +153,11 @@ impl Serialize for Ed25519PublicKey {
     where
         S: Serializer,
     {
-        serializer.serialize_bytes(&self.0[..])
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&BASE64.encode(&self.0))
+        } else {
+            serializer.serialize_bytes(&self.0[..])
+        }
     }
 }
 
@@ -130,9 +166,20 @@ impl<'de> Deserialize<'de> for Ed25519PublicKey {
     where
         D: Deserializer<'de>,
     {
-        Ok(Ed25519PublicKey(
-            deserializer.deserialize_bytes(U8_32Visitor)?,
-        ))
+        if deserializer.is_human_readable() {
+            let s = String::deserialize(deserializer)?;
+            let bytes = BASE64
+                .decode(s.as_bytes())
+                .map_err(serde::de::Error::custom)?;
+            let arr: [u8; 32] = bytes.try_into().map_err(|v: Vec<u8>| {
+                serde::de::Error::custom(format!("expected 32-byte ed25519 pk, got {}", v.len()))
+            })?;
+            Ok(Ed25519PublicKey(arr))
+        } else {
+            Ok(Ed25519PublicKey(
+                deserializer.deserialize_bytes(U8_32Visitor)?,
+            ))
+        }
     }
 }
 
@@ -189,4 +236,69 @@ where
             Ok(Ed25519PublicKey(decoded))
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn signature_json_round_trip_is_base64() {
+        let sig = Signature([3; 64]);
+        let json = serde_json::to_string(&sig).unwrap();
+        assert_eq!(json, format!("\"{}\"", BASE64.encode(&sig.0)));
+        let parsed: Signature = serde_json::from_str(&json).unwrap();
+        assert_eq!(sig, parsed);
+    }
+
+    #[test]
+    fn signature_msgpack_is_raw_bytes() {
+        let sig = Signature([3; 64]);
+        let bytes = rmp_serde::to_vec(&sig).unwrap();
+        assert_eq!(bytes[0], 0xc4); // bin8
+        assert_eq!(bytes[1], 0x40); // 64 bytes
+        assert_eq!(&bytes[2..], &[3u8; 64]);
+        let parsed: Signature = rmp_serde::from_slice(&bytes).unwrap();
+        assert_eq!(sig, parsed);
+    }
+
+    #[test]
+    fn hash_digest_json_round_trip_is_base64() {
+        let h = HashDigest([11; 32]);
+        let json = serde_json::to_string(&h).unwrap();
+        assert_eq!(json, format!("\"{}\"", BASE64.encode(&h.0)));
+        let parsed: HashDigest = serde_json::from_str(&json).unwrap();
+        assert_eq!(h, parsed);
+    }
+
+    #[test]
+    fn hash_digest_msgpack_is_raw_bytes() {
+        let h = HashDigest([11; 32]);
+        let bytes = rmp_serde::to_vec(&h).unwrap();
+        assert_eq!(bytes[0], 0xc4);
+        assert_eq!(bytes[1], 0x20);
+        assert_eq!(&bytes[2..], &[11u8; 32]);
+        let parsed: HashDigest = rmp_serde::from_slice(&bytes).unwrap();
+        assert_eq!(h, parsed);
+    }
+
+    #[test]
+    fn ed25519_public_key_json_round_trip_is_base64() {
+        let pk = Ed25519PublicKey([1; 32]);
+        let json = serde_json::to_string(&pk).unwrap();
+        assert_eq!(json, format!("\"{}\"", BASE64.encode(&pk.0)));
+        let parsed: Ed25519PublicKey = serde_json::from_str(&json).unwrap();
+        assert_eq!(pk, parsed);
+    }
+
+    #[test]
+    fn ed25519_public_key_msgpack_is_raw_bytes() {
+        let pk = Ed25519PublicKey([1; 32]);
+        let bytes = rmp_serde::to_vec(&pk).unwrap();
+        assert_eq!(bytes[0], 0xc4);
+        assert_eq!(bytes[1], 0x20);
+        assert_eq!(&bytes[2..], &[1u8; 32]);
+        let parsed: Ed25519PublicKey = rmp_serde::from_slice(&bytes).unwrap();
+        assert_eq!(pk, parsed);
+    }
 }

@@ -22,3 +22,7 @@ serde = { workspace = true }
 sha2 = { workspace = true }
 static_assertions = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+rmp-serde = { workspace = true }
+serde_json = { workspace = true }
