@@ -1,4 +1,5 @@
 use algonaut_core::MultisigAddress;
+use algonaut_crypto::Signature;
 use algonaut_transaction::{
     SignedTransaction, Transaction, account::Account, contract_account::ContractAccount,
     error::TransactionError, transaction::TransactionSignature,
@@ -13,6 +14,12 @@ pub enum TransactionSigner {
         address: MultisigAddress,
         accounts: Vec<Account>,
     },
+    /// Produces a `SignedTransaction` whose signature is the all-zero
+    /// 64-byte placeholder — algod's simulator detects this as a
+    /// missing signature and reports `signedtxn has no sig`. Useful for
+    /// the `/v2/transactions/simulate` "allow-empty-signatures = false"
+    /// scenarios; do not use against the live submit endpoint.
+    Empty,
 }
 
 impl TransactionSigner {
@@ -41,6 +48,20 @@ impl TransactionSigner {
                 let mut signed_txs = vec![];
                 for tx in tx_group {
                     signed_txs.push(sign_msig_tx(address, accounts, tx)?);
+                }
+                Ok(signed_txs)
+            }
+
+            TransactionSigner::Empty => {
+                let mut signed_txs = vec![];
+                for tx in tx_group {
+                    let transaction_id = tx.id()?;
+                    signed_txs.push(SignedTransaction {
+                        transaction: tx,
+                        transaction_id,
+                        sig: TransactionSignature::Single(Signature([0; 64])),
+                        auth_address: None,
+                    });
                 }
                 Ok(signed_txs)
             }

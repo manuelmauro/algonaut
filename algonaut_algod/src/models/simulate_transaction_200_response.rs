@@ -22,7 +22,10 @@ pub struct SimulateTransaction200Response {
     #[serde(rename = "version")]
     pub version: u64,
     /// Indicates whether the simulated transactions would have succeeded during an actual submission. If any transaction fails or is missing a signature, this will be false.
-    #[serde(rename = "would-succeed")]
+    ///
+    /// Older sandbox builds omit this field when the simulation hit an
+    /// error early; treat the absence as `false`.
+    #[serde(rename = "would-succeed", default)]
     pub would_succeed: bool,
     /// Echoes any per-eval overrides the simulator applied (max-log-calls,
     /// max-log-size, extra-opcode-budget, allow-empty-signatures,

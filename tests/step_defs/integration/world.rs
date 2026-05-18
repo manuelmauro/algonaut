@@ -8,7 +8,10 @@ use algonaut::{
     kmd::v1::Kmd,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::SourceMap};
-use algonaut_algod::models::{AssetParams, TealDryrun200Response, TransactionParams200Response};
+use algonaut_algod::models::{
+    AssetParams, SimulateRequest, SimulateTransaction200Response, TealDryrun200Response,
+    TransactionParams200Response,
+};
 use algonaut_core::{Address, MultisigAddress};
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_transaction::{
@@ -85,4 +88,8 @@ pub struct World {
     pub asset_second: Option<Address>,
 
     pub dryrun_response: Option<TealDryrun200Response>,
+
+    pub simulate_request: Option<SimulateRequest>,
+    pub simulate_response: Option<SimulateTransaction200Response>,
+    pub simulate_unsigned: bool,
 }

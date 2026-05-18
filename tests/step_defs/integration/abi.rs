@@ -96,6 +96,17 @@ async fn i_create_a_transaction_with_signer_with_the_current_transaction(w: &mut
     w.tx_with_signer = Some(TransactionWithSigner { tx, signer });
 }
 
+#[when(expr = "I create a transaction with an empty signer with the current transaction.")]
+#[given(expr = "I create a transaction with an empty signer with the current transaction.")]
+async fn i_create_a_transaction_with_an_empty_signer_with_the_current_transaction(w: &mut World) {
+    let tx = w.tx.clone().unwrap();
+
+    w.tx_with_signer = Some(TransactionWithSigner {
+        tx,
+        signer: TransactionSigner::Empty,
+    });
+}
+
 #[when(expr = "I add the current transaction with signer to the composer.")]
 async fn i_add_the_current_transaction_with_signer_tothecomposer(w: &mut World) {
     let tx_with_signer = w.tx_with_signer.clone().unwrap();
@@ -292,6 +303,64 @@ async fn i_add_a_method_call_for_create(
         None,
     )
     .await;
+}
+
+#[when(
+    regex = r#"^I add a method call with the ([^"]*) account, the current application, suggested params, on complete "([^"]*)", current transaction signer, current method arguments, boxes "([^"]*)"\.$"#
+)]
+#[given(
+    regex = r#"^I add a method call with the ([^"]*) account, the current application, suggested params, on complete "([^"]*)", current transaction signer, current method arguments, boxes "([^"]*)"\.$"#
+)]
+async fn i_add_a_method_call_with_boxes(
+    w: &mut World,
+    account_type: String,
+    on_complete: String,
+    boxes_str: String,
+) {
+    let boxes = parse_box_references(&boxes_str, &w.app_ids);
+    add_method_call(
+        w,
+        account_type,
+        on_complete,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        false,
+        Some(boxes),
+    )
+    .await;
+}
+
+fn parse_box_references(s: &str, app_ids: &[u64]) -> Vec<BoxReference> {
+    if s.is_empty() {
+        return Vec::new();
+    }
+    let parts: Vec<&str> = s.split(',').collect();
+    let mut boxes = Vec::with_capacity(parts.len() / 2);
+    let mut i = 0;
+    while i + 1 < parts.len() {
+        let idx: usize = parts[i].trim().parse().unwrap();
+        let key_spec = parts[i + 1].trim();
+        let app_id = if idx == 0 {
+            None
+        } else {
+            Some(app_ids[idx - 1])
+        };
+        let name = if let Some(rest) = key_spec.strip_prefix("str:") {
+            rest.as_bytes().to_vec()
+        } else if let Some(rest) = key_spec.strip_prefix("b64:") {
+            BASE64.decode(rest.as_bytes()).unwrap()
+        } else {
+            key_spec.as_bytes().to_vec()
+        };
+        boxes.push(BoxReference { app_id, name });
+        i += 2;
+    }
+    boxes
 }
 
 #[given(
