@@ -65,3 +65,28 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --lib --examples --tests
+
+  cargo-test-integration:
+    name: cargo-test-integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: integration
+      - name: Bring up the algorand test harness
+        run: ./test-harness.sh up
+      - name: Dump sandbox.log on harness failure
+        if: failure()
+        run: |
+          test -f test-harness/.sandbox/sandbox.log \
+            && cat test-harness/.sandbox/sandbox.log \
+            || echo "No sandbox.log to dump."
+      - name: Run cucumber integration tests
+        run: cargo test --test features_runner --
+      - name: Tear down the algorand test harness
+        if: always()
+        run: ./test-harness.sh down
