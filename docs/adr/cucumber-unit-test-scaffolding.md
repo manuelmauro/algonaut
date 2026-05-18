@@ -2,7 +2,7 @@
 id: cucumber-unit-test-scaffolding
 title: Cucumber unit-test scaffolding
 abstract: Split the integration cucumber World from a new unit World so the 17 unit features can run without a live harness.
-status: proposed
+status: accepted
 date: 2026-05-18
 deciders: []
 tags: []
@@ -12,7 +12,7 @@ tags: []
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 

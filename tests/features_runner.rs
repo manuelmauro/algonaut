@@ -23,7 +23,7 @@
 //! reference.
 
 use cucumber::World;
-use step_defs::integration;
+use step_defs::{integration, unit};
 
 mod step_defs;
 
@@ -143,8 +143,21 @@ const UNIT_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/unit/offline.feature",
-        gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
-        excluded_tags: &[],
+        gate: None,
+        // Only the address/mnemonic/microalgos round-trip scenarios are
+        // wired so far. The transaction-signing scenarios share step
+        // phrases (mnemonic for private key, multisig addresses, etc.)
+        // with the integration features; wiring them to the unit world
+        // needs care to avoid duplicate-step ambiguity. Tracked as
+        // follow-up under ADR `cucumber-unit-test-scaffolding`.
+        excluded_tags: &[
+            "unit.offline.sign",
+            "unit.offline.signMsig",
+            "unit.offline.signFlat",
+            "unit.offline.signFlatLogic",
+            "unit.offline.appendMsig",
+            "unit.offline.mergeMsig",
+        ],
     },
     Feature {
         path: "tests/features/unit/program_sanity_check.feature",
@@ -207,13 +220,29 @@ async fn run_integration(path: &str, excluded_tags: &'static [&'static str]) {
         .await;
 }
 
+async fn run_unit(path: &str, excluded_tags: &'static [&'static str]) {
+    unit::world::UnitWorld::cucumber()
+        .max_concurrent_scenarios(1)
+        .filter_run(path, move |_, _, sc| {
+            !sc.tags.iter().any(|t| excluded_tags.iter().any(|x| x == t))
+        })
+        .await;
+}
+
 #[tokio::main]
 async fn main() {
     let mut skipped: Vec<(&str, &str)> = Vec::new();
 
-    for feature in INTEGRATION_FEATURES.iter().chain(UNIT_FEATURES.iter()) {
+    for feature in INTEGRATION_FEATURES {
         match feature.gate {
             None => run_integration(feature.path, feature.excluded_tags).await,
+            Some(reason) => skipped.push((feature.path, reason)),
+        }
+    }
+
+    for feature in UNIT_FEATURES {
+        match feature.gate {
+            None => run_unit(feature.path, feature.excluded_tags).await,
             Some(reason) => skipped.push((feature.path, reason)),
         }
     }
