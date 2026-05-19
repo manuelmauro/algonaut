@@ -85,22 +85,31 @@ review-able** process, staged in three phases.
 
 **Phase 2 — drive the regen toward near-lossless.**
 
-*Phase 2a (done).* Custom `model.mustache` and `reqwest/api.mustache`
-templates under `openapi/templates/` force every integer — scalar, array
-element, and operation parameter — to `u64`, since Algorand types its
-integers as 64-bit unsigned. With the integer dimension removed, **86 of the
-121 common model files regenerate byte-identical** to the committed crates
-(41/57 algod, 45/64 indexer).
+Custom templates under `openapi/templates/`, wired through `make
+generate-clients`:
 
-*Phase 2b (next).* The bulk of the remaining residual is the domain-type
-substitution — `format: byte` / `x-algorand-format` fields that the crates
-hand-type as `HashDigest`, `Bytes`, `Address`, `SignedTransaction`. Mustache
-cannot branch on a vendor extension's *value*, so this needs either a custom
-generator class or a post-generation patch step driven by the spec's
-`x-algorand-format`. The remaining hand-written extensions then move into
-`ext/` modules so the generated files carry no bespoke logic.
+- `model.mustache` / `reqwest/api.mustache` — every integer (model field,
+  `Vec` element, operation parameter) emits `u64`, since Algorand types its
+  integers as 64-bit unsigned.
+- `model.mustache` — `format: byte` fields emit `algonaut_encoding::Bytes`
+  instead of `String`. `openapi/preprocess.py` sets an `x-has-bytes` schema
+  flag so the template emits the `use` import only where it is used.
+- `make generate-clients` runs `rustfmt` over the output, so the review diff
+  reflects semantic drift rather than formatting.
 
-Goal: `make generate-clients` produces a diff small enough to review by eye.
+With these, **66 of the 121 common model files regenerate byte-identical**
+to the committed crates (25/57 algod, 41/64 indexer) — measured after
+formatting, ignoring the generated-header comment.
+
+The remaining ~55 files differ by per-field decisions the spec does not
+encode: the `format: byte` fields the crates narrow to `HashDigest` (with
+`deserialize_opt_hash` serde) or type as `Address` / `SignedTransaction`,
+plus genuinely new upstream models and fields. Distinguishing `HashDigest`
+from `Bytes`, or branching on an `x-algorand-format` *value*, is beyond what
+mustache can express — closing it fully would need a custom generator class
+or a post-generation patch table. Since the regen already serves its purpose
+(drift detection with a review-able diff), that last mile is left as
+documented hand-edits rather than further tooling.
 
 **Phase 3 — adopt upstream changes.**
 
@@ -115,8 +124,8 @@ Goal: `make generate-clients` produces a diff small enough to review by eye.
   risk and unblocks the later phases.
 - The committed specs add ~460 KB to the repo; that is the pinning mechanism
   and the price of reproducibility.
-- The Phase 2a templates cover every integer; the domain-type substitutions
-  (`HashDigest`, `Bytes`, `Address`, `SignedTransaction`) are the main
-  remaining residual and are addressed in Phase 2b.
+- The Phase 2 templates cover every integer and the `Bytes` fields; the
+  `HashDigest` / `Address` / `SignedTransaction` substitutions and their
+  bespoke serde remain as documented hand-edits.
 - The clients are still behind upstream after Phase 1 — closing that gap is
   deliberately deferred to Phase 3 so the API additions get a focused review.
