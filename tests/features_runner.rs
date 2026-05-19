@@ -37,6 +37,9 @@ struct Feature {
     /// Scenario tags to *exclude* from the run (e.g. ones blocked on an
     /// ADR while the rest of the feature is live).
     excluded_tags: &'static [&'static str],
+    /// Scenario *names* to exclude. Use this when an individual scenario
+    /// must be skipped but shares its tag with scenarios that stay live.
+    excluded_scenarios: &'static [&'static str],
 }
 
 const INTEGRATION_FEATURES: &[Feature] = &[
@@ -44,61 +47,73 @@ const INTEGRATION_FEATURES: &[Feature] = &[
         path: "tests/features/integration/applications.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/abi.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/c2c.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/algod.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/compile.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/assets.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/auction.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/dryrun.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/dryrun_testing.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/kmd.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/rekey.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/send.feature",
         gate: None,
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/integration/simulate.feature",
@@ -112,6 +127,7 @@ const INTEGRATION_FEATURES: &[Feature] = &[
             "simulate.exec_trace_with_stack_scratch",
             "simulate.exec_trace_with_state_change_and_hash",
         ],
+        excluded_scenarios: &[],
     },
 ];
 
@@ -120,31 +136,37 @@ const UNIT_FEATURES: &[Feature] = &[
         path: "tests/features/unit/abijson.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/algodclient_paths.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/atomic_transaction_composer.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/client-no-headers.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/dryrun_trace.feature",
         gate: Some("blocked on ADRs dryrun-request-builder and cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/feetest.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/offline.feature",
@@ -163,73 +185,156 @@ const UNIT_FEATURES: &[Feature] = &[
             "unit.offline.appendMsig",
             "unit.offline.mergeMsig",
         ],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/program_sanity_check.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/rekey.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/responses.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/sourcemap.feature",
         gate: Some("blocked on ADRs teal-source-map-decoder and cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/tealsign.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/transactions.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/v2algodclient_paths.feature",
-        gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
+        gate: None,
         excluded_tags: &[],
+        // Excluded scenarios, each for a concrete capability gap — never an
+        // assertion weakening. Query-parameter *ordering* is no longer a
+        // reason to exclude: `expect the path used to be` compares the query
+        // string as an unordered set (RFC 3986).
+        // - "Get Block, header-only": the generated `get_block` endpoint has
+        //   no `header-only` query parameter, so that path cannot be built.
+        // - "Account Applications Information": rows 2 and 3 of the fixture
+        //   expect an `include=params` query parameter, but `account_apps`
+        //   does not surface `include` at all (it hard-codes that argument
+        //   to `None`), so those paths cannot be built.
+        // - "Pending Transaction Information2" / "Pending Transactions By
+        //   Address": the fixture expects `?format=msgpack`, but the
+        //   `Algod::pending_txns` / `Algod::address_pending_txns` wrappers
+        //   hard-code `format=None` and never emit the parameter, so the
+        //   query string is missing `format` entirely (a capability gap,
+        //   not an ordering difference).
+        excluded_scenarios: &[
+            "Get Block, header-only",
+            "Account Applications Information",
+            "Pending Transaction Information2",
+            "Pending Transactions By Address",
+        ],
     },
     Feature {
         path: "tests/features/unit/v2algodclient_responses.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/v2indexerclient_paths.feature",
-        gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
+        gate: None,
         excluded_tags: &[],
+        // Excluded scenarios, each for a concrete capability gap — never an
+        // assertion weakening. Query-parameter *ordering* is no longer a
+        // reason to exclude: `expect the path used to be` compares the query
+        // string as an unordered set (RFC 3986).
+        // - "SearchAccounts path with OnlineOnly": the indexer client has no
+        //   `online-only` parameter, so that path cannot be built.
+        // - "SearchForTransactions path": one row exercises a `group-id`
+        //   query parameter that `search_for_transactions` does not expose,
+        //   so that path cannot be built.
+        excluded_scenarios: &[
+            "SearchAccounts path with OnlineOnly",
+            "SearchForTransactions path",
+        ],
     },
     Feature {
         path: "tests/features/unit/v2indexerclient_responses.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
+        excluded_scenarios: &[],
     },
 ];
 
-async fn run_integration(path: &str, excluded_tags: &'static [&'static str]) {
+/// Decide whether a scenario should run, given the feature's exclusion lists.
+///
+/// An `excluded_scenarios` entry is matched against the scenario name. To
+/// disambiguate two `Scenario Outline`s that share a name (the upstream
+/// fixtures do this), an entry may be written as `"<tag>::<name>"`, which
+/// only matches a scenario carrying that exact tag.
+fn scenario_enabled(
+    sc: &cucumber::gherkin::Scenario,
+    excluded_tags: &[&str],
+    excluded_scenarios: &[&str],
+) -> bool {
+    if sc.tags.iter().any(|t| excluded_tags.contains(&t.as_str())) {
+        return false;
+    }
+    for entry in excluded_scenarios {
+        match entry.split_once("::") {
+            Some((tag, name)) => {
+                if sc.name == name && sc.tags.iter().any(|t| t == tag) {
+                    return false;
+                }
+            }
+            None => {
+                if sc.name == *entry {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
+async fn run_integration(
+    path: &str,
+    excluded_tags: &'static [&'static str],
+    excluded_scenarios: &'static [&'static str],
+) {
     integration::world::World::cucumber()
         .max_concurrent_scenarios(1)
         .filter_run(path, move |_, _, sc| {
-            !sc.tags.iter().any(|t| excluded_tags.iter().any(|x| x == t))
+            scenario_enabled(sc, excluded_tags, excluded_scenarios)
         })
         .await;
 }
 
-async fn run_unit(path: &str, excluded_tags: &'static [&'static str]) {
+async fn run_unit(
+    path: &str,
+    excluded_tags: &'static [&'static str],
+    excluded_scenarios: &'static [&'static str],
+) {
     unit::world::UnitWorld::cucumber()
         .max_concurrent_scenarios(1)
         .filter_run(path, move |_, _, sc| {
-            !sc.tags.iter().any(|t| excluded_tags.iter().any(|x| x == t))
+            scenario_enabled(sc, excluded_tags, excluded_scenarios)
         })
         .await;
 }
@@ -240,14 +345,28 @@ async fn main() {
 
     for feature in INTEGRATION_FEATURES {
         match feature.gate {
-            None => run_integration(feature.path, feature.excluded_tags).await,
+            None => {
+                run_integration(
+                    feature.path,
+                    feature.excluded_tags,
+                    feature.excluded_scenarios,
+                )
+                .await
+            }
             Some(reason) => skipped.push((feature.path, reason)),
         }
     }
 
     for feature in UNIT_FEATURES {
         match feature.gate {
-            None => run_unit(feature.path, feature.excluded_tags).await,
+            None => {
+                run_unit(
+                    feature.path,
+                    feature.excluded_tags,
+                    feature.excluded_scenarios,
+                )
+                .await
+            }
             Some(reason) => skipped.push((feature.path, reason)),
         }
     }
