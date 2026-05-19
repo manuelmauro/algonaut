@@ -232,23 +232,9 @@ const UNIT_FEATURES: &[Feature] = &[
         // reason to exclude: `expect the path used to be` compares the query
         // string as an unordered set (RFC 3986).
         // - "Get Block, header-only": the generated `get_block` endpoint has
-        //   no `header-only` query parameter, so that path cannot be built.
-        // - "Account Applications Information": rows 2 and 3 of the fixture
-        //   expect an `include=params` query parameter, but `account_apps`
-        //   does not surface `include` at all (it hard-codes that argument
-        //   to `None`), so those paths cannot be built.
-        // - "Pending Transaction Information2" / "Pending Transactions By
-        //   Address": the fixture expects `?format=msgpack`, but the
-        //   `Algod::pending_txns` / `Algod::address_pending_txns` wrappers
-        //   hard-code `format=None` and never emit the parameter, so the
-        //   query string is missing `format` entirely (a capability gap,
-        //   not an ordering difference).
-        excluded_scenarios: &[
-            "Get Block, header-only",
-            "Account Applications Information",
-            "Pending Transaction Information2",
-            "Pending Transactions By Address",
-        ],
+        //   no `header-only` query parameter (only `format`), so that path
+        //   cannot be built without a generated-crate change.
+        excluded_scenarios: &["Get Block, header-only"],
     },
     Feature {
         path: "tests/features/unit/v2algodclient_responses.feature",
@@ -264,11 +250,14 @@ const UNIT_FEATURES: &[Feature] = &[
         // assertion weakening. Query-parameter *ordering* is no longer a
         // reason to exclude: `expect the path used to be` compares the query
         // string as an unordered set (RFC 3986).
-        // - "SearchAccounts path with OnlineOnly": the indexer client has no
-        //   `online-only` parameter, so that path cannot be built.
+        // - "SearchAccounts path with OnlineOnly": the generated
+        //   `search_for_accounts` operation has no `online-only` query
+        //   parameter, so that path cannot be built without a
+        //   generated-crate change.
         // - "SearchForTransactions path": one row exercises a `group-id`
-        //   query parameter that `search_for_transactions` does not expose,
-        //   so that path cannot be built.
+        //   query parameter that the generated `search_for_transactions`
+        //   operation does not expose, so that path cannot be built without
+        //   a generated-crate change.
         excluded_scenarios: &[
             "SearchAccounts path with OnlineOnly",
             "SearchForTransactions path",
