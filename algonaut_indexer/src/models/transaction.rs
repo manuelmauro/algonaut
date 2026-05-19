@@ -81,6 +81,11 @@ pub struct Transaction {
     /// \\[grp\\] Base64 encoded byte array of a sha512/256 digest. When present indicates that this transaction is part of a transaction group and the value is the sha512/256 hash of the transactions in that group.
     #[serde(rename = "group", skip_serializing_if = "Option::is_none")]
     pub group: Option<Bytes>,
+    #[serde(
+        rename = "heartbeat-transaction",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub heartbeat_transaction: Option<Box<crate::models::TransactionHeartbeat>>,
     /// Transaction ID
     #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
@@ -134,7 +139,7 @@ pub struct Transaction {
         skip_serializing_if = "Option::is_none"
     )]
     pub state_proof_transaction: Option<Box<crate::models::TransactionStateProof>>,
-    /// \\[type\\] Indicates what type of transaction this is. Different types have different fields.  Valid types, and where their fields are stored: * \\[pay\\] payment-transaction * \\[keyreg\\] keyreg-transaction * \\[acfg\\] asset-config-transaction * \\[axfer\\] asset-transfer-transaction * \\[afrz\\] asset-freeze-transaction * \\[appl\\] application-transaction * \\[stpf\\] state-proof-transaction
+    /// \\[type\\] Indicates what type of transaction this is. Different types have different fields.  Valid types, and where their fields are stored: * \\[pay\\] payment-transaction * \\[keyreg\\] keyreg-transaction * \\[acfg\\] asset-config-transaction * \\[axfer\\] asset-transfer-transaction * \\[afrz\\] asset-freeze-transaction * \\[appl\\] application-transaction * \\[stpf\\] state-proof-transaction * \\[hb\\] heartbeat-transaction
     #[serde(rename = "tx-type")]
     pub tx_type: TxType,
 }
@@ -165,6 +170,7 @@ impl Transaction {
             genesis_id: None,
             global_state_delta: None,
             group: None,
+            heartbeat_transaction: None,
             id: None,
             inner_txns: None,
             intra_round_offset: None,
@@ -187,7 +193,7 @@ impl Transaction {
     }
 }
 
-/// \\[type\\] Indicates what type of transaction this is. Different types have different fields.  Valid types, and where their fields are stored: * \\[pay\\] payment-transaction * \\[keyreg\\] keyreg-transaction * \\[acfg\\] asset-config-transaction * \\[axfer\\] asset-transfer-transaction * \\[afrz\\] asset-freeze-transaction * \\[appl\\] application-transaction * \\[stpf\\] state-proof-transaction
+/// \\[type\\] Indicates what type of transaction this is. Different types have different fields.  Valid types, and where their fields are stored: * \\[pay\\] payment-transaction * \\[keyreg\\] keyreg-transaction * \\[acfg\\] asset-config-transaction * \\[axfer\\] asset-transfer-transaction * \\[afrz\\] asset-freeze-transaction * \\[appl\\] application-transaction * \\[stpf\\] state-proof-transaction * \\[hb\\] heartbeat-transaction
 #[derive(
     Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, Default,
 )]
@@ -207,4 +213,6 @@ pub enum TxType {
     Appl,
     #[serde(rename = "stpf")]
     Stpf,
+    #[serde(rename = "hb")]
+    Hb,
 }

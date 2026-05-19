@@ -14,6 +14,9 @@ use algonaut_encoding::Bytes;
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct TransactionApplication {
+    /// \\[al\\] Access unifies `accounts`, `foreign-apps`, `foreign-assets`, and `box-references` under a single list. If access is non-empty, these lists must be empty. If access is empty, those lists may be non-empty.
+    #[serde(rename = "access", skip_serializing_if = "Option::is_none")]
+    pub access: Option<Vec<crate::models::ResourceRef>>,
     /// \\[apat\\] List of accounts in addition to the sender that may be accessed from the application's approval-program and clear-state-program.
     #[serde(rename = "accounts", skip_serializing_if = "Option::is_none")]
     pub accounts: Option<Vec<String>>,
@@ -26,6 +29,9 @@ pub struct TransactionApplication {
     /// \\[apap\\] Logic executed for every application transaction, except when on-completion is set to \"clear\". It can read and write global state for the application, as well as account-specific local state. Approval programs may reject the transaction.
     #[serde(rename = "approval-program", skip_serializing_if = "Option::is_none")]
     pub approval_program: Option<Bytes>,
+    /// \\[apbx\\] the boxes that can be accessed by this transaction (and others in the same group).
+    #[serde(rename = "box-references", skip_serializing_if = "Option::is_none")]
+    pub box_references: Option<Vec<crate::models::BoxReference>>,
     /// \\[apsu\\] Logic executed for application transactions with on-completion set to \"clear\". It can read and write global state for the application, as well as account-specific local state. Clear state programs cannot reject the transaction.
     #[serde(
         rename = "clear-state-program",
@@ -53,6 +59,9 @@ pub struct TransactionApplication {
     pub local_state_schema: Option<Box<crate::models::StateSchema>>,
     #[serde(rename = "on-completion")]
     pub on_completion: crate::models::OnCompletion,
+    /// \\[aprv\\] the lowest application version for which this transaction should immediately fail. 0 indicates that no version check should be performed.
+    #[serde(rename = "reject-version", skip_serializing_if = "Option::is_none")]
+    pub reject_version: Option<u64>,
 }
 
 impl TransactionApplication {
@@ -62,10 +71,12 @@ impl TransactionApplication {
         on_completion: crate::models::OnCompletion,
     ) -> TransactionApplication {
         TransactionApplication {
+            access: None,
             accounts: None,
             application_args: None,
             application_id,
             approval_program: None,
+            box_references: None,
             clear_state_program: None,
             extra_program_pages: None,
             foreign_apps: None,
@@ -73,6 +84,7 @@ impl TransactionApplication {
             global_state_schema: None,
             local_state_schema: None,
             on_completion,
+            reject_version: None,
         }
     }
 }
