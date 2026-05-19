@@ -3,10 +3,10 @@ authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp97
 description = "Core structs for the Algorand blockchain."
 edition = "2024"
 keywords = ["Algorand", "sdk"]
-license = "MIT"
+license = "MIT OR Apache-2.0"
 name = "algonaut_core"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.5.0"
+version = "0.6.0"
 
 [dependencies]
 algonaut_crypto = { workspace = true }

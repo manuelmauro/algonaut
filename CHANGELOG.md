@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-18
+
 ### Added
 
 - `algonaut::dryrun::DryrunRequestBuilder` for assembling a `DryrunRequest` from signed transactions + compiled or source-text TEAL programs, plus `algonaut::dryrun::result::{first_status, app_call_status, logic_sig_status, overall_status}` helpers
@@ -18,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `algonaut::simulate::SimulateRequestBuilder` plus `SimulateTraceConfigBuilder` — fluent setters that fold the nested `Option<Box<...>>` fields into a chainable API
 - `algonaut::atomic_transaction_composer::AtomicTransactionComposer::{simulate, simulate_with}` for running the composed group against algod's `/v2/transactions/simulate` endpoint. New `AtcSimulateResult` carries the typed `SimulateTransaction200Response` alongside the parsed ABI returns
 - `AtomicTransactionComposerStatus::Simulated` variant (placed between `Signed` and `Submitted` so subsequent `submit()`/`execute()` calls still work after a simulate)
-- ADR collection at `docs/adr/` managed by [`arkouda`](https://github.com/manuelmauro/arkouda); seeded with `cucumber-test-suite-coverage-strategy`, `simulaterequest-model-needs-power-pack-fields`, `atomictransactioncomposer-simulate-convenience`, `teal-source-map-decoder`, `dryrun-request-builder`, and `cucumber-unit-test-scaffolding`
+- `TransactionSigner::Empty` variant — emits the all-zero placeholder signature so the simulator can report unsigned transactions as `signedtxn has no sig`
+- `simulate.feature` is wired up: payment + ATC group simulate scenarios, power-pack toggles, and trace assertions. Two scenarios are gated (`simulate.exec_trace_with_stack_scratch`, `simulate.exec_trace_with_state_change_and_hash`) pending an upstream fix and the `create-and-optin` on-complete combo on `CreateApplication` (#273)
+- Format-aware `Serialize`/`Deserialize` impls on `Address`, `VotePk`, `VrfPk`, `StateProofPk`, `Signature`, `HashDigest`, and `Ed25519PublicKey` — JSON now renders canonical base32/base64 strings while msgpack stays byte-identical. Unblocks the indexer client and other JSON-only endpoints (#272, closes #271)
+- ADR collection at `docs/adr/` managed by [`arkouda`](https://github.com/manuelmauro/arkouda); seeded with `cucumber-test-suite-coverage-strategy`, `simulaterequest-model-needs-power-pack-fields`, `atomictransactioncomposer-simulate-convenience`, `teal-source-map-decoder`, `dryrun-request-builder`, `cucumber-unit-test-scaffolding`, and `domain-types-serialize-for-both-json-and-msgpack`
 - `tests/features_runner.rs` now enumerates every `.feature` file in the algorand-sdk-testing suite (13 integration + 17 unit), gating un-implemented features behind explicit ADR references
 - Drafted upstream tickets in `docs/cucumber-pending-issues.md` ready for `gh issue create`
 - `algonaut_core::StateProofPk` (64-byte BLS public key) plus `algonaut_encoding::U8_64Visitor`
@@ -27,8 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The runner's "v1 only" comment for `algod`/`assets` is replaced with an accurate matrix — both features actually target v2 endpoints and only need step-def coverage
+- **Breaking:** `SimulateRequestTransactionGroup.txns` switches from `Vec<String>` (the OpenAPI placeholder) to `Vec<SignedTransaction>` — algod expects nested `SignedTxn` objects inline (#273)
 - **Breaking:** `algonaut_transaction::RegisterKey::online` now takes a `StateProofPk` argument between `selection_pk` and `vote_first`. v34 consensus rejects online registrations without it
+- `SimulateTransaction200Response.would_succeed` is now `#[serde(default)]`; current sandbox builds omit it on early-error responses
+- `AtomicTransactionComposer::simulate_with` no longer base64-encodes the signed group — it passes the `SignedTransaction`s straight to the request
+- The dryrun msgpack workaround introduced as a stopgap is removed; the generated JSON client serialises the body correctly now that domain types branch on `is_human_readable()`
+- The runner's "v1 only" comment for `algod`/`assets` is replaced with an accurate matrix — both features actually target v2 endpoints and only need step-def coverage
 
 ## [0.5.0] - 2026-05-18
 
