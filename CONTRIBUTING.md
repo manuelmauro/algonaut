@@ -58,6 +58,7 @@ stateDiagram-v2
     kmd --> model
     transaction --> model
     transaction --> abi
+    algod --> transaction
 ```
 
 ## Useful Resources
