@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Account-resource pagination endpoints on `Algod`: `account_apps` (`GET /v2/accounts/{address}/applications`) and `account_assets` (`GET /v2/accounts/{address}/assets`), each accepting `limit`/`next` pagination arguments. New `algonaut_algod` models `AccountApplicationsInformation200Response`, `AccountAssetsInformation200Response`, `AccountApplicationResource`, and `AccountAssetHolding`
 - Ledger state-delta endpoints on `Algod`: `txn_group_state_delta` (`GET /v2/deltas/txn/group/{id}`) and `txn_group_state_deltas_for_round` (`GET /v2/deltas/{round}/txn/group`). New `algonaut_algod` models `GetTransactionGroupLedgerStateDeltasForRound200Response` and `LedgerStateDeltaForTransactionGroup`
 - Node-administration endpoints on `Algod`: `generate_participation_keys` (`POST /v2/participation/generate/{address}`), `config` (`GET /debug/settings/config`), `debug_settings_prof` (`GET /debug/settings/pprof`), and `set_debug_settings_prof` (`PUT /debug/settings/pprof`). New `algonaut_algod` model `DebugSettingsProf`
+- Asynchronous transaction-broadcast endpoint on `Algod`: `send_raw_txn_async`, `send_txn_async`, and `send_txns_async` (`POST /v2/transactions/async`), which submit transactions to the network without ahead-of-time checks and without waiting for a transaction ID
 
 ## [0.6.0] - 2026-05-18
 

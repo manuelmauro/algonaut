@@ -35,6 +35,19 @@ pub enum GetLedgerStateDeltaError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`raw_transaction_async`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum RawTransactionAsyncError {
+    Status400(crate::models::ErrorResponse),
+    Status401(crate::models::ErrorResponse),
+    Status404(),
+    Status500(crate::models::ErrorResponse),
+    Status503(crate::models::ErrorResponse),
+    DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
 pub async fn experimental_check(
     configuration: &configuration::Configuration,
 ) -> Result<(), Error<ExperimentalCheckError>> {
@@ -124,6 +137,57 @@ pub async fn get_ledger_state_delta(
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<GetLedgerStateDeltaError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Broadcasts a raw transaction or transaction group to the network without ahead of time checks.
+pub async fn raw_transaction_async(
+    configuration: &configuration::Configuration,
+    rawtxn: &[u8],
+) -> Result<(), Error<RawTransactionAsyncError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/v2/transactions/async",
+        local_var_configuration.base_path
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+    // TODO check for a better type that implements Into<Body>
+    local_var_req_builder = local_var_req_builder.body(rawtxn.to_vec());
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        Ok(())
+    } else {
+        let local_var_entity: Option<RawTransactionAsyncError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
             status: local_var_status,
