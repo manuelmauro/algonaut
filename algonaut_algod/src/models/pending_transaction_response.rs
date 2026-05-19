@@ -58,12 +58,15 @@ pub struct PendingTransactionResponse {
     pub sender_rewards: Option<u64>,
     /// The raw signed transaction.
     #[serde(rename = "txn")]
-    pub txn: serde_json::Value,
+    pub txn: crate::ext::transaction::TransactionHeader,
 }
 
 impl PendingTransactionResponse {
     /// Details about a pending transaction. If the transaction was recently confirmed, includes confirmation details like the round and reward details.
-    pub fn new(pool_error: String, txn: serde_json::Value) -> PendingTransactionResponse {
+    pub fn new(
+        pool_error: String,
+        txn: crate::ext::transaction::TransactionHeader,
+    ) -> PendingTransactionResponse {
         PendingTransactionResponse {
             application_index: None,
             asset_closing_amount: None,

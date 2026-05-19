@@ -97,7 +97,15 @@ async fn mock_http_responses(w: &mut UnitWorld, jsonfiles: String, directory: St
         .filter(|s| !s.is_empty())
         .expect("no fixture file named");
     let body = load_body(&directory, file);
-    w.response_server = Some(ResponseMockServer::start(body).await);
+    // `*.base64` fixtures hold a base64-encoded *msgpack* body; serve them as
+    // `application/msgpack` so the SDK's content negotiation decodes them with
+    // `rmp_serde`. Everything else (`*.json`, …) is JSON.
+    let content_type = if file.ends_with(".base64") {
+        "application/msgpack"
+    } else {
+        "application/json"
+    };
+    w.response_server = Some(ResponseMockServer::start(body, content_type).await);
 }
 
 // === Algod v2 responses ====================================================
@@ -401,8 +409,7 @@ async fn algod_assert_get_block_pool(w: &mut UnitWorld, pool: String) {
     };
     let actual = resp
         .block
-        .rewards_pool
-        .as_deref()
+        .rewards_pool_base64()
         .expect("block has no rewards pool");
     assert_eq!(actual, pool, "block rewards pool mismatch");
 }
@@ -416,14 +423,28 @@ async fn algod_assert_get_block_header_only(w: &mut UnitWorld, pool: String) {
     };
     let actual = resp
         .block
-        .rewards_pool
-        .as_deref()
+        .rewards_pool_base64()
         .expect("block has no rewards pool");
     assert_eq!(actual, pool, "block rewards pool mismatch");
     assert!(
         resp.block.txns.is_none() || resp.block.txns.as_ref().is_some_and(Vec::is_empty),
         "header-only block should carry no payset"
     );
+}
+
+#[then(regex = r#"^the parsed Get Block response should have heartbeat address "([^"]*)"$"#)]
+async fn algod_assert_get_block_heartbeat(w: &mut UnitWorld, hbaddress: String) {
+    let UnitResponse::Block(resp) = w.last_response.as_ref().expect("no response") else {
+        panic!("last response is not a BlockResponse");
+    };
+    let txns = resp.block.txns.as_ref().expect("block has no payset");
+    let actual = txns
+        .iter()
+        .filter_map(|t| t.txn.as_ref())
+        .find_map(|txn| txn.heartbeat_address())
+        .expect("block payset has no heartbeat transaction")
+        .to_string();
+    assert_eq!(actual, hbaddress, "block heartbeat address mismatch");
 }
 
 #[then(
@@ -456,18 +477,18 @@ async fn algod_assert_dryrun(w: &mut UnitWorld, key: String, action: u64) {
     assert_eq!(entry.value.action, action, "global delta action mismatch");
 }
 
-/// Pull the `snd` (sender) field out of a raw transaction `serde_json::Value`.
+/// Pull the `snd` (sender) base32 address out of a parsed signed transaction.
 ///
-/// The pending-transaction fixtures arrive msgpack-encoded; once parsed into
-/// `serde_json::Value` the sender lives at `txn.snd` as a base32 address
-/// string (the SDK's msgpack decode already address-encodes it).
-fn txn_sender(value: &serde_json::Value) -> String {
-    value
-        .get("txn")
-        .and_then(|t| t.get("snd"))
-        .and_then(|s| s.as_str())
-        .map(str::to_string)
-        .unwrap_or_else(|| panic!("transaction value has no `txn.snd`: {value}"))
+/// The pending-transaction fixtures arrive msgpack-encoded; the SDK decodes
+/// the inner `txn.snd` into an `Address`, which renders as the canonical
+/// base32-checksum string.
+fn txn_sender(header: &algonaut_algod::ext::transaction::TransactionHeader) -> String {
+    header
+        .txn
+        .as_ref()
+        .and_then(|txn| txn.sender())
+        .map(ToString::to_string)
+        .expect("transaction has no `txn.snd`")
 }
 
 // --- Then/And: indexer response assertions ---------------------------------

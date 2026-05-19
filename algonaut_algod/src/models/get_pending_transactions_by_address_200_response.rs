@@ -14,7 +14,7 @@
 pub struct GetPendingTransactionsByAddress200Response {
     /// An array of signed transaction objects.
     #[serde(rename = "top-transactions")]
-    pub top_transactions: Vec<serde_json::Value>,
+    pub top_transactions: Vec<crate::ext::transaction::TransactionHeader>,
     /// Total number of transactions in the pool.
     #[serde(rename = "total-transactions")]
     pub total_transactions: u64,
@@ -23,7 +23,7 @@ pub struct GetPendingTransactionsByAddress200Response {
 impl GetPendingTransactionsByAddress200Response {
     /// PendingTransactions is an array of signed transactions exactly as they were submitted.
     pub fn new(
-        top_transactions: Vec<serde_json::Value>,
+        top_transactions: Vec<crate::ext::transaction::TransactionHeader>,
         total_transactions: u64,
     ) -> GetPendingTransactionsByAddress200Response {
         GetPendingTransactionsByAddress200Response {

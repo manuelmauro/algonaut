@@ -130,12 +130,18 @@ pub struct ResponseMockServer {
 impl ResponseMockServer {
     /// Bind an ephemeral loopback port and start serving `body` (the raw HTTP
     /// response body — already base64-decoded) for every accepted request.
-    pub async fn start(body: Vec<u8>) -> ResponseMockServer {
+    ///
+    /// `content_type` is sent verbatim as the response `Content-Type` header,
+    /// so the SDK's content negotiation picks the right decoder: a `*.base64`
+    /// msgpack fixture is served as `application/msgpack`, a `*.json` fixture
+    /// as `application/json`.
+    pub async fn start(body: Vec<u8>, content_type: &str) -> ResponseMockServer {
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
             .expect("failed to bind response mock server");
         let port = listener.local_addr().expect("no local addr").port();
         let body = Arc::new(body);
+        let content_type = content_type.to_string();
 
         tokio::spawn(async move {
             loop {
@@ -143,6 +149,7 @@ impl ResponseMockServer {
                     continue;
                 };
                 let body = body.clone();
+                let content_type = content_type.clone();
                 tokio::spawn(async move {
                     // Drain the request. The body is irrelevant — we answer
                     // every request identically — but we must read enough to
@@ -161,7 +168,7 @@ impl ResponseMockServer {
                     }
 
                     let header = format!(
-                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\
+                        "HTTP/1.1 200 OK\r\ncontent-type: {content_type}\r\n\
                          content-length: {}\r\n\r\n",
                         body.len()
                     );

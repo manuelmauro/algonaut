@@ -478,11 +478,17 @@ pub async fn get_pending_transactions(
     let local_var_resp = local_var_client.execute(local_var_req).await?;
 
     let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
+    let local_var_content_type = local_var_resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_string);
+    let local_var_body = local_var_resp.bytes().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        crate::apis::decode_response_body(local_var_content_type.as_deref(), &local_var_body)
     } else {
+        let local_var_content = String::from_utf8_lossy(&local_var_body).into_owned();
         let local_var_entity: Option<GetPendingTransactionsError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
@@ -540,11 +546,17 @@ pub async fn get_pending_transactions_by_address(
     let local_var_resp = local_var_client.execute(local_var_req).await?;
 
     let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
+    let local_var_content_type = local_var_resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_string);
+    let local_var_body = local_var_resp.bytes().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        crate::apis::decode_response_body(local_var_content_type.as_deref(), &local_var_body)
     } else {
+        let local_var_content = String::from_utf8_lossy(&local_var_body).into_owned();
         let local_var_entity: Option<GetPendingTransactionsByAddressError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
@@ -595,11 +607,17 @@ pub async fn pending_transaction_information(
     let local_var_resp = local_var_client.execute(local_var_req).await?;
 
     let local_var_status = local_var_resp.status();
-    let local_var_content = local_var_resp.text().await?;
+    let local_var_content_type = local_var_resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_string);
+    let local_var_body = local_var_resp.bytes().await?;
 
     if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
-        serde_json::from_str(&local_var_content).map_err(Error::from)
+        crate::apis::decode_response_body(local_var_content_type.as_deref(), &local_var_body)
     } else {
+        let local_var_content = String::from_utf8_lossy(&local_var_body).into_owned();
         let local_var_entity: Option<PendingTransactionInformationError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {

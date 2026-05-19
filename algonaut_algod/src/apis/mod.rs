@@ -12,6 +12,7 @@ pub struct ResponseContent<T> {
 pub enum Error<T> {
     Reqwest(reqwest::Error),
     Serde(serde_json::Error),
+    Msgpack(rmp_serde::decode::Error),
     Io(std::io::Error),
     ResponseError(ResponseContent<T>),
 }
@@ -21,6 +22,7 @@ impl<T> fmt::Display for Error<T> {
         let (module, e) = match self {
             Error::Reqwest(e) => ("reqwest", e.to_string()),
             Error::Serde(e) => ("serde", e.to_string()),
+            Error::Msgpack(e) => ("msgpack", e.to_string()),
             Error::Io(e) => ("IO", e.to_string()),
             Error::ResponseError(e) => ("response", format!("status code {}", e.status)),
         };
@@ -33,6 +35,7 @@ impl<T: fmt::Debug> error::Error for Error<T> {
         Some(match self {
             Error::Reqwest(e) => e,
             Error::Serde(e) => e,
+            Error::Msgpack(e) => e,
             Error::Io(e) => e,
             Error::ResponseError(_) => return None,
         })
@@ -51,6 +54,12 @@ impl<T> From<serde_json::Error> for Error<T> {
     }
 }
 
+impl<T> From<rmp_serde::decode::Error> for Error<T> {
+    fn from(e: rmp_serde::decode::Error) -> Self {
+        Error::Msgpack(e)
+    }
+}
+
 impl<T> From<std::io::Error> for Error<T> {
     fn from(e: std::io::Error) -> Self {
         Error::Io(e)
@@ -59,6 +68,37 @@ impl<T> From<std::io::Error> for Error<T> {
 
 pub fn urlencode<T: AsRef<str>>(s: T) -> String {
     ::url::form_urlencoded::byte_serialize(s.as_ref().as_bytes()).collect()
+}
+
+/// Decode a successful response body into a typed model, negotiating the
+/// wire format from the response `Content-Type`.
+///
+/// algod can answer with either JSON or msgpack (the latter when the request
+/// carried `format=msgpack`). msgpack response bodies use the same top-level
+/// field names as the generated models' `#[serde(rename = "...")]`, so the
+/// model deserializes from either format unchanged — only the decoder differs.
+///
+/// `application/msgpack` (matched case-insensitively, ignoring any `;`-suffixed
+/// parameters) is decoded with `rmp_serde`; anything else is decoded as JSON.
+pub fn decode_response_body<T, E>(content_type: Option<&str>, body: &[u8]) -> Result<T, Error<E>>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let is_msgpack = content_type
+        .map(|ct| {
+            ct.split(';')
+                .next()
+                .unwrap_or(ct)
+                .trim()
+                .eq_ignore_ascii_case("application/msgpack")
+        })
+        .unwrap_or(false);
+
+    if is_msgpack {
+        rmp_serde::from_slice(body).map_err(Error::from)
+    } else {
+        serde_json::from_slice(body).map_err(Error::from)
+    }
 }
 
 pub fn parse_deep_object(prefix: &str, value: &serde_json::Value) -> Vec<(String, String)> {
