@@ -1,4 +1,4 @@
-use crate::step_defs::unit::mock_server::MockServer;
+use crate::step_defs::unit::mock_server::{MockServer, ResponseMockServer};
 use algonaut::algod::v2::Algod;
 use algonaut::indexer::v2::Indexer;
 use algonaut_core::{Address, MultisigAddress};
@@ -34,4 +34,43 @@ pub struct UnitWorld {
     pub algod: Option<Algod>,
     /// `algonaut` indexer v2 client wired to the mock server.
     pub indexer: Option<Indexer>,
+
+    // --- v2 client response features ------------------------------------
+    /// Canned-response HTTP server the `*_responses` features point the SDK
+    /// clients at. Holds the base64-decoded fixture as the reply body.
+    pub response_server: Option<ResponseMockServer>,
+    /// The `Result` of the last `When we make any <X> call` step, as the
+    /// SDK's error string (or `Ok(())` for a successful call). The parsed
+    /// response value itself is stashed in the typed `last_*` fields below.
+    pub last_call_error: Option<Result<(), String>>,
+    /// Parsed response payloads from the last `When` step, one slot per
+    /// response shape the `Then`/`And` assertions need to inspect.
+    pub last_response: Option<UnitResponse>,
+}
+
+/// The parsed response from the last `*_responses` `When` step. Each variant
+/// holds exactly the typed payload the matching assertion steps read back.
+#[allow(dead_code)]
+#[derive(Debug)]
+pub enum UnitResponse {
+    PendingTransaction(algonaut::openapi_algod::models::PendingTransactionResponse),
+    PendingTransactions(
+        algonaut::openapi_algod::models::GetPendingTransactionsByAddress200Response,
+    ),
+    RawTransaction(algonaut::openapi_algod::models::RawTransaction200Response),
+    Status(algonaut::openapi_algod::models::GetStatus200Response),
+    Supply(algonaut::openapi_algod::models::GetSupply200Response),
+    Account(algonaut::openapi_algod::models::Account),
+    Block(algonaut::openapi_algod::ext::block::BlockResponse),
+    TransactionParams(algonaut::openapi_algod::models::TransactionParams200Response),
+    Dryrun(algonaut::openapi_algod::models::TealDryrun200Response),
+    AssetBalances(algonaut::openapi_indexer::models::LookupAssetBalances200Response),
+    Transactions(algonaut::openapi_indexer::models::LookupAccountTransactions200Response),
+    IndexerBlock(algonaut::openapi_indexer::models::Block),
+    IndexerAccount(algonaut::openapi_indexer::models::LookupAccountById200Response),
+    IndexerAsset(algonaut::openapi_indexer::models::LookupAssetById200Response),
+    Accounts(algonaut::openapi_indexer::models::SearchForAccounts200Response),
+    BlockHeaders(algonaut::openapi_indexer::models::SearchForBlockHeaders200Response),
+    /// `search_for_assets` reuses the `LookupAccountCreatedAssets` shape.
+    SearchAssets(algonaut::openapi_indexer::models::LookupAccountCreatedAssets200Response),
 }

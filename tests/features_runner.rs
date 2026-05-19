@@ -238,9 +238,30 @@ const UNIT_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/unit/v2algodclient_responses.feature",
-        gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
-        excluded_tags: &[],
-        excluded_scenarios: &[],
+        gate: None,
+        // "Get Block response, heartbeat" carries the heartbeat example
+        // tags; the parsed `BlockResponse` has a `Transaction` enum that is
+        // `#[serde(tag = "type")]` with no `hb` variant — and no
+        // `heartbeat address` accessor exists — so neither the JSON nor the
+        // msgpack heartbeat row can pass without an algod-crate change.
+        excluded_tags: &["unit.algod.heartbeat", "unit.algod.heartbeat.msgp"],
+        // Excluded scenarios, each for a concrete capability gap — never an
+        // assertion weakening.
+        // The five excluded scenarios all feed a base64-decoded *msgpack*
+        // HTTP response body to a generated endpoint. The generated
+        // `algonaut_algod` endpoints (`get_block`,
+        // `pending_transaction_information`, `get_pending_transactions`,
+        // `get_pending_transactions_by_address`) unconditionally call
+        // `serde_json::from_str` on the response text, so a msgpack body
+        // fails to parse (`Serde(... "expected value")`). Supporting
+        // msgpack responses would be a generated-crate change.
+        excluded_scenarios: &[
+            "Pending Transaction Information response",
+            "Pending Transactions Information response",
+            "Pending Transactions By Address response",
+            "Get Block response",
+            "Get Block response, header-only",
+        ],
     },
     Feature {
         path: "tests/features/unit/v2indexerclient_paths.feature",
@@ -265,9 +286,37 @@ const UNIT_FEATURES: &[Feature] = &[
     },
     Feature {
         path: "tests/features/unit/v2indexerclient_responses.feature",
-        gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
+        gate: None,
         excluded_tags: &[],
-        excluded_scenarios: &[],
+        // Excluded scenarios, each for a concrete capability gap — never an
+        // assertion weakening. Every excluded fixture predates a field that
+        // the current generated `algonaut_indexer` models mark mandatory,
+        // so `serde_json::from_str` fails before any assertion runs:
+        // - `metadata-hash`: `AssetParams::metadata_hash` is
+        //   `Option<HashDigest>` but its `deserialize_with` lacks a
+        //   `#[serde(default)]`, so an absent field is a hard error.
+        //   Affects "LookupAssetTransactions response",
+        //   "LookupAssetByID response", "SearchForTransactions response",
+        //   "SearchForAssets response" and "SearchForTransactions
+        //   response, rekey-to".
+        // - `total-apps-opted-in`: `Account::total_apps_opted_in` is a
+        //   required `u64`. Affects "LookupAccountByID response",
+        //   "SearchAccounts response" and "SearchForAccounts response,
+        //   authorizing address".
+        // - `transactions-root-sha256`: `Block::transactions_root_sha256`
+        //   is a required field. Affects "LookupBlock response".
+        // Each fix is a generated-crate change, out of scope here.
+        excluded_scenarios: &[
+            "LookupAssetTransactions response",
+            "LookupBlock response",
+            "LookupAccountByID response",
+            "LookupAssetByID response",
+            "SearchAccounts response",
+            "SearchForTransactions response",
+            "SearchForAssets response",
+            "SearchForAccounts response, authorizing address",
+            "SearchForTransactions response, rekey-to",
+        ],
     },
 ];
 

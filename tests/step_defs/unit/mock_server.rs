@@ -110,3 +110,70 @@ fn parse_request_line(buf: &[u8]) -> Option<RecordedRequest> {
     let path = parts.next()?.to_string();
     Some(RecordedRequest { method, path })
 }
+
+/// A mock HTTP server for the **unit** `*_responses` features.
+///
+/// Unlike [`MockServer`], which records the request path and answers with a
+/// throwaway `{}` body, this server is configured *up front* with a canned
+/// response body (the base64-decoded fixture). Every request it accepts is
+/// answered with `200 OK` and that exact body, byte-for-byte — letting the
+/// step-defs assert on the SDK's *parsed* response.
+///
+/// The body is fixed for the server's lifetime; each scenario starts a fresh
+/// server, so there is no per-request state to juggle.
+#[derive(Clone, Debug)]
+pub struct ResponseMockServer {
+    /// `http://127.0.0.1:<port>` base URL the SDK clients are pointed at.
+    pub base_url: String,
+}
+
+impl ResponseMockServer {
+    /// Bind an ephemeral loopback port and start serving `body` (the raw HTTP
+    /// response body — already base64-decoded) for every accepted request.
+    pub async fn start(body: Vec<u8>) -> ResponseMockServer {
+        let listener = TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("failed to bind response mock server");
+        let port = listener.local_addr().expect("no local addr").port();
+        let body = Arc::new(body);
+
+        tokio::spawn(async move {
+            loop {
+                let Ok((mut stream, _)) = listener.accept().await else {
+                    continue;
+                };
+                let body = body.clone();
+                tokio::spawn(async move {
+                    // Drain the request. The body is irrelevant — we answer
+                    // every request identically — but we must read enough to
+                    // let the client finish writing before we reply.
+                    let mut chunk = [0u8; 4096];
+                    for _ in 0..4 {
+                        match stream.read(&mut chunk).await {
+                            Ok(0) => break,
+                            Ok(n) => {
+                                if n < chunk.len() {
+                                    break;
+                                }
+                            }
+                            Err(_) => break,
+                        }
+                    }
+
+                    let header = format!(
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\
+                         content-length: {}\r\n\r\n",
+                        body.len()
+                    );
+                    let _ = stream.write_all(header.as_bytes()).await;
+                    let _ = stream.write_all(&body).await;
+                    let _ = stream.flush().await;
+                });
+            }
+        });
+
+        ResponseMockServer {
+            base_url: format!("http://127.0.0.1:{port}"),
+        }
+    }
+}
