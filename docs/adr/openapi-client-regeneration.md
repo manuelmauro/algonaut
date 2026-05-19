@@ -85,31 +85,34 @@ review-able** process, staged in three phases.
 
 **Phase 2 — drive the regen toward near-lossless.**
 
-Custom templates under `openapi/templates/`, wired through `make
-generate-clients`:
+Custom templates and a preprocessing step under `openapi/`, wired through
+`make generate-clients`:
 
 - `model.mustache` / `reqwest/api.mustache` — every integer (model field,
   `Vec` element, operation parameter) emits `u64`, since Algorand types its
   integers as 64-bit unsigned.
 - `model.mustache` — `format: byte` fields emit `algonaut_encoding::Bytes`
-  instead of `String`. `openapi/preprocess.py` sets an `x-has-bytes` schema
-  flag so the template emits the `use` import only where it is used.
-- `make generate-clients` runs `rustfmt` over the output, so the review diff
-  reflects semantic drift rather than formatting.
+  instead of `String`.
+- `openapi/type-overrides.json` — a per-field table for the domain types the
+  spec cannot express (`HashDigest`, `Vec<SignedTransaction>`, ...).
+  `openapi/preprocess.py` reads it and injects `x-rust-type` / `x-rust-serde`
+  / `x-rust-imports` vendor extensions into the spec, which the template
+  consumes; mustache cannot branch on an `x-algorand-format` *value*, so the
+  decision is made in the preprocessor instead. preprocess.py fails loudly
+  if a table entry stops matching the spec.
+- `make generate-clients` runs `rustfmt` (edition 2024, matching the
+  workspace) over the output, so the review diff reflects semantic drift
+  rather than formatting.
 
-With these, **66 of the 121 common model files regenerate byte-identical**
-to the committed crates (25/57 algod, 41/64 indexer) — measured after
+With these, **77 of the 121 common model files regenerate byte-identical**
+to the committed crates (33/57 algod, 44/64 indexer) — measured after
 formatting, ignoring the generated-header comment.
 
-The remaining ~55 files differ by per-field decisions the spec does not
-encode: the `format: byte` fields the crates narrow to `HashDigest` (with
-`deserialize_opt_hash` serde) or type as `Address` / `SignedTransaction`,
-plus genuinely new upstream models and fields. Distinguishing `HashDigest`
-from `Bytes`, or branching on an `x-algorand-format` *value*, is beyond what
-mustache can express — closing it fully would need a custom generator class
-or a post-generation patch table. Since the regen already serves its purpose
-(drift detection with a review-able diff), that last mile is left as
-documented hand-edits rather than further tooling.
+The remaining ~44 files carry genuinely new upstream models and fields — the
+drift the tool exists to surface — plus a few bespoke per-file hand-edits (a
+renamed field, an extra `skip_serializing_if`) not worth encoding in the
+table. The regen now serves drift detection with a tightly review-able diff;
+the last bespoke edits stay documented hand-edits.
 
 **Phase 3 — adopt upstream changes.**
 
@@ -124,8 +127,11 @@ documented hand-edits rather than further tooling.
   risk and unblocks the later phases.
 - The committed specs add ~460 KB to the repo; that is the pinning mechanism
   and the price of reproducibility.
-- The Phase 2 templates cover every integer and the `Bytes` fields; the
-  `HashDigest` / `Address` / `SignedTransaction` substitutions and their
-  bespoke serde remain as documented hand-edits.
+- The Phase 2 templates and `type-overrides.json` cover every integer, the
+  `Bytes` fields, and the domain-typed fields; only genuinely new upstream
+  content and a few bespoke per-file edits remain in the regen diff.
+- `type-overrides.json` is a maintenance surface: when upstream adds a
+  domain-typed field the regen emits the stock type, the diff reveals it,
+  and a table entry is added.
 - The clients are still behind upstream after Phase 1 — closing that gap is
   deliberately deferred to Phase 3 so the API additions get a focused review.

@@ -103,7 +103,7 @@ generate-clients:
 	  -i /local/openapi/generated/_specs/indexer.oas3.json -o /local/openapi/generated/indexer
 	@echo 'Formatting generated output so the diff reflects only semantic drift...'
 	find openapi/generated/algod openapi/generated/indexer -name '*.rs' \
-	  | xargs rustfmt --edition 2021
+	  | xargs rustfmt --edition 2024
 	@echo 'Regenerated into openapi/generated/. Review drift with e.g.:'
 	@echo '  git diff --no-index openapi/generated/algod/src algonaut_algod/src'
 

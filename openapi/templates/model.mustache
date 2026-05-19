@@ -1,19 +1,23 @@
 {{>partial_header}}
 {{!--
-  algonaut customization of the stock openapi-generator rust `model.mustache`:
-  - every integer/long leaf (scalar or Vec element) is forced to `u64`, since
-    Algorand types its integers as 64-bit unsigned but the specs only carry an
-    explicit `format` on a minority of them;
-  - `format: byte` fields emit `algonaut_encoding::Bytes` instead of `String`,
-    with the `use` guarded by the `x-has-bytes` flag that openapi/preprocess.py
-    sets on each affected schema.
+  algonaut customization of the stock openapi-generator rust `model.mustache`.
+  openapi/preprocess.py injects the vendor extensions consumed here:
+  - x-rust-imports (schema)  -> the `use` lines the model file needs;
+  - x-rust-type (property)   -> an exact Rust type override, for domain types
+    the spec cannot express; takes precedence over the rules below;
+  - x-rust-serde (property)  -> extra `#[serde(..)]` attributes.
+  Absent an override, every integer/long leaf (scalar or Vec element) is
+  forced to `u64`, and `format: byte` fields emit `algonaut_encoding::Bytes`.
   See docs/adr/openapi-client-regeneration.md.
 --}}
 {{#models}}
 {{#model}}
-{{#vendorExtensions.x-has-bytes}}
-use algonaut_encoding::Bytes;
-{{/vendorExtensions.x-has-bytes}}
+{{#vendorExtensions.x-rust-imports}}
+{{{.}}}
+{{/vendorExtensions.x-rust-imports}}
+{{#vendorExtensions.x-rust-imports.0}}
+
+{{/vendorExtensions.x-rust-imports.0}}
 {{#description}}
 /// {{{classname}}} : {{{description}}}
 {{/description}}
@@ -83,8 +87,8 @@ pub struct {{{classname}}} {
     {{#description}}
     /// {{{.}}}
     {{/description}}
-    #[serde(rename = "{{{baseName}}}"{{^required}}{{#isNullable}}, default, with = "::serde_with::rust::double_option"{{/isNullable}}{{/required}}{{^required}}, skip_serializing_if = "Option::is_none"{{/required}}{{#required}}{{#isNullable}}, deserialize_with = "Option::deserialize"{{/isNullable}}{{/required}})]
-    pub {{{name}}}: {{#isNullable}}Option<{{/isNullable}}{{^required}}Option<{{/required}}{{#isEnum}}{{#isArray}}{{#uniqueItems}}std::collections::HashSet<{{/uniqueItems}}{{^uniqueItems}}Vec<{{/uniqueItems}}{{/isArray}}{{{enumName}}}{{#isArray}}>{{/isArray}}{{/isEnum}}{{^isEnum}}{{#isModel}}Box<{{{dataType}}}>{{/isModel}}{{^isModel}}{{#isArray}}Vec<{{#items}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/items}}>{{/isArray}}{{^isArray}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/isArray}}{{/isModel}}{{/isEnum}}{{#isNullable}}>{{/isNullable}}{{^required}}>{{/required}},
+    #[serde(rename = "{{{baseName}}}"{{^required}}{{#isNullable}}, default, with = "::serde_with::rust::double_option"{{/isNullable}}{{/required}}{{^required}}, skip_serializing_if = "Option::is_none"{{/required}}{{#required}}{{#isNullable}}, deserialize_with = "Option::deserialize"{{/isNullable}}{{/required}}{{#vendorExtensions.x-rust-serde}}, {{{vendorExtensions.x-rust-serde}}}{{/vendorExtensions.x-rust-serde}})]
+    pub {{{name}}}: {{#isNullable}}Option<{{/isNullable}}{{^required}}Option<{{/required}}{{#vendorExtensions.x-rust-type}}{{{vendorExtensions.x-rust-type}}}{{/vendorExtensions.x-rust-type}}{{^vendorExtensions.x-rust-type}}{{#isEnum}}{{#isArray}}{{#uniqueItems}}std::collections::HashSet<{{/uniqueItems}}{{^uniqueItems}}Vec<{{/uniqueItems}}{{/isArray}}{{{enumName}}}{{#isArray}}>{{/isArray}}{{/isEnum}}{{^isEnum}}{{#isModel}}Box<{{{dataType}}}>{{/isModel}}{{^isModel}}{{#isArray}}Vec<{{#items}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/items}}>{{/isArray}}{{^isArray}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/isArray}}{{/isModel}}{{/isEnum}}{{/vendorExtensions.x-rust-type}}{{#isNullable}}>{{/isNullable}}{{^required}}>{{/required}},
 {{/vars}}
 }
 
@@ -92,7 +96,7 @@ impl {{{classname}}} {
     {{#description}}
     /// {{{.}}}
     {{/description}}
-    pub fn new({{#requiredVars}}{{{name}}}: {{#isNullable}}Option<{{/isNullable}}{{#isEnum}}{{#isArray}}Vec<{{/isArray}}{{{enumName}}}{{#isArray}}>{{/isArray}}{{/isEnum}}{{^isEnum}}{{#isModel}}{{{dataType}}}{{/isModel}}{{^isModel}}{{#isArray}}Vec<{{#items}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/items}}>{{/isArray}}{{^isArray}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/isArray}}{{/isModel}}{{/isEnum}}{{#isNullable}}>{{/isNullable}}{{^-last}}, {{/-last}}{{/requiredVars}}) -> {{{classname}}} {
+    pub fn new({{#requiredVars}}{{{name}}}: {{#isNullable}}Option<{{/isNullable}}{{#vendorExtensions.x-rust-type}}{{{vendorExtensions.x-rust-type}}}{{/vendorExtensions.x-rust-type}}{{^vendorExtensions.x-rust-type}}{{#isEnum}}{{#isArray}}Vec<{{/isArray}}{{{enumName}}}{{#isArray}}>{{/isArray}}{{/isEnum}}{{^isEnum}}{{#isModel}}{{{dataType}}}{{/isModel}}{{^isModel}}{{#isArray}}Vec<{{#items}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/items}}>{{/isArray}}{{^isArray}}{{#isInteger}}u64{{/isInteger}}{{#isLong}}u64{{/isLong}}{{#isByteArray}}Bytes{{/isByteArray}}{{^isInteger}}{{^isLong}}{{^isByteArray}}{{{dataType}}}{{/isByteArray}}{{/isLong}}{{/isInteger}}{{/isArray}}{{/isModel}}{{/isEnum}}{{/vendorExtensions.x-rust-type}}{{#isNullable}}>{{/isNullable}}{{^-last}}, {{/-last}}{{/requiredVars}}) -> {{{classname}}} {
         {{{classname}}} {
             {{#vars}}
             {{{name}}}{{^required}}{{#isArray}}: None{{/isArray}}{{#isMap}}: None{{/isMap}}{{^isContainer}}: None{{/isContainer}}{{/required}}{{#required}}{{#isModel}}: {{^isNullable}}Box::new({{{name}}}){{/isNullable}}{{#isNullable}}if let Some(x) = {{{name}}} {Some(Box::new(x))} else {None}{{/isNullable}}{{/isModel}}{{/required}},
