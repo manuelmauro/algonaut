@@ -1,3 +1,6 @@
+use crate::step_defs::unit::mock_server::MockServer;
+use algonaut::algod::v2::Algod;
+use algonaut::indexer::v2::Indexer;
 use algonaut_core::{Address, MultisigAddress};
 use algonaut_transaction::{SignedTransaction, Transaction, account::Account};
 use cucumber;
@@ -23,4 +26,12 @@ pub struct UnitWorld {
     pub multisig: Option<MultisigAddress>,
     pub microalgos: Option<u64>,
     pub roundtrip_microalgos: Option<u64>,
+
+    // --- v2 client path features ----------------------------------------
+    /// Recording HTTP server the path features point the SDK clients at.
+    pub mock_server: Option<MockServer>,
+    /// `algonaut` algod v2 client wired to the mock server.
+    pub algod: Option<Algod>,
+    /// `algonaut` indexer v2 client wired to the mock server.
+    pub indexer: Option<Indexer>,
 }
