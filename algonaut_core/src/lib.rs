@@ -36,6 +36,24 @@ impl MicroAlgos {
     pub fn from_millialgos(millialgos: u64) -> Self {
         MicroAlgos(millialgos * 1_000)
     }
+
+    /// Checked addition of two amounts. Returns `None` if the result would
+    /// overflow `u64`.
+    pub fn checked_add(self, rhs: MicroAlgos) -> Option<MicroAlgos> {
+        self.0.checked_add(rhs.0).map(MicroAlgos)
+    }
+
+    /// Checked subtraction of two amounts. Returns `None` if `rhs` is larger
+    /// than `self`.
+    pub fn checked_sub(self, rhs: MicroAlgos) -> Option<MicroAlgos> {
+        self.0.checked_sub(rhs.0).map(MicroAlgos)
+    }
+
+    /// Checked multiplication by a scalar. Returns `None` if the result would
+    /// overflow `u64`.
+    pub fn checked_mul(self, rhs: u64) -> Option<MicroAlgos> {
+        self.0.checked_mul(rhs).map(MicroAlgos)
+    }
 }
 
 impl Add<u64> for MicroAlgos {
@@ -422,5 +440,29 @@ mod tests {
         assert_eq!(&bytes[2..], &[9u8; 64]);
         let parsed: StateProofPk = rmp_serde::from_slice(&bytes).unwrap();
         assert_eq!(pk, parsed);
+    }
+
+    #[test]
+    fn micro_algos_checked_add() {
+        assert_eq!(
+            MicroAlgos(10).checked_add(MicroAlgos(5)),
+            Some(MicroAlgos(15))
+        );
+        assert_eq!(MicroAlgos(u64::MAX).checked_add(MicroAlgos(1)), None);
+    }
+
+    #[test]
+    fn micro_algos_checked_sub() {
+        assert_eq!(
+            MicroAlgos(10).checked_sub(MicroAlgos(4)),
+            Some(MicroAlgos(6))
+        );
+        assert_eq!(MicroAlgos(0).checked_sub(MicroAlgos(1)), None);
+    }
+
+    #[test]
+    fn micro_algos_checked_mul() {
+        assert_eq!(MicroAlgos(7).checked_mul(3), Some(MicroAlgos(21)));
+        assert_eq!(MicroAlgos(u64::MAX).checked_mul(2), None);
     }
 }
