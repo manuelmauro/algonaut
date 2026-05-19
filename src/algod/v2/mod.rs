@@ -4,9 +4,10 @@ use algonaut_algod::{
     apis::configuration::{ApiKey, Configuration},
     ext::block::BlockResponse,
     models::{
-        self, Account, AccountApplicationInformation200Response, Application, Asset, DryrunRequest,
-        GetApplicationBoxes200Response, GetBlockHash200Response, GetBlockLogs200Response,
-        GetBlockTimeStampOffset200Response, GetBlockTxids200Response,
+        self, Account, AccountApplicationInformation200Response,
+        AccountApplicationsInformation200Response, AccountAssetsInformation200Response,
+        Application, Asset, DryrunRequest, GetApplicationBoxes200Response, GetBlockHash200Response,
+        GetBlockLogs200Response, GetBlockTimeStampOffset200Response, GetBlockTxids200Response,
         GetPendingTransactionsByAddress200Response, GetStatus200Response, GetSupply200Response,
         GetSyncRound200Response, GetTransactionProof200Response, LightBlockHeaderProof,
         PendingTransactionResponse, RawTransaction200Response, SimulateRequest,
@@ -59,6 +60,46 @@ impl Algod {
                 address,
                 application_id,
                 None,
+            )
+            .await
+            .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Lookup an account's application holdings (local state and params if the
+    /// account is the creator), paginated by application ID.
+    pub async fn account_apps(
+        &self,
+        address: &str,
+        limit: Option<u64>,
+        next: Option<&str>,
+    ) -> Result<AccountApplicationsInformation200Response, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::account_applications_information(
+                &self.configuration,
+                address,
+                limit,
+                next,
+                None,
+            )
+            .await
+            .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Lookup an account's asset holdings, paginated by asset ID.
+    pub async fn account_assets(
+        &self,
+        address: &str,
+        limit: Option<u64>,
+        next: Option<&str>,
+    ) -> Result<AccountAssetsInformation200Response, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::account_assets_information(
+                &self.configuration,
+                address,
+                limit,
+                next,
             )
             .await
             .map_err(Into::<AlgodError>::into)?,

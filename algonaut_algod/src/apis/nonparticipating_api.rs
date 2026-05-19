@@ -35,10 +35,32 @@ pub enum AccountApplicationInformationError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`account_applications_information`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AccountApplicationsInformationError {
+    Status400(crate::models::ErrorResponse),
+    Status401(crate::models::ErrorResponse),
+    Status500(crate::models::ErrorResponse),
+    DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`account_asset_information`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccountAssetInformationError {
+    Status400(crate::models::ErrorResponse),
+    Status401(crate::models::ErrorResponse),
+    Status500(crate::models::ErrorResponse),
+    DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`account_assets_information`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AccountAssetsInformationError {
     Status400(crate::models::ErrorResponse),
     Status401(crate::models::ErrorResponse),
     Status500(crate::models::ErrorResponse),
@@ -417,6 +439,150 @@ pub async fn account_application_information(
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<AccountApplicationInformationError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Lookup an account's application holdings (local state and params if the account is the creator).
+pub async fn account_applications_information(
+    configuration: &configuration::Configuration,
+    address: &str,
+    limit: Option<u64>,
+    next: Option<&str>,
+    include: Option<Vec<String>>,
+) -> Result<
+    crate::models::AccountApplicationsInformation200Response,
+    Error<AccountApplicationsInformationError>,
+> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/v2/accounts/{address}/applications",
+        local_var_configuration.base_path,
+        address = crate::apis::urlencode(address)
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = limit {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("limit", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = next {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("next", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = include {
+        local_var_req_builder = match "csv" {
+            "multi" => local_var_req_builder.query(
+                &local_var_str
+                    .iter()
+                    .map(|p| ("include".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => local_var_req_builder.query(&[(
+                "include",
+                &local_var_str
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
+    }
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<AccountApplicationsInformationError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Lookup an account's asset holdings.
+pub async fn account_assets_information(
+    configuration: &configuration::Configuration,
+    address: &str,
+    limit: Option<u64>,
+    next: Option<&str>,
+) -> Result<crate::models::AccountAssetsInformation200Response, Error<AccountAssetsInformationError>>
+{
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/v2/accounts/{address}/assets",
+        local_var_configuration.base_path,
+        address = crate::apis::urlencode(address)
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = limit {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("limit", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = next {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("next", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<AccountAssetsInformationError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
             status: local_var_status,
