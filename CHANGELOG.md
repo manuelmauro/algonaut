@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `MicroAlgos::checked_add`, `MicroAlgos::checked_sub`, and `MicroAlgos::checked_mul` — overflow- and underflow-safe arithmetic returning `Option<MicroAlgos>`, so callers no longer need to reach into the inner `u64` (#152)
 
+### Changed
+
+- **Breaking:** `AssetParams.decimals` is now `u32` instead of `u64` in the `algonaut_algod` and `algonaut_indexer` clients, matching Algorand's documentation (the value is bounded to 0..=19). The hand-written `algonaut_transaction`/`algonaut_model` `AssetParams` types already used `u32` (#140)
+
 ## [0.6.0] - 2026-05-18
 
 ### Added

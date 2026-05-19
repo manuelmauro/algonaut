@@ -23,7 +23,7 @@ pub struct AssetParams {
     pub creator: String,
     /// \\[dc\\] The number of digits to use after the decimal point when displaying this asset. If 0, the asset is not divisible. If 1, the base unit of the asset is in tenths. If 2, the base unit of the asset is in hundredths, and so on. This value must be between 0 and 19 (inclusive).
     #[serde(rename = "decimals")]
-    pub decimals: u64,
+    pub decimals: u32,
     /// \\[df\\] Whether holdings of this asset are frozen by default.
     #[serde(rename = "default-frozen", skip_serializing_if = "Option::is_none")]
     pub default_frozen: Option<bool>,
@@ -68,7 +68,7 @@ pub struct AssetParams {
 
 impl AssetParams {
     /// AssetParams specifies the parameters for an asset.  \\[apar\\] when part of an AssetConfig transaction.  Definition: data/transactions/asset.go : AssetParams
-    pub fn new(creator: String, decimals: u64, total: u64) -> AssetParams {
+    pub fn new(creator: String, decimals: u32, total: u64) -> AssetParams {
         AssetParams {
             clawback: None,
             creator,
