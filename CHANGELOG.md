@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Block-introspection endpoints on `Algod`: `block_txids` (`GET /v2/blocks/{round}/txids`), `block_logs` (`GET /v2/blocks/{round}/logs`), `block_timestamp_offset` (`GET /v2/devmode/blocks/offset`), and `set_block_timestamp_offset` (`POST /v2/devmode/blocks/offset/{offset}`). New `algonaut_algod` models `GetBlockTxids200Response`, `GetBlockLogs200Response`, `AppCallLogs`, and `GetBlockTimeStampOffset200Response`
 - Account-resource pagination endpoints on `Algod`: `account_apps` (`GET /v2/accounts/{address}/applications`) and `account_assets` (`GET /v2/accounts/{address}/assets`), each accepting `limit`/`next` pagination arguments. New `algonaut_algod` models `AccountApplicationsInformation200Response`, `AccountAssetsInformation200Response`, `AccountApplicationResource`, and `AccountAssetHolding`
 - Ledger state-delta endpoints on `Algod`: `txn_group_state_delta` (`GET /v2/deltas/txn/group/{id}`) and `txn_group_state_deltas_for_round` (`GET /v2/deltas/{round}/txn/group`). New `algonaut_algod` models `GetTransactionGroupLedgerStateDeltasForRound200Response` and `LedgerStateDeltaForTransactionGroup`
+- Node-administration endpoints on `Algod`: `generate_participation_keys` (`POST /v2/participation/generate/{address}`), `config` (`GET /debug/settings/config`), `debug_settings_prof` (`GET /debug/settings/pprof`), and `set_debug_settings_prof` (`PUT /debug/settings/pprof`). New `algonaut_algod` model `DebugSettingsProf`
 
 ### Changed
 
