@@ -49,6 +49,15 @@ pub enum SearchForAssetsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`search_for_block_headers`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum SearchForBlockHeadersError {
+    Status404(crate::models::SearchForAccounts400Response),
+    Status500(crate::models::SearchForAccounts400Response),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`search_for_transactions`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -343,6 +352,134 @@ pub async fn search_for_assets(
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<SearchForAssetsError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Search for block headers. Block headers are returned in ascending round order. Transactions are not included in the output.
+#[allow(clippy::too_many_arguments)]
+pub async fn search_for_block_headers(
+    configuration: &configuration::Configuration,
+    limit: Option<u64>,
+    next: Option<&str>,
+    min_round: Option<u64>,
+    max_round: Option<u64>,
+    before_time: Option<String>,
+    after_time: Option<String>,
+    proposers: Option<Vec<String>>,
+    expired: Option<Vec<String>>,
+    absent: Option<Vec<String>>,
+) -> Result<crate::models::SearchForBlockHeaders200Response, Error<SearchForBlockHeadersError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/v2/block-headers", local_var_configuration.base_path);
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = limit {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("limit", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = next {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("next", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = min_round {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("min-round", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = max_round {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("max-round", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = before_time {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("before-time", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = after_time {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("after-time", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_str) = proposers {
+        local_var_req_builder = match "csv" {
+            "multi" => local_var_req_builder.query(
+                &local_var_str
+                    .iter()
+                    .map(|p| ("proposers".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => local_var_req_builder.query(&[(
+                "proposers",
+                &local_var_str
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
+    }
+    if let Some(ref local_var_str) = expired {
+        local_var_req_builder = match "csv" {
+            "multi" => local_var_req_builder.query(
+                &local_var_str
+                    .iter()
+                    .map(|p| ("expired".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => local_var_req_builder.query(&[(
+                "expired",
+                &local_var_str
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
+    }
+    if let Some(ref local_var_str) = absent {
+        local_var_req_builder = match "csv" {
+            "multi" => local_var_req_builder.query(
+                &local_var_str
+                    .iter()
+                    .map(|p| ("absent".to_owned(), p.to_string()))
+                    .collect::<Vec<(std::string::String, std::string::String)>>(),
+            ),
+            _ => local_var_req_builder.query(&[(
+                "absent",
+                &local_var_str
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .to_string(),
+            )]),
+        };
+    }
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<SearchForBlockHeadersError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
             status: local_var_status,

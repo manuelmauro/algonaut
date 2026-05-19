@@ -9,6 +9,7 @@ use algonaut_indexer::{
         LookupApplicationById200Response, LookupApplicationLogsById200Response,
         LookupAssetBalances200Response, LookupAssetById200Response, LookupTransaction200Response,
         SearchForAccounts200Response, SearchForApplicationBoxes200Response,
+        SearchForBlockHeaders200Response,
     },
 };
 
@@ -478,6 +479,38 @@ impl Indexer {
         )
         .await
         .map_err(Into::<IndexerError>::into)?)
+    }
+
+    /// Search for block headers. Block headers are returned in ascending round order. Transactions are not included in the output.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn search_for_block_headers(
+        &self,
+        limit: Option<u64>,
+        next: Option<&str>,
+        min_round: Option<u64>,
+        max_round: Option<u64>,
+        before_time: Option<String>,
+        after_time: Option<String>,
+        proposers: Option<Vec<String>>,
+        expired: Option<Vec<String>>,
+        absent: Option<Vec<String>>,
+    ) -> Result<SearchForBlockHeaders200Response, Error> {
+        Ok(
+            algonaut_indexer::apis::search_api::search_for_block_headers(
+                &self.configuration,
+                limit,
+                next,
+                min_round,
+                max_round,
+                before_time,
+                after_time,
+                proposers,
+                expired,
+                absent,
+            )
+            .await
+            .map_err(Into::<IndexerError>::into)?,
+        )
     }
 
     /// Search for transactions. Transactions are returned oldest to newest unless the address parameter is used, in which case results are returned newest to oldest.
