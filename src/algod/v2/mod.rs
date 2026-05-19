@@ -9,10 +9,10 @@ use algonaut_algod::{
         Application, Asset, DryrunRequest, GetApplicationBoxes200Response, GetBlockHash200Response,
         GetBlockLogs200Response, GetBlockTimeStampOffset200Response, GetBlockTxids200Response,
         GetPendingTransactionsByAddress200Response, GetStatus200Response, GetSupply200Response,
-        GetSyncRound200Response, GetTransactionProof200Response, LightBlockHeaderProof,
-        PendingTransactionResponse, RawTransaction200Response, SimulateRequest,
-        SimulateTransaction200Response, StateProof, TealDisassemble200Response,
-        TealDryrun200Response, TransactionParams200Response, Version,
+        GetSyncRound200Response, GetTransactionGroupLedgerStateDeltasForRound200Response,
+        GetTransactionProof200Response, LightBlockHeaderProof, PendingTransactionResponse,
+        RawTransaction200Response, SimulateRequest, SimulateTransaction200Response, StateProof,
+        TealDisassemble200Response, TealDryrun200Response, TransactionParams200Response, Version,
     },
 };
 use algonaut_core::{CompiledTeal, ToMsgPack};
@@ -253,6 +253,36 @@ impl Algod {
         )
         .await
         .map_err(Into::<AlgodError>::into)?)
+    }
+
+    /// Get a ledger delta for a given transaction group, identified by the ID
+    /// of the first transaction in the group.
+    pub async fn txn_group_state_delta(&self, id: &str) -> Result<serde_json::Value, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::get_ledger_state_delta_for_transaction_group(
+                &self.configuration,
+                id,
+                None,
+            )
+            .await
+            .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Get ledger deltas for every transaction group in a given round.
+    pub async fn txn_group_state_deltas_for_round(
+        &self,
+        round: u64,
+    ) -> Result<GetTransactionGroupLedgerStateDeltasForRound200Response, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::get_transaction_group_ledger_state_deltas_for_round(
+                &self.configuration,
+                round,
+                None,
+            )
+            .await
+            .map_err(Into::<AlgodError>::into)?,
+        )
     }
 
     /// Gets a proof for a given light block header inside a state proof commitment.

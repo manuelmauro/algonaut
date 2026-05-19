@@ -201,6 +201,19 @@ pub enum GetLedgerStateDeltaError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_ledger_state_delta_for_transaction_group`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetLedgerStateDeltaForTransactionGroupError {
+    Status401(crate::models::ErrorResponse),
+    Status404(crate::models::ErrorResponse),
+    Status408(crate::models::ErrorResponse),
+    Status500(crate::models::ErrorResponse),
+    Status501(crate::models::ErrorResponse),
+    DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_light_block_header_proof`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -287,6 +300,19 @@ pub enum GetSyncRoundError {
     Status401(crate::models::ErrorResponse),
     Status500(crate::models::ErrorResponse),
     Status503(crate::models::ErrorResponse),
+    DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_transaction_group_ledger_state_deltas_for_round`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetTransactionGroupLedgerStateDeltasForRoundError {
+    Status401(crate::models::ErrorResponse),
+    Status404(crate::models::ErrorResponse),
+    Status408(crate::models::ErrorResponse),
+    Status500(crate::models::ErrorResponse),
+    Status501(crate::models::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -1385,6 +1411,61 @@ pub async fn get_ledger_state_delta(
     }
 }
 
+/// Get a ledger delta for a given transaction group.
+pub async fn get_ledger_state_delta_for_transaction_group(
+    configuration: &configuration::Configuration,
+    id: &str,
+    format: Option<&str>,
+) -> Result<serde_json::Value, Error<GetLedgerStateDeltaForTransactionGroupError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/v2/deltas/txn/group/{id}",
+        local_var_configuration.base_path,
+        id = crate::apis::urlencode(id)
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = format {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("format", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetLedgerStateDeltaForTransactionGroupError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 pub async fn get_light_block_header_proof(
     configuration: &configuration::Configuration,
     round: u64,
@@ -1771,6 +1852,64 @@ pub async fn get_sync_round(
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<GetSyncRoundError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Get ledger deltas for transaction groups in a given round.
+pub async fn get_transaction_group_ledger_state_deltas_for_round(
+    configuration: &configuration::Configuration,
+    round: u64,
+    format: Option<&str>,
+) -> Result<
+    crate::models::GetTransactionGroupLedgerStateDeltasForRound200Response,
+    Error<GetTransactionGroupLedgerStateDeltasForRoundError>,
+> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/v2/deltas/{round}/txn/group",
+        local_var_configuration.base_path,
+        round = round
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = format {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("format", &local_var_str.to_string())]);
+    }
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetTransactionGroupLedgerStateDeltasForRoundError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
             status: local_var_status,
