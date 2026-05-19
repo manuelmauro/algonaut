@@ -6,13 +6,14 @@ use algonaut_algod::{
     models::{
         self, Account, AccountApplicationInformation200Response,
         AccountApplicationsInformation200Response, AccountAssetsInformation200Response,
-        Application, Asset, DryrunRequest, GetApplicationBoxes200Response, GetBlockHash200Response,
-        GetBlockLogs200Response, GetBlockTimeStampOffset200Response, GetBlockTxids200Response,
-        GetPendingTransactionsByAddress200Response, GetStatus200Response, GetSupply200Response,
-        GetSyncRound200Response, GetTransactionGroupLedgerStateDeltasForRound200Response,
-        GetTransactionProof200Response, LightBlockHeaderProof, PendingTransactionResponse,
-        RawTransaction200Response, SimulateRequest, SimulateTransaction200Response, StateProof,
-        TealDisassemble200Response, TealDryrun200Response, TransactionParams200Response, Version,
+        Application, Asset, DebugSettingsProf, DryrunRequest, GetApplicationBoxes200Response,
+        GetBlockHash200Response, GetBlockLogs200Response, GetBlockTimeStampOffset200Response,
+        GetBlockTxids200Response, GetPendingTransactionsByAddress200Response, GetStatus200Response,
+        GetSupply200Response, GetSyncRound200Response,
+        GetTransactionGroupLedgerStateDeltasForRound200Response, GetTransactionProof200Response,
+        LightBlockHeaderProof, PendingTransactionResponse, RawTransaction200Response,
+        SimulateRequest, SimulateTransaction200Response, StateProof, TealDisassemble200Response,
+        TealDryrun200Response, TransactionParams200Response, Version,
     },
 };
 use algonaut_core::{CompiledTeal, ToMsgPack};
@@ -582,6 +583,55 @@ impl Algod {
     pub async fn status_after_block(&self, round: u64) -> Result<GetStatus200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::wait_for_block(&self.configuration, round)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Generate and install participation keys to the node, valid for rounds
+    /// `first` through `last`. Returns the participation ID of the new keys.
+    pub async fn generate_participation_keys(
+        &self,
+        address: &str,
+        first: u64,
+        last: u64,
+        dilution: Option<u64>,
+    ) -> Result<String, Error> {
+        Ok(
+            algonaut_algod::apis::private_api::generate_participation_keys(
+                &self.configuration,
+                address,
+                first,
+                last,
+                dilution,
+            )
+            .await
+            .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Returns the merged (defaults + overrides) node config file as a JSON string.
+    pub async fn config(&self) -> Result<String, Error> {
+        Ok(
+            algonaut_algod::apis::private_api::get_config(&self.configuration)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Retrieves the current settings for blocking and mutex profiles.
+    pub async fn debug_settings_prof(&self) -> Result<DebugSettingsProf, Error> {
+        Ok(
+            algonaut_algod::apis::private_api::get_debug_settings_prof(&self.configuration)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Enables blocking and mutex profiles, and returns the old settings.
+    pub async fn set_debug_settings_prof(&self) -> Result<DebugSettingsProf, Error> {
+        Ok(
+            algonaut_algod::apis::private_api::put_debug_settings_prof(&self.configuration)
                 .await
                 .map_err(Into::<AlgodError>::into)?,
         )

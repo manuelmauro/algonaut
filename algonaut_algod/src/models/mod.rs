@@ -42,6 +42,8 @@ pub mod box_descriptor;
 pub use self::box_descriptor::BoxDescriptor;
 pub mod build_version;
 pub use self::build_version::BuildVersion;
+pub mod debug_settings_prof;
+pub use self::debug_settings_prof::DebugSettingsProf;
 pub mod dryrun_request;
 pub use self::dryrun_request::DryrunRequest;
 pub mod dryrun_source;

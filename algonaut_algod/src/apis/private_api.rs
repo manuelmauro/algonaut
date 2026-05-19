@@ -61,6 +61,33 @@ pub enum DeleteParticipationKeyByIdError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`generate_participation_keys`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GenerateParticipationKeysError {
+    Status400(crate::models::ErrorResponse),
+    Status401(crate::models::ErrorResponse),
+    Status500(crate::models::ErrorResponse),
+    Status503(crate::models::ErrorResponse),
+    DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_config`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetConfigError {
+    DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_debug_settings_prof`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetDebugSettingsProfError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_participation_key_by_id`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -82,6 +109,13 @@ pub enum GetParticipationKeysError {
     Status404(crate::models::ErrorResponse),
     Status500(crate::models::ErrorResponse),
     DefaultResponse(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`put_debug_settings_prof`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PutDebugSettingsProfError {
     UnknownValue(serde_json::Value),
 }
 
@@ -301,6 +335,158 @@ pub async fn delete_participation_key_by_id(
     }
 }
 
+/// Generate and install participation keys to the node.
+pub async fn generate_participation_keys(
+    configuration: &configuration::Configuration,
+    address: &str,
+    first: u64,
+    last: u64,
+    dilution: Option<u64>,
+) -> Result<String, Error<GenerateParticipationKeysError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/v2/participation/generate/{address}",
+        local_var_configuration.base_path,
+        address = crate::apis::urlencode(address)
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::POST, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_str) = dilution {
+        local_var_req_builder =
+            local_var_req_builder.query(&[("dilution", &local_var_str.to_string())]);
+    }
+    local_var_req_builder = local_var_req_builder.query(&[("first", &first.to_string())]);
+    local_var_req_builder = local_var_req_builder.query(&[("last", &last.to_string())]);
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GenerateParticipationKeysError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Returns the merged (defaults + overrides) config file in json.
+pub async fn get_config(
+    configuration: &configuration::Configuration,
+) -> Result<String, Error<GetConfigError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!(
+        "{}/debug/settings/config",
+        local_var_configuration.base_path
+    );
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetConfigError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Retrieves the current settings for blocking and mutex profiles
+pub async fn get_debug_settings_prof(
+    configuration: &configuration::Configuration,
+) -> Result<crate::models::DebugSettingsProf, Error<GetDebugSettingsProfError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/debug/settings/pprof", local_var_configuration.base_path);
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::GET, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<GetDebugSettingsProfError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
 /// Given a participation ID, return information about that participation key
 pub async fn get_participation_key_by_id(
     configuration: &configuration::Configuration,
@@ -386,6 +572,51 @@ pub async fn get_participation_keys(
         serde_json::from_str(&local_var_content).map_err(Error::from)
     } else {
         let local_var_entity: Option<GetParticipationKeysError> =
+            serde_json::from_str(&local_var_content).ok();
+        let local_var_error = ResponseContent {
+            status: local_var_status,
+            content: local_var_content,
+            entity: local_var_entity,
+        };
+        Err(Error::ResponseError(local_var_error))
+    }
+}
+
+/// Enables blocking and mutex profiles, and returns the old settings
+pub async fn put_debug_settings_prof(
+    configuration: &configuration::Configuration,
+) -> Result<crate::models::DebugSettingsProf, Error<PutDebugSettingsProfError>> {
+    let local_var_configuration = configuration;
+
+    let local_var_client = &local_var_configuration.client;
+
+    let local_var_uri_str = format!("{}/debug/settings/pprof", local_var_configuration.base_path);
+    let mut local_var_req_builder =
+        local_var_client.request(reqwest::Method::PUT, local_var_uri_str.as_str());
+
+    if let Some(ref local_var_user_agent) = local_var_configuration.user_agent {
+        local_var_req_builder =
+            local_var_req_builder.header(reqwest::header::USER_AGENT, local_var_user_agent.clone());
+    }
+    if let Some(ref local_var_apikey) = local_var_configuration.api_key {
+        let local_var_key = local_var_apikey.key.clone();
+        let local_var_value = match local_var_apikey.prefix {
+            Some(ref local_var_prefix) => format!("{} {}", local_var_prefix, local_var_key),
+            None => local_var_key,
+        };
+        local_var_req_builder = local_var_req_builder.header("X-Algo-API-Token", local_var_value);
+    };
+
+    let local_var_req = local_var_req_builder.build()?;
+    let local_var_resp = local_var_client.execute(local_var_req).await?;
+
+    let local_var_status = local_var_resp.status();
+    let local_var_content = local_var_resp.text().await?;
+
+    if !local_var_status.is_client_error() && !local_var_status.is_server_error() {
+        serde_json::from_str(&local_var_content).map_err(Error::from)
+    } else {
+        let local_var_entity: Option<PutDebugSettingsProfError> =
             serde_json::from_str(&local_var_content).ok();
         let local_var_error = ResponseContent {
             status: local_var_status,
