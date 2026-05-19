@@ -82,6 +82,45 @@ fn algod_config(w: &UnitWorld) -> algonaut::openapi_algod::apis::configuration::
 
 // --- Then ------------------------------------------------------------------
 
+/// Split a request path into its `(path, query)` halves at the first `?`.
+/// A path with no `?` yields an empty query string.
+fn split_path(p: &str) -> (&str, &str) {
+    match p.split_once('?') {
+        Some((path, query)) => (path, query),
+        None => (p, ""),
+    }
+}
+
+/// Parse a query string into its sorted list of `&`-separated `key=value`
+/// pairs. The pairs are compared raw (still percent-encoded) — both the SDK
+/// and the upstream fixtures encode the same way, so the only difference is
+/// ordering, which RFC 3986 leaves semantically insignificant.
+fn sorted_query_pairs(query: &str) -> Vec<&str> {
+    if query.is_empty() {
+        return Vec::new();
+    }
+    let mut pairs: Vec<&str> = query.split('&').collect();
+    pairs.sort_unstable();
+    pairs
+}
+
+/// Assert that `actual` and `expected` refer to the same request path,
+/// treating the query string as an unordered set of parameters.
+fn assert_path_eq(actual: &str, expected: &str) {
+    let (actual_path, actual_query) = split_path(actual);
+    let (expected_path, expected_query) = split_path(expected);
+    assert_eq!(
+        actual_path, expected_path,
+        "request path mismatch: got `{actual}`, expected `{expected}`"
+    );
+    assert_eq!(
+        sorted_query_pairs(actual_query),
+        sorted_query_pairs(expected_query),
+        "request query-parameter mismatch (order-insensitive): \
+         got `{actual}`, expected `{expected}`"
+    );
+}
+
 #[then(regex = r#"^expect the path used to be "([^"]*)"$"#)]
 async fn expect_path(w: &mut UnitWorld, expected: String) {
     let req = w
@@ -89,7 +128,7 @@ async fn expect_path(w: &mut UnitWorld, expected: String) {
         .as_ref()
         .expect("mock server not started")
         .last_request();
-    assert_eq!(req.path, expected, "request path mismatch");
+    assert_path_eq(&req.path, &expected);
 }
 
 #[then(regex = r#"^expect the request to be "([^"]*)" "([^"]*)"$"#)]
@@ -104,7 +143,7 @@ async fn expect_request(w: &mut UnitWorld, method: String, expected: String) {
         method.to_lowercase(),
         "request method mismatch"
     );
-    assert_eq!(req.path, expected, "request path mismatch");
+    assert_path_eq(&req.path, &expected);
 }
 
 // === Algod v2 paths ========================================================

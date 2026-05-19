@@ -227,27 +227,27 @@ const UNIT_FEATURES: &[Feature] = &[
         path: "tests/features/unit/v2algodclient_paths.feature",
         gate: None,
         excluded_tags: &[],
-        // Excluded scenarios, each for a concrete capability/ordering gap —
-        // never an assertion weakening:
+        // Excluded scenarios, each for a concrete capability gap — never an
+        // assertion weakening. Query-parameter *ordering* is no longer a
+        // reason to exclude: `expect the path used to be` compares the query
+        // string as an unordered set (RFC 3986).
         // - "Get Block, header-only": the generated `get_block` endpoint has
         //   no `header-only` query parameter, so that path cannot be built.
-        // - "Account Applications Information": the upstream fixture expects
-        //   `?include=...&limit=...&next=...` (alphabetical), but the SDK
-        //   emits query parameters in declaration order (`limit`, `next`,
-        //   `include`) and `account_apps` does not surface `include` at all.
+        // - "Account Applications Information": rows 2 and 3 of the fixture
+        //   expect an `include=params` query parameter, but `account_apps`
+        //   does not surface `include` at all (it hard-codes that argument
+        //   to `None`), so those paths cannot be built.
         // - "Pending Transaction Information2" / "Pending Transactions By
-        //   Address" / "GetTransactionProof": when more than one optional
-        //   query parameter is set, the SDK emits them in declaration order
-        //   (`max` before `format`, `hashtype` before `format`) whereas the
-        //   fixture expects alphabetical order. The request is correct on
-        //   the wire — query-string order is HTTP-insignificant — but the
-        //   literal path strings differ.
+        //   Address": the fixture expects `?format=msgpack`, but the
+        //   `Algod::pending_txns` / `Algod::address_pending_txns` wrappers
+        //   hard-code `format=None` and never emit the parameter, so the
+        //   query string is missing `format` entirely (a capability gap,
+        //   not an ordering difference).
         excluded_scenarios: &[
             "Get Block, header-only",
             "Account Applications Information",
             "Pending Transaction Information2",
             "Pending Transactions By Address",
-            "GetTransactionProof",
         ],
     },
     Feature {
@@ -260,32 +260,18 @@ const UNIT_FEATURES: &[Feature] = &[
         path: "tests/features/unit/v2indexerclient_paths.feature",
         gate: None,
         excluded_tags: &[],
-        // Excluded scenarios, each for a concrete capability/ordering gap —
-        // never an assertion weakening:
+        // Excluded scenarios, each for a concrete capability gap — never an
+        // assertion weakening. Query-parameter *ordering* is no longer a
+        // reason to exclude: `expect the path used to be` compares the query
+        // string as an unordered set (RFC 3986).
         // - "SearchAccounts path with OnlineOnly": the indexer client has no
         //   `online-only` parameter, so that path cannot be built.
-        // - All others: when a scenario sets more than one query parameter,
-        //   the SDK emits them in its declaration order whereas the upstream
-        //   fixture expects strict alphabetical order (e.g. `limit` before
-        //   `currency-greater-than`, `min-round` before `max-round`). The
-        //   requests are correct on the wire — query-string order is
-        //   HTTP-insignificant — but the literal path strings differ, so we
-        //   exclude rather than weaken the assertion. `SearchForTransactions
-        //   path` additionally exercises a `group-id` parameter the client
-        //   does not expose. The `"unit.indexer::"` qualifier pins the
-        //   exclusion to the `@unit.indexer` "SearchAccounts path" outline,
-        //   leaving the identically-named `@unit.indexer.ledger_refactoring`
-        //   one (which passes) live.
+        // - "SearchForTransactions path": one row exercises a `group-id`
+        //   query parameter that `search_for_transactions` does not expose,
+        //   so that path cannot be built.
         excluded_scenarios: &[
-            "LookupAssetBalances path",
-            "LookupAssetTransactions path",
-            "LookupAccountTransactions path",
-            "unit.indexer::SearchAccounts path",
             "SearchAccounts path with OnlineOnly",
             "SearchForTransactions path",
-            "SearchForBlockHeaders path",
-            "SearchAccounts path for rekey",
-            "LookupApplicationLogsByID path",
         ],
     },
     Feature {
