@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `MicroAlgos::checked_add`, `MicroAlgos::checked_sub`, and `MicroAlgos::checked_mul` — overflow- and underflow-safe arithmetic returning `Option<MicroAlgos>`, so callers no longer need to reach into the inner `u64` (#152)
+- Block-introspection endpoints on `Algod`: `block_txids` (`GET /v2/blocks/{round}/txids`), `block_logs` (`GET /v2/blocks/{round}/logs`), `block_timestamp_offset` (`GET /v2/devmode/blocks/offset`), and `set_block_timestamp_offset` (`POST /v2/devmode/blocks/offset/{offset}`). New `algonaut_algod` models `GetBlockTxids200Response`, `GetBlockLogs200Response`, `AppCallLogs`, and `GetBlockTimeStampOffset200Response`
 
 ## [0.6.0] - 2026-05-18
 
