@@ -466,6 +466,33 @@ impl Algod {
         self.send_raw_txn(&bytes.concat()).await
     }
 
+    /// Broadcasts a raw transaction or transaction group to the network without
+    /// performing ahead-of-time checks. Returns as soon as the request is
+    /// accepted, without a transaction ID.
+    pub async fn send_raw_txn_async(&self, rawtxn: &[u8]) -> Result<(), Error> {
+        Ok(
+            algonaut_algod::apis::public_api::raw_transaction_async(&self.configuration, rawtxn)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Broadcasts a transaction to the network without ahead-of-time checks.
+    pub async fn send_txn_async(&self, txn: &SignedTransaction) -> Result<(), Error> {
+        self.send_raw_txn_async(&txn.to_msg_pack()?).await
+    }
+
+    /// Broadcasts a transaction group to the network without ahead-of-time checks.
+    ///
+    /// Atomic if the transactions share a [group](algonaut_transaction::transaction::Transaction::group)
+    pub async fn send_txns_async(&self, txns: &[SignedTransaction]) -> Result<(), Error> {
+        let mut bytes = vec![];
+        for t in txns {
+            bytes.push(t.to_msg_pack()?);
+        }
+        self.send_raw_txn_async(&bytes.concat()).await
+    }
+
     /// Sets the minimum sync round on the ledger.
     pub async fn sync(&self, round: u64) -> Result<(), Error> {
         Ok(
