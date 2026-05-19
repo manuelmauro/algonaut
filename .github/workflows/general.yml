@@ -14,8 +14,30 @@ env:
   RUSTFLAGS: -D warnings
 
 jobs:
+  # Gate the build jobs: a docs-only change skips them. Skipped jobs report
+  # their check as "skipped", which branch protection treats as passing — so
+  # the required checks stay green without burning a full CI run. (Workflow
+  # level `paths-ignore` cannot be used: it would leave required checks stuck
+  # in a pending "Expected" state forever.)
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+
   cargo-fmt:
     name: cargo-fmt
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +48,8 @@ jobs:
 
   cargo-check:
     name: cargo-check
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +59,8 @@ jobs:
 
   cargo-check-wasm:
     name: cargo-check-wasm
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +74,8 @@ jobs:
 
   cargo-clippy:
     name: cargo-clippy
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +87,8 @@ jobs:
 
   cargo-test:
     name: cargo-test
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,6 +98,8 @@ jobs:
 
   cargo-test-integration:
     name: cargo-test-integration
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
