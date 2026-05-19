@@ -5,7 +5,8 @@ use algonaut_algod::{
     ext::block::BlockResponse,
     models::{
         self, Account, AccountApplicationInformation200Response, Application, Asset, DryrunRequest,
-        GetApplicationBoxes200Response, GetBlockHash200Response,
+        GetApplicationBoxes200Response, GetBlockHash200Response, GetBlockLogs200Response,
+        GetBlockTimeStampOffset200Response, GetBlockTxids200Response,
         GetPendingTransactionsByAddress200Response, GetStatus200Response, GetSupply200Response,
         GetSyncRound200Response, GetTransactionProof200Response, LightBlockHeaderProof,
         PendingTransactionResponse, RawTransaction200Response, SimulateRequest,
@@ -147,6 +148,49 @@ impl Algod {
             algonaut_algod::apis::public_api::get_block_hash(&self.configuration, round)
                 .await
                 .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Get all of the logs from outer and inner app calls in the given round.
+    pub async fn block_logs(&self, round: u64) -> Result<GetBlockLogs200Response, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::get_block_logs(&self.configuration, round)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Get the top level transaction IDs for the block on the given round.
+    pub async fn block_txids(&self, round: u64) -> Result<GetBlockTxids200Response, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::get_block_txids(&self.configuration, round)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Get the current timestamp offset.
+    pub async fn block_timestamp_offset(
+        &self,
+    ) -> Result<GetBlockTimeStampOffset200Response, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::get_block_time_stamp_offset(&self.configuration)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
+    }
+
+    /// Set the timestamp offset (seconds) for blocks in dev mode. Providing an
+    /// offset of 0 will unset this value and try to use the real clock for the
+    /// timestamp.
+    pub async fn set_block_timestamp_offset(&self, offset: u64) -> Result<(), Error> {
+        Ok(
+            algonaut_algod::apis::public_api::set_block_time_stamp_offset(
+                &self.configuration,
+                offset,
+            )
+            .await
+            .map_err(Into::<AlgodError>::into)?,
         )
     }
 
