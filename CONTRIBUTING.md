@@ -22,12 +22,15 @@ We are very happy to accept code contributions too! Please address issues in our
 Before submitting your pull request to the repository, please make sure you have done the following things first:
 
 1. You have ensured the pull request is based on a recent version of your respective branch.
-2. You have processed your source code with the code formatter.
-   1. `cargo fmt --all -- --check`
-3. All of the following commands completed without errors or warnings.
-   1. `cargo test --workspace --lib --examples --test test_logic_signature`
-   2. `cargo clippy -- -D warnings`
-   3. `make docker-test`
+2. `make ci` completes without errors or warnings. It runs, in order:
+   1. `make fmt-check` — `cargo fmt --all -- --check`
+   2. `make clippy` — `cargo clippy --workspace --all-targets -- -D warnings`
+   3. `make test` — `cargo test --workspace --lib --examples --tests`
+   4. `make check-integration` — compile-checks the cucumber runner
+   5. `make build` — `cargo build --workspace`
+
+   The `lefthook` pre-commit hook runs `make ci` for you; install it with `make setup`.
+3. If your change affects behaviour covered by the cucumber integration suite, you have run it against a local Algorand sandbox. See [Running the test suite](./README.md#running-the-test-suite) for how to boot the harness (`make harness`) and run the runner (`make integration`); `make docker-test` runs the whole flow in Docker.
 
 ## Writing Documentation
 
