@@ -81,17 +81,6 @@ cargo run --example quickstart
 
 If you see `Error: NotPresent`, your environment variables aren't set — `cp examples.env .env` and edit as needed.
 
-## Running the test suite
-
-```bash
-make setup           # rustfmt + clippy + lefthook hooks
-make ci              # fmt-check, clippy, unit tests, build, integration compile-check
-./test-harness.sh up # boot a local algorand sandbox (ports 60000/60001/60002)
-make integration     # run the cucumber suite against the sandbox
-```
-
-See `docs/adr/` for the architectural decisions behind the cross-SDK cucumber wiring, the simulate / dryrun builders, the V3 source-map decoder, and the dual-format (`JSON`/msgpack) domain-type serialization.
-
 ## Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md).

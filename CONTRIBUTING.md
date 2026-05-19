@@ -6,7 +6,9 @@
   - [Submitting Issues](#submitting-issues)
   - [Pull Requests](#pull-requests)
     - [Submission Checklist](#submission-checklist)
+  - [Running the test suite](#running-the-test-suite)
   - [Writing Documentation](#writing-documentation)
+  - [Dependency Diagram](#dependency-diagram)
   - [Useful Resources](#useful-resources)
 
 ## Submitting Issues
@@ -22,12 +24,26 @@ We are very happy to accept code contributions too! Please address issues in our
 Before submitting your pull request to the repository, please make sure you have done the following things first:
 
 1. You have ensured the pull request is based on a recent version of your respective branch.
-2. You have processed your source code with the code formatter.
-   1. `cargo fmt --all -- --check`
-3. All of the following commands completed without errors or warnings.
-   1. `cargo test --workspace --lib --examples --test test_logic_signature`
-   2. `cargo clippy -- -D warnings`
-   3. `make docker-test`
+2. `make ci` completes without errors or warnings. It runs, in order:
+   1. `make fmt-check` — `cargo fmt --all -- --check`
+   2. `make clippy` — `cargo clippy --workspace --all-targets -- -D warnings`
+   3. `make test` — `cargo test --workspace --lib --examples --tests`
+   4. `make check-integration` — compile-checks the cucumber runner
+   5. `make build` — `cargo build --workspace`
+
+   The `lefthook` pre-commit hook runs `make ci` for you; install it with `make setup`.
+3. If your change affects behaviour covered by the cucumber integration suite, you have run it against a local Algorand sandbox. See [Running the test suite](#running-the-test-suite) below; `make docker-test` runs the whole flow in Docker.
+
+## Running the test suite
+
+```bash
+make setup           # rustfmt + clippy + lefthook hooks
+make ci              # fmt-check, clippy, unit tests, build, integration compile-check
+./test-harness.sh up # boot a local algorand sandbox (ports 60000/60001/60002)
+make integration     # run the cucumber suite against the sandbox
+```
+
+See `docs/adr/` for the architectural decisions behind the cross-SDK cucumber wiring, the simulate / dryrun builders, the V3 source-map decoder, and the dual-format (`JSON`/msgpack) domain-type serialization.
 
 ## Writing Documentation
 
