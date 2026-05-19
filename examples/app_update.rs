@@ -1,4 +1,5 @@
 use algonaut::algod::v2::Algod;
+use algonaut::core::AppId;
 use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::UpdateApplication;
@@ -47,7 +48,7 @@ int 1
         &params,
         UpdateApplication::new(
             alice.address(),
-            5,
+            AppId(5),
             compiled_approval_program,
             compiled_clear_program,
         )

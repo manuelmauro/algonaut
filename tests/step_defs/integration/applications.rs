@@ -1,6 +1,7 @@
 use crate::step_defs::integration::world::World;
 use crate::step_defs::util::{parse_app_args, read_teal, split_addresses, split_uint64};
 use algonaut_algod::models::{Application, ApplicationLocalState};
+use algonaut_core::{AppId, AssetId};
 use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,
     UpdateApplication,
@@ -42,8 +43,14 @@ async fn i_build_an_application_transaction(
 
     let accounts = split_addresses(app_accounts)?;
 
-    let foreign_apps = split_uint64(&foreign_apps)?;
-    let foreign_assets = split_uint64(&foreign_assets)?;
+    let foreign_apps: Vec<AppId> = split_uint64(&foreign_apps)?
+        .into_iter()
+        .map(AppId)
+        .collect();
+    let foreign_assets: Vec<AssetId> = split_uint64(&foreign_assets)?
+        .into_iter()
+        .map(AssetId)
+        .collect();
 
     let params = algod.txn_params().await?;
 
@@ -154,11 +161,11 @@ async fn i_build_an_application_transaction(
 async fn i_remember_the_new_application_id(w: &mut World) {
     let algod = w.algod.as_ref().unwrap();
     let tx_id = w.tx_id.as_ref().unwrap();
-    let app_ids: &mut Vec<u64> = w.app_ids.as_mut();
+    let app_ids: &mut Vec<AppId> = w.app_ids.as_mut();
 
-    let p_tx = algod.pending_txn(tx_id).await.unwrap();
+    let p_tx = algod.pending_txn(tx_id.as_str()).await.unwrap();
     assert!(p_tx.application_index.is_some());
-    let app_id = p_tx.application_index.unwrap();
+    let app_id = AppId(p_tx.application_index.unwrap());
 
     w.app_id = Some(app_id);
     app_ids.push(app_id);
@@ -196,7 +203,7 @@ async fn the_transient_account_should_have(
         .created_apps
         .unwrap()
         .iter()
-        .any(|a| a.id == app_id);
+        .any(|a| a.id == app_id.0);
 
     match (app_created, app_in_account) {
         (true, false) => Err(format!("AppId {} is not found in the account", app_id))?,
@@ -218,7 +225,7 @@ async fn the_transient_account_should_have(
                 .apps_local_state
                 .unwrap()
                 .into_iter()
-                .filter(|s| s.id == app_id)
+                .filter(|s| s.id == app_id.0)
                 .collect::<Vec<ApplicationLocalState>>();
 
             let len = local_state.len();
@@ -237,7 +244,7 @@ async fn the_transient_account_should_have(
                 .created_apps
                 .unwrap()
                 .into_iter()
-                .filter(|s| s.id == app_id)
+                .filter(|s| s.id == app_id.0)
                 .collect::<Vec<Application>>();
 
             let len = apps.len();

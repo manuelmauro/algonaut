@@ -3,7 +3,7 @@ use crate::step_defs::{
     util::{account_from_kmd_response, wait_for_pending_transaction},
 };
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
-use algonaut_core::{Address, MicroAlgos};
+use algonaut_core::{Address, MicroAlgos, TxId};
 use algonaut_transaction::{Pay, TxnBuilder};
 use cucumber::{given, then, when};
 use rand::Rng;
@@ -174,7 +174,7 @@ async fn i_sign_and_submit_the_transaction_saving_the_tx_id_if_there_is_an_error
 
     match algod.send_txn(&s_tx).await {
         Ok(response) => {
-            w.tx_id = Some(response.tx_id);
+            w.tx_id = Some(TxId(response.tx_id));
         }
         Err(e) => {
             assert!(e.to_string().contains(&err));
@@ -189,7 +189,7 @@ async fn i_wait_for_the_transaction_to_be_confirmed(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
     let tx_id = w.tx_id.as_ref().expect("tx id not set");
 
-    wait_for_pending_transaction(&algod, &tx_id)
+    wait_for_pending_transaction(&algod, tx_id.as_str())
         .await
         .expect("couldn't get pending tx");
 }

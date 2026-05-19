@@ -1,5 +1,5 @@
 use algonaut::algod::v2::Algod;
-use algonaut::core::{LogicSignature, MicroAlgos, MultisigAddress};
+use algonaut::core::{LogicSignature, MicroAlgos, MultisigAddress, TxId};
 use algonaut::transaction::transaction::TransactionSignature;
 use algonaut::transaction::{Pay, SignedTransaction};
 use algonaut::transaction::{TxnBuilder, account::Account};
@@ -68,7 +68,7 @@ int 1
     info!("signing transaction");
     let signed_t = SignedTransaction {
         transaction: t,
-        transaction_id: "".to_owned(),
+        transaction_id: TxId::default(),
         sig,
         auth_address: None,
     };

@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `algonaut_indexer` no longer fails to deserialize valid responses that omit a field the generated models marked mandatory. `Account`'s `total-*` count fields and the `genesis-hash` / `metadata-hash` / `transactions-root-sha256` fields on `Transaction`, `Block`, and `AssetParams` gained `#[serde(default)]`, so an absent value decodes (counts to `0`, optional hashes to `None`) instead of erroring. This brings `v2indexerclient_responses.feature` fully live (13/13 scenarios, none excluded)
 
+### Changed
+
+- **Breaking:** introduced the `algonaut_core::{AppId, AssetId, TxId}` newtypes and adopted them across the hand-written crates for full type safety. `AppId`/`AssetId` wrap `u64` and `TxId` wraps `String`; all three serialize transparently (wire-identical to the bare value). Application and asset ids — and transaction ids — in the transaction builders (`UpdateAsset`, `DestroyAsset`, `TransferAsset`, `AcceptAsset`, `ClawbackAsset`, `FreezeAsset`, `CreateApplication`, `UpdateApplication`, `CallApplication`, `OptInApplication`, `ClearApplication`, `CloseApplication`, `DeleteApplication`), the `Transaction`/`SignedTransaction` types and `Transaction::id`, the `algonaut_model` API transaction models, the `algonaut_abi::AbiContractNetworkInfo` type, and the `AtomicTransactionComposer` (`AddMethodCallParams::app_id`, `AbiMethodResult::tx_id`) now use these newtypes instead of bare `u64`/`String`. Wrap literals with `AppId(..)`/`AssetId(..)`/`TxId(..)` or use `.into()`; unwrap at generated-crate boundaries with `id.0` / `u64::from(id)` / `txid.as_str()` (#160)
+
 ## [0.6.0] - 2026-05-18
 
 ### Added

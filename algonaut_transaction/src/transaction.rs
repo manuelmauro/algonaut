@@ -5,6 +5,7 @@ use algonaut_core::SuggestedTransactionParams;
 use algonaut_core::ToMsgPack;
 use algonaut_core::TransactionTypeEnum;
 use algonaut_core::{Address, MultisigSignature};
+use algonaut_core::{AppId, AssetId, TxId};
 use algonaut_core::{MicroAlgos, Round, StateProofPk, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
@@ -99,8 +100,8 @@ impl Transaction {
         Ok(HashDigest(hashed.into()))
     }
 
-    pub fn id(&self) -> Result<String, TransactionError> {
-        Ok(BASE32_NOPAD.encode(&self.raw_id()?.0))
+    pub fn id(&self) -> Result<TxId, TransactionError> {
+        Ok(TxId(BASE32_NOPAD.encode(&self.raw_id()?.0)))
     }
 
     pub fn assign_group_id(&mut self, group_id: HashDigest) {
@@ -211,7 +212,7 @@ pub struct AssetConfigurationTransaction {
     /// For re-configure or destroy transactions, this is the unique asset ID. On asset creation,
     /// the ID is set to zero.
     /// NOTE: Algorand's REST documentation seems incorrect. The ID has to be not set for creation to work.
-    pub config_asset: Option<u64>,
+    pub config_asset: Option<AssetId>,
 }
 
 /// This is used to create or configure an asset.
@@ -266,7 +267,7 @@ pub struct AssetTransferTransaction {
     pub sender: Address,
 
     /// The unique ID of the asset to be transferred.
-    pub xfer: u64,
+    pub xfer: AssetId,
 
     /// The amount of the asset to be transferred. A zero amount transferred to self allocates that
     /// asset in the account's Asset map.
@@ -287,7 +288,7 @@ pub struct AssetAcceptTransaction {
     pub sender: Address,
 
     /// The unique ID of the asset to be transferred.
-    pub xfer: u64,
+    pub xfer: AssetId,
 }
 
 /// This is a special form of an Asset Transfer Transaction.
@@ -297,7 +298,7 @@ pub struct AssetClawbackTransaction {
     pub sender: Address,
 
     /// The unique ID of the asset to be transferred.
-    pub xfer: u64,
+    pub xfer: AssetId,
 
     /// The amount of the asset to be transferred.
     pub asset_amount: u64,
@@ -323,7 +324,7 @@ pub struct AssetFreezeTransaction {
     pub freeze_account: Address,
 
     /// The asset ID being frozen or unfrozen.
-    pub asset_id: u64,
+    pub asset_id: AssetId,
 
     /// True to freeze the asset.
     pub frozen: bool,
@@ -335,7 +336,7 @@ pub struct ApplicationCallTransaction {
     pub sender: Address,
 
     /// ID of the application being configured or empty if creating.
-    pub app_id: Option<u64>,
+    pub app_id: Option<AppId>,
 
     /// Defines what additional actions occur with the transaction. See the OnComplete section of
     /// the TEAL spec for details.
@@ -361,11 +362,11 @@ pub struct ApplicationCallTransaction {
 
     /// Lists the applications in addition to the application-id whose global states may be accessed
     /// by this application's approval-program and clear-state-program. The access is read-only.
-    pub foreign_apps: Option<Vec<u64>>,
+    pub foreign_apps: Option<Vec<AppId>>,
 
     /// Lists the assets whose AssetParams may be accessed by this application's approval-program and
     /// clear-state-program. The access is read-only.
-    pub foreign_assets: Option<Vec<u64>>,
+    pub foreign_assets: Option<Vec<AssetId>>,
 
     /// Holds the maximum number of global state values defined within a StateSchema object.
     pub global_state_schema: Option<StateSchema>,
@@ -383,7 +384,7 @@ pub struct ApplicationCallTransaction {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BoxReference {
     /// The ID of the application that this box belongs to
-    pub app_id: Option<u64>,
+    pub app_id: Option<AppId>,
 
     /// The name of the box as bytes
     pub name: Vec<u8>,
@@ -434,7 +435,7 @@ pub struct StateSchema {
 #[derive(Clone, Debug, PartialEq)]
 pub struct SignedTransaction {
     pub transaction: Transaction,
-    pub transaction_id: String,
+    pub transaction_id: TxId,
     pub sig: TransactionSignature,
     pub auth_address: Option<Address>,
 }

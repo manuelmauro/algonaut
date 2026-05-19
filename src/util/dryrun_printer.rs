@@ -3,7 +3,7 @@ use algonaut_algod::models::{
     Application, ApplicationParams, ApplicationStateSchema, DryrunRequest, DryrunState,
     DryrunTxnResult, TealValue,
 };
-use algonaut_core::{Address, to_app_address};
+use algonaut_core::{Address, AppId, AssetId, to_app_address};
 use algonaut_encoding::Bytes;
 use algonaut_transaction::{
     SignedTransaction, TransactionType,
@@ -38,8 +38,8 @@ pub async fn create_dryrun_with_settings(
     let mut acct_infos = vec![];
 
     // These are populated from the transactions passed
-    let mut apps = HashSet::new();
-    let mut assets = HashSet::new();
+    let mut apps: HashSet<AppId> = HashSet::new();
+    let mut assets: HashSet<AssetId> = HashSet::new();
     let mut accts = HashSet::new();
 
     for signed_tx in signed_txs {
@@ -48,7 +48,7 @@ pub async fn create_dryrun_with_settings(
         if let TransactionType::ApplicationCallTransaction(app_call) = &tx.txn_type {
             if let Some(app_id) = app_call.app_id {
                 apps.insert(app_id);
-                accts.insert(to_app_address(app_id));
+                accts.insert(to_app_address(app_id.0));
             } else {
                 // Prepare and set param fields for Application being created
                 app_infos.push(to_application(app_call, &tx.sender()))
@@ -68,12 +68,12 @@ pub async fn create_dryrun_with_settings(
     }
 
     for asset_id in assets {
-        let asset = algod.asset(asset_id).await?;
+        let asset = algod.asset(asset_id.0).await?;
         accts.insert(asset.params.creator.parse().unwrap());
     }
 
     for app_id in apps {
-        let app = algod.app(app_id).await?;
+        let app = algod.app(app_id.0).await?;
         accts.insert(app.params.creator.parse().unwrap());
         app_infos.push(app);
     }

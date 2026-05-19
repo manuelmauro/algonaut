@@ -1,5 +1,5 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
-use algonaut_core::{MicroAlgos, MultisigAddress, Round, StateProofPk, VotePk, VrfPk};
+use algonaut_core::{MicroAlgos, MultisigAddress, Round, StateProofPk, TxId, VotePk, VrfPk};
 use algonaut_transaction::{
     Pay, RegisterKey, SignedTransaction, TxnBuilder, transaction::TransactionSignature,
 };
@@ -139,7 +139,7 @@ async fn i_send_the_transaction(w: &mut World) {
 
     match algod.send_txn(signed).await {
         Ok(resp) => {
-            w.tx_id = Some(resp.tx_id);
+            w.tx_id = Some(TxId(resp.tx_id));
             w.last_send_succeeded = Some(true);
         }
         Err(_) => {

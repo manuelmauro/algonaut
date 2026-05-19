@@ -3,6 +3,7 @@ mod tests {
     use crate::abi_interactions::{
         AbiContract, AbiContractNetworkInfo, AbiInterface, AbiMethod, AbiMethodArg, AbiReturn,
     };
+    use algonaut_core::AppId;
 
     #[test]
     fn test_encode_json_method() {
@@ -187,7 +188,7 @@ mod tests {
             },
         };
 
-        let network = AbiContractNetworkInfo { app_id: 123 };
+        let network = AbiContractNetworkInfo { app_id: AppId(123) };
 
         let contract = AbiContract {
             name: "contract".to_owned(),
@@ -232,7 +233,7 @@ mod tests {
             },
         };
 
-        let network = AbiContractNetworkInfo { app_id: 123 };
+        let network = AbiContractNetworkInfo { app_id: AppId(123) };
 
         let contract = AbiContract {
             name: "contract".to_owned(),
@@ -376,7 +377,7 @@ mod tests {
                 description: Some("example description".to_owned()),
                 networks: [(
                     "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=".to_owned(),
-                    AbiContractNetworkInfo { app_id: 10 }
+                    AbiContractNetworkInfo { app_id: AppId(10) }
                 )]
                 .into(),
                 methods

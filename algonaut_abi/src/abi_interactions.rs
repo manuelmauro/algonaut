@@ -1,6 +1,6 @@
 use super::abi_type::AbiType;
 use crate::abi_error::AbiError;
-use algonaut_core::{TransactionTypeEnum, error::CoreError};
+use algonaut_core::{AppId, TransactionTypeEnum, error::CoreError};
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::{collections::HashMap, convert::TryInto};
@@ -376,7 +376,7 @@ pub struct AbiInterface {
 pub struct AbiContractNetworkInfo {
     /// The application ID of the contract for this network
     #[serde(rename = "appID")]
-    pub app_id: u64,
+    pub app_id: AppId,
 }
 
 /// Represents an ABI contract, which is a concrete set of methods implemented by a single app

@@ -12,7 +12,7 @@ use algonaut_algod::models::{
     PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
     SimulateTransaction200Response, TransactionParams200Response,
 };
-use algonaut_core::{Address, CompiledTeal, MicroAlgos};
+use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, TxId};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
     SignedTransaction, Transaction, TransactionType, TxnBuilder,
@@ -56,7 +56,7 @@ pub struct TransactionWithSigner {
 #[derive(Debug, Clone)]
 pub struct AbiMethodResult {
     /// The TxID of the transaction that invoked the ABI method call.
-    pub tx_id: String,
+    pub tx_id: TxId,
     /// Information about the confirmed transaction that invoked the ABI method call.
     pub tx_info: PendingTransactionResponse,
     /// The method's return value
@@ -75,7 +75,7 @@ pub enum AbiMethodReturnValue {
 /// Contains the parameters for the method AtomicTransactionComposer.AddMethodCall
 pub struct AddMethodCallParams {
     /// The ID of the smart contract to call. Set this to 0 to indicate an application creation call.
-    pub app_id: u64,
+    pub app_id: AppId,
     /// The method to call on the smart contract
     pub method: AbiMethod,
     /// The arguments to include in the method call. If omitted, no arguments will be passed to the method.
@@ -452,7 +452,7 @@ impl AtomicTransactionComposer {
     fn get_txs_ids(&self) -> Vec<String> {
         self.signed_txs
             .iter()
-            .map(|t| t.transaction_id.clone())
+            .map(|t| t.transaction_id.0.clone())
             .collect()
     }
 
@@ -487,8 +487,8 @@ impl AtomicTransactionComposer {
             }
         }
 
-        let tx_id = &self.signed_txs[index_to_wait].transaction_id;
-        let pending_tx = wait_for_pending_transaction(algod, tx_id).await?;
+        let tx_id = self.signed_txs[index_to_wait].transaction_id.clone();
+        let pending_tx = wait_for_pending_transaction(algod, tx_id.as_str()).await?;
 
         let mut return_list: Vec<AbiMethodResult> = vec![];
 
@@ -505,7 +505,7 @@ impl AtomicTransactionComposer {
             if i != index_to_wait {
                 let tx_id = self.signed_txs[i].transaction_id.clone();
 
-                match algod.pending_txn(&tx_id).await {
+                match algod.pending_txn(tx_id.as_str()).await {
                     Ok(p) => {
                         current_tx_id = tx_id;
                         current_pending_tx = p;
@@ -603,7 +603,7 @@ impl AtomicTransactionComposer {
 
 fn get_return_value_with_return_type(
     pending_tx: &PendingTransactionResponse,
-    tx_id: &str, // our txn in PendingTransaction currently has no fields, so the tx id is passed separately
+    tx_id: &TxId, // our txn in PendingTransaction currently has no fields, so the tx id is passed separately
     return_type: AbiReturnType,
 ) -> Result<AbiMethodResult, Error> {
     let return_value = match return_type {
@@ -698,14 +698,14 @@ fn add_ref_arg_to_method_call(
     arg_value: &AbiArgValue,
 
     foreign_accounts: &mut Vec<Address>,
-    foreign_assets: &mut Vec<u64>,
-    foreign_apps: &mut Vec<u64>,
+    foreign_assets: &mut Vec<AssetId>,
+    foreign_apps: &mut Vec<AppId>,
 
     method_types: &mut Vec<AbiType>,
     method_args: &mut Vec<AbiValue>,
 
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
 ) -> Result<(), Error> {
     let index = add_to_foreign_array(
         arg_type,
@@ -729,10 +729,10 @@ fn add_to_foreign_array(
     arg_type: &ReferenceArgType,
     arg_value: &AbiArgValue,
     foreign_accounts: &mut Vec<Address>,
-    foreign_assets: &mut Vec<u64>,
-    foreign_apps: &mut Vec<u64>,
+    foreign_assets: &mut Vec<AssetId>,
+    foreign_apps: &mut Vec<AppId>,
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
 ) -> Result<usize, Error> {
     match arg_type {
         ReferenceArgType::Account => match arg_value.address() {
@@ -751,7 +751,11 @@ fn add_to_foreign_array(
                     AbiError::Msg(format!("big int: {int} couldn't be converted to u64"))
                 })?;
 
-                Ok(populate_foreign_array(intu64, foreign_assets, None))
+                Ok(populate_foreign_array(
+                    AssetId(intu64),
+                    foreign_assets,
+                    None,
+                ))
             }
             _ => Err(Error::Msg(format!(
                 "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
@@ -763,7 +767,11 @@ fn add_to_foreign_array(
                     AbiError::Msg(format!("big int: {int} couldn't be converted to u64"))
                 })?;
 
-                Ok(populate_foreign_array(intu64, foreign_apps, Some(app_id)))
+                Ok(populate_foreign_array(
+                    AppId(intu64),
+                    foreign_apps,
+                    Some(app_id),
+                ))
             }
             _ => Err(Error::Msg(format!(
                 "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
