@@ -85,13 +85,22 @@ review-able** process, staged in three phases.
 
 **Phase 2 — drive the regen toward near-lossless.**
 
-- Add a custom model mustache template that maps format-less integers to
-  `u64` and reads `x-algorand-format` to emit the algonaut domain types
-  (`Address`, `SignedTransaction`, `CompiledTeal`, `HashDigest`/`Bytes`).
-- Move the remaining hand-written extensions into `ext/` modules so the
-  generated files contain no bespoke logic.
-- Goal: `make generate-clients` produces a diff against the committed crates
-  small enough to review by eye.
+*Phase 2a (done).* Custom `model.mustache` and `reqwest/api.mustache`
+templates under `openapi/templates/` force every integer — scalar, array
+element, and operation parameter — to `u64`, since Algorand types its
+integers as 64-bit unsigned. With the integer dimension removed, **86 of the
+121 common model files regenerate byte-identical** to the committed crates
+(41/57 algod, 45/64 indexer).
+
+*Phase 2b (next).* The bulk of the remaining residual is the domain-type
+substitution — `format: byte` / `x-algorand-format` fields that the crates
+hand-type as `HashDigest`, `Bytes`, `Address`, `SignedTransaction`. Mustache
+cannot branch on a vendor extension's *value*, so this needs either a custom
+generator class or a post-generation patch step driven by the spec's
+`x-algorand-format`. The remaining hand-written extensions then move into
+`ext/` modules so the generated files carry no bespoke logic.
+
+Goal: `make generate-clients` produces a diff small enough to review by eye.
 
 **Phase 3 — adopt upstream changes.**
 
@@ -106,8 +115,8 @@ review-able** process, staged in three phases.
   risk and unblocks the later phases.
 - The committed specs add ~460 KB to the repo; that is the pinning mechanism
   and the price of reproducibility.
-- `typeMappings` covers integers that carry an explicit `format`; format-less
-  integers and the domain-type substitutions remain hand-applied until the
-  Phase 2 template lands.
+- The Phase 2a templates cover every integer; the domain-type substitutions
+  (`HashDigest`, `Bytes`, `Address`, `SignedTransaction`) are the main
+  remaining residual and are addressed in Phase 2b.
 - The clients are still behind upstream after Phase 1 — closing that gap is
   deliberately deferred to Phase 3 so the API additions get a focused review.

@@ -94,9 +94,11 @@ fetch-openapi-specs:
 generate-clients:
 	docker run --rm -v "$(CURDIR)":/local $(OPENAPI_IMAGE) generate \
 	  -c /local/openapi/config-algod.yaml --skip-validate-spec \
+	  -t /local/openapi/templates \
 	  -i /local/openapi/specs/algod.oas3.json -o /local/openapi/generated/algod
 	docker run --rm -v "$(CURDIR)":/local $(OPENAPI_IMAGE) generate \
 	  -c /local/openapi/config-indexer.yaml --skip-validate-spec \
+	  -t /local/openapi/templates \
 	  -i /local/openapi/specs/indexer.oas3.json -o /local/openapi/generated/indexer
 	@echo 'Regenerated into openapi/generated/. Review drift with e.g.:'
 	@echo '  git diff --no-index openapi/generated/algod/src algonaut_algod/src'
