@@ -37,7 +37,12 @@ impl TxnHeader {
     /// Combine this header with the suggested params and a type-specific
     /// `txn_type` to produce a finished [`Transaction`]. Used by every
     /// per-type builder's terminal `build(&params)`.
-    pub(crate) fn into_transaction(
+    ///
+    /// Named `apply` rather than `into_transaction` because the latter
+    /// reads like an `Into`-trait method (`fn into_X(self) -> X`), which
+    /// this is not — it takes two extra arguments and can never be that
+    /// trait.
+    pub(crate) fn apply(
         self,
         params: &impl TransactionParams,
         txn_type: TransactionType,
@@ -147,7 +152,7 @@ impl Pay {
             amount: self.amount,
             close_remainder_to: self.close_remainder_to,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -232,7 +237,7 @@ impl RegisterKey {
             state_proof_key: self.state_proof_key,
             nonparticipating: self.nonparticipating,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -333,7 +338,7 @@ impl CreateAsset {
                     clawback: self.clawback,
                 }),
             });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -451,7 +456,7 @@ impl UpdateAsset {
                     clawback: self.clawback,
                 }),
             });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -480,7 +485,7 @@ impl DestroyAsset {
                 config_asset: Some(self.asset_id),
                 params: None,
             });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -521,7 +526,7 @@ impl TransferAsset {
             receiver: self.receiver,
             close_to: self.close_to,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -548,7 +553,7 @@ impl AcceptAsset {
             sender: self.sender,
             xfer: self.asset_id,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -598,7 +603,7 @@ impl ClawbackAsset {
             asset_receiver: self.asset_receiver,
             asset_close_to: self.asset_close_to,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -631,7 +636,7 @@ impl FreezeAsset {
             asset_id: self.asset_id,
             frozen: self.frozen,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -723,7 +728,7 @@ impl CreateApplication {
             extra_pages: self.extra_pages,
             boxes: self.boxes,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -805,7 +810,7 @@ impl UpdateApplication {
             extra_pages: 0,
             boxes: self.boxes,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -878,7 +883,7 @@ impl CallApplication {
             extra_pages: 0,
             boxes: self.boxes,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -951,7 +956,7 @@ impl ClearApplication {
             extra_pages: 0,
             boxes: self.boxes,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -1024,7 +1029,7 @@ impl CloseApplication {
             extra_pages: 0,
             boxes: self.boxes,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -1097,7 +1102,7 @@ impl DeleteApplication {
             extra_pages: 0,
             boxes: self.boxes,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 
@@ -1170,7 +1175,7 @@ impl OptInApplication {
             extra_pages: 0,
             boxes: self.boxes,
         });
-        self.header.into_transaction(params, txn_type)
+        self.header.apply(params, txn_type)
     }
 }
 

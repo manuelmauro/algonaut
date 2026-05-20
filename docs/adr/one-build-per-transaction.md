@@ -86,15 +86,21 @@ reader looking for `Pay::note` finds it via `rustdoc`, IDE
 auto-complete, and `rg '\.note\('` without needing to know the trait
 exists.
 
-### `TxnHeader::into_transaction`
+### `TxnHeader::apply`
 
 Each builder's new `build(&params)` finishes by calling
-`self.header.into_transaction(params, txn_type)`, the helper that
-formerly lived inside `TxnBuilder::build_tx`. It applies the suggested
-params (`first_valid` = `last_round`, `last_valid` = `last_round +
-1000`, `fee` defaults to `min_fee`, `genesis_id` falls back to params)
-and returns the `Transaction`. `pub(crate)` — only the per-type
-builders and the atomic-transaction-composer need it.
+`self.header.apply(params, txn_type)`, the helper that formerly lived
+inside `TxnBuilder::build_tx`. It applies the suggested params
+(`first_valid` = `last_round`, `last_valid` = `last_round + 1000`,
+`fee` defaults to `min_fee`, `genesis_id` falls back to params) and
+returns the `Transaction`. `pub(crate)` — only the per-type builders
+and the atomic-transaction-composer need it.
+
+The name matters: an `into_transaction(self, ...) -> Transaction`
+reads like a Rust `Into`-trait method (`fn into_X(self) -> X`), but
+this signature takes two extra arguments and can never be that trait.
+`apply` describes the operation — "apply this header against params +
+txn_type" — without making a promise the type signature won't keep.
 
 ### The composer
 
@@ -103,10 +109,10 @@ builders and the atomic-transaction-composer need it.
 `TxnBuilder::with_fee(&params, fee, app_call).rekey_to(...)...build()?`.
 After this change, the same construction happens inline (the
 `Transaction` struct's fields are `pub`), using the same `last_round +
-1000` shape `TxnHeader::into_transaction` uses. The composer does not
-go through any per-type builder because its `AddMethodCallParams` is
-the union of every application-call variant — the `MethodCall`
-fluent builder (D6) is the eventual replacement for that path.
+1000` shape `TxnHeader::apply` uses. The composer does not go through
+any per-type builder because its `AddMethodCallParams` is the union of
+every application-call variant — the `MethodCall` fluent builder (D6)
+is the eventual replacement for that path.
 
 ## Consequences
 
