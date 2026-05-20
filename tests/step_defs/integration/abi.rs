@@ -12,7 +12,7 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
 };
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::{Address, AppId, MicroAlgos, to_app_address};
+use algonaut_core::{Address, AppId, MicroAlgos, TxId};
 use algonaut_transaction::{
     Pay, TxnBuilder,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
@@ -411,18 +411,12 @@ async fn add_method_call(
     let extra_pages = extra_pages.unwrap_or(0);
 
     let global_schema = match (global_ints, global_bytes) {
-        (Some(ints), Some(bytes)) => Some(StateSchema {
-            number_ints: ints,
-            number_byteslices: bytes,
-        }),
+        (Some(ints), Some(bytes)) => Some(StateSchema::new(ints, bytes)),
         _ => None,
     };
 
     let local_schema = match (local_ints, local_bytes) {
-        (Some(ints), Some(bytes)) => Some(StateSchema {
-            number_ints: ints,
-            number_byteslices: bytes,
-        }),
+        (Some(ints), Some(bytes)) => Some(StateSchema::new(ints, bytes)),
         _ => None,
     };
 
@@ -872,7 +866,7 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
 
     let first_account = accounts[0];
 
-    let app_address = to_app_address(app_id.0);
+    let app_address = app_id.address();
 
     let tx_params = algod.txn_params().await.expect("couldn't get params");
 
@@ -893,7 +887,8 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
         .await
         .expect("couldn't send tx");
 
-    let _ = wait_for_pending_transaction(algod, &res.tx_id);
+    let tx_id: TxId = res.tx_id.into();
+    let _ = wait_for_pending_transaction(algod, &tx_id);
 }
 
 #[given(regex = r#"^I reset the array of application IDs to remember\.$"#)]

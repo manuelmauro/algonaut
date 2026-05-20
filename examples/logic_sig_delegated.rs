@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::{LogicSignature, MicroAlgos, TxId};
 use algonaut::transaction::transaction::TransactionSignature;
 use algonaut::transaction::{Pay, SignedTransaction};
@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 int 1
 "#
             .as_bytes(),
-            None,
+            SourceMap::Skip,
         )
         .await?;
 

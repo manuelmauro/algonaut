@@ -179,9 +179,8 @@ async fn i_delete_the_key(w: &mut World) -> Result<(), Error> {
     let addr = w
         .generated_kmd_address
         .as_ref()
-        .expect("generated kmd address not set")
-        .to_string();
-    kmd.delete_key(handle, password, &addr).await?;
+        .expect("generated kmd address not set");
+    kmd.delete_key(handle, password, addr).await?;
     Ok(())
 }
 
@@ -208,9 +207,8 @@ async fn i_can_get_account_information(w: &mut World) -> Result<(), Error> {
     let addr = w
         .generated_kmd_address
         .as_ref()
-        .expect("generated kmd address not set")
-        .to_string();
-    algod.account(&addr).await?;
+        .expect("generated kmd address not set");
+    algod.account(addr).await?;
     Ok(())
 }
 
@@ -250,7 +248,7 @@ async fn the_private_key_should_be_equal_to_the_exported_private_key(
         "exported seed differs from generated seed"
     );
     // Clean up so the wallet doesn't accumulate keys across runs.
-    kmd.delete_key(handle, password, &account.address().to_string())
+    kmd.delete_key(handle, password, &account.address())
         .await
         .ok();
     Ok(())
@@ -321,9 +319,7 @@ async fn i_export_the_multisig(w: &mut World) -> Result<(), Error> {
     let kmd = w.kmd.as_ref().expect("kmd not set");
     let handle = w.handle.as_ref().expect("wallet handle not set");
     let msig = w.multisig.as_ref().expect("multisig not set");
-    let resp = kmd
-        .export_multisig(handle, &msig.address().to_string())
-        .await?;
+    let resp = kmd.export_multisig(handle, &msig.address()).await?;
     w.exported_multisig_pks = Some(resp.pks);
     Ok(())
 }
@@ -347,7 +343,7 @@ async fn i_delete_the_multisig(w: &mut World) -> Result<(), Error> {
     let handle = w.handle.as_ref().expect("wallet handle not set");
     let password = w.password.as_ref().expect("wallet password not set");
     let msig = w.multisig.as_ref().expect("multisig not set");
-    kmd.delete_multisig(handle, password, &msig.address().to_string())
+    kmd.delete_multisig(handle, password, &msig.address())
         .await?;
     Ok(())
 }

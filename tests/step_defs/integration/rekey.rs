@@ -1,5 +1,5 @@
 use crate::step_defs::{integration::world::World, util::wait_for_pending_transaction};
-use algonaut_core::{Address, MicroAlgos};
+use algonaut_core::{Address, MicroAlgos, TxId};
 use algonaut_transaction::{Pay, TxnBuilder, account::Account};
 use cucumber::{given, when};
 use std::error::Error;
@@ -30,7 +30,8 @@ async fn i_generate_a_key_using_kmd_for_rekeying_and_fund_it(
     .build()?;
     let signed = funder_account.sign_transaction(tx)?;
     let resp = algod.send_txn(&signed).await?;
-    wait_for_pending_transaction(algod, &resp.tx_id).await?;
+    let tx_id: TxId = resp.tx_id.into();
+    wait_for_pending_transaction(algod, &tx_id).await?;
 
     w.rekey_target = Some(new_addr);
     Ok(())

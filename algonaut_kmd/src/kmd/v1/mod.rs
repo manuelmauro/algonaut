@@ -312,7 +312,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<DeleteKeyResponse, ClientError> {
         let req = DeleteKeyRequest {
             wallet_handle_token: wallet_handle.to_string(),
@@ -432,7 +432,7 @@ impl Client {
     pub async fn export_multisig(
         &self,
         wallet_handle: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<ExportMultisigResponse, ClientError> {
         let req = ExportMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),
@@ -457,7 +457,7 @@ impl Client {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<DeleteMultisigResponse, ClientError> {
         let req = DeleteMultisigRequest {
             wallet_handle_token: wallet_handle.to_string(),

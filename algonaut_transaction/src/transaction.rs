@@ -430,6 +430,24 @@ pub struct StateSchema {
     pub number_byteslices: u64,
 }
 
+impl StateSchema {
+    /// A schema with `number_ints` integer slots and `number_byteslices`
+    /// byte-slice slots.
+    pub fn new(number_ints: u64, number_byteslices: u64) -> Self {
+        Self {
+            number_ints,
+            number_byteslices,
+        }
+    }
+
+    /// The all-zero schema — i.e. "this application has no global / local
+    /// state of this kind." Spares the four `StateSchema { number_ints: 0,
+    /// number_byteslices: 0 }` literals that the examples write.
+    pub fn empty() -> Self {
+        Self::new(0, 0)
+    }
+}
+
 /// Wraps a transaction in a signature. The encoding of this struct is suitable to be broadcast
 /// on the network
 #[derive(Clone, Debug, PartialEq)]

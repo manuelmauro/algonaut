@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::Pay;
 use algonaut::transaction::TxnBuilder;
@@ -31,7 +31,7 @@ byte 0xFF
 &&
 "#
             .as_bytes(),
-            None,
+            SourceMap::Skip,
         )
         .await?;
 

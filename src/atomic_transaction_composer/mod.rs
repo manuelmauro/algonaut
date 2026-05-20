@@ -21,7 +21,7 @@ use algonaut_transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
         to_tx_type_enum,
     },
-    tx_group::TxGroup,
+    tx_group,
 };
 use data_encoding::BASE64;
 use num_bigint::BigUint;
@@ -396,7 +396,7 @@ impl AtomicTransactionComposer {
             for tx in self.txs.iter_mut() {
                 group_txs.push(&mut tx.tx);
             }
-            TxGroup::assign_group_id(&mut group_txs)?;
+            tx_group::assign_in_place(&mut group_txs)?;
         }
 
         self.status = AtomicTransactionComposerStatus::Built;
@@ -488,7 +488,7 @@ impl AtomicTransactionComposer {
         }
 
         let tx_id = self.signed_txs[index_to_wait].transaction_id.clone();
-        let pending_tx = wait_for_pending_transaction(algod, tx_id.as_str()).await?;
+        let pending_tx = wait_for_pending_transaction(algod, &tx_id).await?;
 
         let mut return_list: Vec<AbiMethodResult> = vec![];
 
@@ -505,7 +505,7 @@ impl AtomicTransactionComposer {
             if i != index_to_wait {
                 let tx_id = self.signed_txs[i].transaction_id.clone();
 
-                match algod.pending_txn(tx_id.as_str()).await {
+                match algod.pending_txn(&tx_id).await {
                     Ok(p) => {
                         current_tx_id = tx_id;
                         current_pending_tx = p;

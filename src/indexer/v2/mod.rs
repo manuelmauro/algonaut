@@ -1,5 +1,6 @@
 use self::error::IndexerError;
 use crate::Error;
+use algonaut_core::{Address, AppId, AssetId, TxId};
 use algonaut_indexer::{
     apis::configuration::{ApiKey, Configuration},
     models::{
@@ -54,8 +55,8 @@ impl Indexer {
     /// Lookup an account's asset holdings, optionally for a specific ID.
     pub async fn lookup_account_app_local_states(
         &self,
-        account_id: &str,
-        application_id: Option<u64>,
+        address: &Address,
+        app_id: Option<AppId>,
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
@@ -63,8 +64,8 @@ impl Indexer {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_app_local_states(
                 &self.configuration,
-                account_id,
-                application_id,
+                &address.to_string(),
+                app_id.map(|a| a.0),
                 include_all,
                 limit,
                 next,
@@ -77,16 +78,16 @@ impl Indexer {
     /// Lookup an account's asset holdings, optionally for a specific ID.
     pub async fn lookup_account_assets(
         &self,
-        account_id: &str,
-        asset_id: Option<u64>,
+        address: &Address,
+        asset_id: Option<AssetId>,
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
     ) -> Result<LookupAccountAssets200Response, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_account_assets(
             &self.configuration,
-            account_id,
-            asset_id,
+            &address.to_string(),
+            asset_id.map(|a| a.0),
             include_all,
             limit,
             next,
@@ -98,14 +99,14 @@ impl Indexer {
     /// Lookup account information.
     pub async fn lookup_account_by_id(
         &self,
-        account_id: &str,
+        address: &Address,
         round: Option<u64>,
         include_all: Option<bool>,
         exclude: Option<Vec<String>>,
     ) -> Result<LookupAccountById200Response, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_account_by_id(
             &self.configuration,
-            account_id,
+            &address.to_string(),
             round,
             include_all,
             exclude,
@@ -117,8 +118,8 @@ impl Indexer {
     /// Lookup an account's created application parameters, optionally for a specific ID.
     pub async fn lookup_account_created_applications(
         &self,
-        account_id: &str,
-        application_id: Option<u64>,
+        address: &Address,
+        app_id: Option<AppId>,
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
@@ -126,8 +127,8 @@ impl Indexer {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_created_applications(
                 &self.configuration,
-                account_id,
-                application_id,
+                &address.to_string(),
+                app_id.map(|a| a.0),
                 include_all,
                 limit,
                 next,
@@ -140,8 +141,8 @@ impl Indexer {
     /// Lookup an account's created asset parameters, optionally for a specific ID.
     pub async fn lookup_account_created_assets(
         &self,
-        account_id: &str,
-        asset_id: Option<u64>,
+        address: &Address,
+        asset_id: Option<AssetId>,
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
@@ -149,8 +150,8 @@ impl Indexer {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_created_assets(
                 &self.configuration,
-                account_id,
-                asset_id,
+                &address.to_string(),
+                asset_id.map(|a| a.0),
                 include_all,
                 limit,
                 next,
@@ -164,17 +165,17 @@ impl Indexer {
     #[allow(clippy::too_many_arguments)]
     pub async fn lookup_account_transactions(
         &self,
-        account_id: &str,
+        address: &Address,
         limit: Option<u64>,
         next: Option<&str>,
         note_prefix: Option<&str>,
         tx_type: Option<&str>,
         sig_type: Option<&str>,
-        txid: Option<&str>,
+        txid: Option<&TxId>,
         round: Option<u64>,
         min_round: Option<u64>,
         max_round: Option<u64>,
-        asset_id: Option<u64>,
+        asset_id: Option<AssetId>,
         before_time: Option<String>,
         after_time: Option<String>,
         currency_greater_than: Option<u64>,
@@ -184,17 +185,17 @@ impl Indexer {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_transactions(
                 &self.configuration,
-                account_id,
+                &address.to_string(),
                 limit,
                 next,
                 note_prefix,
                 tx_type,
                 sig_type,
-                txid,
+                txid.map(TxId::as_str),
                 round,
                 min_round,
                 max_round,
-                asset_id,
+                asset_id.map(|a| a.0),
                 before_time,
                 after_time,
                 currency_greater_than,
@@ -209,13 +210,13 @@ impl Indexer {
     /// Given an application ID and box name, returns base64 encoded box name and value. Box names must be in the goal app call arg form 'encoding:value'. For ints, use the form 'int:1234'. For raw bytes, encode base 64 and use 'b64' prefix as in 'b64:A=='. For printable strings, use the form 'str:hello'. For addresses, use the form 'addr:XYZ...'.
     pub async fn lookup_application_box_by_id_and_name(
         &self,
-        application_id: u64,
+        app_id: AppId,
         name: &str,
     ) -> Result<algonaut_indexer::models::Box, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_application_box_by_id_and_name(
                 &self.configuration,
-                application_id,
+                app_id.0,
                 name,
             )
             .await
@@ -226,13 +227,13 @@ impl Indexer {
     /// Lookup application.
     pub async fn lookup_application_by_id(
         &self,
-        application_id: u64,
+        app_id: AppId,
         include_all: Option<bool>,
     ) -> Result<LookupApplicationById200Response, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_application_by_id(
                 &self.configuration,
-                application_id,
+                app_id.0,
                 include_all,
             )
             .await
@@ -244,10 +245,10 @@ impl Indexer {
     #[allow(clippy::too_many_arguments)]
     pub async fn lookup_application_logs_by_id(
         &self,
-        application_id: u64,
+        app_id: AppId,
         limit: Option<u64>,
         next: Option<&str>,
-        txid: Option<&str>,
+        txid: Option<&TxId>,
         min_round: Option<u64>,
         max_round: Option<u64>,
         sender_address: Option<&str>,
@@ -255,10 +256,10 @@ impl Indexer {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_application_logs_by_id(
                 &self.configuration,
-                application_id,
+                app_id.0,
                 limit,
                 next,
-                txid,
+                txid.map(TxId::as_str),
                 min_round,
                 max_round,
                 sender_address,
@@ -271,7 +272,7 @@ impl Indexer {
     /// Lookup the list of accounts who hold this asset
     pub async fn lookup_asset_balances(
         &self,
-        asset_id: u64,
+        asset_id: AssetId,
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
@@ -280,7 +281,7 @@ impl Indexer {
     ) -> Result<LookupAssetBalances200Response, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_asset_balances(
             &self.configuration,
-            asset_id,
+            asset_id.0,
             include_all,
             limit,
             next,
@@ -294,12 +295,12 @@ impl Indexer {
     /// Lookup asset information.
     pub async fn lookup_asset_by_id(
         &self,
-        asset_id: u64,
+        asset_id: AssetId,
         include_all: Option<bool>,
     ) -> Result<LookupAssetById200Response, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_asset_by_id(
             &self.configuration,
-            asset_id,
+            asset_id.0,
             include_all,
         )
         .await
@@ -310,13 +311,13 @@ impl Indexer {
     #[allow(clippy::too_many_arguments)]
     pub async fn lookup_asset_transactions(
         &self,
-        asset_id: u64,
+        asset_id: AssetId,
         limit: Option<u64>,
         next: Option<&str>,
         note_prefix: Option<&str>,
         tx_type: Option<&str>,
         sig_type: Option<&str>,
-        txid: Option<&str>,
+        txid: Option<&TxId>,
         round: Option<u64>,
         min_round: Option<u64>,
         max_round: Option<u64>,
@@ -324,21 +325,22 @@ impl Indexer {
         after_time: Option<String>,
         currency_greater_than: Option<u64>,
         currency_less_than: Option<u64>,
-        address: Option<&str>,
+        address: Option<&Address>,
         address_role: Option<&str>,
         exclude_close_to: Option<bool>,
         rekey_to: Option<bool>,
     ) -> Result<LookupAccountTransactions200Response, Error> {
+        let address = address.map(Address::to_string);
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_asset_transactions(
                 &self.configuration,
-                asset_id,
+                asset_id.0,
                 limit,
                 next,
                 note_prefix,
                 tx_type,
                 sig_type,
-                txid,
+                txid.map(TxId::as_str),
                 round,
                 min_round,
                 max_round,
@@ -346,7 +348,7 @@ impl Indexer {
                 after_time,
                 currency_greater_than,
                 currency_less_than,
-                address,
+                address.as_deref(),
                 address_role,
                 exclude_close_to,
                 rekey_to,
@@ -374,42 +376,44 @@ impl Indexer {
     /// Lookup a single transaction.
     pub async fn lookup_transaction(
         &self,
-        txid: &str,
+        txid: &TxId,
     ) -> Result<LookupTransaction200Response, Error> {
-        Ok(
-            algonaut_indexer::apis::lookup_api::lookup_transaction(&self.configuration, txid)
-                .await
-                .map_err(Into::<IndexerError>::into)?,
+        Ok(algonaut_indexer::apis::lookup_api::lookup_transaction(
+            &self.configuration,
+            txid.as_str(),
         )
+        .await
+        .map_err(Into::<IndexerError>::into)?)
     }
 
     /// Search for accounts.
     #[allow(clippy::too_many_arguments)]
     pub async fn search_for_accounts(
         &self,
-        asset_id: Option<u64>,
+        asset_id: Option<AssetId>,
         limit: Option<u64>,
         next: Option<&str>,
         currency_greater_than: Option<u64>,
         include_all: Option<bool>,
         exclude: Option<Vec<String>>,
         currency_less_than: Option<u64>,
-        auth_addr: Option<&str>,
+        auth_addr: Option<&Address>,
         round: Option<u64>,
-        application_id: Option<u64>,
+        app_id: Option<AppId>,
     ) -> Result<SearchForAccounts200Response, Error> {
+        let auth_addr = auth_addr.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_accounts(
             &self.configuration,
-            asset_id,
+            asset_id.map(|a| a.0),
             limit,
             next,
             currency_greater_than,
             include_all,
             exclude,
             currency_less_than,
-            auth_addr,
+            auth_addr.as_deref(),
             round,
-            application_id,
+            app_id.map(|a| a.0),
         )
         .await
         .map_err(Into::<IndexerError>::into)?)
@@ -418,14 +422,14 @@ impl Indexer {
     /// Given an application ID, returns the box names of that application sorted lexicographically.
     pub async fn search_for_application_boxes(
         &self,
-        application_id: u64,
+        app_id: AppId,
         limit: Option<u64>,
         next: Option<&str>,
     ) -> Result<SearchForApplicationBoxes200Response, Error> {
         Ok(
             algonaut_indexer::apis::search_api::search_for_application_boxes(
                 &self.configuration,
-                application_id,
+                app_id.0,
                 limit,
                 next,
             )
@@ -437,16 +441,17 @@ impl Indexer {
     /// Search for applications
     pub async fn search_for_applications(
         &self,
-        application_id: Option<u64>,
-        creator: Option<&str>,
+        app_id: Option<AppId>,
+        creator: Option<&Address>,
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
     ) -> Result<LookupAccountCreatedApplications200Response, Error> {
+        let creator = creator.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_applications(
             &self.configuration,
-            application_id,
-            creator,
+            app_id.map(|a| a.0),
+            creator.as_deref(),
             include_all,
             limit,
             next,
@@ -462,20 +467,21 @@ impl Indexer {
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
-        creator: Option<&str>,
+        creator: Option<&Address>,
         name: Option<&str>,
         unit: Option<&str>,
-        asset_id: Option<u64>,
+        asset_id: Option<AssetId>,
     ) -> Result<LookupAccountCreatedAssets200Response, Error> {
+        let creator = creator.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_assets(
             &self.configuration,
             include_all,
             limit,
             next,
-            creator,
+            creator.as_deref(),
             name,
             unit,
-            asset_id,
+            asset_id.map(|a| a.0),
         )
         .await
         .map_err(Into::<IndexerError>::into)?)
@@ -522,21 +528,22 @@ impl Indexer {
         note_prefix: Option<&str>,
         tx_type: Option<&str>,
         sig_type: Option<&str>,
-        txid: Option<&str>,
+        txid: Option<&TxId>,
         round: Option<u64>,
         min_round: Option<u64>,
         max_round: Option<u64>,
-        asset_id: Option<u64>,
+        asset_id: Option<AssetId>,
         before_time: Option<String>,
         after_time: Option<String>,
         currency_greater_than: Option<u64>,
         currency_less_than: Option<u64>,
-        address: Option<&str>,
+        address: Option<&Address>,
         address_role: Option<&str>,
         exclude_close_to: Option<bool>,
         rekey_to: Option<bool>,
-        application_id: Option<u64>,
+        app_id: Option<AppId>,
     ) -> Result<LookupAccountTransactions200Response, Error> {
+        let address = address.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_transactions(
             &self.configuration,
             limit,
@@ -544,20 +551,20 @@ impl Indexer {
             note_prefix,
             tx_type,
             sig_type,
-            txid,
+            txid.map(TxId::as_str),
             round,
             min_round,
             max_round,
-            asset_id,
+            asset_id.map(|a| a.0),
             before_time,
             after_time,
             currency_greater_than,
             currency_less_than,
-            address,
+            address.as_deref(),
             address_role,
             exclude_close_to,
             rekey_to,
-            application_id,
+            app_id.map(|a| a.0),
         )
         .await
         .map_err(Into::<IndexerError>::into)?)

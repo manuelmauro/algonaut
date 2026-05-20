@@ -16,9 +16,32 @@ use algonaut_algod::{
         TealDryrun200Response, TransactionParams200Response, Version,
     },
 };
-use algonaut_core::{CompiledTeal, ToMsgPack};
+use algonaut_core::{Address, AppId, AssetId, CompiledTeal, ToMsgPack, TxId};
 use algonaut_encoding::decode_base64;
 use algonaut_transaction::SignedTransaction;
+
+/// Whether `teal_compile` should ask algod to include a source-map alongside
+/// the compiled bytes. Distinct from [`algonaut_abi::sourcemap::SourceMap`],
+/// which is the *parsed* source-map type returned by
+/// [`Algod::teal_compile_with_sourcemap`].
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum SourceMap {
+    /// Request a source-map. The map travels back on the JSON response but
+    /// [`Algod::teal_compile`] still returns only the compiled bytes — call
+    /// [`Algod::teal_compile_with_sourcemap`] if you need the parsed map.
+    Emit,
+    /// Do not request a source-map.
+    Skip,
+}
+
+impl SourceMap {
+    fn as_option_bool(self) -> Option<bool> {
+        match self {
+            SourceMap::Emit => Some(true),
+            SourceMap::Skip => None,
+        }
+    }
+}
 
 /// Error class wrapping errors from algonaut_algod
 pub(crate) mod error;
@@ -52,14 +75,14 @@ impl Algod {
     /// Given a specific account public key and application ID, this call returns the account's application local state and global state (AppLocalState and AppParams, if either exists). Global state will only be returned if the provided address is the application's creator.
     pub async fn account_app(
         self,
-        address: &str,
-        application_id: u64,
+        address: &Address,
+        app_id: AppId,
     ) -> Result<AccountApplicationInformation200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::account_application_information(
                 &self.configuration,
-                address,
-                application_id,
+                &address.to_string(),
+                app_id.0,
                 None,
             )
             .await
@@ -73,7 +96,7 @@ impl Algod {
     /// `include` controls which sub-objects are returned (e.g. `["params"]`).
     pub async fn account_apps(
         &self,
-        address: &str,
+        address: &Address,
         limit: Option<u64>,
         next: Option<&str>,
         include: Option<&[String]>,
@@ -81,7 +104,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::public_api::account_applications_information(
                 &self.configuration,
-                address,
+                &address.to_string(),
                 limit,
                 next,
                 include.map(<[String]>::to_vec),
@@ -94,14 +117,14 @@ impl Algod {
     /// Lookup an account's asset holdings, paginated by asset ID.
     pub async fn account_assets(
         &self,
-        address: &str,
+        address: &Address,
         limit: Option<u64>,
         next: Option<&str>,
     ) -> Result<AccountAssetsInformation200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::account_assets_information(
                 &self.configuration,
-                address,
+                &address.to_string(),
                 limit,
                 next,
             )
@@ -111,10 +134,10 @@ impl Algod {
     }
 
     /// Given a specific account public key, this call returns the accounts status, balance and spendable amounts
-    pub async fn account(&self, address: &str) -> Result<Account, Error> {
+    pub async fn account(&self, address: &Address) -> Result<Account, Error> {
         Ok(algonaut_algod::apis::public_api::account_information(
             &self.configuration,
-            address,
+            &address.to_string(),
             None,
             None,
         )
@@ -132,11 +155,11 @@ impl Algod {
     }
 
     /// Given an application ID and box name, it returns the box name and value (each base64 encoded). Box names must be in the goal app call arg encoding form 'encoding:value'. For ints, use the form 'int:1234'. For raw bytes, use the form 'b64:A=='. For printable strings, use the form 'str:hello'. For addresses, use the form 'addr:XYZ...'.
-    pub async fn app_box(&self, application_id: u64, name: &str) -> Result<models::Box, Error> {
+    pub async fn app_box(&self, app_id: AppId, name: &str) -> Result<models::Box, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_application_box_by_name(
                 &self.configuration,
-                application_id,
+                app_id.0,
                 name,
             )
             .await
@@ -147,12 +170,12 @@ impl Algod {
     /// Given an application ID, return all Box names. No particular ordering is guaranteed. Request fails when client or server-side configured limits prevent returning all Box names.
     pub async fn app_boxes(
         &self,
-        application_id: u64,
+        app_id: AppId,
         max: Option<u64>,
     ) -> Result<GetApplicationBoxes200Response, Error> {
         Ok(algonaut_algod::apis::public_api::get_application_boxes(
             &self.configuration,
-            application_id,
+            app_id.0,
             max,
         )
         .await
@@ -160,19 +183,18 @@ impl Algod {
     }
 
     /// Given a application ID, it returns application information including creator, approval and clear programs, global and local schemas, and global state.
-    pub async fn app(&self, application_id: u64) -> Result<Application, Error> {
-        Ok(algonaut_algod::apis::public_api::get_application_by_id(
-            &self.configuration,
-            application_id,
+    pub async fn app(&self, app_id: AppId) -> Result<Application, Error> {
+        Ok(
+            algonaut_algod::apis::public_api::get_application_by_id(&self.configuration, app_id.0)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
         )
-        .await
-        .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Given a asset ID, it returns asset information including creator, name, total supply and special addresses.
-    pub async fn asset(&self, asset_id: u64) -> Result<Asset, Error> {
+    pub async fn asset(&self, asset_id: AssetId) -> Result<Asset, Error> {
         Ok(
-            algonaut_algod::apis::public_api::get_asset_by_id(&self.configuration, asset_id)
+            algonaut_algod::apis::public_api::get_asset_by_id(&self.configuration, asset_id.0)
                 .await
                 .map_err(Into::<AlgodError>::into)?,
         )
@@ -261,11 +283,11 @@ impl Algod {
 
     /// Get a ledger delta for a given transaction group, identified by the ID
     /// of the first transaction in the group.
-    pub async fn txn_group_state_delta(&self, id: &str) -> Result<serde_json::Value, Error> {
+    pub async fn txn_group_state_delta(&self, id: &TxId) -> Result<serde_json::Value, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_ledger_state_delta_for_transaction_group(
                 &self.configuration,
-                id,
+                id.as_str(),
                 None,
             )
             .await
@@ -326,14 +348,14 @@ impl Algod {
     /// `format` selects the response encoding (`"json"` or `"msgpack"`).
     pub async fn address_pending_txns(
         &self,
-        address: &str,
+        address: &Address,
         max: Option<u64>,
         format: Option<&str>,
     ) -> Result<GetPendingTransactionsByAddress200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_pending_transactions_by_address(
                 &self.configuration,
-                address,
+                &address.to_string(),
                 max,
                 format,
             )
@@ -391,12 +413,12 @@ impl Algod {
     pub async fn txn_proof(
         &self,
         round: u64,
-        txid: &str,
+        txid: &TxId,
     ) -> Result<GetTransactionProof200Response, Error> {
         Ok(algonaut_algod::apis::public_api::get_transaction_proof(
             &self.configuration,
             round,
-            txid,
+            txid.as_str(),
             None,
             None,
         )
@@ -432,11 +454,11 @@ impl Algod {
     }
 
     /// Given a transaction ID of a recently submitted transaction, it returns information about it.  There are several cases when this might succeed: - transaction committed (committed round > 0) - transaction still in the pool (committed round = 0, pool error = \"\") - transaction removed from pool due to error (committed round = 0, pool error != \"\") Or the transaction may have happened sufficiently long ago that the node no longer remembers it, and this will return an error.
-    pub async fn pending_txn(&self, txid: &str) -> Result<PendingTransactionResponse, Error> {
+    pub async fn pending_txn(&self, txid: &TxId) -> Result<PendingTransactionResponse, Error> {
         Ok(
             algonaut_algod::apis::public_api::pending_transaction_information(
                 &self.configuration,
-                txid,
+                txid.as_str(),
                 None,
             )
             .await
@@ -538,12 +560,15 @@ impl Algod {
     pub async fn teal_compile(
         &self,
         source: &[u8],
-        sourcemap: Option<bool>,
+        sourcemap: SourceMap,
     ) -> Result<CompiledTeal, Error> {
-        let api_compiled_teal =
-            algonaut_algod::apis::public_api::teal_compile(&self.configuration, source, sourcemap)
-                .await
-                .map_err(Into::<AlgodError>::into)?;
+        let api_compiled_teal = algonaut_algod::apis::public_api::teal_compile(
+            &self.configuration,
+            source,
+            sourcemap.as_option_bool(),
+        )
+        .await
+        .map_err(Into::<AlgodError>::into)?;
         // The api result (program + hash) is mapped to the domain program struct, which computes the hash on demand.
         // The hash here is redundant and we want to allow to generate it with the SDK too (e.g. for when loading programs from a DB).
         // At the moment it seems not warranted to add a cache (so it's initialized with the API hash or lazily), but this can be re-evaluated.
@@ -628,7 +653,7 @@ impl Algod {
     /// `first` through `last`. Returns the participation ID of the new keys.
     pub async fn generate_participation_keys(
         &self,
-        address: &str,
+        address: &Address,
         first: u64,
         last: u64,
         dilution: Option<u64>,
@@ -636,7 +661,7 @@ impl Algod {
         Ok(
             algonaut_algod::apis::private_api::generate_participation_keys(
                 &self.configuration,
-                address,
+                &address.to_string(),
                 first,
                 last,
                 dilution,

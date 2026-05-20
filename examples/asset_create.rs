@@ -2,6 +2,7 @@ use algonaut::algod::v2::Algod;
 use algonaut::openapi_algod::models::PendingTransactionResponse;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{CreateAsset, TxnBuilder};
+use algonaut_core::TxId;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -51,7 +52,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("transaction ID: {}", send_response.tx_id);
 
     info!("waiting for transaction finality");
-    let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
+    let tx_id: TxId = send_response.tx_id.into();
+    let pending_t = wait_for_pending_transaction(&algod, &tx_id).await?;
     info!("asset index: {:?}", pending_t.map(|t| t.asset_index));
 
     Ok(())
@@ -60,7 +62,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 /// Utility function to wait on a transaction to be confirmed
 async fn wait_for_pending_transaction(
     algod: &Algod,
-    txid: &str,
+    txid: &TxId,
 ) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();

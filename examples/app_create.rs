@@ -1,9 +1,10 @@
-use algonaut::algod::v2::Algod;
+use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::transaction::CreateApplication;
 use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::transaction::StateSchema;
 use algonaut_algod::models::PendingTransactionResponse;
+use algonaut_core::TxId;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -42,8 +43,10 @@ int 1
     .as_bytes();
 
     info!("compiling approval and clear programs");
-    let compiled_approval_program = algod.teal_compile(approval_program, None).await?;
-    let compiled_clear_program = algod.teal_compile(clear_program, None).await?;
+    let compiled_approval_program = algod
+        .teal_compile(approval_program, SourceMap::Skip)
+        .await?;
+    let compiled_clear_program = algod.teal_compile(clear_program, SourceMap::Skip).await?;
 
     info!("retrieving suggested params");
     let params = algod.txn_params().await?;
@@ -55,14 +58,8 @@ int 1
             alice.address(),
             compiled_approval_program,
             compiled_clear_program,
-            StateSchema {
-                number_ints: 0,
-                number_byteslices: 0,
-            },
-            StateSchema {
-                number_ints: 0,
-                number_byteslices: 0,
-            },
+            StateSchema::empty(),
+            StateSchema::empty(),
         )
         .app_arguments(vec![vec![1, 0], vec![255]])
         .build(),
@@ -76,7 +73,8 @@ int 1
     let send_response = algod.send_txn(&signed_t).await?;
 
     info!("waiting for transaction finality");
-    let pending_t = wait_for_pending_transaction(&algod, &send_response.tx_id).await?;
+    let tx_id: TxId = send_response.tx_id.into();
+    let pending_t = wait_for_pending_transaction(&algod, &tx_id).await?;
 
     info!(
         "application id: {:?}",
@@ -89,7 +87,7 @@ int 1
 /// Utility function to wait on a transaction to be confirmed
 async fn wait_for_pending_transaction(
     algod: &Algod,
-    txid: &str,
+    txid: &TxId,
 ) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
     let timeout = Duration::from_secs(10);
     let start = Instant::now();

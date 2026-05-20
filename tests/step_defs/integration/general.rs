@@ -19,7 +19,7 @@ pub async fn pick_funded_account(
 ) -> Result<Address, Box<dyn Error>> {
     let mut best: Option<(Address, u64)> = None;
     for addr in accounts {
-        let info = algod.account(&addr.to_string()).await?;
+        let info = algod.account(addr).await?;
         if best.is_none_or(|(_, bal)| info.amount > bal) {
             best = Some((*addr, info.amount));
         }
@@ -146,7 +146,8 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     let s_tx = sender_account.sign_transaction(tx)?;
 
     let send_response = algod.send_txn(&s_tx).await?;
-    wait_for_pending_transaction(algod, &send_response.tx_id).await?;
+    let tx_id: TxId = send_response.tx_id.into();
+    wait_for_pending_transaction(algod, &tx_id).await?;
 
     w.transient_account = Some(sender_account);
 
@@ -189,7 +190,7 @@ async fn i_wait_for_the_transaction_to_be_confirmed(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
     let tx_id = w.tx_id.as_ref().expect("tx id not set");
 
-    wait_for_pending_transaction(&algod, tx_id.as_str())
+    wait_for_pending_transaction(&algod, tx_id)
         .await
         .expect("couldn't get pending tx");
 }

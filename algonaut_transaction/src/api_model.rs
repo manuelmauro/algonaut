@@ -9,7 +9,6 @@ use crate::{
         AssetParams, AssetTransferTransaction, BoxReference, KeyRegistration, Payment, SignedLogic,
         StateProofTransaction, StateSchema, TransactionSignature, to_tx_type_enum,
     },
-    tx_group::TxGroup,
 };
 use algonaut_core::{AppId, AssetId, CompiledTeal, LogicSignature, MicroAlgos, Round, ToMsgPack};
 use algonaut_model::transaction::{
@@ -454,7 +453,6 @@ impl From<ApiStateSchema> for StateSchema {
 
 impl ToMsgPack for Transaction {}
 impl ToMsgPack for SignedTransaction {}
-impl ToMsgPack for TxGroup {}
 
 /// Convenience to serialize Transaction directly to msg pack
 impl Serialize for Transaction {
