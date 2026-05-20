@@ -1,4 +1,5 @@
 use algonaut::algod::v2::Algod;
+use algonaut::core::AppId;
 use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::OptInApplication;
@@ -26,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let t = TxnBuilder::with(
         &params,
         // TODO set a correct app-id here
-        OptInApplication::new(alice.address(), 11)
+        OptInApplication::new(alice.address(), AppId(11))
             .app_arguments(vec![vec![1, 0], vec![255]])
             .build(),
     )

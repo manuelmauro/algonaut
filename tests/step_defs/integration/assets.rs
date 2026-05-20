@@ -1,7 +1,7 @@
 use crate::step_defs::integration::world::World;
 use algonaut::error::Error;
 use algonaut_algod::models::AssetParams;
-use algonaut_core::Address;
+use algonaut_core::{Address, AssetId, TxId};
 use algonaut_transaction::{
     AcceptAsset, ClawbackAsset, CreateAsset, FreezeAsset, TransferAsset, TxnBuilder,
     builder::{DestroyAsset, UpdateAsset},
@@ -107,7 +107,7 @@ async fn i_send_the_kmd_signed_transaction(w: &mut World) -> Result<(), Error> {
         .expect("kmd-signed transaction not set");
     match algod.send_raw_txn(bytes).await {
         Ok(resp) => {
-            w.tx_id = Some(resp.tx_id);
+            w.tx_id = Some(TxId(resp.tx_id));
             w.last_send_succeeded = Some(true);
         }
         Err(e) => {
@@ -138,9 +138,9 @@ async fn i_send_the_bogus_kmd_signed_transaction(w: &mut World) -> Result<(), Er
 async fn i_update_the_asset_index(w: &mut World) -> Result<(), Error> {
     let algod = w.algod.as_ref().expect("algod not set");
     let tx_id = w.tx_id.as_ref().expect("no last tx id");
-    let pending = algod.pending_txn(tx_id).await?;
+    let pending = algod.pending_txn(tx_id.as_str()).await?;
     if let Some(asset_index) = pending.asset_index {
-        w.asset_id = Some(asset_index);
+        w.asset_id = Some(AssetId(asset_index));
     }
     Ok(())
 }
@@ -150,7 +150,7 @@ async fn i_update_the_asset_index(w: &mut World) -> Result<(), Error> {
 async fn i_get_the_asset_info(w: &mut World) -> Result<(), Error> {
     let algod = w.algod.as_ref().expect("algod not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let asset = algod.asset(asset_id).await?;
+    let asset = algod.asset(asset_id.0).await?;
     w.asset_info = Some(*asset.params);
     Ok(())
 }
@@ -211,7 +211,7 @@ async fn i_should_be_unable_to_get_the_asset_info(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
     let asset_id = w.asset_id.expect("asset id not set");
     assert!(
-        algod.asset(asset_id).await.is_err(),
+        algod.asset(asset_id.0).await.is_err(),
         "expected asset info to be missing after destroy"
     );
 }
@@ -307,7 +307,7 @@ async fn the_creator_should_have_assets_remaining(
         .as_deref()
         .unwrap_or(&[])
         .iter()
-        .find(|h| h.asset_id == asset_id)
+        .find(|h| h.asset_id == asset_id.0)
         .ok_or_else(|| Error::Msg(format!("creator does not hold asset {asset_id}")))?;
     assert_eq!(
         holding.amount, expected,

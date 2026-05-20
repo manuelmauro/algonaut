@@ -12,7 +12,7 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
 };
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::{Address, MicroAlgos, to_app_address};
+use algonaut_core::{Address, AppId, MicroAlgos, to_app_address};
 use algonaut_transaction::{
     Pay, TxnBuilder,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
@@ -182,7 +182,7 @@ async fn i_append_the_encoded_arguments_to_the_method_arguments_array(
     w: &mut World,
     comma_separated_b64_args: String,
 ) -> Result<(), Box<dyn Error>> {
-    let application_ids: &[u64] = w.app_ids.as_ref();
+    let application_ids: &[AppId] = w.app_ids.as_ref();
     let method_args = w.abi_method_arg_values.as_mut().expect("no method args");
 
     let abi_method_arg_types = w
@@ -210,7 +210,7 @@ async fn i_append_the_encoded_arguments_to_the_method_arguments_array(
                 );
             }
 
-            let arg = AbiValue::Int(application_ids[parsed_index].into());
+            let arg = AbiValue::Int(application_ids[parsed_index].0.into());
             method_args.push(AbiArgValue::AbiValue(arg));
         } else {
             let base64_decoded_arg = BASE64.decode(b64_arg.as_bytes()).unwrap();
@@ -335,7 +335,7 @@ async fn i_add_a_method_call_with_boxes(
     .await;
 }
 
-fn parse_box_references(s: &str, app_ids: &[u64]) -> Vec<BoxReference> {
+fn parse_box_references(s: &str, app_ids: &[AppId]) -> Vec<BoxReference> {
     if s.is_empty() {
         return Vec::new();
     }
@@ -818,7 +818,7 @@ async fn check_atomic_result_against_value(
 
 #[given(regex = r#"^an application id (\d+)$"#)]
 async fn an_application_id(w: &mut World, app_id: u64) {
-    w.app_id = Some(app_id);
+    w.app_id = Some(AppId(app_id));
 }
 
 #[then(regex = r#"^The (\d+)th atomic result for "([^"]*)" satisfies the regex "([^"]*)"$"#)]
@@ -872,7 +872,7 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
 
     let first_account = accounts[0];
 
-    let app_address = to_app_address(app_id);
+    let app_address = to_app_address(app_id.0);
 
     let tx_params = algod.txn_params().await.expect("couldn't get params");
 

@@ -7,7 +7,9 @@ use crate::{
         Transaction, TransactionType,
     },
 };
-use algonaut_core::{Address, CompiledTeal, MicroAlgos, Round, StateProofPk, VotePk, VrfPk};
+use algonaut_core::{
+    Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, StateProofPk, VotePk, VrfPk,
+};
 use algonaut_crypto::HashDigest;
 
 pub trait TransactionParams {
@@ -332,7 +334,7 @@ impl CreateAsset {
 /// A builder for [AssetConfigurationTransaction].
 pub struct UpdateAsset {
     sender: Address,
-    asset_id: u64,
+    asset_id: AssetId,
     total: Option<u64>,
     decimals: Option<u32>,
     default_frozen: Option<bool>,
@@ -347,7 +349,7 @@ pub struct UpdateAsset {
 }
 
 impl UpdateAsset {
-    pub fn new(sender: Address, asset_id: u64) -> Self {
+    pub fn new(sender: Address, asset_id: AssetId) -> Self {
         UpdateAsset {
             sender,
             asset_id,
@@ -444,11 +446,11 @@ impl UpdateAsset {
 /// A builder for [AssetConfigurationTransaction].
 pub struct DestroyAsset {
     sender: Address,
-    asset_id: u64,
+    asset_id: AssetId,
 }
 
 impl DestroyAsset {
-    pub fn new(sender: Address, asset_id: u64) -> Self {
+    pub fn new(sender: Address, asset_id: AssetId) -> Self {
         DestroyAsset { sender, asset_id }
     }
 
@@ -464,14 +466,14 @@ impl DestroyAsset {
 /// A builder for [AssetTransferTransaction].
 pub struct TransferAsset {
     sender: Address,
-    xfer: u64,
+    xfer: AssetId,
     amount: u64,
     receiver: Address,
     close_to: Option<Address>,
 }
 
 impl TransferAsset {
-    pub fn new(sender: Address, asset_id: u64, amount: u64, receiver: Address) -> Self {
+    pub fn new(sender: Address, asset_id: AssetId, amount: u64, receiver: Address) -> Self {
         TransferAsset {
             sender,
             xfer: asset_id,
@@ -500,11 +502,11 @@ impl TransferAsset {
 /// A builder for [AssetAcceptTransaction].
 pub struct AcceptAsset {
     sender: Address,
-    asset_id: u64,
+    asset_id: AssetId,
 }
 
 impl AcceptAsset {
-    pub fn new(sender: Address, asset_id: u64) -> Self {
+    pub fn new(sender: Address, asset_id: AssetId) -> Self {
         AcceptAsset { sender, asset_id }
     }
 
@@ -519,7 +521,7 @@ impl AcceptAsset {
 /// A builder for [AssetClawbackTransaction].
 pub struct ClawbackAsset {
     sender: Address,
-    asset_id: u64,
+    asset_id: AssetId,
     asset_amount: u64,
     asset_sender: Address,
     asset_receiver: Address,
@@ -529,7 +531,7 @@ pub struct ClawbackAsset {
 impl ClawbackAsset {
     pub fn new(
         sender: Address,
-        asset_id: u64,
+        asset_id: AssetId,
         asset_amount: u64,
         asset_sender: Address,
         asset_receiver: Address,
@@ -565,12 +567,12 @@ impl ClawbackAsset {
 pub struct FreezeAsset {
     sender: Address,
     freeze_account: Address,
-    asset_id: u64,
+    asset_id: AssetId,
     frozen: bool,
 }
 
 impl FreezeAsset {
-    pub fn new(sender: Address, freeze_account: Address, asset_id: u64, frozen: bool) -> Self {
+    pub fn new(sender: Address, freeze_account: Address, asset_id: AssetId, frozen: bool) -> Self {
         FreezeAsset {
             sender,
             freeze_account,
@@ -596,8 +598,8 @@ pub struct CreateApplication {
     approval_program: Option<CompiledTeal>,
     app_arguments: Option<Vec<Vec<u8>>>,
     clear_state_program: Option<CompiledTeal>,
-    foreign_apps: Option<Vec<u64>>,
-    foreign_assets: Option<Vec<u64>>,
+    foreign_apps: Option<Vec<AppId>>,
+    foreign_assets: Option<Vec<AssetId>>,
     global_state_schema: Option<StateSchema>,
     local_state_schema: Option<StateSchema>,
     extra_pages: u32,
@@ -637,12 +639,12 @@ impl CreateApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<AppId>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<AssetId>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -679,20 +681,20 @@ impl CreateApplication {
 /// A builder for [ApplicationCallTransaction].
 pub struct UpdateApplication {
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
     accounts: Option<Vec<Address>>,
     approval_program: Option<CompiledTeal>,
     app_arguments: Option<Vec<Vec<u8>>>,
     clear_state_program: Option<CompiledTeal>,
-    foreign_apps: Option<Vec<u64>>,
-    foreign_assets: Option<Vec<u64>>,
+    foreign_apps: Option<Vec<AppId>>,
+    foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
 }
 
 impl UpdateApplication {
     pub fn new(
         sender: Address,
-        app_id: u64,
+        app_id: AppId,
         approval_program: CompiledTeal,
         clear_state_program: CompiledTeal,
     ) -> Self {
@@ -719,12 +721,12 @@ impl UpdateApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<AppId>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<AssetId>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -756,16 +758,16 @@ impl UpdateApplication {
 /// A builder for [ApplicationCallTransaction].
 pub struct CallApplication {
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Vec<u64>>,
-    foreign_assets: Option<Vec<u64>>,
+    foreign_apps: Option<Vec<AppId>>,
+    foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
 }
 
 impl CallApplication {
-    pub fn new(sender: Address, app_id: u64) -> Self {
+    pub fn new(sender: Address, app_id: AppId) -> Self {
         CallApplication {
             sender,
             app_id,
@@ -787,12 +789,12 @@ impl CallApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<AppId>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<AssetId>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -824,16 +826,16 @@ impl CallApplication {
 /// A builder for [ApplicationCallTransaction].
 pub struct ClearApplication {
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Vec<u64>>,
-    foreign_assets: Option<Vec<u64>>,
+    foreign_apps: Option<Vec<AppId>>,
+    foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
 }
 
 impl ClearApplication {
-    pub fn new(sender: Address, app_id: u64) -> Self {
+    pub fn new(sender: Address, app_id: AppId) -> Self {
         ClearApplication {
             sender,
             app_id,
@@ -855,12 +857,12 @@ impl ClearApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<AppId>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<AssetId>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -892,16 +894,16 @@ impl ClearApplication {
 /// A builder for [ApplicationCallTransaction].
 pub struct CloseApplication {
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Vec<u64>>,
-    foreign_assets: Option<Vec<u64>>,
+    foreign_apps: Option<Vec<AppId>>,
+    foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
 }
 
 impl CloseApplication {
-    pub fn new(sender: Address, app_id: u64) -> Self {
+    pub fn new(sender: Address, app_id: AppId) -> Self {
         CloseApplication {
             sender,
             app_id,
@@ -923,12 +925,12 @@ impl CloseApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<AppId>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<AssetId>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -960,16 +962,16 @@ impl CloseApplication {
 /// A builder for [ApplicationCallTransaction].
 pub struct DeleteApplication {
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Vec<u64>>,
-    foreign_assets: Option<Vec<u64>>,
+    foreign_apps: Option<Vec<AppId>>,
+    foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
 }
 
 impl DeleteApplication {
-    pub fn new(sender: Address, app_id: u64) -> Self {
+    pub fn new(sender: Address, app_id: AppId) -> Self {
         DeleteApplication {
             sender,
             app_id,
@@ -991,12 +993,12 @@ impl DeleteApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<AppId>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<AssetId>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }
@@ -1028,16 +1030,16 @@ impl DeleteApplication {
 /// A builder for [ApplicationCallTransaction].
 pub struct OptInApplication {
     sender: Address,
-    app_id: u64,
+    app_id: AppId,
     accounts: Option<Vec<Address>>,
     app_arguments: Option<Vec<Vec<u8>>>,
-    foreign_apps: Option<Vec<u64>>,
-    foreign_assets: Option<Vec<u64>>,
+    foreign_apps: Option<Vec<AppId>>,
+    foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
 }
 
 impl OptInApplication {
-    pub fn new(sender: Address, app_id: u64) -> Self {
+    pub fn new(sender: Address, app_id: AppId) -> Self {
         OptInApplication {
             sender,
             app_id,
@@ -1059,12 +1061,12 @@ impl OptInApplication {
         self
     }
 
-    pub fn foreign_apps(mut self, foreign_apps: Vec<u64>) -> Self {
+    pub fn foreign_apps(mut self, foreign_apps: Vec<AppId>) -> Self {
         self.foreign_apps = Some(foreign_apps);
         self
     }
 
-    pub fn foreign_assets(mut self, foreign_assets: Vec<u64>) -> Self {
+    pub fn foreign_assets(mut self, foreign_assets: Vec<AssetId>) -> Self {
         self.foreign_assets = Some(foreign_assets);
         self
     }

@@ -1,5 +1,6 @@
 use algonaut_core::{
-    Address, MicroAlgos, MultisigSignature, Round, StateProofPk, ToMsgPack, VotePk, VrfPk,
+    Address, AppId, AssetId, MicroAlgos, MultisigSignature, Round, StateProofPk, ToMsgPack, TxId,
+    VotePk, VrfPk,
 };
 use algonaut_crypto::{HashDigest, HashType, Signature};
 use algonaut_encoding::{deserialize_bytes64, serialize_bytes};
@@ -51,7 +52,7 @@ pub struct ApiTransaction {
     pub asset_params: Option<ApiAssetParams>,
 
     #[serde(rename = "apas", skip_serializing_if = "Option::is_none")]
-    pub foreign_assets: Option<Vec<u64>>,
+    pub foreign_assets: Option<Vec<AssetId>>,
 
     #[serde(rename = "apat", skip_serializing_if = "Option::is_none")]
     pub accounts: Option<Vec<Address>>,
@@ -63,13 +64,13 @@ pub struct ApiTransaction {
     pub extra_pages: Option<u32>,
 
     #[serde(rename = "apfa", skip_serializing_if = "Option::is_none")]
-    pub foreign_apps: Option<Vec<u64>>,
+    pub foreign_apps: Option<Vec<AppId>>,
 
     #[serde(rename = "apgs", skip_serializing_if = "Option::is_none")]
     pub global_state_schema: Option<ApiStateSchema>,
 
     #[serde(rename = "apid", skip_serializing_if = "Option::is_none")]
-    pub app_id: Option<u64>,
+    pub app_id: Option<AppId>,
 
     #[serde(rename = "apls", skip_serializing_if = "Option::is_none")]
     pub local_state_schema: Option<ApiStateSchema>,
@@ -89,7 +90,7 @@ pub struct ApiTransaction {
     pub asset_sender: Option<Address>,
 
     #[serde(rename = "caid", skip_serializing_if = "Option::is_none")]
-    pub config_asset: Option<u64>,
+    pub config_asset: Option<AssetId>,
 
     #[serde(rename = "close", skip_serializing_if = "Option::is_none")]
     pub close_reminder_to: Option<Address>,
@@ -98,7 +99,7 @@ pub struct ApiTransaction {
     pub freeze_account: Option<Address>,
 
     #[serde(rename = "faid", skip_serializing_if = "Option::is_none")]
-    pub asset_id: Option<u64>,
+    pub asset_id: Option<AssetId>,
 
     #[serde(rename = "fee", skip_serializing_if = "Option::is_none")]
     pub fee: Option<MicroAlgos>, // optional for serialization zero value omission
@@ -172,7 +173,7 @@ pub struct ApiTransaction {
     pub vote_last: Option<Round>,
 
     #[serde(rename = "xaid", skip_serializing_if = "Option::is_none")]
-    pub xfer: Option<u64>,
+    pub xfer: Option<AssetId>,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
@@ -208,7 +209,7 @@ pub struct ApiSignedTransaction {
     pub auth_address: Option<Address>,
 
     #[serde(skip)]
-    pub transaction_id: String,
+    pub transaction_id: TxId,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]

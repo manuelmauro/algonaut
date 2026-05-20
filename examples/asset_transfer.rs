@@ -1,4 +1,5 @@
 use algonaut::algod::v2::Algod;
+use algonaut::core::AssetId;
 use algonaut::transaction::TransferAsset;
 use algonaut::transaction::{TxnBuilder, account::Account};
 use dotenv::dotenv;
@@ -25,7 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("building TransferAsset transaction");
     let t = TxnBuilder::with(
         &params,
-        TransferAsset::new(alice.address(), 16, 1, bob.address()).build(),
+        TransferAsset::new(alice.address(), AssetId(16), 1, bob.address()).build(),
     )
     .build()?;
 

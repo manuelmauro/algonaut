@@ -1,7 +1,7 @@
 use crate::step_defs::integration::world::World;
 use algonaut::dryrun::{DryrunRequestBuilder, field_name, result};
 use algonaut_algod::models::{Application, ApplicationParams, DryrunSource};
-use algonaut_core::{Address, CompiledTeal, MicroAlgos};
+use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_encoding::Bytes;
 use algonaut_transaction::{
     Pay, TxnBuilder, builder::TransactionParams, contract_account::ContractAccount,
@@ -180,7 +180,7 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_algod::mod
                 algonaut_transaction::transaction::TransactionType::ApplicationCallTransaction(
                     algonaut_transaction::transaction::ApplicationCallTransaction {
                         sender: creator,
-                        app_id: Some(DRYRUN_APP_ID),
+                        app_id: Some(AppId(DRYRUN_APP_ID)),
                         on_complete:
                             algonaut_transaction::transaction::ApplicationCallOnComplete::NoOp,
                         accounts: None,

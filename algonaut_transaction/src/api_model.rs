@@ -11,7 +11,7 @@ use crate::{
     },
     tx_group::TxGroup,
 };
-use algonaut_core::{CompiledTeal, LogicSignature, MicroAlgos, Round, ToMsgPack};
+use algonaut_core::{AppId, AssetId, CompiledTeal, LogicSignature, MicroAlgos, Round, ToMsgPack};
 use algonaut_model::transaction::{
     ApiAssetParams, ApiBoxReference, ApiSignedLogic, ApiSignedLogicArg, ApiSignedTransaction,
     ApiStateSchema, ApiTransaction, AppArgument,
@@ -91,10 +91,14 @@ impl TryFrom<Transaction> for ApiTransaction {
             }
             TransactionType::AssetConfigurationTransaction(config) => {
                 api_t.asset_params = config.to_owned().params.map(|p| p.into());
-                api_t.config_asset = config.config_asset.and_then(num_as_api_option);
+                api_t.config_asset = config
+                    .config_asset
+                    .map(u64::from)
+                    .and_then(num_as_api_option)
+                    .map(AssetId::from);
             }
             TransactionType::AssetTransferTransaction(transfer) => {
-                api_t.xfer = num_as_api_option(transfer.xfer);
+                api_t.xfer = num_as_api_option(u64::from(transfer.xfer)).map(AssetId::from);
                 api_t.asset_amount = num_as_api_option(transfer.amount);
                 api_t.asset_receiver = Some(transfer.receiver);
                 api_t.asset_close_to = transfer.close_to;
@@ -112,11 +116,15 @@ impl TryFrom<Transaction> for ApiTransaction {
             }
             TransactionType::AssetFreezeTransaction(freeze) => {
                 api_t.freeze_account = Some(freeze.freeze_account);
-                api_t.asset_id = num_as_api_option(freeze.asset_id);
+                api_t.asset_id = num_as_api_option(u64::from(freeze.asset_id)).map(AssetId::from);
                 api_t.frozen = bool_as_api_option(freeze.frozen);
             }
             TransactionType::ApplicationCallTransaction(call) => {
-                api_t.app_id = call.app_id.and_then(num_as_api_option);
+                api_t.app_id = call
+                    .app_id
+                    .map(u64::from)
+                    .and_then(num_as_api_option)
+                    .map(AppId::from);
                 api_t.on_complete =
                     num_as_api_option(application_call_on_complete_to_int(&call.on_complete));
                 api_t.accounts = call.accounts.clone().and_then(vec_as_api_option);
@@ -254,7 +262,7 @@ impl TryFrom<ApiTransaction> for Transaction {
 
 fn parse_state_schema(
     on_complete: ApplicationCallOnComplete,
-    app_id: Option<u64>,
+    app_id: Option<AppId>,
     api_state_schema: Option<ApiStateSchema>,
 ) -> Option<StateSchema> {
     match (on_complete, app_id) {
@@ -574,26 +582,26 @@ fn int_to_application_call_on_complete(
 }
 
 trait AppCallMetadata {
-    fn current_app_id(&self) -> Option<u64>;
-    fn foreign_apps(&self) -> Option<&Vec<u64>>;
+    fn current_app_id(&self) -> Option<AppId>;
+    fn foreign_apps(&self) -> Option<&Vec<AppId>>;
 }
 
 impl AppCallMetadata for &ApplicationCallTransaction {
-    fn current_app_id(&self) -> Option<u64> {
+    fn current_app_id(&self) -> Option<AppId> {
         self.app_id
     }
 
-    fn foreign_apps(&self) -> Option<&Vec<u64>> {
+    fn foreign_apps(&self) -> Option<&Vec<AppId>> {
         self.foreign_apps.as_ref()
     }
 }
 
 impl AppCallMetadata for &ApiTransaction {
-    fn current_app_id(&self) -> Option<u64> {
+    fn current_app_id(&self) -> Option<AppId> {
         self.app_id
     }
 
-    fn foreign_apps(&self) -> Option<&Vec<u64>> {
+    fn foreign_apps(&self) -> Option<&Vec<AppId>> {
         self.foreign_apps.as_ref()
     }
 }
@@ -618,7 +626,7 @@ where
                 index = num_as_api_option(0);
             } else {
                 let mut idx = 0;
-                if app_id > 0 {
+                if app_id.0 > 0 {
                     let pos = info
                         .call_metadata
                         .foreign_apps()
@@ -731,16 +739,16 @@ mod tests {
     use super::*;
 
     struct DummyAppCall {
-        app_id: Option<u64>,
-        foreign_apps: Option<Vec<u64>>,
+        app_id: Option<AppId>,
+        foreign_apps: Option<Vec<AppId>>,
     }
 
     impl AppCallMetadata for &DummyAppCall {
-        fn current_app_id(&self) -> Option<u64> {
+        fn current_app_id(&self) -> Option<AppId> {
             self.app_id
         }
 
-        fn foreign_apps(&self) -> Option<&Vec<u64>> {
+        fn foreign_apps(&self) -> Option<&Vec<AppId>> {
             self.foreign_apps.as_ref()
         }
     }
@@ -793,21 +801,21 @@ mod tests {
     fn test_api_box_references_from_box_references() {
         let box_name = vec![1, 2, 3, 4];
         let dummy_app_call = DummyAppCall {
-            app_id: Some(6355),
-            foreign_apps: Some(vec![8577, 7466]),
+            app_id: Some(AppId(6355)),
+            foreign_apps: Some(vec![AppId(8577), AppId(7466)]),
         };
 
         let boxes = vec![
             BoxReference {
-                app_id: Some(6355),
+                app_id: Some(AppId(6355)),
                 name: box_name.clone(),
             },
             BoxReference {
-                app_id: Some(7466),
+                app_id: Some(AppId(7466)),
                 name: box_name.clone(),
             },
             BoxReference {
-                app_id: Some(8577),
+                app_id: Some(AppId(8577)),
                 name: box_name.clone(),
             },
         ];
@@ -831,11 +839,11 @@ mod tests {
         let box_name = vec![1, 2, 3, 4];
 
         let dummy_app_call = DummyAppCall {
-            app_id: Some(6355),
-            foreign_apps: Some(vec![8577, 7466]),
+            app_id: Some(AppId(6355)),
+            foreign_apps: Some(vec![AppId(8577), AppId(7466)]),
         };
         let boxes = vec![BoxReference {
-            app_id: Some(1234),
+            app_id: Some(AppId(1234)),
             name: box_name.clone(),
         }];
 

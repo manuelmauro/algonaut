@@ -1,4 +1,5 @@
 use algonaut::algod::v2::Algod;
+use algonaut::core::AssetId;
 use algonaut::transaction::ClawbackAsset;
 use algonaut::transaction::{TxnBuilder, account::Account};
 use dotenv::dotenv;
@@ -29,7 +30,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("building ClawbackAsset transaction");
     let t = TxnBuilder::with(
         &params,
-        ClawbackAsset::new(alice.address(), 21, 1, bob.address(), alice.address()).build(),
+        ClawbackAsset::new(
+            alice.address(),
+            AssetId(21),
+            1,
+            bob.address(),
+            alice.address(),
+        )
+        .build(),
     )
     .build()?;
 

@@ -120,6 +120,91 @@ impl From<u64> for Round {
     }
 }
 
+/// Identifier of an Algorand application (smart contract).
+///
+/// A tuple struct over `u64`; unlike a bare integer it cannot be mixed up
+/// with an [`AssetId`] or any other numeric value. Serializes transparently
+/// as its inner `u64`, so the wire format matches a plain integer.
+#[derive(
+    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, Display,
+)]
+pub struct AppId(pub u64);
+
+impl From<u64> for AppId {
+    fn from(id: u64) -> Self {
+        AppId(id)
+    }
+}
+
+impl From<AppId> for u64 {
+    fn from(id: AppId) -> Self {
+        id.0
+    }
+}
+
+/// Identifier of an Algorand Standard Asset.
+///
+/// A tuple struct over `u64`; unlike a bare integer it cannot be mixed up
+/// with an [`AppId`] or any other numeric value. Serializes transparently
+/// as its inner `u64`, so the wire format matches a plain integer.
+#[derive(
+    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, Display,
+)]
+pub struct AssetId(pub u64);
+
+impl From<u64> for AssetId {
+    fn from(id: u64) -> Self {
+        AssetId(id)
+    }
+}
+
+impl From<AssetId> for u64 {
+    fn from(id: AssetId) -> Self {
+        id.0
+    }
+}
+
+/// Identifier of an Algorand transaction: the base32-encoded SHA-512/256
+/// hash of the transaction.
+///
+/// A tuple struct over `String`. Serializes transparently as its inner
+/// `String`.
+#[derive(
+    Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, Display,
+)]
+pub struct TxId(pub String);
+
+impl TxId {
+    /// Borrows the identifier as a string slice.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<String> for TxId {
+    fn from(id: String) -> Self {
+        TxId(id)
+    }
+}
+
+impl From<&str> for TxId {
+    fn from(id: &str) -> Self {
+        TxId(id.to_owned())
+    }
+}
+
+impl From<TxId> for String {
+    fn from(id: TxId) -> Self {
+        id.0
+    }
+}
+
+impl AsRef<str> for TxId {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 /// Participation public key used in key registration transactions
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct VotePk(pub [u8; 32]);
@@ -464,5 +549,37 @@ mod tests {
     fn micro_algos_checked_mul() {
         assert_eq!(MicroAlgos(7).checked_mul(3), Some(MicroAlgos(21)));
         assert_eq!(MicroAlgos(u64::MAX).checked_mul(2), None);
+    }
+
+    #[test]
+    fn id_newtypes_serialize_transparently() {
+        // AppId / AssetId must be wire-identical to a bare u64 in both
+        // JSON and msgpack, otherwise transaction signing breaks.
+        assert_eq!(serde_json::to_string(&AppId(42)).unwrap(), "42");
+        assert_eq!(serde_json::to_string(&AssetId(7)).unwrap(), "7");
+        assert_eq!(
+            rmp_serde::to_vec(&AppId(42)).unwrap(),
+            rmp_serde::to_vec(&42u64).unwrap()
+        );
+        assert_eq!(
+            rmp_serde::to_vec(&AssetId(7)).unwrap(),
+            rmp_serde::to_vec(&7u64).unwrap()
+        );
+        assert_eq!(
+            serde_json::to_string(&TxId("ABC".to_owned())).unwrap(),
+            "\"ABC\""
+        );
+    }
+
+    #[test]
+    fn id_newtypes_round_trip_and_convert() {
+        let app: AppId = 99u64.into();
+        assert_eq!(u64::from(app), 99);
+        let asset: AssetId = 99u64.into();
+        assert_eq!(u64::from(asset), 99);
+        let tx: TxId = "XYZ".into();
+        assert_eq!(tx.as_str(), "XYZ");
+        assert_eq!(String::from(tx.clone()), "XYZ");
+        assert_eq!(serde_json::from_str::<AppId>("5").unwrap(), AppId(5));
     }
 }

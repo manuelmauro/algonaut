@@ -1,4 +1,5 @@
 use algonaut::algod::v2::Algod;
+use algonaut::core::AppId;
 use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::ClearApplication;
@@ -25,8 +26,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("building CreateApplication transaction");
     // to test this, create an application that sets local state and opt-in, for/with the account sending this transaction.
     // TODO set a correct app-id here
-    let t =
-        TxnBuilder::with(&params, ClearApplication::new(alice.address(), 11).build()).build()?;
+    let t = TxnBuilder::with(
+        &params,
+        ClearApplication::new(alice.address(), AppId(11)).build(),
+    )
+    .build()?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

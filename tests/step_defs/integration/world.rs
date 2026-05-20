@@ -12,7 +12,7 @@ use algonaut_algod::models::{
     AssetParams, SimulateRequest, SimulateTransaction200Response, TealDryrun200Response,
     TransactionParams200Response,
 };
-use algonaut_core::{Address, MultisigAddress};
+use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TxId};
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_transaction::{
     SignedTransaction, Transaction,
@@ -34,10 +34,10 @@ pub struct World {
     pub transient_account: Option<Account>,
 
     pub tx: Option<Transaction>,
-    pub tx_id: Option<String>,
+    pub tx_id: Option<TxId>,
 
-    pub app_id: Option<u64>,
-    pub app_ids: Vec<u64>,
+    pub app_id: Option<AppId>,
+    pub app_ids: Vec<AppId>,
 
     pub tx_params: Option<TransactionParams200Response>,
 
@@ -81,7 +81,7 @@ pub struct World {
     pub kmd_signed_multisig_bytes: Option<Vec<u8>>,
     pub exported_multisig_pks: Option<Vec<Ed25519PublicKey>>,
 
-    pub asset_id: Option<u64>,
+    pub asset_id: Option<AssetId>,
     pub asset_info: Option<AssetParams>,
     pub expected_asset_params: Option<AssetParams>,
     pub asset_creator: Option<Address>,

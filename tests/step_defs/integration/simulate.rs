@@ -364,7 +364,7 @@ async fn the_current_application_initial_state_should_be_empty(w: &mut World, st
         .expect("expected initial-states on response");
 
     let app_id = w.app_id.expect("no current app id");
-    let bucket = locate_app_initial_state(initial, app_id, &state_kind);
+    let bucket = locate_app_initial_state(initial, app_id.0, &state_kind);
     let empty = match &bucket {
         None => true,
         Some(serde_json::Value::Array(a)) => a.is_empty(),
@@ -394,7 +394,7 @@ async fn the_current_application_initial_state_should_contain(
         .expect("expected initial-states on response");
 
     let app_id = w.app_id.expect("no current app id");
-    let bucket = locate_app_initial_state(initial, app_id, &state_kind)
+    let bucket = locate_app_initial_state(initial, app_id.0, &state_kind)
         .expect("no initial state bucket found");
     let entries = bucket
         .as_array()
