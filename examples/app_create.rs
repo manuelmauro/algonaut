@@ -58,7 +58,6 @@ int 1
         StateSchema::empty(),
         StateSchema::empty(),
     )
-    .app_arguments(vec![vec![1, 0], vec![255]])
     .build(&params)?;
 
     info!("signing transaction");

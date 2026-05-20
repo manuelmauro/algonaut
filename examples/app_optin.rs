@@ -24,9 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("building OptInApplication transaction");
     // TODO set a correct app-id here
-    let t = OptInApplication::new(alice.address(), AppId(11))
-        .app_arguments(vec![vec![1, 0], vec![255]])
-        .build(&params)?;
+    let t = OptInApplication::new(alice.address(), AppId(11)).build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

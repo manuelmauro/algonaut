@@ -51,7 +51,6 @@ int 1
         compiled_approval_program,
         compiled_clear_program,
     )
-    .app_arguments(vec![vec![1, 0], vec![255]]) // for the program being upgraded
     .build(&params)?;
 
     info!("signing transaction");

@@ -687,6 +687,15 @@ impl CreateApplication {
         self
     }
 
+    /// Raw byte-string arguments passed to the contract's TEAL program
+    /// (the on-wire `apaa` field). The protocol imposes no type system
+    /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
+    /// and the TEAL program decides how to interpret it.
+    ///
+    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
+    /// encodes the method selector and arguments for you and decodes
+    /// the return value. This setter is the lower-level escape hatch
+    /// for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -774,6 +783,15 @@ impl UpdateApplication {
         self
     }
 
+    /// Raw byte-string arguments passed to the contract's TEAL program
+    /// (the on-wire `apaa` field). The protocol imposes no type system
+    /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
+    /// and the TEAL program decides how to interpret it.
+    ///
+    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
+    /// encodes the method selector and arguments for you and decodes
+    /// the return value. This setter is the lower-level escape hatch
+    /// for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -847,6 +865,15 @@ impl CallApplication {
         self
     }
 
+    /// Raw byte-string arguments passed to the contract's TEAL program
+    /// (the on-wire `apaa` field). The protocol imposes no type system
+    /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
+    /// and the TEAL program decides how to interpret it.
+    ///
+    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
+    /// encodes the method selector and arguments for you and decodes
+    /// the return value. This setter is the lower-level escape hatch
+    /// for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -920,6 +947,15 @@ impl ClearApplication {
         self
     }
 
+    /// Raw byte-string arguments passed to the contract's TEAL program
+    /// (the on-wire `apaa` field). The protocol imposes no type system
+    /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
+    /// and the TEAL program decides how to interpret it.
+    ///
+    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
+    /// encodes the method selector and arguments for you and decodes
+    /// the return value. This setter is the lower-level escape hatch
+    /// for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -993,6 +1029,15 @@ impl CloseApplication {
         self
     }
 
+    /// Raw byte-string arguments passed to the contract's TEAL program
+    /// (the on-wire `apaa` field). The protocol imposes no type system
+    /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
+    /// and the TEAL program decides how to interpret it.
+    ///
+    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
+    /// encodes the method selector and arguments for you and decodes
+    /// the return value. This setter is the lower-level escape hatch
+    /// for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -1066,6 +1111,15 @@ impl DeleteApplication {
         self
     }
 
+    /// Raw byte-string arguments passed to the contract's TEAL program
+    /// (the on-wire `apaa` field). The protocol imposes no type system
+    /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
+    /// and the TEAL program decides how to interpret it.
+    ///
+    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
+    /// encodes the method selector and arguments for you and decodes
+    /// the return value. This setter is the lower-level escape hatch
+    /// for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -1139,6 +1193,15 @@ impl OptInApplication {
         self
     }
 
+    /// Raw byte-string arguments passed to the contract's TEAL program
+    /// (the on-wire `apaa` field). The protocol imposes no type system
+    /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
+    /// and the TEAL program decides how to interpret it.
+    ///
+    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
+    /// encodes the method selector and arguments for you and decodes
+    /// the return value. This setter is the lower-level escape hatch
+    /// for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
