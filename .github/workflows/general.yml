@@ -25,6 +25,11 @@ jobs:
     outputs:
       code: ${{ steps.filter.outputs.code }}
     steps:
+      # `dorny/paths-filter@v3` needs a checkout for `push` events (it shells
+      # out to git to compare against the base). `pull_request` events use the
+      # API and don't need this, but pushes to main were failing with
+      # `fatal: not a git repository` until this step was added.
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
