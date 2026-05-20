@@ -67,6 +67,7 @@ tokio = "1.52.3"
 url = "2.5.8"
 urlencoding = "2.1.3"
 uuid = { version = "1.23", features = ["serde"] }
+wiremock = "0.6.5"
 
 [dependencies]
 algonaut_abi = { workspace = true }
@@ -104,6 +105,7 @@ getrandom = { workspace = true, features = ["js"] }
 rand = { workspace = true }
 regex = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+wiremock = { workspace = true }
 
 [features]
 default = ["native"]

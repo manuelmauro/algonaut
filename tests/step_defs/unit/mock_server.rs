@@ -1,20 +1,20 @@
-//! A minimal recording HTTP server for the **unit** path features.
+//! Thin wrappers around [`wiremock::MockServer`] for the **unit** features.
 //!
-//! The `v2algodclient_paths` / `v2indexerclient_paths` features assert the
-//! exact request *path* (including query string) that the SDK's HTTP client
-//! emits. None of them need a real algod / indexer node — only a server that
-//! captures the request line and answers with something parseable enough not
-//! to panic the client before the request has been recorded.
+//! Two flavours, matched to the two feature families:
 //!
-//! For every accepted connection the server reads the HTTP request line
-//! (`<METHOD> <PATH> HTTP/1.1`), stores the method + full path into shared
-//! state, and replies with `200 OK` and a tiny `{}` body. The SDK call may
-//! still fail to *parse* that body — the path-assertion steps ignore the
-//! call's `Result`, so that is harmless.
+//! - [`MockServer`] — used by `v2algodclient_paths` / `v2indexerclient_paths`.
+//!   Answers every request with `200 OK` + `{}`; the step-defs assert on the
+//!   *request path* the SDK emitted via [`MockServer::last_request`].
+//!
+//! - [`ResponseMockServer`] — used by `v2algodclient_responses` /
+//!   `v2indexerclient_responses`. Configured up front with a canned body and a
+//!   content type (the base64-decoded fixture, served as msgpack or JSON), it
+//!   answers every accepted request with that exact body byte-for-byte. Each
+//!   scenario starts a fresh server, so there is no per-request state.
 
-use std::sync::{Arc, Mutex};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpListener;
+use std::fmt;
+use wiremock::matchers::any;
+use wiremock::{Mock, MockServer as WireMockServer, ResponseTemplate};
 
 /// A single recorded HTTP request: the method and the full request target
 /// (path plus query string), exactly as the client put it on the wire.
@@ -24,156 +24,89 @@ pub struct RecordedRequest {
     pub path: String,
 }
 
-/// Handle to a running mock server. Dropping it leaves the background task
-/// running until the process exits — fine for a test binary.
-#[derive(Clone, Debug)]
+/// Recording mock server. Every request is answered with `200 OK` + `{}` —
+/// the typed models may fail to deserialise that body, which the path steps
+/// deliberately ignore. The interesting state is the captured request path.
 pub struct MockServer {
+    inner: WireMockServer,
     /// `http://127.0.0.1:<port>` base URL the SDK clients are pointed at.
     pub base_url: String,
-    /// The most recent request the server observed.
-    recorded: Arc<Mutex<Option<RecordedRequest>>>,
 }
 
 impl MockServer {
-    /// Bind an ephemeral port on loopback and start serving in the background.
+    /// Bind an ephemeral loopback port and start serving in the background.
     pub async fn start() -> MockServer {
-        let listener = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("failed to bind mock server");
-        let port = listener.local_addr().expect("no local addr").port();
-        let recorded: Arc<Mutex<Option<RecordedRequest>>> = Arc::new(Mutex::new(None));
-
-        let recorded_for_task = recorded.clone();
-        tokio::spawn(async move {
-            loop {
-                let Ok((mut stream, _)) = listener.accept().await else {
-                    continue;
-                };
-                let recorded = recorded_for_task.clone();
-                tokio::spawn(async move {
-                    // Read enough bytes to cover the request line. Requests in
-                    // these features are tiny, so a single read is plenty;
-                    // loop a few times just in case the line is split.
-                    let mut buf = Vec::with_capacity(1024);
-                    let mut chunk = [0u8; 1024];
-                    for _ in 0..4 {
-                        match stream.read(&mut chunk).await {
-                            Ok(0) => break,
-                            Ok(n) => {
-                                buf.extend_from_slice(&chunk[..n]);
-                                if buf.windows(2).any(|w| w == b"\r\n") {
-                                    break;
-                                }
-                            }
-                            Err(_) => break,
-                        }
-                    }
-
-                    if let Some(req) = parse_request_line(&buf) {
-                        *recorded.lock().unwrap() = Some(req);
-                    }
-
-                    // Minimal valid response. `{}` is valid JSON; the client
-                    // may still fail to deserialize it into a typed model,
-                    // which the path steps deliberately ignore.
-                    let _ = stream
-                        .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\n\r\n{}")
-                        .await;
-                    let _ = stream.flush().await;
-                });
-            }
-        });
-
-        MockServer {
-            base_url: format!("http://127.0.0.1:{port}"),
-            recorded,
-        }
+        let inner = WireMockServer::start().await;
+        let base_url = inner.uri();
+        Mock::given(any())
+            .respond_with(
+                ResponseTemplate::new(200).set_body_raw(b"{}".to_vec(), "application/json"),
+            )
+            .mount(&inner)
+            .await;
+        MockServer { inner, base_url }
     }
 
     /// Return the most recently recorded request, panicking if the client
     /// never reached the server.
-    pub fn last_request(&self) -> RecordedRequest {
-        self.recorded
-            .lock()
-            .unwrap()
-            .clone()
-            .expect("no request reached the mock server")
+    pub async fn last_request(&self) -> RecordedRequest {
+        let requests = self
+            .inner
+            .received_requests()
+            .await
+            .expect("request recording disabled on wiremock server");
+        let req = requests.last().expect("no request reached the mock server");
+        let path = match req.url.query() {
+            Some(q) if !q.is_empty() => format!("{}?{}", req.url.path(), q),
+            _ => req.url.path().to_string(),
+        };
+        RecordedRequest {
+            method: req.method.to_string(),
+            path,
+        }
     }
 }
 
-/// Parse `<METHOD> <TARGET> HTTP/1.1` out of the start of an HTTP request.
-fn parse_request_line(buf: &[u8]) -> Option<RecordedRequest> {
-    let text = String::from_utf8_lossy(buf);
-    let line = text.lines().next()?;
-    let mut parts = line.split_whitespace();
-    let method = parts.next()?.to_string();
-    let path = parts.next()?.to_string();
-    Some(RecordedRequest { method, path })
+impl fmt::Debug for MockServer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MockServer")
+            .field("base_url", &self.base_url)
+            .finish()
+    }
 }
 
-/// A mock HTTP server for the **unit** `*_responses` features.
-///
-/// Unlike [`MockServer`], which records the request path and answers with a
-/// throwaway `{}` body, this server is configured *up front* with a canned
-/// response body (the base64-decoded fixture). Every request it accepts is
-/// answered with `200 OK` and that exact body, byte-for-byte — letting the
-/// step-defs assert on the SDK's *parsed* response.
-///
-/// The body is fixed for the server's lifetime; each scenario starts a fresh
-/// server, so there is no per-request state to juggle.
-#[derive(Clone, Debug)]
+/// Canned-response mock server. Every request is answered with the body and
+/// content type supplied at construction time — let the SDK's content
+/// negotiation pick the right decoder (`application/msgpack` for `*.base64`
+/// fixtures, `application/json` for `*.json`).
 pub struct ResponseMockServer {
+    _inner: WireMockServer,
     /// `http://127.0.0.1:<port>` base URL the SDK clients are pointed at.
     pub base_url: String,
 }
 
 impl ResponseMockServer {
     /// Bind an ephemeral loopback port and start serving `body` (the raw HTTP
-    /// response body — already base64-decoded) for every accepted request.
-    pub async fn start(body: Vec<u8>) -> ResponseMockServer {
-        let listener = TcpListener::bind("127.0.0.1:0")
-            .await
-            .expect("failed to bind response mock server");
-        let port = listener.local_addr().expect("no local addr").port();
-        let body = Arc::new(body);
-
-        tokio::spawn(async move {
-            loop {
-                let Ok((mut stream, _)) = listener.accept().await else {
-                    continue;
-                };
-                let body = body.clone();
-                tokio::spawn(async move {
-                    // Drain the request. The body is irrelevant — we answer
-                    // every request identically — but we must read enough to
-                    // let the client finish writing before we reply.
-                    let mut chunk = [0u8; 4096];
-                    for _ in 0..4 {
-                        match stream.read(&mut chunk).await {
-                            Ok(0) => break,
-                            Ok(n) => {
-                                if n < chunk.len() {
-                                    break;
-                                }
-                            }
-                            Err(_) => break,
-                        }
-                    }
-
-                    let header = format!(
-                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\
-                         content-length: {}\r\n\r\n",
-                        body.len()
-                    );
-                    let _ = stream.write_all(header.as_bytes()).await;
-                    let _ = stream.write_all(&body).await;
-                    let _ = stream.flush().await;
-                });
-            }
-        });
-
+    /// response body — already base64-decoded) for every accepted request,
+    /// labelled with `content_type` as the response `Content-Type` header.
+    pub async fn start(body: Vec<u8>, content_type: &str) -> ResponseMockServer {
+        let inner = WireMockServer::start().await;
+        let base_url = inner.uri();
+        Mock::given(any())
+            .respond_with(ResponseTemplate::new(200).set_body_raw(body, content_type))
+            .mount(&inner)
+            .await;
         ResponseMockServer {
-            base_url: format!("http://127.0.0.1:{port}"),
+            _inner: inner,
+            base_url,
         }
+    }
+}
+
+impl fmt::Debug for ResponseMockServer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ResponseMockServer")
+            .field("base_url", &self.base_url)
+            .finish()
     }
 }

@@ -8,11 +8,14 @@ license = "MIT OR Apache-2.0"
 edition = "2024"
 
 [dependencies]
+algonaut_core = { workspace = true }
 algonaut_crypto = { workspace = true }
 algonaut_encoding = { workspace = true }
 algonaut_model = { workspace = true }
 algonaut_transaction = { workspace = true }
+data-encoding = { workspace = true }
 reqwest = { workspace = true, features = ["json", "multipart", "query"] }
+rmp-serde = { workspace = true }
 serde = { workspace = true }
 serde_derive = { workspace = true }
 serde_json = { workspace = true }

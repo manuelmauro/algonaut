@@ -127,7 +127,8 @@ async fn expect_path(w: &mut UnitWorld, expected: String) {
         .mock_server
         .as_ref()
         .expect("mock server not started")
-        .last_request();
+        .last_request()
+        .await;
     assert_path_eq(&req.path, &expected);
 }
 
@@ -137,7 +138,8 @@ async fn expect_request(w: &mut UnitWorld, method: String, expected: String) {
         .mock_server
         .as_ref()
         .expect("mock server not started")
-        .last_request();
+        .last_request()
+        .await;
     assert_eq!(
         req.method.to_lowercase(),
         method.to_lowercase(),

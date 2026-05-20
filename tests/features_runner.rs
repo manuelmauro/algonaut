@@ -239,29 +239,8 @@ const UNIT_FEATURES: &[Feature] = &[
     Feature {
         path: "tests/features/unit/v2algodclient_responses.feature",
         gate: None,
-        // "Get Block response, heartbeat" carries the heartbeat example
-        // tags; the parsed `BlockResponse` has a `Transaction` enum that is
-        // `#[serde(tag = "type")]` with no `hb` variant — and no
-        // `heartbeat address` accessor exists — so neither the JSON nor the
-        // msgpack heartbeat row can pass without an algod-crate change.
-        excluded_tags: &["unit.algod.heartbeat", "unit.algod.heartbeat.msgp"],
-        // Excluded scenarios, each for a concrete capability gap — never an
-        // assertion weakening.
-        // The five excluded scenarios all feed a base64-decoded *msgpack*
-        // HTTP response body to a generated endpoint. The generated
-        // `algonaut_algod` endpoints (`get_block`,
-        // `pending_transaction_information`, `get_pending_transactions`,
-        // `get_pending_transactions_by_address`) unconditionally call
-        // `serde_json::from_str` on the response text, so a msgpack body
-        // fails to parse (`Serde(... "expected value")`). Supporting
-        // msgpack responses would be a generated-crate change.
-        excluded_scenarios: &[
-            "Pending Transaction Information response",
-            "Pending Transactions Information response",
-            "Pending Transactions By Address response",
-            "Get Block response",
-            "Get Block response, header-only",
-        ],
+        excluded_tags: &[],
+        excluded_scenarios: &[],
     },
     Feature {
         path: "tests/features/unit/v2indexerclient_paths.feature",

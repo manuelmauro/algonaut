@@ -3,16 +3,242 @@ use serde::de::Error;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::convert::TryInto;
+use std::ops::Deref;
 
-/// Convenience newtype for a array of bytes.
-#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Bytes(
-    #[serde(
-        skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "deserialize_bytes"
-    )]
-    pub Vec<u8>,
-);
+/// A byte slice that round-trips through both JSON (base64 string) and
+/// msgpack (`bin`).
+///
+/// Algorand's JSON renders byte slices as base64 strings, msgpack as raw
+/// `bin`. `Bytes` bridges the two: on deserialize it accepts a base64
+/// string, a raw byte buffer, or a sequence of bytes; on serialize it emits
+/// a base64 string for human-readable formats and raw bytes otherwise.
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
+pub struct Bytes(pub Vec<u8>);
+
+impl Bytes {
+    /// The base64 rendering of the bytes — algod's canonical JSON form.
+    pub fn to_base64(&self) -> String {
+        BASE64.encode(&self.0)
+    }
+}
+
+impl From<Vec<u8>> for Bytes {
+    fn from(v: Vec<u8>) -> Self {
+        Bytes(v)
+    }
+}
+
+impl Serialize for Bytes {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.to_base64())
+        } else {
+            serializer.serialize_bytes(&self.0)
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Bytes {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct BytesVisitor;
+
+        impl<'de> Visitor<'de> for BytesVisitor {
+            type Value = Bytes;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("a base64 string or a byte buffer")
+            }
+
+            fn visit_str<E: Error>(self, v: &str) -> Result<Bytes, E> {
+                BASE64.decode(v.as_bytes()).map(Bytes).map_err(E::custom)
+            }
+
+            fn visit_bytes<E: Error>(self, v: &[u8]) -> Result<Bytes, E> {
+                Ok(Bytes(v.to_vec()))
+            }
+
+            fn visit_byte_buf<E: Error>(self, v: Vec<u8>) -> Result<Bytes, E> {
+                Ok(Bytes(v))
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Bytes, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let mut bytes = Vec::new();
+                while let Some(b) = seq.next_element::<u8>()? {
+                    bytes.push(b);
+                }
+                Ok(Bytes(bytes))
+            }
+        }
+
+        deserializer.deserialize_any(BytesVisitor)
+    }
+}
+
+/// A string that round-trips through both JSON (string) and msgpack (`bin`
+/// rendered as lossy UTF-8).
+///
+/// Some algod text fields — `gen`, `proto`, the transaction `type`
+/// discriminant — are plain strings in JSON but `bin` values in msgpack.
+/// A plain `String` only handles the JSON form; `Text` accepts both,
+/// decoding msgpack bytes as lossy UTF-8.
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
+pub struct Text(pub String);
+
+impl From<String> for Text {
+    fn from(s: String) -> Self {
+        Text(s)
+    }
+}
+
+impl From<&str> for Text {
+    fn from(s: &str) -> Self {
+        Text(s.to_owned())
+    }
+}
+
+impl AsRef<str> for Text {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Deref for Text {
+    type Target = str;
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Serialize for Text {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.0)
+        } else {
+            serializer.serialize_bytes(self.0.as_bytes())
+        }
+    }
+}
+
+/// Deserialize an `Option<String>` byte-ish field leniently: a string is
+/// kept verbatim, a byte buffer is base64-encoded.
+///
+/// Use this for fields that algod renders inconsistently across wire formats
+/// — e.g. an algod block's `fees` / `rwd` (a base32-checksum address in
+/// JSON, raw `bin` in msgpack) and `prev` (a `blk-…`-prefixed string in
+/// JSON, raw `bin` in msgpack). [`Bytes`] is the right type for fields that
+/// are *always* base64-or-bin; this helper is for the genuinely-mixed ones.
+pub fn deserialize_opt_lenient_str<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct OptLenientStrVisitor;
+
+    impl<'de> Visitor<'de> for OptLenientStrVisitor {
+        type Value = Option<String>;
+
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            f.write_str("a string, a byte buffer, or null")
+        }
+
+        fn visit_none<E: Error>(self) -> Result<Option<String>, E> {
+            Ok(None)
+        }
+
+        fn visit_unit<E: Error>(self) -> Result<Option<String>, E> {
+            Ok(None)
+        }
+
+        fn visit_some<D>(self, d: D) -> Result<Option<String>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            d.deserialize_any(LenientStrVisitor).map(Some)
+        }
+
+        fn visit_str<E: Error>(self, v: &str) -> Result<Option<String>, E> {
+            Ok(Some(v.to_owned()))
+        }
+
+        fn visit_bytes<E: Error>(self, v: &[u8]) -> Result<Option<String>, E> {
+            Ok(Some(BASE64.encode(v)))
+        }
+
+        fn visit_byte_buf<E: Error>(self, v: Vec<u8>) -> Result<Option<String>, E> {
+            Ok(Some(BASE64.encode(&v)))
+        }
+    }
+
+    struct LenientStrVisitor;
+
+    impl<'de> Visitor<'de> for LenientStrVisitor {
+        type Value = String;
+
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            f.write_str("a string or a byte buffer")
+        }
+
+        fn visit_str<E: Error>(self, v: &str) -> Result<String, E> {
+            Ok(v.to_owned())
+        }
+
+        fn visit_bytes<E: Error>(self, v: &[u8]) -> Result<String, E> {
+            Ok(BASE64.encode(v))
+        }
+
+        fn visit_byte_buf<E: Error>(self, v: Vec<u8>) -> Result<String, E> {
+            Ok(BASE64.encode(&v))
+        }
+    }
+
+    deserializer.deserialize_option(OptLenientStrVisitor)
+}
+
+impl<'de> Deserialize<'de> for Text {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct TextVisitor;
+
+        impl<'de> Visitor<'de> for TextVisitor {
+            type Value = Text;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("a string or a byte buffer")
+            }
+
+            fn visit_str<E: Error>(self, v: &str) -> Result<Text, E> {
+                Ok(Text(v.to_owned()))
+            }
+
+            fn visit_string<E: Error>(self, v: String) -> Result<Text, E> {
+                Ok(Text(v))
+            }
+
+            fn visit_bytes<E: Error>(self, v: &[u8]) -> Result<Text, E> {
+                Ok(Text(String::from_utf8_lossy(v).into_owned()))
+            }
+
+            fn visit_byte_buf<E: Error>(self, v: Vec<u8>) -> Result<Text, E> {
+                Ok(Text(String::from_utf8_lossy(&v).into_owned()))
+            }
+        }
+
+        deserializer.deserialize_any(TextVisitor)
+    }
+}
 
 pub struct SignatureVisitor;
 
