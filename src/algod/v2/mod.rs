@@ -626,9 +626,7 @@ impl Algod {
                 .await
                 .map_err(Into::<AlgodError>::into)?;
         let bytes = decode_base64(api_compiled_teal.result.as_bytes())?;
-        let raw = api_compiled_teal
-            .sourcemap
-            .ok_or_else(|| Error::Msg("algod did not return a sourcemap".to_string()))?;
+        let raw = api_compiled_teal.sourcemap.ok_or(Error::MissingSourcemap)?;
         let json = serde_json::to_string(&raw).map_err(|e| Error::Msg(e.to_string()))?;
         let map = algonaut_abi::sourcemap::SourceMap::from_json(&json)
             .map_err(|e| Error::Msg(e.to_string()))?;

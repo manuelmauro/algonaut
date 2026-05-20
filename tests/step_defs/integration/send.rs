@@ -1,7 +1,7 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
 use algonaut_core::{MicroAlgos, MultisigAddress, Round, StateProofPk, TxId, VotePk, VrfPk};
 use algonaut_transaction::{
-    Pay, RegisterKey, SignedTransaction, TxnBuilder, transaction::TransactionSignature,
+    Pay, RegisterKey, SignedTransaction, transaction::TransactionSignature,
 };
 use cucumber::{given, then, when};
 use data_encoding::BASE64;
@@ -28,19 +28,15 @@ async fn build_default_payment(
         BASE64.decode(note_b64.as_bytes())?
     };
 
-    let mut tx_builder = TxnBuilder::with(
-        &params,
-        Pay::new(
-            accounts[sender_index],
-            accounts[receiver_index],
-            MicroAlgos(amt),
-        )
-        .build(),
+    let mut tx_builder = Pay::new(
+        accounts[sender_index],
+        accounts[receiver_index],
+        MicroAlgos(amt),
     );
     if !note.is_empty() {
         tx_builder = tx_builder.note(note.clone());
     }
-    w.tx = Some(tx_builder.build()?);
+    w.tx = Some(tx_builder.build(&params)?);
     w.note = Some(note);
     Ok(())
 }
@@ -72,14 +68,11 @@ async fn default_multisig_transaction_with_parameters(
         BASE64.decode(note_b64.as_bytes())?
     };
 
-    let mut tx_builder = TxnBuilder::with(
-        &params,
-        Pay::new(msig.address(), accounts[1], MicroAlgos(amt)).build(),
-    );
+    let mut tx_builder = Pay::new(msig.address(), accounts[1], MicroAlgos(amt));
     if !note.is_empty() {
         tx_builder = tx_builder.note(note.clone());
     }
-    w.tx = Some(tx_builder.build()?);
+    w.tx = Some(tx_builder.build(&params)?);
     w.note = Some(note);
     w.multisig = Some(msig);
     Ok(())
@@ -173,7 +166,7 @@ async fn default_v2_key_registration_transaction(
         other => return Err(format!("unknown keyreg variant: {other}").into()),
     };
 
-    w.tx = Some(TxnBuilder::with(&params, keyreg.build()).build()?);
+    w.tx = Some(keyreg.build(&params)?);
     Ok(())
 }
 

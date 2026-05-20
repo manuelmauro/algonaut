@@ -1,7 +1,6 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::Pay;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::tx_group::TxGroup;
 use dotenv::dotenv;
@@ -29,18 +28,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Normally you'll want to submit e.g. a payment and asset transfer or asset transfers for different assets.
 
     info!("building payment transaction alice -> bob");
-    let t1 = TxnBuilder::with(
-        &params,
-        Pay::new(alice.address(), bob.address(), MicroAlgos(1_000)).build(),
-    )
-    .build()?;
+    let t1 = Pay::new(alice.address(), bob.address(), MicroAlgos(1_000)).build(&params)?;
 
     info!("building payment transaction bob -> alice");
-    let t2 = TxnBuilder::with(
-        &params,
-        Pay::new(bob.address(), alice.address(), MicroAlgos(3_000)).build(),
-    )
-    .build()?;
+    let t2 = Pay::new(bob.address(), alice.address(), MicroAlgos(3_000)).build(&params)?;
 
     info!("grouping transactions");
     let group = TxGroup::try_from(vec![t1, t2])?;

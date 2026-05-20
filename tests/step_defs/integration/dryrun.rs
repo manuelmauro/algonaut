@@ -3,9 +3,7 @@ use algonaut::dryrun::{DryrunRequestBuilder, field_name, result};
 use algonaut_algod::models::{Application, ApplicationParams, DryrunSource};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_encoding::Bytes;
-use algonaut_transaction::{
-    Pay, TxnBuilder, builder::TransactionParams, contract_account::ContractAccount,
-};
+use algonaut_transaction::{Pay, builder::TransactionParams, contract_account::ContractAccount};
 use cucumber::{given, then, when};
 use std::fs;
 
@@ -37,8 +35,8 @@ impl TransactionParams for DryrunParams {
 
 fn dummy_payment_txn(sender: Address) -> algonaut_transaction::Transaction {
     let params = DryrunParams;
-    TxnBuilder::with(&params, Pay::new(sender, sender, MicroAlgos(0)).build())
-        .build()
+    Pay::new(sender, sender, MicroAlgos(0))
+        .build(&params)
         .expect("building dummy payment")
 }
 
@@ -175,29 +173,10 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_algod::mod
 
             // Build an app-call txn referencing app id 1.
             let params = DryrunParams;
-            let txn = algonaut_transaction::TxnBuilder::with(
-                &params,
-                algonaut_transaction::transaction::TransactionType::ApplicationCallTransaction(
-                    algonaut_transaction::transaction::ApplicationCallTransaction {
-                        sender: creator,
-                        app_id: Some(AppId(DRYRUN_APP_ID)),
-                        on_complete:
-                            algonaut_transaction::transaction::ApplicationCallOnComplete::NoOp,
-                        accounts: None,
-                        approval_program: None,
-                        app_arguments: None,
-                        clear_state_program: None,
-                        foreign_apps: None,
-                        foreign_assets: None,
-                        global_state_schema: None,
-                        local_state_schema: None,
-                        extra_pages: 0,
-                        boxes: None,
-                    },
-                ),
-            )
-            .build()
-            .expect("app call txn");
+            let txn =
+                algonaut_transaction::builder::CallApplication::new(creator, AppId(DRYRUN_APP_ID))
+                    .build(&params)
+                    .expect("app call txn");
 
             // Sign as a no-op contract account (the dryrun endpoint does
             // not validate signatures).

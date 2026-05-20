@@ -1,5 +1,5 @@
 use algonaut::algod::v2::Algod;
-use algonaut::transaction::{TxnBuilder, account::Account};
+use algonaut::transaction::account::Account;
 use algonaut_core::MicroAlgos;
 use algonaut_transaction::Pay;
 use dotenv::dotenv;
@@ -37,13 +37,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("creating rekey-ing transaction");
-    // rekey
-    let rekey_tx = TxnBuilder::with(
-        &params,
-        Pay::new(rekeyed_acc_address, rekeyed_acc_address, MicroAlgos(0)).build(),
-    )
-    .rekey_to(rekey_to_acc_address)
-    .build()?;
+    let rekey_tx = Pay::rekey(rekeyed_acc_address, rekey_to_acc_address).build(&params)?;
 
     info!("signing transaction");
     let rekey_signed = rekeyed_acc.sign_transaction(rekey_tx)?;
@@ -63,11 +57,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("testing the rekey success");
     // verify: send a tx with the rekeyed address as sender, signing with rekey_to account
     let receiver = "PGCS3D5JL4AIFGTBPDGGMMCT3ODKUUFEFG336MJO25CGBG7ORKVOE3AHSU".parse()?;
-    let payment_tx = TxnBuilder::with(
-        &params,
-        Pay::new(rekeyed_acc_address, receiver, MicroAlgos(10_000)).build(),
-    )
-    .build()?;
+    let payment_tx = Pay::new(rekeyed_acc_address, receiver, MicroAlgos(10_000)).build(&params)?;
 
     info!("signing transaction");
     let payment_signed = rekey_to_acc.sign_transaction(payment_tx)?;

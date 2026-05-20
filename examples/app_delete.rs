@@ -1,6 +1,5 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::AppId;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::DeleteApplication;
 use dotenv::dotenv;
@@ -24,13 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building DeleteApplication transaction");
-    let t = TxnBuilder::with(
-        &params,
-        DeleteApplication::new(alice.address(), AppId(3))
-            .app_arguments(vec![vec![1, 0], vec![255]])
-            .build(),
-    )
-    .build()?;
+    let t = DeleteApplication::new(alice.address(), AppId(3)).build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

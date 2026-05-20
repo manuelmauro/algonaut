@@ -1,7 +1,7 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
 use algonaut_core::{Address, MicroAlgos, TxId};
-use algonaut_transaction::{Pay, TxnBuilder};
+use algonaut_transaction::Pay;
 use cucumber::{given, then, when};
 use rand::Rng;
 use std::error::Error;
@@ -129,16 +129,12 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     let sender_account = account_from_kmd_response(&sender_key)?;
 
     let params = algod.txn_params().await?;
-    let tx = TxnBuilder::with(
-        &params,
-        Pay::new(
-            sender_address,
-            sender_account.address(),
-            MicroAlgos(micro_algos + dust),
-        )
-        .build(),
+    let tx = Pay::new(
+        sender_address,
+        sender_account.address(),
+        MicroAlgos(micro_algos + dust),
     )
-    .build()?;
+    .build(&params)?;
 
     let s_tx = sender_account.sign_transaction(tx)?;
 

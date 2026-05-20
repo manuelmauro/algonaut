@@ -1,6 +1,6 @@
 use algonaut::algod::v2::Algod;
+use algonaut::transaction::CreateAsset;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::{CreateAsset, TxnBuilder};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -25,19 +25,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building CreateAsset transaction");
-    let t = TxnBuilder::with(
-        &params,
-        CreateAsset::new(alice.address(), 100, 2, false)
-            .unit_name("EIRI".to_owned())
-            .asset_name("Naki".to_owned())
-            .manager(alice.address())
-            .reserve(alice.address())
-            .freeze(alice.address())
-            .clawback(alice.address())
-            .url("example.com".to_owned())
-            .build(),
-    )
-    .build()?;
+    let t = CreateAsset::new(alice.address(), 100, 2, false)
+        .unit_name("EIRI".to_owned())
+        .asset_name("Naki".to_owned())
+        .manager(alice.address())
+        .reserve(alice.address())
+        .freeze(alice.address())
+        .clawback(alice.address())
+        .url("example.com".to_owned())
+        .build(&params)?;
 
     info!("signing transaction");
     // we need to sign the transaction to prove that we own the sender address

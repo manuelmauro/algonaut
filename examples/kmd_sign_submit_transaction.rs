@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::MicroAlgos;
 use algonaut::kmd::v1::Kmd;
-use algonaut::transaction::{Pay, TxnBuilder};
+use algonaut::transaction::Pay;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -53,8 +53,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
-    let t =
-        TxnBuilder::with(&params, Pay::new(sender, bob, MicroAlgos(123_456)).build()).build()?;
+    let t = Pay::new(sender, bob, MicroAlgos(123_456)).build(&params)?;
 
     info!("signing transaction");
     // we need to sign the transaction to prove that we own the sender address

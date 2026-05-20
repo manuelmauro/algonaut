@@ -2,12 +2,12 @@ use crate::step_defs::integration::world::World;
 use crate::step_defs::util::{parse_app_args, read_teal, split_addresses, split_uint64};
 use algonaut_algod::models::{Application, ApplicationLocalState};
 use algonaut_core::{AppId, AssetId};
+use algonaut_transaction::CreateApplication;
 use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,
     UpdateApplication,
 };
 use algonaut_transaction::transaction::StateSchema;
-use algonaut_transaction::{CreateApplication, TxnBuilder};
 use cucumber::{given, then, when};
 use data_encoding::BASE64;
 use std::error::Error;
@@ -54,7 +54,7 @@ async fn i_build_an_application_transaction(
 
     let params = algod.txn_params().await?;
 
-    let tx_type = match operation.as_str() {
+    let tx = match operation.as_str() {
         "create" => {
             let approval_program = read_teal(algod, &approval_program_file).await;
             let clear_program = read_teal(algod, &clear_program_file).await;
@@ -75,7 +75,7 @@ async fn i_build_an_application_transaction(
             .accounts(accounts)
             .app_arguments(args)
             .extra_pages(extra_pages)
-            .build()
+            .build(&params)?
         }
         "update" => {
             let app_id = w.app_id.unwrap();
@@ -93,7 +93,7 @@ async fn i_build_an_application_transaction(
             .foreign_apps(foreign_apps)
             .accounts(accounts)
             .app_arguments(args)
-            .build()
+            .build(&params)?
         }
         "call" => {
             let app_id = w.app_id.unwrap();
@@ -102,7 +102,7 @@ async fn i_build_an_application_transaction(
                 .foreign_apps(foreign_apps)
                 .accounts(accounts)
                 .app_arguments(args)
-                .build()
+                .build(&params)?
         }
         "optin" => {
             let app_id = w.app_id.unwrap();
@@ -112,7 +112,7 @@ async fn i_build_an_application_transaction(
                 .foreign_apps(foreign_apps)
                 .accounts(accounts)
                 .app_arguments(args)
-                .build()
+                .build(&params)?
         }
         "clear" => {
             let app_id = w.app_id.unwrap();
@@ -121,7 +121,7 @@ async fn i_build_an_application_transaction(
                 .foreign_apps(foreign_apps)
                 .accounts(accounts)
                 .app_arguments(args)
-                .build()
+                .build(&params)?
         }
         "closeout" => {
             let app_id = w.app_id.unwrap();
@@ -130,7 +130,7 @@ async fn i_build_an_application_transaction(
                 .foreign_apps(foreign_apps)
                 .accounts(accounts)
                 .app_arguments(args)
-                .build()
+                .build(&params)?
         }
         "delete" => {
             let app_id = w.app_id.unwrap();
@@ -139,13 +139,13 @@ async fn i_build_an_application_transaction(
                 .foreign_apps(foreign_apps)
                 .accounts(accounts)
                 .app_arguments(args)
-                .build()
+                .build(&params)?
         }
 
         _ => Err(format!("Invalid str: {}", operation))?,
     };
 
-    w.tx = Some(TxnBuilder::with(&params, tx_type).build()?);
+    w.tx = Some(tx);
 
     Ok(())
 }
