@@ -22,6 +22,37 @@ pub enum Error {
     #[error("http error: {0}")]
     Request(RequestError),
 
+    /// Tried to build / submit / execute a transaction group with zero
+    /// transactions in the [`AtomicTransactionComposer`]. Equivalent of
+    /// [`algonaut_transaction::error::TransactionError::EmptyTransactionListError`]
+    /// at the top-level error layer.
+    ///
+    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
+    #[error("transaction group is empty")]
+    EmptyTransactionGroup,
+    /// An [`AtomicTransactionComposer`] operation was attempted in the wrong
+    /// status. The original `String` captures the operation and expected
+    /// status for diagnostics; tests should match on the variant, not the
+    /// message.
+    ///
+    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
+    #[error("composer status invalid: {0}")]
+    ComposerStatusInvalid(String),
+    /// The [`AtomicTransactionComposer`] is at maximum capacity (16 txns by
+    /// protocol).
+    ///
+    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
+    #[error("composer group full (max {max} transactions)")]
+    ComposerGroupFull { max: usize },
+    /// An ABI method call returned but the application did not emit a
+    /// matching `log` entry, so the return value cannot be decoded.
+    #[error("app call transaction did not log a return value")]
+    MissingReturnLog,
+    /// `algod` was asked to compile TEAL with a source-map but the response
+    /// did not carry one.
+    #[error("algod did not return a sourcemap")]
+    MissingSourcemap,
+
     /// General text-only errors. Dedicated error variants can be created, if needed.
     #[error("Msg: {0}")]
     Msg(String),
