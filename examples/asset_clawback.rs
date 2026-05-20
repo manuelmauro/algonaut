@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::AssetId;
 use algonaut::transaction::ClawbackAsset;
-use algonaut::transaction::{TxnBuilder, account::Account};
+use algonaut::transaction::account::Account;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -28,18 +28,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building ClawbackAsset transaction");
-    let t = TxnBuilder::with(
-        &params,
-        ClawbackAsset::new(
-            alice.address(),
-            AssetId(21),
-            1,
-            bob.address(),
-            alice.address(),
-        )
-        .build(),
+    let t = ClawbackAsset::new(
+        alice.address(),
+        AssetId(21),
+        1,
+        bob.address(),
+        alice.address(),
     )
-    .build()?;
+    .build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

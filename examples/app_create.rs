@@ -1,14 +1,10 @@
 use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::transaction::CreateApplication;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::transaction::StateSchema;
-use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::TxId;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
-use std::time::{Duration, Instant};
 #[macro_use]
 extern crate log;
 
@@ -52,52 +48,22 @@ int 1
     let params = algod.txn_params().await?;
 
     info!("building CreateApplication transaction");
-    let t = TxnBuilder::with(
-        &params,
-        CreateApplication::new(
-            alice.address(),
-            compiled_approval_program,
-            compiled_clear_program,
-            StateSchema::empty(),
-            StateSchema::empty(),
-        )
-        .build(),
+    let t = CreateApplication::new(
+        alice.address(),
+        compiled_approval_program,
+        compiled_clear_program,
+        StateSchema::empty(),
+        StateSchema::empty(),
     )
-    .build()?;
+    .build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;
 
-    info!("broadcasting transaction");
-    let send_response = algod.send_txn(&signed_t).await?;
+    info!("broadcasting transaction and waiting for finality");
+    let pending_t = algod.submit(&signed_t).await?.confirm().await?;
 
-    info!("waiting for transaction finality");
-    let tx_id: TxId = send_response.tx_id.into();
-    let pending_t = wait_for_pending_transaction(&algod, &tx_id).await?;
-
-    info!(
-        "application id: {:?}",
-        pending_t.map(|t| t.application_index)
-    );
+    info!("application id: {:?}", pending_t.application_index);
 
     Ok(())
-}
-
-/// Utility function to wait on a transaction to be confirmed
-async fn wait_for_pending_transaction(
-    algod: &Algod,
-    txid: &TxId,
-) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
-    let timeout = Duration::from_secs(10);
-    let start = Instant::now();
-    loop {
-        let pending_transaction = algod.pending_txn(txid).await?;
-        // If the transaction has been confirmed or we time out, exit.
-        if pending_transaction.confirmed_round.is_some() {
-            return Ok(Some(pending_transaction));
-        } else if start.elapsed() >= timeout {
-            return Ok(None);
-        }
-        std::thread::sleep(Duration::from_millis(250))
-    }
 }

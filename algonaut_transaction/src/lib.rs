@@ -10,8 +10,9 @@ pub mod tx_group;
 pub mod url;
 
 pub use builder::{
-    AcceptAsset, ClawbackAsset, CreateApplication, CreateAsset, FreezeAsset, Pay, RegisterKey,
-    TransferAsset, TxnBuilder,
+    AcceptAsset, CallApplication, ClawbackAsset, ClearApplication, CloseApplication,
+    CreateApplication, CreateAsset, DeleteApplication, DestroyAsset, FreezeAsset, OptInApplication,
+    Pay, RegisterKey, TransferAsset, UpdateApplication, UpdateAsset,
 };
 pub use signer::{MultisigSigner, Signer};
 pub use transaction::{SignedTransaction, Transaction, TransactionType};

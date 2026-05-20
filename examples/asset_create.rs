@@ -1,12 +1,9 @@
 use algonaut::algod::v2::Algod;
-use algonaut::openapi_algod::models::PendingTransactionResponse;
+use algonaut::transaction::CreateAsset;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::{CreateAsset, TxnBuilder};
-use algonaut_core::TxId;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
-use std::time::{Duration, Instant};
 #[macro_use]
 extern crate log;
 
@@ -28,52 +25,28 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building CreateAsset transaction");
-    let t = TxnBuilder::with(
-        &params,
-        CreateAsset::new(alice.address(), 100, 2, false)
-            .unit_name("EIRI".to_owned())
-            .asset_name("Naki".to_owned())
-            .manager(alice.address())
-            .reserve(alice.address())
-            .freeze(alice.address())
-            .clawback(alice.address())
-            .url("example.com".to_owned())
-            .build(),
-    )
-    .build()?;
+    let t = CreateAsset::new(alice.address(), 100, 2, false)
+        .unit_name("EIRI".to_owned())
+        .asset_name("Naki".to_owned())
+        .manager(alice.address())
+        .reserve(alice.address())
+        .freeze(alice.address())
+        .clawback(alice.address())
+        .url("example.com".to_owned())
+        .build(&params)?;
 
     info!("signing transaction");
     // we need to sign the transaction to prove that we own the sender address
     let signed_t = alice.sign_transaction(t)?;
 
     info!("broadcasting transaction");
-    // broadcast the transaction to the network
-    let send_response = algod.send_txn(&signed_t).await?;
-    info!("transaction ID: {}", send_response.tx_id);
+    // broadcast the transaction to the network and wait for confirmation
+    let pending = algod.submit(&signed_t).await?;
+    info!("transaction ID: {}", pending.tx_id());
 
     info!("waiting for transaction finality");
-    let tx_id: TxId = send_response.tx_id.into();
-    let pending_t = wait_for_pending_transaction(&algod, &tx_id).await?;
-    info!("asset index: {:?}", pending_t.map(|t| t.asset_index));
+    let pending_t = pending.confirm().await?;
+    info!("asset index: {:?}", pending_t.asset_index);
 
     Ok(())
-}
-
-/// Utility function to wait on a transaction to be confirmed
-async fn wait_for_pending_transaction(
-    algod: &Algod,
-    txid: &TxId,
-) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
-    let timeout = Duration::from_secs(10);
-    let start = Instant::now();
-    loop {
-        let pending_transaction = algod.pending_txn(txid).await?;
-        // If the transaction has been confirmed or we time out, exit.
-        if pending_transaction.confirmed_round.is_some() {
-            return Ok(Some(pending_transaction));
-        } else if start.elapsed() >= timeout {
-            return Ok(None);
-        }
-        std::thread::sleep(Duration::from_millis(250))
-    }
 }

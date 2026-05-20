@@ -9,9 +9,9 @@
 use std::sync::Arc;
 
 use algonaut_abi::abi_interactions::AbiMethod;
-use algonaut_algod::models::TransactionParams200Response;
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
+use algonaut_model::client_types::SuggestedParams;
 use algonaut_transaction::{
     Signer,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
@@ -31,7 +31,7 @@ pub struct MethodCall {
     pub(super) method_args: Vec<AbiArgValue>,
     pub(super) fee: MicroAlgos,
     pub(super) sender: Address,
-    pub(super) suggested_params: TransactionParams200Response,
+    pub(super) suggested_params: SuggestedParams,
     pub(super) on_complete: ApplicationCallOnComplete,
     pub(super) approval_program: Option<CompiledTeal>,
     pub(super) clear_program: Option<CompiledTeal>,
@@ -189,8 +189,8 @@ impl MethodCallBuilder {
     ///
     /// The fee defaults to `params.min_fee` if no [`fee`](Self::fee)
     /// override was supplied.
-    pub fn build(self, params: &TransactionParams200Response) -> MethodCall {
-        let fee = self.fee.unwrap_or(MicroAlgos(params.min_fee));
+    pub fn build(self, params: &SuggestedParams) -> MethodCall {
+        let fee = self.fee.unwrap_or(params.min_fee);
         MethodCall {
             app_id: self.app_id,
             method: self.method,

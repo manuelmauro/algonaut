@@ -1,7 +1,4 @@
-use crate::step_defs::{
-    integration::world::World,
-    util::{read_teal, wait_for_pending_transaction},
-};
+use crate::step_defs::{integration::world::World, util::read_teal};
 use algonaut::atomic_transaction_composer::{
     AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicTransactionComposer,
     AtomicTransactionComposerStatus, MethodCall, TransactionWithSigner,
@@ -11,9 +8,9 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
 };
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::{Address, AppId, MicroAlgos, TxId};
+use algonaut_core::{Address, AppId, MicroAlgos};
 use algonaut_transaction::{
-    Pay, Signer, TxnBuilder,
+    Pay, Signer,
     transaction::{BoxReference, OnComplete, StateSchema},
 };
 use cucumber::{codegen::Regex, given, then, when};
@@ -80,9 +77,7 @@ async fn i_build_a_payment_transaction_with_sender_receiver_amount_close_remaind
         payment = payment.close_remainder_to(close_to);
     }
 
-    let tx = TxnBuilder::with(tx_params, payment.build())
-        .build()
-        .unwrap();
+    let tx = payment.build(tx_params).unwrap();
 
     w.tx = Some(tx);
 }
@@ -349,7 +344,7 @@ struct MethodCallCtx {
     method: AbiMethod,
     method_args: Vec<AbiArgValue>,
     app_id: AppId,
-    params: algonaut_algod::models::TransactionParams200Response,
+    params: algonaut_model::client_types::SuggestedParams,
     sender: Address,
     signer: std::sync::Arc<dyn Signer>,
     on_complete: OnComplete,
@@ -454,20 +449,11 @@ fn i_build_the_transaction_group_with_the_composer(w: &mut World, error_type: St
             // no error expected
             build_res.unwrap();
         }
-        "zero group size error" => {
-            let message = match build_res {
-                Ok(_) => None,
-                Err(e) => match e {
-                    algonaut::Error::Msg(m) => Some(m),
-                    _ => None,
-                },
-            };
-
-            match message.as_deref() {
-                Some("attempting to build group with zero transactions") => {}
-                _ => panic!("expected error, but got: {:?}", message),
-            }
-        }
+        "zero group size error" => match build_res {
+            Err(algonaut::Error::EmptyTransactionGroup) => {}
+            Err(other) => panic!("expected Error::EmptyTransactionGroup, got: {:?}", other),
+            Ok(_) => panic!("expected Error::EmptyTransactionGroup, got Ok"),
+        },
         _ => panic!("Unknown error type: {}", error_type),
     }
 }
@@ -797,25 +783,21 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
 
     let tx_params = algod.txn_params().await.expect("couldn't get params");
 
-    let tx = TxnBuilder::with(
-        &tx_params,
-        Pay::new(first_account, app_address, MicroAlgos(micro_algos)).build(),
-    )
-    .build()
-    .unwrap();
+    let tx = Pay::new(first_account, app_address, MicroAlgos(micro_algos))
+        .build(&tx_params)
+        .unwrap();
 
     let signed_tx = kmd
         .sign_transaction(kmd_handle, kmd_pw, &tx)
         .await
         .expect("couldn't sign tx");
 
-    let res = algod
-        .send_raw_txn(&signed_tx.signed_transaction)
+    let pending = algod
+        .submit_raw(&signed_tx.signed_transaction)
         .await
         .expect("couldn't send tx");
 
-    let tx_id: TxId = res.tx_id.into();
-    let _ = wait_for_pending_transaction(algod, &tx_id);
+    let _ = pending.confirm().await;
 }
 
 #[given(regex = r#"^I reset the array of application IDs to remember\.$"#)]

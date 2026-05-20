@@ -1,6 +1,6 @@
-use crate::step_defs::{integration::world::World, util::wait_for_pending_transaction};
-use algonaut_core::{Address, MicroAlgos, TxId};
-use algonaut_transaction::{Pay, TxnBuilder, account::Account};
+use crate::step_defs::integration::world::World;
+use algonaut_core::{Address, MicroAlgos};
+use algonaut_transaction::{Pay, account::Account};
 use cucumber::{given, when};
 use std::error::Error;
 
@@ -23,15 +23,9 @@ async fn i_generate_a_key_using_kmd_for_rekeying_and_fund_it(
     let funder_key = kmd.export_key(handle, password, &funder).await?;
     let funder_account = Account::from_seed(funder_key.private_key[0..32].try_into()?);
     let params = algod.txn_params().await?;
-    let tx = TxnBuilder::with(
-        &params,
-        Pay::new(funder, new_addr, MicroAlgos(10_000_000)).build(),
-    )
-    .build()?;
+    let tx = Pay::new(funder, new_addr, MicroAlgos(10_000_000)).build(&params)?;
     let signed = funder_account.sign_transaction(tx)?;
-    let resp = algod.send_txn(&signed).await?;
-    let tx_id: TxId = resp.tx_id.into();
-    wait_for_pending_transaction(algod, &tx_id).await?;
+    algod.submit(&signed).await?.confirm().await?;
 
     w.rekey_target = Some(new_addr);
     Ok(())
@@ -52,14 +46,11 @@ async fn default_transaction_with_parameters_and_rekeying_key(
     } else {
         data_encoding::BASE64.decode(note_b64.as_bytes())?
     };
-    let mut builder = TxnBuilder::with(
-        &params,
-        Pay::new(rekey_target, accounts[1], MicroAlgos(amt)).build(),
-    );
+    let mut builder = Pay::new(rekey_target, accounts[1], MicroAlgos(amt));
     if !note.is_empty() {
         builder = builder.note(note.clone());
     }
-    w.tx = Some(builder.build()?);
+    w.tx = Some(builder.build(&params)?);
     w.note = Some(note);
     Ok(())
 }

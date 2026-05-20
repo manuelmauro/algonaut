@@ -1,6 +1,5 @@
 use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::AppId;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::UpdateApplication;
 use dotenv::dotenv;
@@ -46,17 +45,13 @@ int 1
     let params = algod.txn_params().await?;
 
     info!("building UpdateApplication transaction");
-    let t = TxnBuilder::with(
-        &params,
-        UpdateApplication::new(
-            alice.address(),
-            AppId(5),
-            compiled_approval_program,
-            compiled_clear_program,
-        )
-        .build(),
+    let t = UpdateApplication::new(
+        alice.address(),
+        AppId(5),
+        compiled_approval_program,
+        compiled_clear_program,
     )
-    .build()?;
+    .build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

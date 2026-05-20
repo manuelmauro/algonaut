@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("algod latest version: {}", node_status.last_version);
 
     // fetch block information
-    let last_block = algod.block(node_status.last_round).await?;
+    let last_block = algod.block(node_status.last_round.0).await?;
     info!("{:?}", last_block);
 
     Ok(())
