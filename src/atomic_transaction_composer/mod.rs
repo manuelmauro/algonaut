@@ -1,5 +1,3 @@
-pub mod transaction_signer;
-
 use algonaut_abi::{
     abi_error::AbiError,
     abi_interactions::{
@@ -13,14 +11,14 @@ use algonaut_algod::models::{
     SimulateTransaction200Response, TransactionParams200Response,
 };
 use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, TxId};
-use algonaut_crypto::HashDigest;
+use algonaut_crypto::{HashDigest, Signature};
 use algonaut_transaction::{
-    SignedTransaction, Transaction, TransactionType,
+    SignedTransaction, Signer, Transaction, TransactionType,
     builder::TransactionParams,
     error::TransactionError,
     transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
-        to_tx_type_enum,
+        TransactionSignature, to_tx_type_enum,
     },
     tx_group,
 };
@@ -28,6 +26,7 @@ use data_encoding::BASE64;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 
 use crate::{Error, algod::v2::Algod};
@@ -66,8 +65,6 @@ async fn poll_until_confirmed(
     }
 }
 
-use self::transaction_signer::TransactionSigner;
-
 /// 4-byte prefix for logged return values, from https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#standard-format
 const ABI_RETURN_HASH: [u8; 4] = [0x15, 0x1f, 0x7c, 0x75];
 
@@ -80,12 +77,38 @@ const MAX_ABI_ARG_TYPE_LEN: usize = 15;
 const FOREIGN_OBJ_ABI_UINT_SIZE: usize = 8;
 
 /// Represents an unsigned transactions and a signer that can authorize that transaction.
+///
+/// `signer` is optional: when `None`, the composer will produce a
+/// placeholder `SignedTransaction` whose signature is the all-zero
+/// 64-byte sentinel. That mirrors the old `TransactionSigner::Empty`
+/// enum variant and is useful for the `/v2/transactions/simulate`
+/// "allow-empty-signatures = false" scenarios; never use it against
+/// the live submit endpoint.
 #[derive(Debug, Clone)]
 pub struct TransactionWithSigner {
     /// An unsigned transaction
     pub tx: Transaction,
-    /// A transaction signer that can authorize the transaction
-    pub signer: TransactionSigner,
+    /// A transaction signer that can authorize the transaction, or
+    /// `None` for an unsigned simulate slot.
+    pub signer: Option<Arc<dyn Signer>>,
+}
+
+impl TransactionWithSigner {
+    /// Build a `TransactionWithSigner` from a transaction and a signer
+    /// that will authorize it.
+    pub fn new(tx: Transaction, signer: Arc<dyn Signer>) -> Self {
+        Self {
+            tx,
+            signer: Some(signer),
+        }
+    }
+
+    /// Build a `TransactionWithSigner` that has no real signer
+    /// attached. The composer will fill the corresponding slot with an
+    /// all-zero placeholder signature — only safe for simulate.
+    pub fn unsigned(tx: Transaction) -> Self {
+        Self { tx, signer: None }
+    }
 }
 
 /// Represents the output from a successful ABI method call.
@@ -144,7 +167,7 @@ pub struct AddMethodCallParams {
     /// If provided, the address that the sender will be rekeyed to at the conclusion of this application call
     pub rekey_to: Option<Address>,
     /// A transaction Signer that can authorize this application call from sender
-    pub signer: TransactionSigner,
+    pub signer: Arc<dyn Signer>,
     /// A list of boxes that the app call has access to
     pub boxes: Option<Vec<BoxReference>>,
 }
@@ -409,7 +432,7 @@ impl AtomicTransactionComposer {
         self.txs.append(&mut txs_with_signer);
         self.txs.push(TransactionWithSigner {
             tx,
-            signer: params.signer.clone(),
+            signer: Some(params.signer.clone()),
         });
         self.method_map
             .insert(self.txs.len() - 1, params.method.clone());
@@ -445,36 +468,33 @@ impl AtomicTransactionComposer {
 
         let tx_and_signers = self.build_group()?;
 
-        let txs: Vec<Transaction> = self.txs.clone().into_iter().map(|t| t.tx).collect();
-
-        let mut visited = vec![false; txs.len()];
-        let mut signed_txs = vec![];
-
-        for (i, tx_with_signer) in tx_and_signers.iter().enumerate() {
-            if visited[i] {
-                continue;
-            }
-
-            let mut indices_to_sign = vec![];
-
-            for (j, other) in tx_and_signers.iter().enumerate() {
-                if !visited[j] && tx_with_signer.signer == other.signer {
-                    indices_to_sign.push(j);
-                    visited[j] = true;
+        let mut signed_txs = Vec::with_capacity(tx_and_signers.len());
+        for tx_with_signer in tx_and_signers.iter() {
+            let signed = match &tx_with_signer.signer {
+                Some(signer) => {
+                    let one = [tx_with_signer.tx.clone()];
+                    let mut out = signer.sign_transactions(&one)?;
+                    out.pop().ok_or_else(|| {
+                        Error::Msg("signer returned no signed transactions".to_owned())
+                    })?
                 }
-            }
-
-            if indices_to_sign.is_empty() {
-                return Err(Error::Msg(
-                    "invalid tx signer provided, isn't equal to self".to_owned(),
-                ));
-            }
-
-            let filtered_tx_group = indices_to_sign
-                .into_iter()
-                .map(|i| txs[i].clone())
-                .collect();
-            signed_txs = tx_with_signer.signer.sign_transactions(filtered_tx_group)?;
+                None => {
+                    // Mirrors the old `TransactionSigner::Empty` variant:
+                    // produce a placeholder `SignedTransaction` whose
+                    // 64-byte signature is all zeros. Algod's simulator
+                    // detects this as a missing signature; never submit
+                    // it to the live endpoint.
+                    let tx = tx_with_signer.tx.clone();
+                    let transaction_id = tx.id()?;
+                    SignedTransaction {
+                        transaction: tx,
+                        transaction_id,
+                        sig: TransactionSignature::Single(Signature([0; 64])),
+                        auth_address: None,
+                    }
+                }
+            };
+            signed_txs.push(signed);
         }
 
         self.signed_txs = signed_txs.clone();

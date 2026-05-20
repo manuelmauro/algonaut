@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Open `algonaut_transaction::signer::Signer` trait so third-party signers (HSMs, remote KMS, hardware wallets, etc.) can plug into the `AtomicTransactionComposer`. Built-in impls are provided for `Account`, `ContractAccount`, and a new `MultisigSigner` bundle (`address: MultisigAddress`, `accounts: Vec<Account>`). Re-exported as `algonaut::transaction::{Signer, MultisigSigner}`
+- `TransactionWithSigner::new(tx, signer)` and `TransactionWithSigner::unsigned(tx)` convenience constructors
+
+### Changed
+
+- **Breaking:** the closed `algonaut::atomic_transaction_composer::transaction_signer::TransactionSigner` enum is replaced by the open `Signer` trait. `TransactionWithSigner.signer` is now `Option<Arc<dyn Signer>>` (`None` mirrors the old `TransactionSigner::Empty` simulate slot — the composer fills it with an all-zero placeholder signature). `AddMethodCallParams.signer` is now `Arc<dyn Signer>`. Migrate constructions: `TransactionSigner::BasicAccount(acc)` → `Arc::new(acc) as Arc<dyn Signer>`; `TransactionSigner::ContractAccount(ca)` → `Arc::new(ca)`; `TransactionSigner::MultisigAccount { address, accounts }` → `Arc::new(MultisigSigner { address, accounts })`; `TransactionSigner::Empty` → drop, use `TransactionWithSigner::unsigned(tx)` or `signer: None`
+
 ## [0.7.0] - 2026-05-20
 
 ### Added

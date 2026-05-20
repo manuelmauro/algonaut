@@ -1,9 +1,7 @@
 use algonaut::{
     algod::v2::Algod,
     atomic_transaction_composer::AtomicTransactionComposer,
-    atomic_transaction_composer::{
-        AbiArgValue, ExecuteResult, TransactionWithSigner, transaction_signer::TransactionSigner,
-    },
+    atomic_transaction_composer::{AbiArgValue, ExecuteResult, TransactionWithSigner},
     indexer::v2::Indexer,
     kmd::v1::Kmd,
 };
@@ -15,11 +13,12 @@ use algonaut_algod::models::{
 use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TxId};
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_transaction::{
-    SignedTransaction, Transaction,
+    SignedTransaction, Signer, Transaction,
     account::Account,
     auction::{Bid, SignedBid},
 };
 use cucumber;
+use std::sync::Arc;
 
 #[derive(Default, Debug, cucumber::World)]
 pub struct World {
@@ -43,7 +42,7 @@ pub struct World {
 
     pub note: Option<Vec<u8>>,
 
-    pub tx_signer: Option<TransactionSigner>,
+    pub tx_signer: Option<Arc<dyn Signer>>,
     pub tx_with_signer: Option<TransactionWithSigner>,
     pub tx_composer: Option<AtomicTransactionComposer>,
     pub tx_composer_methods: Option<Vec<AbiMethod>>,

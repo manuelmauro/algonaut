@@ -2,7 +2,6 @@ use crate::step_defs::{integration::world::World, util::read_teal};
 use algonaut::atomic_transaction_composer::{
     AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AddMethodCallParams,
     AtomicTransactionComposer, AtomicTransactionComposerStatus, TransactionWithSigner,
-    transaction_signer::TransactionSigner,
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
@@ -11,7 +10,7 @@ use algonaut_abi::{
 use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, AppId, MicroAlgos};
 use algonaut_transaction::{
-    Pay,
+    Pay, Signer,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
 };
 use cucumber::{codegen::Regex, given, then, when};
@@ -20,16 +19,17 @@ use num_traits::ToPrimitive;
 use sha2::Digest;
 use std::convert::TryInto;
 use std::error::Error;
+use std::sync::Arc;
 
 #[given(regex = r#"^I make a transaction signer for the ([^"]*) account\.$"#)]
 #[when(regex = r#"^I make a transaction signer for the ([^"]*) account\.$"#)]
 async fn i_make_a_transaction_signer_for_the_account(w: &mut World, account_str: String) {
-    let signer = TransactionSigner::BasicAccount(match account_str.as_ref() {
+    let account = match account_str.as_ref() {
         "transient" => w.transient_account.clone().unwrap(),
         _ => panic!("Not handled account string: {}", account_str),
-    });
+    };
 
-    w.tx_signer = Some(signer);
+    w.tx_signer = Some(Arc::new(account) as Arc<dyn Signer>);
 }
 
 #[given(expr = "a new AtomicTransactionComposer")]
@@ -88,7 +88,7 @@ async fn i_create_a_transaction_with_signer_with_the_current_transaction(w: &mut
     let tx = w.tx.clone().unwrap();
     let signer = w.tx_signer.clone().unwrap();
 
-    w.tx_with_signer = Some(TransactionWithSigner { tx, signer });
+    w.tx_with_signer = Some(TransactionWithSigner::new(tx, signer));
 }
 
 #[when(expr = "I create a transaction with an empty signer with the current transaction.")]
@@ -96,10 +96,7 @@ async fn i_create_a_transaction_with_signer_with_the_current_transaction(w: &mut
 async fn i_create_a_transaction_with_an_empty_signer_with_the_current_transaction(w: &mut World) {
     let tx = w.tx.clone().unwrap();
 
-    w.tx_with_signer = Some(TransactionWithSigner {
-        tx,
-        signer: TransactionSigner::Empty,
-    });
+    w.tx_with_signer = Some(TransactionWithSigner::unsigned(tx));
 }
 
 #[when(expr = "I add the current transaction with signer to the composer.")]
