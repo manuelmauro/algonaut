@@ -256,15 +256,15 @@ impl AtomicTransactionComposer {
     /// or if adding this transaction causes the current group to exceed MaxAtomicGroupSize.
     pub fn add_transaction(&mut self, txn_with_signer: TransactionWithSigner) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(Error::Msg(
-                "status must be BUILDING in order to add transactions".to_owned(),
+            return Err(Error::ComposerStatusInvalid(
+                "add_transaction requires status=Building".to_owned(),
             ));
         }
 
         if self.len() == MAX_ATOMIC_GROUP_SIZE {
-            return Err(Error::Msg(format!(
-                "reached max group size: {MAX_ATOMIC_GROUP_SIZE}"
-            )));
+            return Err(Error::ComposerGroupFull {
+                max: MAX_ATOMIC_GROUP_SIZE,
+            });
         }
 
         validate_tx(&txn_with_signer.tx, TransactionArgType::Any)?;
@@ -276,8 +276,8 @@ impl AtomicTransactionComposer {
 
     pub fn add_method_call(&mut self, params: &mut AddMethodCallParams) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(Error::Msg(
-                "status must be BUILDING in order to add transactions".to_owned(),
+            return Err(Error::ComposerStatusInvalid(
+                "add_method_call requires status=Building".to_owned(),
             ));
         }
         if params.method_args.len() != params.method.args.len() {
@@ -288,9 +288,9 @@ impl AtomicTransactionComposer {
             )));
         }
         if self.len() + params.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
-            return Err(Error::Msg(format!(
-                "reached max group size: {MAX_ATOMIC_GROUP_SIZE}"
-            )));
+            return Err(Error::ComposerGroupFull {
+                max: MAX_ATOMIC_GROUP_SIZE,
+            });
         }
 
         let mut method_types = vec![];
@@ -390,9 +390,7 @@ impl AtomicTransactionComposer {
         }
 
         if self.txs.is_empty() {
-            return Err(Error::Msg(
-                "should not build transaction group with 0 transactions in composer".to_owned(),
-            ));
+            return Err(Error::EmptyTransactionGroup);
         } else if self.txs.len() > 1 {
             let mut group_txs = vec![];
             for tx in self.txs.iter_mut() {
@@ -460,8 +458,8 @@ impl AtomicTransactionComposer {
 
     pub async fn submit(&mut self, algod: &Algod) -> Result<Vec<String>, Error> {
         if self.status >= AtomicTransactionComposerStatus::Submitted {
-            return Err(Error::Msg(
-                "Atomic Transaction Composer cannot submit committed transaction".to_owned(),
+            return Err(Error::ComposerStatusInvalid(
+                "submit cannot be called after a previous submit/execute".to_owned(),
             ));
         }
 
@@ -476,7 +474,9 @@ impl AtomicTransactionComposer {
 
     pub async fn execute(&mut self, algod: &Algod) -> Result<ExecuteResult, Error> {
         if self.status >= AtomicTransactionComposerStatus::Committed {
-            return Err(Error::Msg("status is already committed".to_owned()));
+            return Err(Error::ComposerStatusInvalid(
+                "execute cannot be called after the composer is committed".to_owned(),
+            ));
         }
 
         self.submit(algod).await?;
@@ -838,18 +838,14 @@ fn get_return_value_with_abi_type(
     abi_type: &AbiType,
 ) -> Result<Result<AbiMethodReturnValue, AbiReturnDecodeError>, Error> {
     if pending_tx.logs.is_none() {
-        return Err(Error::Msg(
-            "App call transaction did not log a return value".to_owned(),
-        ));
+        return Err(Error::MissingReturnLog);
     }
 
     // safe to unwrap given the previous check
     let logs = &pending_tx.logs.clone().unwrap();
 
     if logs.is_empty() {
-        return Err(Error::Msg(
-            "App call transaction did not log a return value".to_owned(),
-        ));
+        return Err(Error::MissingReturnLog);
     }
 
     let ret_line = &logs[logs.len() - 1];
@@ -859,9 +855,7 @@ fn get_return_value_with_abi_type(
         .map_err(|e| Error::Msg(format!("BASE64 Decoding error: {e:?}")))?;
 
     if !check_log_ret(&decoded_ret_line) {
-        return Err(Error::Msg(
-            "App call transaction did not log a return value(2)".to_owned(),
-        ));
+        return Err(Error::MissingReturnLog);
     }
 
     let abi_encoded = &decoded_ret_line[ABI_RETURN_HASH.len()..decoded_ret_line.len()];

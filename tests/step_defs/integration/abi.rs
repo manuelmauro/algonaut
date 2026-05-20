@@ -525,20 +525,11 @@ fn i_build_the_transaction_group_with_the_composer(w: &mut World, error_type: St
             // no error expected
             build_res.unwrap();
         }
-        "zero group size error" => {
-            let message = match build_res {
-                Ok(_) => None,
-                Err(e) => match e {
-                    algonaut::Error::Msg(m) => Some(m),
-                    _ => None,
-                },
-            };
-
-            match message.as_deref() {
-                Some("attempting to build group with zero transactions") => {}
-                _ => panic!("expected error, but got: {:?}", message),
-            }
-        }
+        "zero group size error" => match build_res {
+            Err(algonaut::Error::EmptyTransactionGroup) => {}
+            Err(other) => panic!("expected Error::EmptyTransactionGroup, got: {:?}", other),
+            Ok(_) => panic!("expected Error::EmptyTransactionGroup, got Ok"),
+        },
         _ => panic!("Unknown error type: {}", error_type),
     }
 }
