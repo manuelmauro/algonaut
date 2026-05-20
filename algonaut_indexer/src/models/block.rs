@@ -53,7 +53,7 @@ pub struct Block {
     #[serde(rename = "transactions-root")]
     pub transactions_root: Bytes,
     /// \\[txn256\\] TransactionsRootSHA256 is an auxiliary TransactionRoot, built using a vector commitment instead of a merkle tree, and SHA256 hash function instead of the default SHA512_256. This commitment can be used on environments where only the SHA256 function exists.
-    #[serde(rename = "transactions-root-sha256")]
+    #[serde(rename = "transactions-root-sha256", default)]
     pub transactions_root_sha256: Bytes,
     /// \\[tc\\] TxnCounter counts the number of transactions committed in the ledger, from the time at which support for this feature was introduced.  Specifically, TxnCounter is the number of the next transaction that will be committed after this block.  It is 0 when no transactions have ever been committed (since TxnCounter started being supported).
     #[serde(rename = "txn-counter", skip_serializing_if = "Option::is_none")]

@@ -288,35 +288,7 @@ const UNIT_FEATURES: &[Feature] = &[
         path: "tests/features/unit/v2indexerclient_responses.feature",
         gate: None,
         excluded_tags: &[],
-        // Excluded scenarios, each for a concrete capability gap — never an
-        // assertion weakening. Every excluded fixture predates a field that
-        // the current generated `algonaut_indexer` models mark mandatory,
-        // so `serde_json::from_str` fails before any assertion runs:
-        // - `metadata-hash`: `AssetParams::metadata_hash` is
-        //   `Option<HashDigest>` but its `deserialize_with` lacks a
-        //   `#[serde(default)]`, so an absent field is a hard error.
-        //   Affects "LookupAssetTransactions response",
-        //   "LookupAssetByID response", "SearchForTransactions response",
-        //   "SearchForAssets response" and "SearchForTransactions
-        //   response, rekey-to".
-        // - `total-apps-opted-in`: `Account::total_apps_opted_in` is a
-        //   required `u64`. Affects "LookupAccountByID response",
-        //   "SearchAccounts response" and "SearchForAccounts response,
-        //   authorizing address".
-        // - `transactions-root-sha256`: `Block::transactions_root_sha256`
-        //   is a required field. Affects "LookupBlock response".
-        // Each fix is a generated-crate change, out of scope here.
-        excluded_scenarios: &[
-            "LookupAssetTransactions response",
-            "LookupBlock response",
-            "LookupAccountByID response",
-            "LookupAssetByID response",
-            "SearchAccounts response",
-            "SearchForTransactions response",
-            "SearchForAssets response",
-            "SearchForAccounts response, authorizing address",
-            "SearchForTransactions response, rekey-to",
-        ],
+        excluded_scenarios: &[],
     },
 ];
 

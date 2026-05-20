@@ -74,22 +74,22 @@ pub struct Account {
     #[serde(rename = "status")]
     pub status: String,
     /// The count of all applications that have been opted in, equivalent to the count of application local data (AppLocalState objects) stored in this account.
-    #[serde(rename = "total-apps-opted-in")]
+    #[serde(rename = "total-apps-opted-in", default)]
     pub total_apps_opted_in: u64,
     /// The count of all assets that have been opted in, equivalent to the count of AssetHolding objects held by this account.
-    #[serde(rename = "total-assets-opted-in")]
+    #[serde(rename = "total-assets-opted-in", default)]
     pub total_assets_opted_in: u64,
     /// For app-accounts only. The total number of bytes allocated for the keys and values of boxes which belong to the associated application.
-    #[serde(rename = "total-box-bytes")]
+    #[serde(rename = "total-box-bytes", default)]
     pub total_box_bytes: u64,
     /// For app-accounts only. The total number of boxes which belong to the associated application.
-    #[serde(rename = "total-boxes")]
+    #[serde(rename = "total-boxes", default)]
     pub total_boxes: u64,
     /// The count of all apps (AppParams objects) created by this account.
-    #[serde(rename = "total-created-apps")]
+    #[serde(rename = "total-created-apps", default)]
     pub total_created_apps: u64,
     /// The count of all assets (AssetParams objects) created by this account.
-    #[serde(rename = "total-created-assets")]
+    #[serde(rename = "total-created-assets", default)]
     pub total_created_assets: u64,
 }
 

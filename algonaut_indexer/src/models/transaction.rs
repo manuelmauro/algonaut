@@ -69,7 +69,8 @@ pub struct Transaction {
     #[serde(
         rename = "genesis-hash",
         skip_serializing_if = "Option::is_none",
-        deserialize_with = "deserialize_opt_hash"
+        deserialize_with = "deserialize_opt_hash",
+        default
     )]
     pub genesis_hash: Option<HashDigest>,
     /// \\[gen\\] genesis block ID.
