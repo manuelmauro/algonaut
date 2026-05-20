@@ -3,8 +3,8 @@ use crate::step_defs::{
     util::{read_teal, wait_for_pending_transaction},
 };
 use algonaut::atomic_transaction_composer::{
-    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AddMethodCallParams,
-    AtomicTransactionComposer, AtomicTransactionComposerStatus, TransactionWithSigner,
+    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicTransactionComposer,
+    AtomicTransactionComposerStatus, MethodCall, TransactionWithSigner,
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
@@ -14,7 +14,7 @@ use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, AppId, MicroAlgos, TxId};
 use algonaut_transaction::{
     Pay, Signer, TxnBuilder,
-    transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
+    transaction::{BoxReference, OnComplete, StateSchema},
 };
 use cucumber::{codegen::Regex, given, then, when};
 use data_encoding::BASE64;
@@ -226,21 +226,9 @@ async fn i_append_the_encoded_arguments_to_the_method_arguments_array(
     regex = r#"^I add a method call with the ([^"]*) account, the current application, suggested params, on complete "([^"]*)", current transaction signer, current method arguments.$"#
 )]
 async fn i_add_a_method_call(w: &mut World, account_type: String, on_complete: String) {
-    add_method_call(
-        w,
-        account_type,
-        on_complete,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-    )
-    .await;
+    let ctx = method_call_ctx(w, &account_type, &on_complete);
+    let call = ctx.builder().build(&ctx.params);
+    ctx.commit(w, call);
 }
 
 #[when(
@@ -253,21 +241,15 @@ async fn i_add_a_method_call_for_update(
     approval_program: String,
     clear_program: String,
 ) {
-    add_method_call(
-        w,
-        account_type,
-        on_complete,
-        Some(approval_program),
-        Some(clear_program),
-        None,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-    )
-    .await;
+    let approval = read_teal(w.algod.as_ref().unwrap(), &approval_program).await;
+    let clear = read_teal(w.algod.as_ref().unwrap(), &clear_program).await;
+    let ctx = method_call_ctx(w, &account_type, &on_complete);
+    let call = ctx
+        .builder()
+        .approval_program(approval)
+        .clear_program(clear)
+        .build(&ctx.params);
+    ctx.commit(w, call);
 }
 
 #[when(
@@ -285,21 +267,18 @@ async fn i_add_a_method_call_for_create(
     local_ints: u64,
     extra_pages: u32,
 ) {
-    add_method_call(
-        w,
-        account_type,
-        on_complete,
-        Some(approval_program),
-        Some(clear_program),
-        Some(global_bytes),
-        Some(global_ints),
-        Some(local_bytes),
-        Some(local_ints),
-        Some(extra_pages),
-        false,
-        None,
-    )
-    .await;
+    let approval = read_teal(w.algod.as_ref().unwrap(), &approval_program).await;
+    let clear = read_teal(w.algod.as_ref().unwrap(), &clear_program).await;
+    let ctx = method_call_ctx(w, &account_type, &on_complete);
+    let call = ctx
+        .builder()
+        .approval_program(approval)
+        .clear_program(clear)
+        .global_schema(StateSchema::new(global_ints, global_bytes))
+        .local_schema(StateSchema::new(local_ints, local_bytes))
+        .extra_pages(extra_pages)
+        .build(&ctx.params);
+    ctx.commit(w, call);
 }
 
 #[when(
@@ -315,21 +294,9 @@ async fn i_add_a_method_call_with_boxes(
     boxes_str: String,
 ) {
     let boxes = parse_box_references(&boxes_str, &w.app_ids);
-    add_method_call(
-        w,
-        account_type,
-        on_complete,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some(boxes),
-    )
-    .await;
+    let ctx = method_call_ctx(w, &account_type, &on_complete);
+    let call = ctx.builder().boxes(boxes).build(&ctx.params);
+    ctx.commit(w, call);
 }
 
 fn parse_box_references(s: &str, app_ids: &[AppId]) -> Vec<BoxReference> {
@@ -364,127 +331,90 @@ fn parse_box_references(s: &str, app_ids: &[AppId]) -> Vec<BoxReference> {
     regex = r#"^I add a nonced method call with the ([^"]*) account, the current application, suggested params, on complete "([^"]*)", current transaction signer, current method arguments\.$"#
 )]
 async fn i_add_method_call_with_nonce(w: &mut World, account_type: String, on_complete: String) {
-    add_method_call(
-        w,
-        account_type,
-        on_complete,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-    )
-    .await;
+    let note = w
+        .note
+        .clone()
+        .expect("note should be set before adding a nonced method call");
+    let ctx = method_call_ctx(w, &account_type, &on_complete);
+    let call = ctx.builder().note(note).build(&ctx.params);
+    ctx.commit(w, call);
 }
 
-async fn add_method_call(
-    w: &mut World,
-    account_type: String,
-    on_complete: String,
-    approval_program: Option<String>,
-    clear_program: Option<String>,
-    global_bytes: Option<u64>,
-    global_ints: Option<u64>,
-    local_bytes: Option<u64>,
-    local_ints: Option<u64>,
-    extra_pages: Option<u32>,
-    use_nonce: bool,
-    boxes: Option<Vec<BoxReference>>,
-) {
-    let algod = w.algod.as_ref().unwrap();
-    let transient_account = w.transient_account.clone().unwrap();
-    let abi_method = w.abi_method.as_ref().unwrap();
-    let abi_method_args = w.abi_method_arg_values.as_mut().unwrap();
-    let application_id = w.app_id.clone().unwrap();
-    let tx_params = w.tx_params.clone().unwrap();
-    let tx_signer = w.tx_signer.clone().unwrap();
-    let tx_composer = w.tx_composer.as_mut().unwrap();
-    let tx_composer_methods = w.tx_composer_methods.as_mut().unwrap();
+/// Shared context resolved from the [`World`] before constructing a
+/// [`MethodCall`]. Centralises lookups of the algod, transient account,
+/// suggested params, ABI method, and signer, and parses the on-complete
+/// string. Each step-def then layers on only the setters it actually
+/// needs — no `None` arguments.
+struct MethodCallCtx {
+    method: AbiMethod,
+    method_args: Vec<AbiArgValue>,
+    app_id: AppId,
+    params: algonaut_algod::models::TransactionParams200Response,
+    sender: Address,
+    signer: std::sync::Arc<dyn Signer>,
+    on_complete: OnComplete,
+}
 
-    let extra_pages = extra_pages.unwrap_or(0);
+impl MethodCallCtx {
+    fn builder(&self) -> algonaut::atomic_transaction_composer::MethodCallBuilder {
+        MethodCall::new(
+            self.app_id,
+            self.method.clone(),
+            self.sender,
+            self.signer.clone(),
+        )
+        .args(self.method_args.clone())
+        .on_complete(self.on_complete.clone())
+    }
 
-    let global_schema = match (global_ints, global_bytes) {
-        (Some(ints), Some(bytes)) => Some(StateSchema::new(ints, bytes)),
-        _ => None,
-    };
+    fn commit(self, w: &mut World, call: MethodCall) {
+        w.tx_composer_methods
+            .as_mut()
+            .unwrap()
+            .push(self.method.clone());
+        w.tx_composer
+            .as_mut()
+            .unwrap()
+            .add_method_call(call)
+            .unwrap();
+    }
+}
 
-    let local_schema = match (local_ints, local_bytes) {
-        (Some(ints), Some(bytes)) => Some(StateSchema::new(ints, bytes)),
-        _ => None,
-    };
-
-    let on_complete = match on_complete.as_ref() {
-        "crate" | "noop" | "call" => ApplicationCallOnComplete::NoOp,
-        "update" => ApplicationCallOnComplete::UpdateApplication,
-        "optin" => ApplicationCallOnComplete::OptIn,
-        "clear" => ApplicationCallOnComplete::ClearState,
-        "closeout" => ApplicationCallOnComplete::CloseOut,
-        "delete" => ApplicationCallOnComplete::DeleteApplication,
-        _ => panic!("invalid onComplete value"),
-    };
-
-    let use_account = match account_type.as_ref() {
-        "transient" => transient_account,
-        _ => panic!("Not handled account string: {}", account_type),
-    };
-
-    let approval = match approval_program {
-        Some(p) => Some(read_teal(algod, &p).await),
-        None => None,
-    };
-
-    let clear = match clear_program {
-        Some(p) => Some(read_teal(algod, &p).await),
-        None => None,
-    };
-
-    // populate args from methodArgs
-
+fn method_call_ctx(w: &World, account_type: &str, on_complete: &str) -> MethodCallCtx {
+    let abi_method = w.abi_method.as_ref().unwrap().clone();
+    let abi_method_args = w.abi_method_arg_values.as_ref().unwrap().clone();
     if abi_method_args.len() != abi_method.args.len() {
         panic!(
             "Provided argument count is incorrect. Expected {}, got {}",
             abi_method_args.len(),
             abi_method.args.len()
         );
+    }
+
+    let use_account = match account_type {
+        "transient" => w.transient_account.clone().unwrap(),
+        _ => panic!("Not handled account string: {}", account_type),
     };
 
-    let note_opt = if use_nonce {
-        Some(
-            w.note
-                .clone()
-                .expect("note should be set if using use_nonce"),
-        )
-    } else {
-        None
+    let on_complete = match on_complete {
+        "crate" | "noop" | "call" => OnComplete::NoOp,
+        "update" => OnComplete::UpdateApplication,
+        "optin" => OnComplete::OptIn,
+        "clear" => OnComplete::ClearState,
+        "closeout" => OnComplete::CloseOut,
+        "delete" => OnComplete::DeleteApplication,
+        _ => panic!("invalid onComplete value"),
     };
 
-    let mut params = AddMethodCallParams {
-        app_id: application_id,
-        method: abi_method.to_owned(),
-        method_args: abi_method_args.to_owned(),
-        fee: MicroAlgos(tx_params.min_fee),
+    MethodCallCtx {
+        method: abi_method,
+        method_args: abi_method_args,
+        app_id: w.app_id.clone().unwrap(),
+        params: w.tx_params.clone().unwrap(),
         sender: use_account.address(),
-        suggested_params: tx_params,
+        signer: w.tx_signer.clone().unwrap(),
         on_complete,
-        approval_program: approval,
-        clear_program: clear,
-        global_schema,
-        local_schema,
-        extra_pages,
-        note: note_opt,
-        lease: None,
-        rekey_to: None,
-        signer: tx_signer,
-        boxes,
-    };
-
-    tx_composer_methods.push(abi_method.to_owned());
-
-    tx_composer.add_method_call(&mut params).unwrap();
+    }
 }
 
 #[given(regex = r#"I add the nonce "([^"]*)"$"#)]
