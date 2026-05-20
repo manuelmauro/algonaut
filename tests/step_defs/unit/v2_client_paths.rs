@@ -166,8 +166,8 @@ async fn algod_pending_txn_information(w: &mut UnitWorld, txid: String, format: 
 #[when(
     regex = r#"^we make a Pending Transaction Information with max (\d+) and format "([^"]*)"$"#
 )]
-async fn algod_pending_txn_information2(w: &mut UnitWorld, max: u64, _format: String) {
-    let _ = algod(w).pending_txns(opt_u64(max)).await;
+async fn algod_pending_txn_information2(w: &mut UnitWorld, max: u64, format: String) {
+    let _ = algod(w).pending_txns(opt_u64(max), opt_str(&format)).await;
 }
 
 #[when(
@@ -177,9 +177,11 @@ async fn algod_pending_txns_by_address(
     w: &mut UnitWorld,
     account: String,
     max: u64,
-    _format: String,
+    format: String,
 ) {
-    let _ = algod(w).address_pending_txns(&account, opt_u64(max)).await;
+    let _ = algod(w)
+        .address_pending_txns(&account, opt_u64(max), opt_str(&format))
+        .await;
 }
 
 #[when(regex = r"^we make a Status after Block call with round (\d+)$")]
@@ -386,12 +388,15 @@ async fn algod_account_applications_information(
     account: String,
     limit: u64,
     next: String,
-    _include: String,
+    include: String,
 ) {
-    // NOTE: only the (limit, next) variant is exercised by live examples;
-    // see the `excluded_tags` rationale in `features_runner.rs`.
     let _ = algod(w)
-        .account_apps(&account, opt_u64(limit), opt_str(&next))
+        .account_apps(
+            &account,
+            opt_u64(limit),
+            opt_str(&next),
+            opt_csv(&include).as_deref(),
+        )
         .await;
 }
 

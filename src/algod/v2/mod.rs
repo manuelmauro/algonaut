@@ -69,11 +69,14 @@ impl Algod {
 
     /// Lookup an account's application holdings (local state and params if the
     /// account is the creator), paginated by application ID.
+    ///
+    /// `include` controls which sub-objects are returned (e.g. `["params"]`).
     pub async fn account_apps(
         &self,
         address: &str,
         limit: Option<u64>,
         next: Option<&str>,
+        include: Option<&[String]>,
     ) -> Result<AccountApplicationsInformation200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::account_applications_information(
@@ -81,7 +84,7 @@ impl Algod {
                 address,
                 limit,
                 next,
-                None,
+                include.map(<[String]>::to_vec),
             )
             .await
             .map_err(Into::<AlgodError>::into)?,
@@ -302,31 +305,37 @@ impl Algod {
     }
 
     /// Get the list of pending transactions, sorted by priority, in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
+    ///
+    /// `format` selects the response encoding (`"json"` or `"msgpack"`).
     pub async fn pending_txns(
         &self,
         max: Option<u64>,
+        format: Option<&str>,
     ) -> Result<GetPendingTransactionsByAddress200Response, Error> {
         Ok(algonaut_algod::apis::public_api::get_pending_transactions(
             &self.configuration,
             max,
-            None,
+            format,
         )
         .await
         .map_err(Into::<AlgodError>::into)?)
     }
 
     /// Get the list of pending transactions by address, sorted by priority, in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
+    ///
+    /// `format` selects the response encoding (`"json"` or `"msgpack"`).
     pub async fn address_pending_txns(
         &self,
         address: &str,
         max: Option<u64>,
+        format: Option<&str>,
     ) -> Result<GetPendingTransactionsByAddress200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_pending_transactions_by_address(
                 &self.configuration,
                 address,
                 max,
-                None,
+                format,
             )
             .await
             .map_err(Into::<AlgodError>::into)?,
