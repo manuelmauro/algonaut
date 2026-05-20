@@ -27,8 +27,36 @@ use data_encoding::BASE64;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use std::collections::HashMap;
+use std::time::Duration;
 
-use crate::{Error, algod::v2::Algod, util::wait_for_pending_tx::wait_for_pending_transaction};
+use crate::{Error, algod::v2::Algod, util::sleep};
+
+use instant::Instant;
+
+/// Default timeout matching [`crate::algod::v2::PendingSubmission::confirm`].
+const COMPOSER_CONFIRM_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// Poll algod for finality of the given transaction id. The composer
+/// already has the tx ids it wants to wait on (post-`send_txns`), so this
+/// internal helper is the equivalent of `PendingSubmission::confirm`
+/// against an arbitrary id.
+async fn poll_until_confirmed(
+    algod: &Algod,
+    tx_id: &TxId,
+) -> Result<PendingTransactionResponse, Error> {
+    let start = Instant::now();
+    loop {
+        let pending = algod.pending_txn(tx_id).await?;
+        if pending.confirmed_round.is_some() {
+            return Ok(pending);
+        } else if start.elapsed() >= COMPOSER_CONFIRM_TIMEOUT {
+            return Err(Error::Msg(format!(
+                "Pending transaction timed out ({COMPOSER_CONFIRM_TIMEOUT:?})"
+            )));
+        }
+        sleep(250).await;
+    }
+}
 
 use self::transaction_signer::TransactionSigner;
 
@@ -488,7 +516,7 @@ impl AtomicTransactionComposer {
         }
 
         let tx_id = self.signed_txs[index_to_wait].transaction_id.clone();
-        let pending_tx = wait_for_pending_transaction(algod, &tx_id).await?;
+        let pending_tx = poll_until_confirmed(algod, &tx_id).await?;
 
         let mut return_list: Vec<AbiMethodResult> = vec![];
 
