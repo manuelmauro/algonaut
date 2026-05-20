@@ -1,6 +1,6 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
-use algonaut_core::{Address, MicroAlgos, TxId};
+use algonaut_core::{Address, MicroAlgos, Round, TxId};
 use algonaut_transaction::Pay;
 use cucumber::{given, then, when};
 use rand::Rng;
@@ -36,7 +36,7 @@ async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
     )
     .unwrap();
 
-    algod.status_after_block(1).await?;
+    algod.status_after_block(Round(1)).await?;
     w.algod = Some(algod);
 
     Ok(())

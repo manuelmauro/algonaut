@@ -461,7 +461,7 @@ async fn add_method_call(
         app_id: application_id,
         method: abi_method.to_owned(),
         method_args: abi_method_args.to_owned(),
-        fee: MicroAlgos(tx_params.min_fee),
+        fee: tx_params.min_fee,
         sender: use_account.address(),
         suggested_params: tx_params,
         on_complete,

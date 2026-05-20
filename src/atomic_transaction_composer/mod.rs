@@ -8,7 +8,7 @@ use algonaut_abi::{
 };
 use algonaut_algod::models::{
     PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
-    SimulateTransaction200Response, TransactionParams200Response,
+    SimulateTransaction200Response,
 };
 use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, TxId};
 use algonaut_crypto::{HashDigest, Signature};
@@ -144,7 +144,7 @@ pub struct AddMethodCallParams {
     /// The address of the sender of this application call
     pub sender: Address,
     /// Transactions params to use for this application call
-    pub suggested_params: TransactionParams200Response,
+    pub suggested_params: algonaut_model::client_types::SuggestedParams,
     /// The OnComplete action to take for this application call
     pub on_complete: ApplicationCallOnComplete,
     /// The approval program for this application call. Only set this if this is an application

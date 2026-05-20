@@ -11,7 +11,7 @@ use crate::step_defs::unit::mock_server::MockServer;
 use crate::step_defs::unit::world::UnitWorld;
 use algonaut::algod::v2::Algod;
 use algonaut::indexer::v2::Indexer;
-use algonaut_core::{Address, AppId, AssetId, TxId};
+use algonaut_core::{Address, AppId, AssetId, Round, TxId};
 use cucumber::{given, then, when};
 
 /// A token (the `Configuration` requires one; its value is irrelevant to the
@@ -227,7 +227,7 @@ async fn algod_pending_txns_by_address(
 
 #[when(regex = r"^we make a Status after Block call with round (\d+)$")]
 async fn algod_status_after_block(w: &mut UnitWorld, round: u64) {
-    let _ = algod(w).status_after_block(round).await;
+    let _ = algod(w).status_after_block(Round(round)).await;
 }
 
 #[when(regex = r#"^we make an Account Information call against account "([^"]*)"$"#)]
