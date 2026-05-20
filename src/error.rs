@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::time::Duration;
 use thiserror::Error;
 
 #[derive(Error, Clone, Debug, PartialEq, Eq)]
@@ -52,6 +53,21 @@ pub enum Error {
     /// did not carry one.
     #[error("algod did not return a sourcemap")]
     MissingSourcemap,
+    /// Algod reported that the transaction was kicked out of its pool
+    /// before being included in a block (expired `LastValid`, underfunded,
+    /// group invalid, etc.). The `reason` string is algod's `pool-error`
+    /// verbatim and is diagnostic only — match on the variant, not the
+    /// message. Note: this is a node-local view; a tx evicted from one
+    /// node's pool could in principle still be alive in peers' pools.
+    #[error("transaction pool error: {reason}")]
+    PendingTransactionPoolError { reason: String },
+    /// [`PendingSubmission::confirm_with`] (or the equivalent internal
+    /// helper on the atomic-transaction-composer) reached its deadline
+    /// without observing a confirmation.
+    ///
+    /// [`PendingSubmission::confirm_with`]: crate::algod::v2::PendingSubmission::confirm_with
+    #[error("pending transaction timed out ({timeout:?})")]
+    PendingTransactionTimeout { timeout: Duration },
 
     /// General text-only errors. Dedicated error variants can be created, if needed.
     #[error("Msg: {0}")]

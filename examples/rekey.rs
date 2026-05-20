@@ -1,7 +1,6 @@
 use algonaut::algod::v2::Algod;
 use algonaut::transaction::account::Account;
-use algonaut::util::wait_for_pending_tx::wait_for_pending_transaction;
-use algonaut_core::{MicroAlgos, TxId};
+use algonaut_core::MicroAlgos;
 use algonaut_transaction::Pay;
 use dotenv::dotenv;
 use std::env;
@@ -44,9 +43,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let rekey_signed = rekeyed_acc.sign_transaction(rekey_tx)?;
 
     info!("broadcasting transaction");
-    let rekey_response = algod.send_txn(&rekey_signed).await?;
-    let tx_id: TxId = rekey_response.tx_id.into();
-    wait_for_pending_transaction(&algod, &tx_id).await?;
+    algod.submit(&rekey_signed).await?.confirm().await?;
     info!("rekey success");
 
     info!("verifying the rekey success");

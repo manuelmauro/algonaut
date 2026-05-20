@@ -1,7 +1,4 @@
-use crate::step_defs::{
-    integration::world::World,
-    util::{read_teal, wait_for_pending_transaction},
-};
+use crate::step_defs::{integration::world::World, util::read_teal};
 use algonaut::atomic_transaction_composer::{
     AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AddMethodCallParams,
     AtomicTransactionComposer, AtomicTransactionComposerStatus, TransactionWithSigner,
@@ -12,7 +9,7 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
 };
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::{Address, AppId, MicroAlgos, TxId};
+use algonaut_core::{Address, AppId, MicroAlgos};
 use algonaut_transaction::{
     Pay,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
@@ -868,13 +865,12 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
         .await
         .expect("couldn't sign tx");
 
-    let res = algod
-        .send_raw_txn(&signed_tx.signed_transaction)
+    let pending = algod
+        .submit_raw(&signed_tx.signed_transaction)
         .await
         .expect("couldn't send tx");
 
-    let tx_id: TxId = res.tx_id.into();
-    let _ = wait_for_pending_transaction(algod, &tx_id);
+    let _ = pending.confirm().await;
 }
 
 #[given(regex = r#"^I reset the array of application IDs to remember\.$"#)]

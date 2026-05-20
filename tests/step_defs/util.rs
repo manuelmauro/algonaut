@@ -1,35 +1,9 @@
-use std::{
-    convert::TryInto,
-    error::Error,
-    fs,
-    num::ParseIntError,
-    time::{Duration, Instant},
-};
+use std::{convert::TryInto, error::Error, fs, num::ParseIntError};
 
 use algonaut::algod::v2::{Algod, SourceMap};
-use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::{Address, CompiledTeal, TxId};
+use algonaut_core::{Address, CompiledTeal};
 use algonaut_model::kmd::v1::ExportKeyResponse;
 use algonaut_transaction::account::Account;
-
-/// Utility function to wait on a transaction to be confirmed
-pub async fn wait_for_pending_transaction(
-    algod: &Algod,
-    txid: &TxId,
-) -> Result<Option<PendingTransactionResponse>, algonaut::Error> {
-    let timeout = Duration::from_secs(10);
-    let start = Instant::now();
-    loop {
-        let pending_transaction = algod.pending_txn(txid).await?;
-        // If the transaction has been confirmed or we time out, exit.
-        if pending_transaction.confirmed_round.is_some() {
-            return Ok(Some(pending_transaction));
-        } else if start.elapsed() >= timeout {
-            return Ok(None);
-        }
-        std::thread::sleep(Duration::from_millis(250))
-    }
-}
 
 pub fn split_uint64(args_str: &str) -> Result<Vec<u64>, ParseIntError> {
     if args_str.is_empty() {
