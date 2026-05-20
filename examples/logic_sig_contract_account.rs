@@ -1,7 +1,6 @@
 use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::Pay;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::contract_account::ContractAccount;
 use dotenv::dotenv;
 use std::env;
@@ -45,11 +44,7 @@ byte 0xFF
     let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
-    let t = TxnBuilder::with(
-        &params,
-        Pay::new(*contract_account.address(), receiver, MicroAlgos(123_456)).build(),
-    )
-    .build()?;
+    let t = Pay::new(*contract_account.address(), receiver, MicroAlgos(123_456)).build(&params)?;
 
     info!("signing transaction with contract account");
     let signed_t = contract_account.sign(t, vec![vec![1, 0], vec![255]])?;

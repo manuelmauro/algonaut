@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::{Round, StateProofPk, VotePk, VrfPk};
 use algonaut::transaction::RegisterKey;
-use algonaut::transaction::{TxnBuilder, account::Account};
+use algonaut::transaction::account::Account;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -29,20 +29,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building RegisterKey transaction");
-    let t = TxnBuilder::with(
-        &params,
-        RegisterKey::online(
-            alice.address(),
-            VotePk::from_base64_str(vote_pk_str)?,
-            VrfPk::from_base64_str(selection_pk_str)?,
-            StateProofPk::from_base64_str(state_proof_key_str)?,
-            params.last_round,
-            Round(params.last_round.0 + 3_000_000),
-            10_000,
-        )
-        .build(),
+    let t = RegisterKey::online(
+        alice.address(),
+        VotePk::from_base64_str(vote_pk_str)?,
+        VrfPk::from_base64_str(selection_pk_str)?,
+        StateProofPk::from_base64_str(state_proof_key_str)?,
+        params.last_round,
+        Round(params.last_round.0 + 3_000_000),
+        10_000,
     )
-    .build()?;
+    .build(&params)?;
 
     info!("signing transaction");
     let sign_response = alice.sign_transaction(t)?;

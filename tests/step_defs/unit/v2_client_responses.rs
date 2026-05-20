@@ -14,7 +14,7 @@ use crate::step_defs::unit::mock_server::ResponseMockServer;
 use crate::step_defs::unit::world::{UnitResponse, UnitWorld};
 use algonaut::algod::v2::Algod;
 use algonaut::indexer::v2::Indexer;
-use algonaut_core::{Address, AssetId, TxId};
+use algonaut_core::{Address, AssetId, Round, TxId};
 use algonaut_encoding::decode_base64;
 use cucumber::{given, then, when};
 use std::fs;
@@ -166,7 +166,7 @@ async fn algod_ledger_supply(w: &mut UnitWorld) {
 
 #[when(regex = r"^we make any Status After Block call$")]
 async fn algod_status_after_block(w: &mut UnitWorld) {
-    let r = algod(w).status_after_block(0).await;
+    let r = algod(w).status_after_block(Round(0)).await;
     record(w, r, UnitResponse::Status);
 }
 

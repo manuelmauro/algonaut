@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::AssetId;
 use algonaut::transaction::AcceptAsset;
-use algonaut::transaction::{TxnBuilder, account::Account};
+use algonaut::transaction::account::Account;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -24,11 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building AcceptAsset transaction");
-    let t = TxnBuilder::with(
-        &params,
-        AcceptAsset::new(bob.address(), AssetId(16)).build(),
-    )
-    .build()?;
+    let t = AcceptAsset::new(bob.address(), AssetId(16)).build(&params)?;
 
     info!("signing transaction");
     let sign_response = bob.sign_transaction(t)?;

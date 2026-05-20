@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let last_round = algod.status().await.unwrap().last_round;
-    let _ = algod.status_after_block(last_round.0).await;
+    let _ = algod.status_after_block(last_round).await;
     let last_block = algod.block(last_round.0).await.unwrap();
 
     info!("last block: {:#?}", last_block);

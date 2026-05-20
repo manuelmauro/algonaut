@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::Pay;
-use algonaut::transaction::{TxnBuilder, account::Account};
+use algonaut::transaction::account::Account;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -26,11 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
-    let t = TxnBuilder::with(
-        &params,
-        Pay::new(alice.address(), bob.address(), MicroAlgos(123_456)).build(),
-    )
-    .build()?;
+    let t = Pay::new(alice.address(), bob.address(), MicroAlgos(123_456)).build(&params)?;
 
     info!("signing transaction");
     let sign_response = alice.sign_transaction(t)?;
