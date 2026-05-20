@@ -18,6 +18,9 @@ plan toward a near-lossless regen.
 | `specs/indexer.oas3.json` | Pinned snapshot of the indexer OpenAPI spec. |
 | `config-algod.yaml` | openapi-generator config for the algod client. |
 | `config-indexer.yaml` | openapi-generator config for the indexer client. |
+| `templates/` | Custom mustache templates (integer/`Bytes`/override emission). |
+| `type-overrides.json` | Per-field domain-type override table. |
+| `preprocess.py` | Injects the override table into the specs as vendor extensions. |
 | `generated/` | Regenerated output (git-ignored; for diffing only). |
 
 ## Specs

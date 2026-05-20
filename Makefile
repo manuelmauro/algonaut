@@ -92,12 +92,18 @@ fetch-openapi-specs:
 # overwrite algonaut_algod/ or algonaut_indexer/. See
 # docs/adr/openapi-client-regeneration.md.
 generate-clients:
+	python3 openapi/preprocess.py
 	docker run --rm -v "$(CURDIR)":/local $(OPENAPI_IMAGE) generate \
 	  -c /local/openapi/config-algod.yaml --skip-validate-spec \
-	  -i /local/openapi/specs/algod.oas3.json -o /local/openapi/generated/algod
+	  -t /local/openapi/templates \
+	  -i /local/openapi/generated/_specs/algod.oas3.json -o /local/openapi/generated/algod
 	docker run --rm -v "$(CURDIR)":/local $(OPENAPI_IMAGE) generate \
 	  -c /local/openapi/config-indexer.yaml --skip-validate-spec \
-	  -i /local/openapi/specs/indexer.oas3.json -o /local/openapi/generated/indexer
+	  -t /local/openapi/templates \
+	  -i /local/openapi/generated/_specs/indexer.oas3.json -o /local/openapi/generated/indexer
+	@echo 'Formatting generated output so the diff reflects only semantic drift...'
+	find openapi/generated/algod openapi/generated/indexer -name '*.rs' \
+	  | xargs rustfmt --edition 2024
 	@echo 'Regenerated into openapi/generated/. Review drift with e.g.:'
 	@echo '  git diff --no-index openapi/generated/algod/src algonaut_algod/src'
 
