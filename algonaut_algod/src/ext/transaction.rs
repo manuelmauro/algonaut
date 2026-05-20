@@ -12,21 +12,22 @@
 //!
 //! Address-typed fields use [`algonaut_core::Address`], which already
 //! branches on `serializer.is_human_readable()`; binary fields use
-//! [`WireBytes`]. The [`Transaction`] enum is internally tagged on `type`,
-//! but serde's tag machinery insists the tag be a string — which msgpack
-//! violates by sending it as `bin`. `Transaction` therefore keeps the
-//! derived **tagged `Serialize`** but hand-rolls `Deserialize` through a flat
-//! [`TxnFields`] struct whose `type` field is read with [`deserialize_text`].
+//! [`Bytes`] and textual fields [`Text`]. The [`Transaction`] enum is
+//! internally tagged on `type`, but serde's tag machinery insists the tag
+//! be a string — which msgpack violates by sending it as `bin`.
+//! `Transaction` therefore keeps the derived **tagged `Serialize`** but
+//! hand-rolls `Deserialize` through a flat [`TxnFields`] struct whose
+//! `type` field is a [`Text`] (string or msgpack `bin`).
 
-use super::wire::{WireBytes, deserialize_opt_text, deserialize_text};
 use algonaut_core::Address;
+use algonaut_encoding::{Bytes, Text};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct TransactionHeader {
     pub hgi: Option<bool>,
-    pub sig: Option<WireBytes>,
+    pub sig: Option<Bytes>,
     pub msig: Option<MultiSig>,
     pub lsig: Option<LogicSig>,
 
@@ -40,13 +41,13 @@ pub struct TransactionHeader {
 pub struct LogicSig {
     /// The logic program bytecode.
     #[serde(rename = "l")]
-    pub logic: Option<WireBytes>,
+    pub logic: Option<Bytes>,
     /// Program arguments.
     #[serde(rename = "arg")]
-    pub args: Option<Vec<WireBytes>>,
+    pub args: Option<Vec<Bytes>>,
     /// Delegating account signature.
     #[serde(rename = "sig")]
-    pub sig: Option<WireBytes>,
+    pub sig: Option<Bytes>,
     /// Delegating multisig signature.
     #[serde(rename = "msig")]
     pub msig: Option<MultiSig>,
@@ -67,9 +68,9 @@ pub struct MultiSig {
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct MultiSigSubsig {
     #[serde(rename = "pk")]
-    pub public_key: Option<WireBytes>,
+    pub public_key: Option<Bytes>,
     #[serde(rename = "s")]
-    pub signature: Option<WireBytes>,
+    pub signature: Option<Bytes>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Clone)]
@@ -82,19 +83,19 @@ pub enum Transaction {
         #[serde(rename = "fv")]
         first_valid: Option<u64>,
         #[serde(rename = "gh")]
-        genesis_hash: Option<WireBytes>,
+        genesis_hash: Option<Bytes>,
         #[serde(rename = "lv")]
         last_valid: Option<u64>,
         #[serde(rename = "snd")]
         sender: Option<Address>,
         #[serde(rename = "gen")]
-        genesis_id: Option<String>,
+        genesis_id: Option<Text>,
         #[serde(rename = "grp")]
-        group: Option<WireBytes>,
+        group: Option<Bytes>,
         #[serde(rename = "lx")]
-        lease: Option<WireBytes>,
+        lease: Option<Bytes>,
         #[serde(rename = "note")]
-        note: Option<WireBytes>,
+        note: Option<Bytes>,
         #[serde(rename = "rekey")]
         rekey: Option<Address>,
         // type specific fields
@@ -112,28 +113,28 @@ pub enum Transaction {
         #[serde(rename = "fv")]
         first_valid: Option<u64>,
         #[serde(rename = "gh")]
-        genesis_hash: Option<WireBytes>,
+        genesis_hash: Option<Bytes>,
         #[serde(rename = "lv")]
         last_valid: Option<u64>,
         #[serde(rename = "snd")]
         sender: Option<Address>,
         #[serde(rename = "gen")]
-        genesis_id: Option<String>,
+        genesis_id: Option<Text>,
         #[serde(rename = "grp")]
-        group: Option<WireBytes>,
+        group: Option<Bytes>,
         #[serde(rename = "lx")]
-        lease: Option<WireBytes>,
+        lease: Option<Bytes>,
         #[serde(rename = "note")]
-        note: Option<WireBytes>,
+        note: Option<Bytes>,
         #[serde(rename = "rekey")]
         rekey: Option<Address>,
         // type specific fields
         #[serde(rename = "votekey")]
-        vote_pk: Option<WireBytes>,
+        vote_pk: Option<Bytes>,
         #[serde(rename = "selkey")]
-        selection_pk: Option<WireBytes>,
+        selection_pk: Option<Bytes>,
         #[serde(rename = "sprfkey")]
-        state_proof_pk: Option<WireBytes>,
+        state_proof_pk: Option<Bytes>,
         #[serde(rename = "votefst")]
         vote_first: Option<u64>,
         #[serde(rename = "votelst")]
@@ -150,19 +151,19 @@ pub enum Transaction {
         #[serde(rename = "fv")]
         first_valid: Option<u64>,
         #[serde(rename = "gh")]
-        genesis_hash: Option<WireBytes>,
+        genesis_hash: Option<Bytes>,
         #[serde(rename = "lv")]
         last_valid: Option<u64>,
         #[serde(rename = "snd")]
         sender: Option<Address>,
         #[serde(rename = "gen")]
-        genesis_id: Option<String>,
+        genesis_id: Option<Text>,
         #[serde(rename = "grp")]
-        group: Option<WireBytes>,
+        group: Option<Bytes>,
         #[serde(rename = "lx")]
-        lease: Option<WireBytes>,
+        lease: Option<Bytes>,
         #[serde(rename = "note")]
-        note: Option<WireBytes>,
+        note: Option<Bytes>,
         #[serde(rename = "rekey")]
         rekey: Option<Address>,
         // type specific fields
@@ -178,19 +179,19 @@ pub enum Transaction {
         #[serde(rename = "fv")]
         first_valid: Option<u64>,
         #[serde(rename = "gh")]
-        genesis_hash: Option<WireBytes>,
+        genesis_hash: Option<Bytes>,
         #[serde(rename = "lv")]
         last_valid: Option<u64>,
         #[serde(rename = "snd")]
         sender: Option<Address>,
         #[serde(rename = "gen")]
-        genesis_id: Option<String>,
+        genesis_id: Option<Text>,
         #[serde(rename = "grp")]
-        group: Option<WireBytes>,
+        group: Option<Bytes>,
         #[serde(rename = "lx")]
-        lease: Option<WireBytes>,
+        lease: Option<Bytes>,
         #[serde(rename = "note")]
-        note: Option<WireBytes>,
+        note: Option<Bytes>,
         #[serde(rename = "rekey")]
         rekey: Option<Address>,
         // type specific fields
@@ -212,19 +213,19 @@ pub enum Transaction {
         #[serde(rename = "fv")]
         first_valid: Option<u64>,
         #[serde(rename = "gh")]
-        genesis_hash: Option<WireBytes>,
+        genesis_hash: Option<Bytes>,
         #[serde(rename = "lv")]
         last_valid: Option<u64>,
         #[serde(rename = "snd")]
         sender: Option<Address>,
         #[serde(rename = "gen")]
-        genesis_id: Option<String>,
+        genesis_id: Option<Text>,
         #[serde(rename = "grp")]
-        group: Option<WireBytes>,
+        group: Option<Bytes>,
         #[serde(rename = "lx")]
-        lease: Option<WireBytes>,
+        lease: Option<Bytes>,
         #[serde(rename = "note")]
-        note: Option<WireBytes>,
+        note: Option<Bytes>,
         #[serde(rename = "rekey")]
         rekey: Option<Address>,
         // type specific fields
@@ -242,19 +243,19 @@ pub enum Transaction {
         #[serde(rename = "fv")]
         first_valid: Option<u64>,
         #[serde(rename = "gh")]
-        genesis_hash: Option<WireBytes>,
+        genesis_hash: Option<Bytes>,
         #[serde(rename = "lv")]
         last_valid: Option<u64>,
         #[serde(rename = "snd")]
         sender: Option<Address>,
         #[serde(rename = "gen")]
-        genesis_id: Option<String>,
+        genesis_id: Option<Text>,
         #[serde(rename = "grp")]
-        group: Option<WireBytes>,
+        group: Option<Bytes>,
         #[serde(rename = "lx")]
-        lease: Option<WireBytes>,
+        lease: Option<Bytes>,
         #[serde(rename = "note")]
-        note: Option<WireBytes>,
+        note: Option<Bytes>,
         #[serde(rename = "rekey")]
         rekey: Option<Address>,
         // type specific fields
@@ -265,11 +266,11 @@ pub enum Transaction {
         #[serde(rename = "apat")]
         accounts: Option<Vec<Address>>,
         #[serde(rename = "apap")]
-        approval_program: Option<WireBytes>,
+        approval_program: Option<Bytes>,
         #[serde(rename = "apaa")]
-        app_arguments: Option<Vec<WireBytes>>,
+        app_arguments: Option<Vec<Bytes>>,
         #[serde(rename = "apsu")]
-        clear_state_program: Option<WireBytes>,
+        clear_state_program: Option<Bytes>,
         #[serde(rename = "apfa")]
         foreign_apps: Option<Vec<u64>>,
         #[serde(rename = "apas")]
@@ -290,19 +291,19 @@ pub enum Transaction {
         #[serde(rename = "fv")]
         first_valid: Option<u64>,
         #[serde(rename = "gh")]
-        genesis_hash: Option<WireBytes>,
+        genesis_hash: Option<Bytes>,
         #[serde(rename = "lv")]
         last_valid: Option<u64>,
         #[serde(rename = "snd")]
         sender: Option<Address>,
         #[serde(rename = "gen")]
-        genesis_id: Option<String>,
+        genesis_id: Option<Text>,
         #[serde(rename = "grp")]
-        group: Option<WireBytes>,
+        group: Option<Bytes>,
         #[serde(rename = "lx")]
-        lease: Option<WireBytes>,
+        lease: Option<Bytes>,
         #[serde(rename = "note")]
-        note: Option<WireBytes>,
+        note: Option<Bytes>,
         #[serde(rename = "rekey")]
         rekey: Option<Address>,
         // type specific fields
@@ -347,27 +348,27 @@ impl Transaction {
 /// msgpack `bin`), then [`Transaction::from`] dispatches on it.
 #[derive(Debug, Default, Deserialize)]
 struct TxnFields {
-    #[serde(rename = "type", deserialize_with = "deserialize_text")]
-    txn_type: String,
+    #[serde(rename = "type")]
+    txn_type: Text,
     // shared header fields
     #[serde(rename = "fee", default)]
     fee: Option<u64>,
     #[serde(rename = "fv", default)]
     first_valid: Option<u64>,
     #[serde(rename = "gh", default)]
-    genesis_hash: Option<WireBytes>,
+    genesis_hash: Option<Bytes>,
     #[serde(rename = "lv", default)]
     last_valid: Option<u64>,
     #[serde(rename = "snd", default)]
     sender: Option<Address>,
-    #[serde(rename = "gen", default, deserialize_with = "deserialize_opt_text")]
-    genesis_id: Option<String>,
+    #[serde(rename = "gen", default)]
+    genesis_id: Option<Text>,
     #[serde(rename = "grp", default)]
-    group: Option<WireBytes>,
+    group: Option<Bytes>,
     #[serde(rename = "lx", default)]
-    lease: Option<WireBytes>,
+    lease: Option<Bytes>,
     #[serde(rename = "note", default)]
-    note: Option<WireBytes>,
+    note: Option<Bytes>,
     #[serde(rename = "rekey", default)]
     rekey: Option<Address>,
     // payment
@@ -379,11 +380,11 @@ struct TxnFields {
     close_remainder_to: Option<Address>,
     // key registration
     #[serde(rename = "votekey", default)]
-    vote_pk: Option<WireBytes>,
+    vote_pk: Option<Bytes>,
     #[serde(rename = "selkey", default)]
-    selection_pk: Option<WireBytes>,
+    selection_pk: Option<Bytes>,
     #[serde(rename = "sprfkey", default)]
-    state_proof_pk: Option<WireBytes>,
+    state_proof_pk: Option<Bytes>,
     #[serde(rename = "votefst", default)]
     vote_first: Option<u64>,
     #[serde(rename = "votelst", default)]
@@ -421,11 +422,11 @@ struct TxnFields {
     #[serde(rename = "apat", default)]
     accounts: Option<Vec<Address>>,
     #[serde(rename = "apap", default)]
-    approval_program: Option<WireBytes>,
+    approval_program: Option<Bytes>,
     #[serde(rename = "apaa", default)]
-    app_arguments: Option<Vec<WireBytes>>,
+    app_arguments: Option<Vec<Bytes>>,
     #[serde(rename = "apsu", default)]
-    clear_state_program: Option<WireBytes>,
+    clear_state_program: Option<Bytes>,
     #[serde(rename = "apfa", default)]
     foreign_apps: Option<Vec<u64>>,
     #[serde(rename = "apas", default)]
@@ -449,7 +450,7 @@ impl<'de> Deserialize<'de> for Transaction {
         D: Deserializer<'de>,
     {
         let f = TxnFields::deserialize(deserializer)?;
-        let tx = match f.txn_type.as_str() {
+        let tx = match f.txn_type.as_ref() {
             "pay" => Transaction::Payment {
                 fee: f.fee,
                 first_valid: f.first_valid,
@@ -595,31 +596,31 @@ pub struct HeartbeatFields {
     pub proof: Option<HeartbeatProof>,
     /// `[hbsd]` HbSeed — the block seed for this txn's firstValid block.
     #[serde(rename = "sd")]
-    pub seed: Option<WireBytes>,
+    pub seed: Option<Bytes>,
     /// `[hbvid]` HbVoteID — must match HbAddress account's current VoteID.
     #[serde(rename = "vid")]
-    pub vote_id: Option<WireBytes>,
+    pub vote_id: Option<Bytes>,
 }
 
 /// `[hbprf]` HbProof — a one-time signature proving heartbeat onlineness.
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct HeartbeatProof {
     #[serde(rename = "p")]
-    pub pk: Option<WireBytes>,
+    pub pk: Option<Bytes>,
     #[serde(rename = "p1s")]
-    pub pk1_sig: Option<WireBytes>,
+    pub pk1_sig: Option<Bytes>,
     #[serde(rename = "p2")]
-    pub pk2: Option<WireBytes>,
+    pub pk2: Option<Bytes>,
     #[serde(rename = "p2s")]
-    pub pk2_sig: Option<WireBytes>,
+    pub pk2_sig: Option<Bytes>,
     #[serde(rename = "s")]
-    pub sig: Option<WireBytes>,
+    pub sig: Option<Bytes>,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct AssetParams {
     #[serde(rename = "am")]
-    pub meta_data_hash: Option<WireBytes>,
+    pub meta_data_hash: Option<Bytes>,
     #[serde(rename = "an")]
     pub asset_name: Option<String>,
     #[serde(rename = "au")]
@@ -645,7 +646,7 @@ pub struct AssetParams {
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct BoxReference {
     #[serde(rename = "n")]
-    name: WireBytes,
+    name: Bytes,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
