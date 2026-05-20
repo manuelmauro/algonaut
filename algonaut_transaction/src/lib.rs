@@ -14,5 +14,7 @@ pub use builder::{
     CreateApplication, CreateAsset, DeleteApplication, DestroyAsset, FreezeAsset, OptInApplication,
     Pay, RegisterKey, TransferAsset, UpdateApplication, UpdateAsset,
 };
-pub use signer::{MultisigSigner, Signer};
-pub use transaction::{SignedTransaction, Transaction, TransactionType};
+pub use signer::{
+    InProgressMultisigSigningSession, MultisigSigner, MultisigSigningSession, Signer,
+};
+pub use transaction::{SignedTransaction, Transaction, TransactionType, signed_transaction};

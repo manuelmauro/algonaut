@@ -392,7 +392,7 @@ async fn the_multisig_transaction_should_equal_the_kmd_signed_multisig_transacti
         .kmd_signed_multisig_bytes
         .as_ref()
         .expect("kmd-signed multisig not set");
-    let sdk_msig = match &signed.sig {
+    let sdk_msig = match signed.sig() {
         TransactionSignature::Multi(msig) => msig,
         _ => panic!("expected a multisig signature on the signed tx"),
     };

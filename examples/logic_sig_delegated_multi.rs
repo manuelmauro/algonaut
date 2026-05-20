@@ -1,8 +1,7 @@
 use algonaut::algod::v2::{Algod, SourceMap};
-use algonaut::core::{LogicSignature, MicroAlgos, MultisigAddress, TxId};
+use algonaut::core::{LogicSignature, MicroAlgos, MultisigAddress};
+use algonaut::transaction::Pay;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::transaction::TransactionSignature;
-use algonaut::transaction::{Pay, SignedTransaction};
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;
@@ -54,23 +53,16 @@ int 1
     info!("bob is appending to multi-signature");
     let msig = bob.append_to_logic_msig(&program, msig)?;
 
-    info!("building logic signature");
-    let sig = TransactionSignature::Logic(SignedLogic {
+    info!("signing transaction");
+    // the transaction will fail because the multisig address has no funds
+    let signed_t = SignedLogic {
         logic: program,
         args: vec![],
         sig: LogicSignature::DelegatedMultiSig(msig),
-    });
-
-    info!("signing transaction");
-    let signed_t = SignedTransaction {
-        transaction: t,
-        transaction_id: TxId::default(),
-        sig,
-        auth_address: None,
-    };
+    }
+    .sign(t)?;
 
     info!("broadcasting transaction");
-    // the transaction will fail because the multisig address has no funds
     let send_response = algod.send_txn(&signed_t).await;
     info!("response: {:?}", send_response);
 

@@ -12,7 +12,7 @@
 //! between multiple `TransactionWithSigner` values inside an atomic
 //! group.
 
-use algonaut_core::MultisigAddress;
+use algonaut_core::{MultisigAddress, MultisigSignature};
 
 use crate::account::Account;
 use crate::contract_account::ContractAccount;
@@ -101,21 +101,101 @@ fn sign_msig_tx(
     accounts: &[Account],
     tx: Transaction,
 ) -> Result<SignedTransaction, TransactionError> {
-    if let Some(first_account) = accounts.first() {
-        let mut msig = first_account.init_transaction_msig(&tx, address)?;
-        for account in &accounts[1..accounts.len()] {
-            msig = account.append_to_transaction_msig(&tx, msig)?;
-        }
+    let mut session_accounts = accounts.iter();
+    let first_account = session_accounts
+        .next()
+        .ok_or(TransactionError::NoAccountsToSign)?;
+    let mut session = MultisigSigningSession::new(address.clone()).sign(tx, first_account)?;
+    for account in session_accounts {
+        session = session.sign_more(account)?;
+    }
+    session.finish()
+}
 
-        let signed_t = SignedTransaction {
-            transaction_id: tx.id()?,
-            transaction: tx,
-            sig: TransactionSignature::Multi(msig),
+/// Fluent builder that accumulates subsignatures from multiple
+/// [`Account`]s and finalises them into a [`SignedTransaction`].
+///
+/// Use this for one-off multisig signing flows where the signers are
+/// known up front; for repeated signing inside the atomic transaction
+/// composer use the [`MultisigSigner`] [`Signer`] implementation
+/// instead.
+///
+/// ```ignore
+/// use algonaut_transaction::signer::MultisigSigningSession;
+/// use algonaut_core::MultisigAddress;
+///
+/// let multisig_address = MultisigAddress::new(1, 2, &[alice.address(), bob.address()])?;
+/// let signed = MultisigSigningSession::new(multisig_address)
+///     .sign(txn, &alice)?
+///     .sign_more(&bob)?
+///     .finish()?;
+/// ```
+#[derive(Debug, Clone)]
+pub struct MultisigSigningSession {
+    address: MultisigAddress,
+}
+
+impl MultisigSigningSession {
+    /// Begin a new signing session against `address`. No accounts have
+    /// signed yet; transition into the in-progress state by calling
+    /// [`sign`](Self::sign).
+    pub fn new(address: MultisigAddress) -> Self {
+        Self { address }
+    }
+
+    /// Initialise the session with the first signer. The session
+    /// transitions into [`InProgressMultisigSigningSession`], which
+    /// holds the transaction plus the partial multisig signature.
+    pub fn sign(
+        self,
+        transaction: Transaction,
+        account: &Account,
+    ) -> Result<InProgressMultisigSigningSession, TransactionError> {
+        let msig = account.init_transaction_msig(&transaction, &self.address)?;
+        Ok(InProgressMultisigSigningSession {
+            address: self.address,
+            transaction,
+            msig,
+        })
+    }
+}
+
+/// A [`MultisigSigningSession`] that has at least one signer attached.
+/// Add more signers with [`sign_more`](Self::sign_more) and finalise
+/// with [`finish`](Self::finish).
+#[derive(Debug, Clone)]
+pub struct InProgressMultisigSigningSession {
+    address: MultisigAddress,
+    transaction: Transaction,
+    msig: MultisigSignature,
+}
+
+impl InProgressMultisigSigningSession {
+    /// Add another subsignature from `account` to the in-progress
+    /// multisig signature.
+    pub fn sign_more(mut self, account: &Account) -> Result<Self, TransactionError> {
+        self.msig = account.append_to_transaction_msig(&self.transaction, self.msig)?;
+        Ok(self)
+    }
+
+    /// Finalise the session into a [`SignedTransaction`]. The
+    /// transaction id is computed from the carried transaction.
+    pub fn finish(self) -> Result<SignedTransaction, TransactionError> {
+        Ok(SignedTransaction {
+            transaction_id: self.transaction.id()?,
+            transaction: self.transaction,
+            sig: TransactionSignature::Multi(self.msig),
             auth_address: None,
-        };
+        })
+    }
 
-        Ok(signed_t)
-    } else {
-        Err(TransactionError::NoAccountsToSign)
+    /// The multisig address being signed against.
+    pub fn address(&self) -> &MultisigAddress {
+        &self.address
+    }
+
+    /// The transaction being signed.
+    pub fn transaction(&self) -> &Transaction {
+        &self.transaction
     }
 }
