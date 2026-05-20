@@ -12,10 +12,11 @@ use algonaut_algod::models::{
     PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
     SimulateTransaction200Response, TransactionParams200Response,
 };
-use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, TxId};
+use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, TxId};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
-    SignedTransaction, Transaction, TransactionType, TxnBuilder,
+    SignedTransaction, Transaction, TransactionType,
+    builder::TransactionParams,
     error::TransactionError,
     transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
@@ -356,18 +357,19 @@ impl AtomicTransactionComposer {
             boxes: params.boxes.clone(),
         });
 
-        let mut tx_builder = TxnBuilder::with_fee(&params.suggested_params, params.fee, app_call);
-        if let Some(rekey_to) = params.rekey_to {
-            tx_builder = tx_builder.rekey_to(rekey_to);
-        }
-        if let Some(lease) = params.lease {
-            tx_builder = tx_builder.lease(lease);
-        }
-        if let Some(note) = params.note.clone() {
-            tx_builder = tx_builder.note(note);
-        }
-
-        let tx = tx_builder.build()?;
+        let sp = &params.suggested_params;
+        let tx = Transaction {
+            fee: params.fee,
+            first_valid: Round(sp.last_round()),
+            genesis_hash: sp.genesis_hash(),
+            last_valid: Round(sp.last_round() + 1000),
+            txn_type: app_call,
+            genesis_id: Some(sp.genesis_id().clone()),
+            group: None,
+            lease: params.lease,
+            note: params.note.clone(),
+            rekey_to: params.rekey_to,
+        };
 
         self.txs.append(&mut txs_with_signer);
         self.txs.push(TransactionWithSigner {
