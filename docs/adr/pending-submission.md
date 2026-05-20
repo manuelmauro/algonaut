@@ -108,19 +108,30 @@ let confirmed = algod
 - **Cadence is now event-driven.** The old helper slept 250ms between
   `pending_txn` calls; the new implementation awaits algod's
   `wait-for-block-after/{round}` instead, so the loop is woken by the
-  network rather than a timer. Timeout default (60s) and error wording
-  on expiry are unchanged — only the wait between checks moves from
-  timer-driven to event-driven.
+  network rather than a timer. Timeout default (60s) is unchanged —
+  only the wait between checks moves from timer-driven to
+  event-driven.
 - **Pool errors fail fast.** A new failure path: if algod reports a
   non-empty `pool-error` on `pending_txn` (the tx was kicked out of the
   node's pool — expired, underfunded, group invalid, etc.), `confirm`
-  returns `Error::Msg("Transaction pool error: ..")` immediately rather
-  than waiting out the 60s timeout. The old helper ignored the
+  returns `Error::PendingTransactionPoolError { reason }` immediately
+  rather than waiting out the 60s timeout. The old helper ignored the
   `pool-error` field entirely and surfaced everything as a generic
   timeout, hiding the real cause. Caveat: `pool-error` is a node-local
   view — a tx evicted from *this* node's pool could in principle still
   be alive in peers' pools. The other Algorand SDKs accept the same
   trade-off.
+- **Structured error variants** (following the pattern established by
+  the structured-errors ADR / PR #301):
+  - `Error::PendingTransactionTimeout { timeout: Duration }` replaces
+    the old `Error::Msg("Pending transaction timed out (..)")`.
+  - `Error::PendingTransactionPoolError { reason: String }` carries
+    the algod-reported pool-error verbatim.
+  Both apply equally to `PendingSubmission::confirm_with` and the
+  composer's internal `poll_until_confirmed`. Callers (and tests)
+  match on the variant; the inner message is diagnostic. **Compile-
+  error breaking change** for any caller substring-matching the old
+  `Error::Msg("Pending transaction timed out ..")` text.
 - **Out of scope.** A retry policy / exponential backoff /
   cancellation token would be improvements, but they're behavior
   changes the existing helper didn't have either. If they ever land

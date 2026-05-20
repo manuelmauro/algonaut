@@ -53,15 +53,14 @@ async fn poll_until_confirmed(
             return Ok(pending);
         }
         if !pending.pool_error.is_empty() {
-            return Err(Error::Msg(format!(
-                "Transaction pool error: {}",
-                pending.pool_error
-            )));
+            return Err(Error::PendingTransactionPoolError {
+                reason: pending.pool_error,
+            });
         }
         if start.elapsed() >= COMPOSER_CONFIRM_TIMEOUT {
-            return Err(Error::Msg(format!(
-                "Pending transaction timed out ({COMPOSER_CONFIRM_TIMEOUT:?})"
-            )));
+            return Err(Error::PendingTransactionTimeout {
+                timeout: COMPOSER_CONFIRM_TIMEOUT,
+            });
         }
         last_round = algod.status_after_block(last_round).await?.last_round;
     }

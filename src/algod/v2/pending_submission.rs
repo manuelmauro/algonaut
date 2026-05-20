@@ -33,8 +33,8 @@ impl PendingSubmission {
     }
 
     /// Poll algod until the transaction is confirmed, returning
-    /// `Error::Msg("Pending transaction timed out (..)")` if the
-    /// supplied `timeout` elapses first.
+    /// [`Error::PendingTransactionTimeout`] if the supplied `timeout`
+    /// elapses first.
     ///
     /// Between checks, waits on algod's `wait-for-block-after/{round}`
     /// long-poll rather than a fixed timer — the future stays parked
@@ -43,8 +43,9 @@ impl PendingSubmission {
     ///
     /// If algod reports the transaction was kicked out of its pool
     /// (`pool-error` non-empty — e.g. expired, underfunded, group
-    /// invalid), this returns `Error::Msg("Transaction pool error:
-    /// ..")` immediately rather than waiting out the timeout.
+    /// invalid), this returns
+    /// [`Error::PendingTransactionPoolError`] immediately rather than
+    /// waiting out the timeout.
     pub async fn confirm_with(
         self,
         timeout: Duration,
@@ -57,15 +58,12 @@ impl PendingSubmission {
                 return Ok(pending);
             }
             if !pending.pool_error.is_empty() {
-                return Err(Error::Msg(format!(
-                    "Transaction pool error: {}",
-                    pending.pool_error
-                )));
+                return Err(Error::PendingTransactionPoolError {
+                    reason: pending.pool_error,
+                });
             }
             if start.elapsed() >= timeout {
-                return Err(Error::Msg(format!(
-                    "Pending transaction timed out ({timeout:?})"
-                )));
+                return Err(Error::PendingTransactionTimeout { timeout });
             }
             last_round = self.algod.status_after_block(last_round).await?.last_round;
         }
