@@ -503,8 +503,8 @@ impl Algod {
     /// that already have the id (e.g. they submitted earlier and stashed it)
     /// can still poll for finality with the shared
     /// [`PendingSubmission::confirm`] implementation.
-    pub fn pending_submission(&self, tx_id: TxId) -> PendingSubmission {
-        PendingSubmission::new(self.clone(), tx_id)
+    pub fn pending_submission(&self, tx_id: &TxId) -> PendingSubmission {
+        PendingSubmission::new(self.clone(), tx_id.clone())
     }
 
     /// Broadcasts a single signed transaction and returns a

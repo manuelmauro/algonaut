@@ -40,7 +40,7 @@ impl Algod {
     pub async fn submit(&self, txn: &SignedTransaction) -> Result<PendingSubmission, Error>;
     pub async fn submit_txns(&self, txns: &[SignedTransaction]) -> Result<PendingSubmission, Error>;
     pub async fn submit_raw(&self, rawtxn: &[u8]) -> Result<PendingSubmission, Error>;
-    pub fn pending_submission(&self, tx_id: TxId) -> PendingSubmission;
+    pub fn pending_submission(&self, tx_id: &TxId) -> PendingSubmission;
 }
 
 pub struct PendingSubmission { /* algod handle + tx_id */ }

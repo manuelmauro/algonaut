@@ -179,7 +179,7 @@ async fn i_sign_and_submit_the_transaction_saving_the_tx_id_if_there_is_an_error
 #[when(expr = "I wait for the transaction to be confirmed.")]
 async fn i_wait_for_the_transaction_to_be_confirmed(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
-    let tx_id = w.tx_id.as_ref().expect("tx id not set").clone();
+    let tx_id = w.tx_id.as_ref().expect("tx id not set");
 
     algod
         .pending_submission(tx_id)
