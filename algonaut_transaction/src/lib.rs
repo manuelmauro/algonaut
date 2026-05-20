@@ -4,6 +4,7 @@ pub mod auction;
 pub mod builder;
 pub mod contract_account;
 pub mod error;
+pub mod signer;
 pub mod transaction;
 pub mod tx_group;
 pub mod url;
@@ -12,4 +13,5 @@ pub use builder::{
     AcceptAsset, ClawbackAsset, CreateApplication, CreateAsset, FreezeAsset, Pay, RegisterKey,
     TransferAsset, TxnBuilder,
 };
+pub use signer::{MultisigSigner, Signer};
 pub use transaction::{SignedTransaction, Transaction, TransactionType};
