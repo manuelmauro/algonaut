@@ -38,10 +38,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("creating rekey-ing transaction");
-    // rekey
-    let rekey_tx = Pay::new(rekeyed_acc_address, rekeyed_acc_address, MicroAlgos(0))
-        .rekey_to(rekey_to_acc_address)
-        .build(&params)?;
+    let rekey_tx = Pay::rekey(rekeyed_acc_address, rekey_to_acc_address).build(&params)?;
 
     info!("signing transaction");
     let rekey_signed = rekeyed_acc.sign_transaction(rekey_tx)?;

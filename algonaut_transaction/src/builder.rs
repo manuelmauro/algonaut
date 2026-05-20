@@ -140,6 +140,18 @@ impl Pay {
         }
     }
 
+    /// A zero-amount self-payment that rekeys `from`'s account to a new
+    /// authorising address.
+    ///
+    /// Algorand has no dedicated rekey transaction type; rekey is a
+    /// header field that any transaction can carry, and a zero-amount
+    /// self-payment is the canonical minimal carrier. The full
+    /// [`Pay::new`] + [`Pay::rekey_to`] form stays available for the
+    /// "rekey *and* actually pay someone" case.
+    pub fn rekey(from: Address, new_auth: Address) -> Self {
+        Self::new(from, from, MicroAlgos(0)).rekey_to(new_auth)
+    }
+
     pub fn close_remainder_to(mut self, close_remainder_to: Address) -> Self {
         self.close_remainder_to = Some(close_remainder_to);
         self
