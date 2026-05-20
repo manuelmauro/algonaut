@@ -43,10 +43,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build()?;
 
     info!("grouping transactions");
-    let grouped = TxGroup::assign(vec![t1, t2])?;
-    let mut grouped = grouped.into_iter();
-    let t1 = grouped.next().expect("group has two transactions");
-    let t2 = grouped.next().expect("group has two transactions");
+    let group = TxGroup::try_from(vec![t1, t2])?;
+    let mut iter = group.into_iter();
+    let t1 = iter.next().expect("group has two transactions");
+    let t2 = iter.next().expect("group has two transactions");
 
     info!("signing transactions");
     let signed_t1 = alice.sign_transaction(t1)?;

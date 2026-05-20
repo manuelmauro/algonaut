@@ -21,7 +21,7 @@ use algonaut_transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
         to_tx_type_enum,
     },
-    tx_group::TxGroup,
+    tx_group,
 };
 use data_encoding::BASE64;
 use num_bigint::BigUint;
@@ -396,7 +396,7 @@ impl AtomicTransactionComposer {
             for tx in self.txs.iter_mut() {
                 group_txs.push(&mut tx.tx);
             }
-            TxGroup::assign_in_place(&mut group_txs)?;
+            tx_group::assign_in_place(&mut group_txs)?;
         }
 
         self.status = AtomicTransactionComposerStatus::Built;

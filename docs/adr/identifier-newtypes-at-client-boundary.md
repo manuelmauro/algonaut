@@ -82,26 +82,46 @@ conversion from callers.
 Address` replaces it. Both existing callers (`tests/step_defs/integration/abi.rs`,
 `src/util/dryrun_printer.rs`) drop the `.0` unwrap.
 
-### `TxGroup::assign` returns owned transactions
+### `TxGroup` *is* the grouped batch
 
-`TxGroup::assign_group_id(&mut [&mut t1, &mut t2])` is replaced by
+The old `TxGroup` was a passive msgpack-hashing helper holding
+`Vec<HashDigest>` — exposed publicly only so the in-place
+`assign_group_id(&mut [&mut Transaction])` API had somewhere to live as
+a static method. Two iterations during this ADR — first a public
+`TxGroup::new(Vec<Transaction>) -> Result<Vec<Transaction>>`, then a
+rename to `TxGroup::assign` — both kept that shape and both were
+unsatisfying: the type had no domain meaning, and `new` returning
+something other than `Self` is precisely the pattern
+`clippy::new_ret_no_self` exists to flag.
+
+The end state is `TxGroup` representing what callers think it does — a
+batch of transactions sharing a group ID — and a `TryFrom<Vec<Transaction>>`
+impl as the single construction path:
 
 ```rust
-TxGroup::assign(vec![t1, t2]) -> Result<Vec<Transaction>, TransactionError>
+let group: TxGroup = vec![t1, t2].try_into()?;
+// or
+let group = TxGroup::try_from(vec![t1, t2])?;
+
+for tx in group {
+    // IntoIterator over the grouped transactions
+}
 ```
 
-which consumes its inputs and returns the grouped copies. The verb-y
-name matters: the ADR index originally proposed `TxGroup::new`, but a
-`new` that returns `Vec<Transaction>` rather than a `TxGroup` is exactly
-what `clippy::new_ret_no_self` is built to catch — the caller writes
-`TxGroup::new(...)` expecting a `TxGroup` back and gets something else.
-`assign` describes the action and lets the lint stay on.
+`TxGroup::transactions(&self) -> &[Transaction]` borrows, and
+`TxGroup::into_transactions(self) -> Vec<Transaction>` consumes.
 
-The composer-internal in-place form survives as
-`TxGroup::assign_in_place(&mut [&mut Transaction])`, `#[doc(hidden)]
-pub` so the workspace can reach it without leaking it into the public
-surface. The `assign_group_id` name is also retired to avoid the clash
-with the same-named method on `Transaction` itself.
+The msgpack hashing form (the previous public struct) moves to a
+private `TxGroupDigests` inside `tx_group.rs`; the in-place mutating
+form survives as `tx_group::assign_in_place(&mut [&mut Transaction])` —
+a free function in the module, `#[doc(hidden)] pub` so the atomic
+transaction composer can reach it across the workspace boundary without
+leaking it into the public surface.
+
+The same-named `assign_group_id` method on `Transaction` (the
+per-transaction setter) is unaffected and keeps its name; the clash
+that the rename was working around no longer exists once the batch
+operation is a `TryFrom` impl on `TxGroup`.
 
 ### `StateSchema` gains constructors
 
