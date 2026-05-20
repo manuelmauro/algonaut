@@ -1,8 +1,8 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::{MicroAlgos, MultisigAddress};
 use algonaut::transaction::Pay;
+use algonaut::transaction::account::Account;
 use algonaut::transaction::signer::MultisigSigningSession;
-use algonaut::transaction::{TxnBuilder, account::Account};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -31,16 +31,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
-    let t = TxnBuilder::with(
-        &params,
-        Pay::new(
-            multisig_address.address(),
-            bob.address(),
-            MicroAlgos(123_456),
-        )
-        .build(),
+    let t = Pay::new(
+        multisig_address.address(),
+        bob.address(),
+        MicroAlgos(123_456),
     )
-    .build()?;
+    .build(&params)?;
 
     info!("signing transaction through a multisig session");
     let signed_t = MultisigSigningSession::new(multisig_address)

@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::time::Duration;
 use thiserror::Error;
 
 #[derive(Error, Clone, Debug, PartialEq, Eq)]
@@ -21,6 +22,52 @@ pub enum Error {
     /// HTTP calls errors
     #[error("http error: {0}")]
     Request(RequestError),
+
+    /// Tried to build / submit / execute a transaction group with zero
+    /// transactions in the [`AtomicTransactionComposer`]. Equivalent of
+    /// [`algonaut_transaction::error::TransactionError::EmptyTransactionListError`]
+    /// at the top-level error layer.
+    ///
+    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
+    #[error("transaction group is empty")]
+    EmptyTransactionGroup,
+    /// An [`AtomicTransactionComposer`] operation was attempted in the wrong
+    /// status. The original `String` captures the operation and expected
+    /// status for diagnostics; tests should match on the variant, not the
+    /// message.
+    ///
+    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
+    #[error("composer status invalid: {0}")]
+    ComposerStatusInvalid(String),
+    /// The [`AtomicTransactionComposer`] is at maximum capacity (16 txns by
+    /// protocol).
+    ///
+    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
+    #[error("composer group full (max {max} transactions)")]
+    ComposerGroupFull { max: usize },
+    /// An ABI method call returned but the application did not emit a
+    /// matching `log` entry, so the return value cannot be decoded.
+    #[error("app call transaction did not log a return value")]
+    MissingReturnLog,
+    /// `algod` was asked to compile TEAL with a source-map but the response
+    /// did not carry one.
+    #[error("algod did not return a sourcemap")]
+    MissingSourcemap,
+    /// Algod reported that the transaction was kicked out of its pool
+    /// before being included in a block (expired `LastValid`, underfunded,
+    /// group invalid, etc.). The `reason` string is algod's `pool-error`
+    /// verbatim and is diagnostic only — match on the variant, not the
+    /// message. Note: this is a node-local view; a tx evicted from one
+    /// node's pool could in principle still be alive in peers' pools.
+    #[error("transaction pool error: {reason}")]
+    PendingTransactionPoolError { reason: String },
+    /// [`PendingSubmission::confirm_with`] (or the equivalent internal
+    /// helper on the atomic-transaction-composer) reached its deadline
+    /// without observing a confirmation.
+    ///
+    /// [`PendingSubmission::confirm_with`]: crate::algod::v2::PendingSubmission::confirm_with
+    #[error("pending transaction timed out ({timeout:?})")]
+    PendingTransactionTimeout { timeout: Duration },
 
     /// General text-only errors. Dedicated error variants can be created, if needed.
     #[error("Msg: {0}")]

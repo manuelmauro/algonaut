@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let last_round = algod.status().await.unwrap().last_round;
     let _ = algod.status_after_block(last_round).await;
-    let last_block = algod.block(last_round).await.unwrap();
+    let last_block = algod.block(last_round.0).await.unwrap();
 
     info!("last block: {:#?}", last_block);
 

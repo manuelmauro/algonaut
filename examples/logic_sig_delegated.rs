@@ -1,7 +1,7 @@
 use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::{LogicSignature, MicroAlgos};
 use algonaut::transaction::Pay;
-use algonaut::transaction::{TxnBuilder, account::Account};
+use algonaut::transaction::account::Account;
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;
@@ -39,11 +39,7 @@ int 1
     let params = algod.txn_params().await?;
 
     info!("building Pay transaction");
-    let t = TxnBuilder::with(
-        &params,
-        Pay::new(alice.address(), bob.address(), MicroAlgos(123_456)).build(),
-    )
-    .build()?;
+    let t = Pay::new(alice.address(), bob.address(), MicroAlgos(123_456)).build(&params)?;
 
     info!("generating program signature");
     let signature = alice.generate_program_sig(&program);

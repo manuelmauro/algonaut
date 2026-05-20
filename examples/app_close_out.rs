@@ -1,6 +1,5 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::AppId;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::CloseApplication;
 use dotenv::dotenv;
@@ -27,11 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // to test this, create an application that sets local state and opt-in, for/with the account sending this transaction.
     // the approval program has to return success for the local state to be cleared.
     // TODO set a correct app-id here
-    let t = TxnBuilder::with(
-        &params,
-        CloseApplication::new(alice.address(), AppId(0)).build(),
-    )
-    .build()?;
+    let t = CloseApplication::new(alice.address(), AppId(0)).build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;
