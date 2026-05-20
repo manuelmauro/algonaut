@@ -1,0 +1,19 @@
+# openapi-generator config for the algonaut_algod client.
+# Consumed by `make generate-clients`; see docs/adr/openapi-client-regeneration.md.
+#
+# `inputSpec` / `outputDir` are supplied on the CLI by the Makefile so this
+# file stays free of container paths.
+generatorName: rust
+additionalProperties:
+  packageName: algonaut_algod
+  packageVersion: 0.6.0
+  library: reqwest
+# Algorand types nearly every integer as a 64-bit unsigned value. The spec
+# only carries an explicit `format` on a minority of them, so these mappings
+# fix the formatted cases; the format-less integers still need the model
+# template (Phase 2 — see the ADR).
+typeMappings:
+  int32: u64
+  int64: u64
+  integer: u64
+  long: u64

@@ -1,4 +1,8 @@
-.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release integration harness harness-down docker-rustsdk-build docker-rustsdk-run docker-test ci doc help
+.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release integration check-integration harness harness-down docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
+
+# Version of openapi-generator used to regenerate the algod/indexer clients.
+OPENAPI_GENERATOR_VERSION := v6.6.0
+OPENAPI_IMAGE := openapitools/openapi-generator-cli:$(OPENAPI_GENERATOR_VERSION)
 
 # Setup development environment
 setup:
@@ -75,6 +79,27 @@ docker-rustsdk-run:
 	docker run -it --network host rust-sdk-testing:latest
 # Run the full docker test (harness + build + run)
 docker-test: harness docker-rustsdk-build docker-rustsdk-run
+
+# Refresh the pinned Algorand OpenAPI specs from upstream
+fetch-openapi-specs:
+	curl -fsSL -o openapi/specs/algod.oas3.json \
+	  https://raw.githubusercontent.com/algorand/go-algorand/master/daemon/algod/api/algod.oas3.yml
+	curl -fsSL -o openapi/specs/indexer.oas3.json \
+	  https://raw.githubusercontent.com/algorand/indexer/main/api/indexer.oas3.yml
+
+# Regenerate the algod/indexer clients into openapi/generated/ (requires Docker).
+# Output is for review-diffing against the customized crates; it does NOT
+# overwrite algonaut_algod/ or algonaut_indexer/. See
+# docs/adr/openapi-client-regeneration.md.
+generate-clients:
+	docker run --rm -v "$(CURDIR)":/local $(OPENAPI_IMAGE) generate \
+	  -c /local/openapi/config-algod.yaml --skip-validate-spec \
+	  -i /local/openapi/specs/algod.oas3.json -o /local/openapi/generated/algod
+	docker run --rm -v "$(CURDIR)":/local $(OPENAPI_IMAGE) generate \
+	  -c /local/openapi/config-indexer.yaml --skip-validate-spec \
+	  -i /local/openapi/specs/indexer.oas3.json -o /local/openapi/generated/indexer
+	@echo 'Regenerated into openapi/generated/. Review drift with e.g.:'
+	@echo '  git diff --no-index openapi/generated/algod/src algonaut_algod/src'
 
 # Run all CI checks (fmt-check, clippy, test, check-integration, build)
 ci: fmt-check clippy test check-integration build
