@@ -10,10 +10,10 @@ use algonaut::{
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::SourceMap};
 use algonaut_algod::models::{
     AssetParams, SimulateRequest, SimulateTransaction200Response, TealDryrun200Response,
-    TransactionParams200Response,
 };
 use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TxId};
 use algonaut_crypto::Ed25519PublicKey;
+use algonaut_model::client_responses::SuggestedParams;
 use algonaut_transaction::{
     SignedTransaction, Transaction,
     account::Account,
@@ -39,7 +39,7 @@ pub struct World {
     pub app_id: Option<AppId>,
     pub app_ids: Vec<AppId>,
 
-    pub tx_params: Option<TransactionParams200Response>,
+    pub tx_params: Option<SuggestedParams>,
 
     pub note: Option<Vec<u8>>,
 

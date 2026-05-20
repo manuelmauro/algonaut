@@ -12,12 +12,11 @@ use algonaut_core::{
 };
 use algonaut_crypto::HashDigest;
 
-pub trait TransactionParams {
-    fn last_round(&self) -> u64;
-    fn min_fee(&self) -> u64;
-    fn genesis_hash(&self) -> HashDigest;
-    fn genesis_id(&self) -> &String;
-}
+// The trait moved to `algonaut_model::client_responses` so the hand-named
+// `SuggestedParams` (D3) can implement it without crossing the workspace
+// cycle. Re-exported here so existing imports
+// `algonaut_transaction::builder::TransactionParams` keep working.
+pub use algonaut_model::client_responses::TransactionParams;
 
 /// A builder for [Transaction].
 pub struct TxnBuilder {

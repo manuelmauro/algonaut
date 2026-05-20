@@ -397,7 +397,7 @@ async fn algod_assert_node_status(w: &mut UnitWorld, round: u64) {
     let UnitResponse::Status(resp) = w.last_response.as_ref().expect("no response") else {
         panic!("last response is not a GetStatus200Response");
     };
-    assert_eq!(resp.last_round, round, "node status last round mismatch");
+    assert_eq!(resp.last_round.0, round, "node status last round mismatch");
 }
 
 #[then(regex = r"^the parsed Status After Block response should have a last round of (\d+)$")]
@@ -413,15 +413,15 @@ async fn algod_assert_ledger_supply(w: &mut UnitWorld, total: u64, online: u64, 
         panic!("last response is not a GetSupply200Response");
     };
     assert_eq!(
-        resp.total_money, total,
+        resp.total_money.0, total,
         "ledger supply total money mismatch"
     );
     assert_eq!(
-        resp.online_money, online,
+        resp.online_money.0, online,
         "ledger supply online money mismatch"
     );
     assert_eq!(
-        resp.current_round, round,
+        resp.current_round.0, round,
         "ledger supply current round mismatch"
     );
 }
@@ -488,7 +488,7 @@ async fn algod_assert_suggested_params(w: &mut UnitWorld, round: u64) {
         panic!("last response is not a TransactionParams200Response");
     };
     assert_eq!(
-        resp.last_round, round,
+        resp.last_round.0, round,
         "suggested params last round mismatch"
     );
 }

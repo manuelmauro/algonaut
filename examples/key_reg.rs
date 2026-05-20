@@ -36,8 +36,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             VotePk::from_base64_str(vote_pk_str)?,
             VrfPk::from_base64_str(selection_pk_str)?,
             StateProofPk::from_base64_str(state_proof_key_str)?,
-            Round(params.last_round),
-            Round(params.last_round + 3_000_000),
+            params.last_round,
+            Round(params.last_round.0 + 3_000_000),
             10_000,
         )
         .build(),
