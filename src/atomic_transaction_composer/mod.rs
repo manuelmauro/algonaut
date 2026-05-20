@@ -29,7 +29,7 @@ use num_traits::ToPrimitive;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::{Error, algod::v2::Algod, util::sleep};
+use crate::{Error, algod::v2::Algod};
 
 use instant::Instant;
 
@@ -45,16 +45,24 @@ async fn poll_until_confirmed(
     tx_id: &TxId,
 ) -> Result<PendingTransactionResponse, Error> {
     let start = Instant::now();
+    let mut last_round = algod.status().await?.last_round;
     loop {
         let pending = algod.pending_txn(tx_id).await?;
         if pending.confirmed_round.is_some() {
             return Ok(pending);
-        } else if start.elapsed() >= COMPOSER_CONFIRM_TIMEOUT {
+        }
+        if !pending.pool_error.is_empty() {
+            return Err(Error::Msg(format!(
+                "Transaction pool error: {}",
+                pending.pool_error
+            )));
+        }
+        if start.elapsed() >= COMPOSER_CONFIRM_TIMEOUT {
             return Err(Error::Msg(format!(
                 "Pending transaction timed out ({COMPOSER_CONFIRM_TIMEOUT:?})"
             )));
         }
-        sleep(250).await;
+        last_round = algod.status_after_block(last_round).await?.last_round;
     }
 }
 

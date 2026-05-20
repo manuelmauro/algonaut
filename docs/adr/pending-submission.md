@@ -55,7 +55,13 @@ impl PendingSubmission {
 `confirm` is `confirm_with(Duration::from_secs(60))` — same 60-second
 default as the old helper, same `Error::Msg("Pending transaction timed
 out ({timeout:?})")` wording on expiry (so any caller substring-matching
-the old message still works).
+the old message still works). Between checks the implementation awaits
+algod's `wait-for-block-after/{round}` long-poll instead of sleeping
+on a 250ms timer: the future stays parked until the next block lands,
+so the cadence becomes network-driven (~3–4s on mainnet/testnet)
+rather than an arbitrary tick. Each unconfirmed iteration costs two
+HTTP calls (`pending_txn` + `wait-for-block`), versus ~16 polls per
+block under the old timer-driven loop.
 
 The quickstart from the index ADR now reads:
 
@@ -86,7 +92,8 @@ let confirmed = algod
   `poll_until_confirmed(&Algod, &TxId)` helper. The composer polls on
   `signed_txs[index_to_wait].transaction_id` — *not* the id returned by
   `send_txns` — so the public `PendingSubmission` doesn't quite fit;
-  the private helper is the same 60s 250ms loop but scoped to the
+  the private helper mirrors `confirm_with`'s shape (60s deadline,
+  `wait-for-block-after` between checks) but is scoped to the
   composer's module. Users of the composer never see it.
 
 ## Consequences
@@ -98,9 +105,22 @@ let confirmed = algod
 - **The examples shrink.** `examples/app_create.rs` and
   `examples/asset_create.rs` each lose ~15 lines of pasted polling
   loop.
-- **No new behavior.** Polling cadence, timeout default, error message
-  on expiry — all unchanged from the previous helper. The shape is
-  what changes, not the semantics.
+- **Cadence is now event-driven.** The old helper slept 250ms between
+  `pending_txn` calls; the new implementation awaits algod's
+  `wait-for-block-after/{round}` instead, so the loop is woken by the
+  network rather than a timer. Timeout default (60s) and error wording
+  on expiry are unchanged — only the wait between checks moves from
+  timer-driven to event-driven.
+- **Pool errors fail fast.** A new failure path: if algod reports a
+  non-empty `pool-error` on `pending_txn` (the tx was kicked out of the
+  node's pool — expired, underfunded, group invalid, etc.), `confirm`
+  returns `Error::Msg("Transaction pool error: ..")` immediately rather
+  than waiting out the 60s timeout. The old helper ignored the
+  `pool-error` field entirely and surfaced everything as a generic
+  timeout, hiding the real cause. Caveat: `pool-error` is a node-local
+  view — a tx evicted from *this* node's pool could in principle still
+  be alive in peers' pools. The other Algorand SDKs accept the same
+  trade-off.
 - **Out of scope.** A retry policy / exponential backoff /
   cancellation token would be improvements, but they're behavior
   changes the existing helper didn't have either. If they ever land

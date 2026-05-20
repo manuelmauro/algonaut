@@ -1,4 +1,4 @@
-use crate::{Error, algod::v2::Algod, util::sleep};
+use crate::{Error, algod::v2::Algod};
 use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::TxId;
 use instant::Instant;
@@ -35,21 +35,39 @@ impl PendingSubmission {
     /// Poll algod until the transaction is confirmed, returning
     /// `Error::Msg("Pending transaction timed out (..)")` if the
     /// supplied `timeout` elapses first.
+    ///
+    /// Between checks, waits on algod's `wait-for-block-after/{round}`
+    /// long-poll rather than a fixed timer — the future stays parked
+    /// until the next block lands, so the cadence is network-driven
+    /// (~3–4s) instead of an arbitrary 250ms tick.
+    ///
+    /// If algod reports the transaction was kicked out of its pool
+    /// (`pool-error` non-empty — e.g. expired, underfunded, group
+    /// invalid), this returns `Error::Msg("Transaction pool error:
+    /// ..")` immediately rather than waiting out the timeout.
     pub async fn confirm_with(
         self,
         timeout: Duration,
     ) -> Result<PendingTransactionResponse, Error> {
         let start = Instant::now();
+        let mut last_round = self.algod.status().await?.last_round;
         loop {
             let pending = self.algod.pending_txn(&self.tx_id).await?;
             if pending.confirmed_round.is_some() {
                 return Ok(pending);
-            } else if start.elapsed() >= timeout {
+            }
+            if !pending.pool_error.is_empty() {
+                return Err(Error::Msg(format!(
+                    "Transaction pool error: {}",
+                    pending.pool_error
+                )));
+            }
+            if start.elapsed() >= timeout {
                 return Err(Error::Msg(format!(
                     "Pending transaction timed out ({timeout:?})"
                 )));
             }
-            sleep(250).await;
+            last_round = self.algod.status_after_block(last_round).await?.last_round;
         }
     }
 }
