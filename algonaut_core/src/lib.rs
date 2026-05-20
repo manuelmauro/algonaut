@@ -130,6 +130,19 @@ impl From<u64> for Round {
 )]
 pub struct AppId(pub u64);
 
+impl AppId {
+    /// The address of this application's escrow account.
+    ///
+    /// Computed as `sha512_256("appID" || u64_be_bytes(self.0))`, packaged
+    /// in a 32-byte [`Address`].
+    pub fn address(self) -> Address {
+        let bytes = self.0.to_be_bytes();
+        let all_bytes = ["appID".as_bytes(), &bytes].concat();
+        let hash = sha2::Sha512_256::digest(all_bytes);
+        Address(hash.into())
+    }
+}
+
 impl From<u64> for AppId {
     fn from(id: u64) -> Self {
         AppId(id)
@@ -446,14 +459,6 @@ impl TransactionTypeEnum {
             ))),
         }
     }
-}
-
-/// Returns the address corresponding to an application's escrow account.
-pub fn to_app_address(app_id: u64) -> Address {
-    let bytes = app_id.to_be_bytes();
-    let all_bytes = ["appID".as_bytes(), &bytes].concat();
-    let hash = sha2::Sha512_256::digest(all_bytes);
-    Address(hash.into())
 }
 
 #[cfg(test)]

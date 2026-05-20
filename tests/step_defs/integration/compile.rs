@@ -1,4 +1,5 @@
 use crate::step_defs::integration::world::World;
+use algonaut::algod::v2::SourceMap;
 use algonaut_core::Address;
 use cucumber::{then, when};
 use data_encoding::BASE64;
@@ -23,7 +24,7 @@ async fn i_compile_a_teal_program(w: &mut World, program: String) {
     let algod = w.algod.as_ref().expect("algod not set");
     let source = read_resource(&program);
 
-    match algod.teal_compile(&source, None).await {
+    match algod.teal_compile(&source, SourceMap::Skip).await {
         Ok(compiled) => {
             let hash: Address = compiled.hash().into();
             w.compile_status = Some(200);

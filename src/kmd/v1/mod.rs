@@ -170,7 +170,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<DeleteKeyResponse, Error> {
         Ok(self
             .client
@@ -219,7 +219,7 @@ impl Kmd {
     pub async fn export_multisig(
         &self,
         wallet_handle: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<ExportMultisigResponse, Error> {
         Ok(self.client.export_multisig(wallet_handle, address).await?)
     }
@@ -229,7 +229,7 @@ impl Kmd {
         &self,
         wallet_handle: &str,
         wallet_password: &str,
-        address: &str,
+        address: &Address,
     ) -> Result<DeleteMultisigResponse, Error> {
         Ok(self
             .client

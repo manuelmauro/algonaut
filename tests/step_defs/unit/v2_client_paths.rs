@@ -11,6 +11,7 @@ use crate::step_defs::unit::mock_server::MockServer;
 use crate::step_defs::unit::world::UnitWorld;
 use algonaut::algod::v2::Algod;
 use algonaut::indexer::v2::Indexer;
+use algonaut_core::{Address, AppId, AssetId, TxId};
 use cucumber::{given, then, when};
 
 /// A token (the `Configuration` requires one; its value is irrelevant to the
@@ -35,6 +36,44 @@ fn opt_csv(s: &str) -> Option<Vec<String>> {
         None
     } else {
         Some(s.split(',').map(|p| p.to_string()).collect())
+    }
+}
+
+/// Parse a feature-table cell into an [`Address`]. The cells are populated
+/// with well-formed Algorand addresses; treat parse failure as a test-data
+/// bug rather than a fall-through.
+fn parse_address(s: &str) -> Address {
+    s.parse()
+        .unwrap_or_else(|e| panic!("invalid address `{s}`: {e}"))
+}
+
+/// Treat empty cells as "argument omitted"; otherwise parse the cell as an
+/// [`Address`].
+fn opt_address(s: &str) -> Option<Address> {
+    if s.is_empty() {
+        None
+    } else {
+        Some(parse_address(s))
+    }
+}
+
+/// Treat `0` (and empty) as "argument omitted" for application IDs.
+fn opt_app_id(n: u64) -> Option<AppId> {
+    if n == 0 { None } else { Some(AppId(n)) }
+}
+
+/// Treat `0` (and empty) as "argument omitted" for asset IDs.
+fn opt_asset_id(n: u64) -> Option<AssetId> {
+    if n == 0 { None } else { Some(AssetId(n)) }
+}
+
+/// Treat empty cells as "argument omitted"; otherwise wrap the cell as a
+/// [`TxId`].
+fn opt_tx_id(s: &str) -> Option<TxId> {
+    if s.is_empty() {
+        None
+    } else {
+        Some(TxId(s.to_string()))
     }
 }
 
@@ -182,7 +221,7 @@ async fn algod_pending_txns_by_address(
     format: String,
 ) {
     let _ = algod(w)
-        .address_pending_txns(&account, opt_u64(max), opt_str(&format))
+        .address_pending_txns(&parse_address(&account), opt_u64(max), opt_str(&format))
         .await;
 }
 
@@ -193,7 +232,7 @@ async fn algod_status_after_block(w: &mut UnitWorld, round: u64) {
 
 #[when(regex = r#"^we make an Account Information call against account "([^"]*)"$"#)]
 async fn algod_account_information(w: &mut UnitWorld, account: String) {
-    let _ = algod(w).account(&account).await;
+    let _ = algod(w).account(&parse_address(&account)).await;
 }
 
 #[when(regex = r#"^we make a Get Block call against block number (\d+) with format "([^"]*)"$"#)]
@@ -207,24 +246,26 @@ async fn algod_get_block(w: &mut UnitWorld, round: u64, format: String) {
 
 #[when(regex = r#"^we make a GetAssetByID call for assetID (\d+)$"#)]
 async fn algod_get_asset_by_id(w: &mut UnitWorld, asset_id: u64) {
-    let _ = algod(w).asset(asset_id).await;
+    let _ = algod(w).asset(AssetId(asset_id)).await;
 }
 
 #[when(regex = r#"^we make a GetApplicationByID call for applicationID (\d+)$"#)]
 async fn algod_get_application_by_id(w: &mut UnitWorld, application_id: u64) {
-    let _ = algod(w).app(application_id).await;
+    let _ = algod(w).app(AppId(application_id)).await;
 }
 
 #[when(
     regex = r#"^we make a GetApplicationBoxByName call for applicationID (\d+) with encoded box name "([^"]*)"$"#
 )]
 async fn algod_get_application_box_by_name(w: &mut UnitWorld, application_id: u64, name: String) {
-    let _ = algod(w).app_box(application_id, &name).await;
+    let _ = algod(w).app_box(AppId(application_id), &name).await;
 }
 
 #[when(regex = r#"^we make a GetApplicationBoxes call for applicationID (\d+) with max (\d+)$"#)]
 async fn algod_get_application_boxes(w: &mut UnitWorld, application_id: u64, max: u64) {
-    let _ = algod(w).app_boxes(application_id, opt_u64(max)).await;
+    let _ = algod(w)
+        .app_boxes(AppId(application_id), opt_u64(max))
+        .await;
 }
 
 #[when(
@@ -262,7 +303,9 @@ async fn algod_account_application_information(
     account: String,
     application_id: u64,
 ) {
-    let _ = algod(w).account_app(&account, application_id).await;
+    let _ = algod(w)
+        .account_app(&parse_address(&account), AppId(application_id))
+        .await;
 }
 
 #[when(
@@ -378,7 +421,7 @@ async fn algod_account_assets_information(
     next: String,
 ) {
     let _ = algod(w)
-        .account_assets(&account, opt_u64(limit), opt_str(&next))
+        .account_assets(&parse_address(&account), opt_u64(limit), opt_str(&next))
         .await;
 }
 
@@ -394,7 +437,7 @@ async fn algod_account_applications_information(
 ) {
     let _ = algod(w)
         .account_apps(
-            &account,
+            &parse_address(&account),
             opt_u64(limit),
             opt_str(&next),
             opt_csv(&include).as_deref(),
@@ -422,7 +465,7 @@ async fn indexer_lookup_asset_balances(
 ) {
     let _ = indexer(w)
         .lookup_asset_balances(
-            index,
+            AssetId(index),
             None,
             opt_u64(limit),
             opt_str(&next),
@@ -457,13 +500,13 @@ async fn indexer_lookup_asset_transactions(
 ) {
     let _ = indexer(w)
         .lookup_asset_transactions(
-            index,
+            AssetId(index),
             opt_u64(limit),
             None,
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_str(&txid),
+            opt_tx_id(&txid).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -471,7 +514,7 @@ async fn indexer_lookup_asset_transactions(
             opt_str(&after_time).map(str::to_string),
             Some(cgt),
             opt_u64(clt),
-            opt_str(&address),
+            opt_address(&address).as_ref(),
             opt_str(&address_role),
             opt_bool(&exclude_close_to),
             None,
@@ -505,13 +548,13 @@ async fn indexer_lookup_asset_transactions_rekey(
 ) {
     let _ = indexer(w)
         .lookup_asset_transactions(
-            index,
+            AssetId(index),
             opt_u64(limit),
             None,
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_str(&txid),
+            opt_tx_id(&txid).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -519,7 +562,7 @@ async fn indexer_lookup_asset_transactions_rekey(
             opt_str(&after_time).map(str::to_string),
             Some(cgt),
             opt_u64(clt),
-            opt_str(&address),
+            opt_address(&address).as_ref(),
             opt_str(&address_role),
             opt_bool(&exclude_close_to),
             opt_bool(&rekey_to),
@@ -550,17 +593,17 @@ async fn indexer_lookup_account_transactions(
 ) {
     let _ = indexer(w)
         .lookup_account_transactions(
-            &account,
+            &parse_address(&account),
             opt_u64(limit),
             None,
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_str(&txid),
+            opt_tx_id(&txid).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
-            opt_u64(index),
+            opt_asset_id(index),
             opt_str(&before_time).map(str::to_string),
             opt_str(&after_time).map(str::to_string),
             Some(cgt),
@@ -594,17 +637,17 @@ async fn indexer_lookup_account_transactions_rekey(
 ) {
     let _ = indexer(w)
         .lookup_account_transactions(
-            &account,
+            &parse_address(&account),
             opt_u64(limit),
             None,
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_str(&txid),
+            opt_tx_id(&txid).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
-            opt_u64(index),
+            opt_asset_id(index),
             opt_str(&before_time).map(str::to_string),
             opt_str(&after_time).map(str::to_string),
             Some(cgt),
@@ -629,7 +672,7 @@ async fn indexer_lookup_block_header(w: &mut UnitWorld, round: u64, header: Stri
 )]
 async fn indexer_lookup_account_by_id(w: &mut UnitWorld, account: String, round: u64) {
     let _ = indexer(w)
-        .lookup_account_by_id(&account, opt_u64(round), None, None)
+        .lookup_account_by_id(&parse_address(&account), opt_u64(round), None, None)
         .await;
 }
 
@@ -638,13 +681,13 @@ async fn indexer_lookup_account_by_id(w: &mut UnitWorld, account: String, round:
 )]
 async fn indexer_lookup_account_by_id_exclude(w: &mut UnitWorld, account: String, exclude: String) {
     let _ = indexer(w)
-        .lookup_account_by_id(&account, None, None, opt_csv(&exclude))
+        .lookup_account_by_id(&parse_address(&account), None, None, opt_csv(&exclude))
         .await;
 }
 
 #[when(regex = r"^we make a Lookup Asset by ID call against asset index (\d+)$")]
 async fn indexer_lookup_asset_by_id(w: &mut UnitWorld, index: u64) {
-    let _ = indexer(w).lookup_asset_by_id(index, None).await;
+    let _ = indexer(w).lookup_asset_by_id(AssetId(index), None).await;
 }
 
 #[when(
@@ -660,7 +703,7 @@ async fn indexer_search_accounts(
 ) {
     let _ = indexer(w)
         .search_for_accounts(
-            opt_u64(index),
+            opt_asset_id(index),
             opt_u64(limit),
             None,
             Some(cgt),
@@ -714,16 +757,16 @@ async fn indexer_search_for_transactions(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_str(&txid),
+            opt_tx_id(&txid).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
-            opt_u64(index),
+            opt_asset_id(index),
             opt_str(&before_time).map(str::to_string),
             opt_str(&after_time).map(str::to_string),
             Some(cgt),
             opt_u64(clt),
-            opt_str(&account),
+            opt_address(&account).as_ref(),
             opt_str(&address_role),
             opt_bool(&exclude_close_to),
             None,
@@ -764,16 +807,16 @@ async fn indexer_search_for_transactions_rekey(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_str(&txid),
+            opt_tx_id(&txid).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
-            opt_u64(index),
+            opt_asset_id(index),
             opt_str(&before_time).map(str::to_string),
             opt_str(&after_time).map(str::to_string),
             Some(cgt),
             opt_u64(clt),
-            opt_str(&account),
+            opt_address(&account).as_ref(),
             opt_str(&address_role),
             opt_bool(&exclude_close_to),
             opt_bool(&rekey_to),
@@ -829,10 +872,10 @@ async fn indexer_search_for_assets(
             None,
             opt_u64(limit),
             None,
-            opt_str(&creator),
+            opt_address(&creator).as_ref(),
             opt_str(&name),
             opt_str(&unit),
-            opt_u64(index),
+            opt_asset_id(index),
         )
         .await;
 }
@@ -851,14 +894,14 @@ async fn indexer_search_accounts_auth(
 ) {
     let _ = indexer(w)
         .search_for_accounts(
-            opt_u64(index),
+            opt_asset_id(index),
             opt_u64(limit),
             None,
             Some(cgt),
             None,
             None,
             opt_u64(clt),
-            opt_str(&auth_addr),
+            opt_address(&auth_addr).as_ref(),
             opt_u64(round),
             None,
         )
@@ -886,21 +929,21 @@ async fn indexer_search_accounts_exclude(w: &mut UnitWorld, exclude: String) {
 #[when(regex = r"^we make a SearchForApplications call with applicationID (\d+)$")]
 async fn indexer_search_for_applications(w: &mut UnitWorld, application_id: u64) {
     let _ = indexer(w)
-        .search_for_applications(opt_u64(application_id), None, None, None, None)
+        .search_for_applications(opt_app_id(application_id), None, None, None, None)
         .await;
 }
 
 #[when(regex = r#"^we make a SearchForApplications call with creator "([^"]*)"$"#)]
 async fn indexer_search_for_applications_creator(w: &mut UnitWorld, creator: String) {
     let _ = indexer(w)
-        .search_for_applications(None, opt_str(&creator), None, None, None)
+        .search_for_applications(None, opt_address(&creator).as_ref(), None, None, None)
         .await;
 }
 
 #[when(regex = r"^we make a LookupApplications call with applicationID (\d+)$")]
 async fn indexer_lookup_applications(w: &mut UnitWorld, application_id: u64) {
     let _ = indexer(w)
-        .lookup_application_by_id(application_id, None)
+        .lookup_application_by_id(AppId(application_id), None)
         .await;
 }
 
@@ -909,7 +952,7 @@ async fn indexer_lookup_applications(w: &mut UnitWorld, application_id: u64) {
 )]
 async fn indexer_lookup_application_box(w: &mut UnitWorld, application_id: u64, name: String) {
     let _ = indexer(w)
-        .lookup_application_box_by_id_and_name(application_id, &name)
+        .lookup_application_box_by_id_and_name(AppId(application_id), &name)
         .await;
 }
 
@@ -923,7 +966,7 @@ async fn indexer_search_for_application_boxes(
     next: String,
 ) {
     let _ = indexer(w)
-        .search_for_application_boxes(application_id, opt_u64(max), opt_str(&next))
+        .search_for_application_boxes(AppId(application_id), opt_u64(max), opt_str(&next))
         .await;
 }
 
@@ -943,10 +986,10 @@ async fn indexer_lookup_application_logs(
 ) {
     let _ = indexer(w)
         .lookup_application_logs_by_id(
-            application_id,
+            AppId(application_id),
             opt_u64(limit),
             opt_str(&next),
-            opt_str(&txid),
+            opt_tx_id(&txid).as_ref(),
             opt_u64(min_round),
             opt_u64(max_round),
             opt_str(&sender),
@@ -967,8 +1010,8 @@ async fn indexer_lookup_account_assets(
 ) {
     let _ = indexer(w)
         .lookup_account_assets(
-            &account_id,
-            opt_u64(asset_id),
+            &parse_address(&account_id),
+            opt_asset_id(asset_id),
             opt_bool(&include_all),
             opt_u64(limit),
             opt_str(&next),
@@ -989,8 +1032,8 @@ async fn indexer_lookup_account_created_assets(
 ) {
     let _ = indexer(w)
         .lookup_account_created_assets(
-            &account_id,
-            opt_u64(asset_id),
+            &parse_address(&account_id),
+            opt_asset_id(asset_id),
             opt_bool(&include_all),
             opt_u64(limit),
             opt_str(&next),
@@ -1011,8 +1054,8 @@ async fn indexer_lookup_account_app_local_states(
 ) {
     let _ = indexer(w)
         .lookup_account_app_local_states(
-            &account_id,
-            opt_u64(application_id),
+            &parse_address(&account_id),
+            opt_app_id(application_id),
             opt_bool(&include_all),
             opt_u64(limit),
             opt_str(&next),
@@ -1033,8 +1076,8 @@ async fn indexer_lookup_account_created_applications(
 ) {
     let _ = indexer(w)
         .lookup_account_created_applications(
-            &account_id,
-            opt_u64(application_id),
+            &parse_address(&account_id),
+            opt_app_id(application_id),
             opt_bool(&include_all),
             opt_u64(limit),
             opt_str(&next),

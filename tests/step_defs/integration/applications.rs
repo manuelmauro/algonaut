@@ -59,15 +59,9 @@ async fn i_build_an_application_transaction(
             let approval_program = read_teal(algod, &approval_program_file).await;
             let clear_program = read_teal(algod, &clear_program_file).await;
 
-            let global_schema = StateSchema {
-                number_ints: global_ints,
-                number_byteslices: global_bytes,
-            };
+            let global_schema = StateSchema::new(global_ints, global_bytes);
 
-            let local_schema = StateSchema {
-                number_ints: local_ints,
-                number_byteslices: local_bytes,
-            };
+            let local_schema = StateSchema::new(local_ints, local_bytes);
 
             CreateApplication::new(
                 transient_account.address(),
@@ -163,7 +157,7 @@ async fn i_remember_the_new_application_id(w: &mut World) {
     let tx_id = w.tx_id.as_ref().unwrap();
     let app_ids: &mut Vec<AppId> = w.app_ids.as_mut();
 
-    let p_tx = algod.pending_txn(tx_id.as_str()).await.unwrap();
+    let p_tx = algod.pending_txn(tx_id).await.unwrap();
     assert!(p_tx.application_index.is_some());
     let app_id = AppId(p_tx.application_index.unwrap());
 
@@ -187,10 +181,7 @@ async fn the_transient_account_should_have(
     let transient_account = w.transient_account.as_ref().unwrap();
     let app_id = w.app_id.unwrap();
 
-    let account_infos = algod
-        .account(&transient_account.address().to_string())
-        .await
-        .unwrap();
+    let account_infos = algod.account(&transient_account.address()).await.unwrap();
 
     assert!(account_infos.clone().apps_total_schema.is_some());
     let total_schema = account_infos.clone().apps_total_schema.unwrap();

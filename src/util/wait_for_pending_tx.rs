@@ -1,13 +1,14 @@
 use super::sleep;
 use crate::{Error, algod::v2::Algod};
 use algonaut_algod::models::PendingTransactionResponse;
+use algonaut_core::TxId;
 use instant::Instant;
 use std::time::Duration;
 
 /// Utility to wait for a transaction to be confirmed
 pub async fn wait_for_pending_transaction(
     algod: &Algod,
-    tx_id: &str,
+    tx_id: &TxId,
 ) -> Result<PendingTransactionResponse, Error> {
     let timeout = Duration::from_secs(60);
     let start = Instant::now();

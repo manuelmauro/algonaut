@@ -14,6 +14,7 @@ use crate::step_defs::unit::mock_server::ResponseMockServer;
 use crate::step_defs::unit::world::{UnitResponse, UnitWorld};
 use algonaut::algod::v2::Algod;
 use algonaut::indexer::v2::Indexer;
+use algonaut_core::{Address, AssetId, TxId};
 use algonaut_encoding::decode_base64;
 use cucumber::{given, then, when};
 use std::fs;
@@ -22,6 +23,21 @@ use std::path::Path;
 /// A token (the `Configuration` requires one; its value is irrelevant to a
 /// canned-response server).
 const TOKEN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+/// Placeholder Algorand address: the mock server answers every request with
+/// the same canned body regardless of the path, so the address value is
+/// irrelevant; this just needs to be well-formed.
+fn placeholder_address() -> Address {
+    "7ZUECA7HFLZTXENRV24SHLU4AVPUTMTTDUFUBNBD64C73F3UHRTHAIOF6Q"
+        .parse()
+        .expect("placeholder address is well-formed")
+}
+
+/// Placeholder transaction ID: see `placeholder_address` — value is
+/// irrelevant to the response-mock test, only the shape matters.
+fn placeholder_txid() -> TxId {
+    TxId("placeholder-txid".to_string())
+}
 
 /// Load a fixture's bytes as the raw HTTP response body.
 ///
@@ -112,7 +128,7 @@ async fn mock_http_responses(w: &mut UnitWorld, jsonfiles: String, directory: St
 
 #[when(regex = r"^we make any Pending Transaction Information call$")]
 async fn algod_pending_txn(w: &mut UnitWorld) {
-    let r = algod(w).pending_txn("placeholder-txid").await;
+    let r = algod(w).pending_txn(&placeholder_txid()).await;
     record(w, r, UnitResponse::PendingTransaction);
 }
 
@@ -131,7 +147,7 @@ async fn algod_send_raw_txn(w: &mut UnitWorld) {
 #[when(regex = r"^we make any Pending Transactions By Address call$")]
 async fn algod_pending_txns_by_address(w: &mut UnitWorld) {
     let r = algod(w)
-        .address_pending_txns("placeholder-address", None, None)
+        .address_pending_txns(&placeholder_address(), None, None)
         .await;
     record(w, r, UnitResponse::PendingTransactions);
 }
@@ -156,7 +172,7 @@ async fn algod_status_after_block(w: &mut UnitWorld) {
 
 #[when(regex = r"^we make any Account Information call$")]
 async fn algod_account_information(w: &mut UnitWorld) {
-    let r = algod(w).account("placeholder-address").await;
+    let r = algod(w).account(&placeholder_address()).await;
     record(w, r, UnitResponse::Account);
 }
 
@@ -183,7 +199,7 @@ async fn algod_dryrun(w: &mut UnitWorld) {
 #[when(regex = r"^we make any LookupAssetBalances call$")]
 async fn indexer_lookup_asset_balances(w: &mut UnitWorld) {
     let r = indexer(w)
-        .lookup_asset_balances(0, None, None, None, None, None)
+        .lookup_asset_balances(AssetId(0), None, None, None, None, None)
         .await;
     record(w, r, UnitResponse::AssetBalances);
 }
@@ -192,8 +208,24 @@ async fn indexer_lookup_asset_balances(w: &mut UnitWorld) {
 async fn indexer_lookup_asset_transactions(w: &mut UnitWorld) {
     let r = indexer(w)
         .lookup_asset_transactions(
-            0, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
-            None, None, None,
+            AssetId(0),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         )
         .await;
     record(w, r, UnitResponse::Transactions);
@@ -203,7 +235,7 @@ async fn indexer_lookup_asset_transactions(w: &mut UnitWorld) {
 async fn indexer_lookup_account_transactions(w: &mut UnitWorld) {
     let r = indexer(w)
         .lookup_account_transactions(
-            "placeholder-account",
+            &placeholder_address(),
             None,
             None,
             None,
@@ -233,14 +265,14 @@ async fn indexer_lookup_block(w: &mut UnitWorld) {
 #[when(regex = r"^we make any LookupAccountByID call$")]
 async fn indexer_lookup_account_by_id(w: &mut UnitWorld) {
     let r = indexer(w)
-        .lookup_account_by_id("placeholder-account", None, None, None)
+        .lookup_account_by_id(&placeholder_address(), None, None, None)
         .await;
     record(w, r, UnitResponse::IndexerAccount);
 }
 
 #[when(regex = r"^we make any LookupAssetByID call$")]
 async fn indexer_lookup_asset_by_id(w: &mut UnitWorld) {
-    let r = indexer(w).lookup_asset_by_id(0, None).await;
+    let r = indexer(w).lookup_asset_by_id(AssetId(0), None).await;
     record(w, r, UnitResponse::IndexerAsset);
 }
 

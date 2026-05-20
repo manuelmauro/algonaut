@@ -1,7 +1,7 @@
 use algonaut::algod::v2::Algod;
 use algonaut::transaction::{TxnBuilder, account::Account};
 use algonaut::util::wait_for_pending_tx::wait_for_pending_transaction;
-use algonaut_core::MicroAlgos;
+use algonaut_core::{MicroAlgos, TxId};
 use algonaut_transaction::Pay;
 use dotenv::dotenv;
 use std::env;
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("checking auth address");
     // double check that rekeyed account's auth address is not set
-    let account_infos = algod.account(&rekeyed_acc_address.to_string()).await?;
+    let account_infos = algod.account(&rekeyed_acc_address).await?;
     assert!(account_infos.auth_addr.is_none());
 
     info!("retrieving suggested params");
@@ -51,12 +51,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("broadcasting transaction");
     let rekey_response = algod.send_txn(&rekey_signed).await?;
-    wait_for_pending_transaction(&algod, &rekey_response.tx_id).await?;
+    let tx_id: TxId = rekey_response.tx_id.into();
+    wait_for_pending_transaction(&algod, &tx_id).await?;
     info!("rekey success");
 
     info!("verifying the rekey success");
     // verify: rekey_to address is set as auth address of the rekeyed acc
-    let account_infos = algod.account(&rekeyed_acc_address.to_string()).await?;
+    let account_infos = algod.account(&rekeyed_acc_address).await?;
     assert_eq!(
         Some(rekey_to_acc_address.to_string()),
         account_infos.auth_addr

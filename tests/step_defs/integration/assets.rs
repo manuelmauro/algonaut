@@ -29,7 +29,7 @@ async fn choose_creator_and_second(w: &World) -> Result<(Address, Address), Erro
     let accounts = w.accounts.as_ref().expect("accounts not set");
     let mut balances: Vec<(Address, u64)> = Vec::with_capacity(accounts.len());
     for addr in accounts {
-        let info = algod.account(&addr.to_string()).await?;
+        let info = algod.account(addr).await?;
         balances.push((*addr, info.amount));
     }
     balances.sort_by(|a, b| b.1.cmp(&a.1));
@@ -138,7 +138,7 @@ async fn i_send_the_bogus_kmd_signed_transaction(w: &mut World) -> Result<(), Er
 async fn i_update_the_asset_index(w: &mut World) -> Result<(), Error> {
     let algod = w.algod.as_ref().expect("algod not set");
     let tx_id = w.tx_id.as_ref().expect("no last tx id");
-    let pending = algod.pending_txn(tx_id.as_str()).await?;
+    let pending = algod.pending_txn(tx_id).await?;
     if let Some(asset_index) = pending.asset_index {
         w.asset_id = Some(AssetId(asset_index));
     }
@@ -150,7 +150,7 @@ async fn i_update_the_asset_index(w: &mut World) -> Result<(), Error> {
 async fn i_get_the_asset_info(w: &mut World) -> Result<(), Error> {
     let algod = w.algod.as_ref().expect("algod not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let asset = algod.asset(asset_id.0).await?;
+    let asset = algod.asset(asset_id).await?;
     w.asset_info = Some(*asset.params);
     Ok(())
 }
@@ -211,7 +211,7 @@ async fn i_should_be_unable_to_get_the_asset_info(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
     let asset_id = w.asset_id.expect("asset id not set");
     assert!(
-        algod.asset(asset_id.0).await.is_err(),
+        algod.asset(asset_id).await.is_err(),
         "expected asset info to be missing after destroy"
     );
 }
@@ -301,7 +301,7 @@ async fn the_creator_should_have_assets_remaining(
     let algod = w.algod.as_ref().expect("algod not set");
     let creator = w.asset_creator.expect("asset creator not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let info = algod.account(&creator.to_string()).await?;
+    let info = algod.account(&creator).await?;
     let holding = info
         .assets
         .as_deref()

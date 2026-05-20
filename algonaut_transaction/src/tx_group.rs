@@ -14,10 +14,35 @@ pub struct TxGroup {
 impl TxGroup {
     const MAX_TX_GROUP_SIZE: usize = 16;
 
-    pub fn new(tx_group_hashes: Vec<HashDigest>) -> TxGroup {
-        TxGroup { tx_group_hashes }
+    /// Assign a group ID to the given transactions and return the grouped
+    /// copies. Replaces the older `assign_group_id(&mut [&mut Transaction])`
+    /// API, whose slice-of-mutable-references shape made it the odd one out
+    /// in the public surface.
+    ///
+    /// The constructor returns `Vec<Transaction>` rather than `Self` because
+    /// `TxGroup` (the msgpack-hashing helper) is not what callers want — they
+    /// want the grouped transactions back. Per the
+    /// `identifier-newtypes-at-client-boundary` ADR.
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new(mut txns: Vec<Transaction>) -> Result<Vec<Transaction>, TransactionError> {
+        let mut refs: Vec<&mut Transaction> = txns.iter_mut().collect();
+        let gid = TxGroup::compute_group_id(refs.as_mut_slice())?;
+        for tx in txns.iter_mut() {
+            tx.assign_group_id(gid);
+        }
+        Ok(txns)
     }
 
+    /// In-place group-id assignment for callers that already hold their
+    /// transactions through mutable references — currently only the atomic
+    /// transaction composer, which stores transactions inside
+    /// `TransactionWithSigner` records and would otherwise have to
+    /// drain-and-refill on every `build_group`.
+    ///
+    /// `#[doc(hidden)]` because [`TxGroup::new`] is the user-facing API;
+    /// this stays exposed (across-crate workspace visibility) for the
+    /// composer's internal use only.
+    #[doc(hidden)]
     pub fn assign_group_id(txns: &mut [&mut Transaction]) -> Result<(), TransactionError> {
         let gid = TxGroup::compute_group_id(txns)?;
         for tx in txns {
@@ -26,8 +51,14 @@ impl TxGroup {
         Ok(())
     }
 
+    /// Internal constructor that wraps a `Vec<HashDigest>` for msgpack
+    /// hashing. Use [`TxGroup::new`] to actually group transactions.
+    pub(crate) fn from_hashes(tx_group_hashes: Vec<HashDigest>) -> TxGroup {
+        TxGroup { tx_group_hashes }
+    }
+
     pub(crate) fn compute_group_id(
-        txns: &[&mut Transaction],
+        txns: &mut [&mut Transaction],
     ) -> Result<HashDigest, TransactionError> {
         if txns.is_empty() {
             return Err(TransactionError::EmptyTransactionListError);
@@ -38,10 +69,10 @@ impl TxGroup {
             });
         }
         let mut ids: Vec<HashDigest> = vec![];
-        for t in txns {
+        for t in txns.iter() {
             ids.push(t.raw_id()?);
         }
-        let group = TxGroup::new(ids);
+        let group = TxGroup::from_hashes(ids);
         let hashed = sha2::Sha512_256::digest(group.bytes_to_sign()?);
         Ok(HashDigest(hashed.into()))
     }

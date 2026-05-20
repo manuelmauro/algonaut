@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::AppId;
 use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
@@ -35,10 +35,12 @@ int 1
     .as_bytes();
 
     info!("compiling approval program");
-    let compiled_approval_program = algod.teal_compile(approval_program, None).await?;
+    let compiled_approval_program = algod
+        .teal_compile(approval_program, SourceMap::Skip)
+        .await?;
 
     info!("compiling approval program");
-    let compiled_clear_program = algod.teal_compile(clear_program, None).await?;
+    let compiled_clear_program = algod.teal_compile(clear_program, SourceMap::Skip).await?;
 
     info!("retrieving suggested params");
     let params = algod.txn_params().await?;
