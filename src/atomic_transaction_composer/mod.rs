@@ -11,13 +11,14 @@ use algonaut_algod::models::{
     SimulateTransaction200Response, TransactionParams200Response,
 };
 use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, TxId};
-use algonaut_crypto::{HashDigest, Signature};
+use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
     SignedTransaction, Signer, Transaction, TransactionType, TxnBuilder,
     error::TransactionError,
+    signed_transaction,
     transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
-        TransactionSignature, to_tx_type_enum,
+        to_tx_type_enum,
     },
     tx_group,
 };
@@ -449,14 +450,7 @@ impl AtomicTransactionComposer {
                     // 64-byte signature is all zeros. Algod's simulator
                     // detects this as a missing signature; never submit
                     // it to the live endpoint.
-                    let tx = tx_with_signer.tx.clone();
-                    let transaction_id = tx.id()?;
-                    SignedTransaction {
-                        transaction: tx,
-                        transaction_id,
-                        sig: TransactionSignature::Single(Signature([0; 64])),
-                        auth_address: None,
-                    }
+                    signed_transaction::placeholder(tx_with_signer.tx.clone())?
                 }
             };
             signed_txs.push(signed);
@@ -472,7 +466,7 @@ impl AtomicTransactionComposer {
     fn get_txs_ids(&self) -> Vec<String> {
         self.signed_txs
             .iter()
-            .map(|t| t.transaction_id.0.clone())
+            .map(|t| t.transaction_id().0.clone())
             .collect()
     }
 
@@ -507,7 +501,7 @@ impl AtomicTransactionComposer {
             }
         }
 
-        let tx_id = self.signed_txs[index_to_wait].transaction_id.clone();
+        let tx_id = self.signed_txs[index_to_wait].transaction_id().clone();
         let pending_tx = wait_for_pending_transaction(algod, &tx_id).await?;
 
         let mut return_list: Vec<AbiMethodResult> = vec![];
@@ -523,7 +517,7 @@ impl AtomicTransactionComposer {
             let mut current_pending_tx = pending_tx.clone();
 
             if i != index_to_wait {
-                let tx_id = self.signed_txs[i].transaction_id.clone();
+                let tx_id = self.signed_txs[i].transaction_id().clone();
 
                 match algod.pending_txn(&tx_id).await {
                     Ok(p) => {
@@ -600,7 +594,7 @@ impl AtomicTransactionComposer {
                 if !self.method_map.contains_key(&i) {
                     continue;
                 }
-                let tx_id = self.signed_txs[i].transaction_id.clone();
+                let tx_id = self.signed_txs[i].transaction_id().clone();
                 let pending_tx = (*txn_result.txn_result).clone();
                 let return_type = self.method_map[&i].returns.clone().type_()?;
                 return_list.push(get_return_value_with_return_type(

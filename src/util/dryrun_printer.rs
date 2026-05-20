@@ -43,7 +43,7 @@ pub async fn create_dryrun_with_settings(
     let mut accts = HashSet::new();
 
     for signed_tx in signed_txs {
-        let tx = &signed_tx.transaction;
+        let tx = signed_tx.transaction();
 
         if let TransactionType::ApplicationCallTransaction(app_call) = &tx.txn_type {
             if let Some(app_id) = app_call.app_id {

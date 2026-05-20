@@ -1,7 +1,6 @@
 use algonaut::algod::v2::{Algod, SourceMap};
-use algonaut::core::{LogicSignature, MicroAlgos, TxId};
-use algonaut::transaction::transaction::TransactionSignature;
-use algonaut::transaction::{Pay, SignedTransaction};
+use algonaut::core::{LogicSignature, MicroAlgos};
+use algonaut::transaction::Pay;
 use algonaut::transaction::{TxnBuilder, account::Account};
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
@@ -50,16 +49,12 @@ int 1
     let signature = alice.generate_program_sig(&program);
 
     info!("delegating signature for the transaction");
-    let signed_t = SignedTransaction {
-        transaction: t,
-        transaction_id: TxId::default(),
-        sig: TransactionSignature::Logic(SignedLogic {
-            logic: program,
-            args: vec![],
-            sig: LogicSignature::DelegatedSig(signature),
-        }),
-        auth_address: None,
-    };
+    let signed_t = SignedLogic {
+        logic: program,
+        args: vec![],
+        sig: LogicSignature::DelegatedSig(signature),
+    }
+    .sign(t)?;
 
     info!("broadcasting transaction");
     let send_response = algod.send_txn(&signed_t).await;

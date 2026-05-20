@@ -13,5 +13,7 @@ pub use builder::{
     AcceptAsset, ClawbackAsset, CreateApplication, CreateAsset, FreezeAsset, Pay, RegisterKey,
     TransferAsset, TxnBuilder,
 };
-pub use signer::{MultisigSigner, Signer};
-pub use transaction::{SignedTransaction, Transaction, TransactionType};
+pub use signer::{
+    InProgressMultisigSigningSession, MultisigSigner, MultisigSigningSession, Signer,
+};
+pub use transaction::{SignedTransaction, Transaction, TransactionType, signed_transaction};
