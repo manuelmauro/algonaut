@@ -1,6 +1,5 @@
 use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::transaction::CreateApplication;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::transaction::StateSchema;
 use algonaut_algod::models::PendingTransactionResponse;
@@ -52,19 +51,15 @@ int 1
     let params = algod.txn_params().await?;
 
     info!("building CreateApplication transaction");
-    let t = TxnBuilder::with(
-        &params,
-        CreateApplication::new(
-            alice.address(),
-            compiled_approval_program,
-            compiled_clear_program,
-            StateSchema::empty(),
-            StateSchema::empty(),
-        )
-        .app_arguments(vec![vec![1, 0], vec![255]])
-        .build(),
+    let t = CreateApplication::new(
+        alice.address(),
+        compiled_approval_program,
+        compiled_clear_program,
+        StateSchema::empty(),
+        StateSchema::empty(),
     )
-    .build()?;
+    .app_arguments(vec![vec![1, 0], vec![255]])
+    .build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

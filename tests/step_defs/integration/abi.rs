@@ -14,7 +14,7 @@ use algonaut_abi::{
 use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, AppId, MicroAlgos, TxId};
 use algonaut_transaction::{
-    Pay, TxnBuilder,
+    Pay,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
 };
 use cucumber::{codegen::Regex, given, then, when};
@@ -80,9 +80,7 @@ async fn i_build_a_payment_transaction_with_sender_receiver_amount_close_remaind
         payment = payment.close_remainder_to(close_to);
     }
 
-    let tx = TxnBuilder::with(tx_params, payment.build())
-        .build()
-        .unwrap();
+    let tx = payment.build(tx_params).unwrap();
 
     w.tx = Some(tx);
 }
@@ -870,12 +868,9 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
 
     let tx_params = algod.txn_params().await.expect("couldn't get params");
 
-    let tx = TxnBuilder::with(
-        &tx_params,
-        Pay::new(first_account, app_address, MicroAlgos(micro_algos)).build(),
-    )
-    .build()
-    .unwrap();
+    let tx = Pay::new(first_account, app_address, MicroAlgos(micro_algos))
+        .build(&tx_params)
+        .unwrap();
 
     let signed_tx = kmd
         .sign_transaction(kmd_handle, kmd_pw, &tx)

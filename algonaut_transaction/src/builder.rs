@@ -19,110 +19,100 @@ pub trait TransactionParams {
     fn genesis_id(&self) -> &String;
 }
 
-/// A builder for [Transaction].
-pub struct TxnBuilder {
-    fee: MicroAlgos,
-    first_valid: Round,
-    genesis_hash: HashDigest,
-    last_valid: Round,
-    txn_type: TransactionType,
-    genesis_id: Option<String>,
-    group: Option<HashDigest>,
-    lease: Option<HashDigest>,
-    note: Option<Vec<u8>>,
-    rekey_to: Option<Address>,
+/// Shared header fields every transaction can carry. Embedded inside each
+/// per-type builder ([`Pay`], [`CreateAsset`], [`CallApplication`], …), so
+/// every builder has a single terminal `build(&params)` that finalises both
+/// the header and the type-specific fields.
+#[derive(Debug, Default, Clone)]
+pub struct TxnHeader {
+    pub(crate) fee: Option<MicroAlgos>,
+    pub(crate) note: Option<Vec<u8>>,
+    pub(crate) lease: Option<HashDigest>,
+    pub(crate) rekey_to: Option<Address>,
+    pub(crate) group: Option<HashDigest>,
+    pub(crate) genesis_id: Option<String>,
 }
 
-impl TxnBuilder {
-    /// Convenience to initialize builder with suggested transaction params
-    ///
-    /// The txn fee is estimated, based on params. To set the fee manually, use [with_fee](Self::with_fee) or [new](Self::new).
-    pub fn with(params: &impl TransactionParams, txn_type: TransactionType) -> Self {
-        Self::with_fee(params, MicroAlgos(params.min_fee()), txn_type)
-    }
-
-    /// Convenience to initialize builder with suggested transaction params, and set the fee manually (ignoring the fee fields in params).
-    ///
-    /// Useful e.g. in txns groups where one txn pays the fee for others.
-    pub fn with_fee(
+impl TxnHeader {
+    /// Combine this header with the suggested params and a type-specific
+    /// `txn_type` to produce a finished [`Transaction`]. Used by every
+    /// per-type builder's terminal `build(&params)`.
+    pub(crate) fn into_transaction(
+        self,
         params: &impl TransactionParams,
-        fee: MicroAlgos,
         txn_type: TransactionType,
-    ) -> Self {
-        Self::new(
-            fee,
-            Round(params.last_round()),
-            Round(params.last_round() + 1000),
-            params.genesis_hash(),
-            txn_type,
-        )
-        .genesis_id(params.genesis_id().clone())
-    }
-
-    pub fn new(
-        fee: MicroAlgos,
-        first_valid: Round,
-        last_valid: Round,
-        genesis_hash: HashDigest,
-        txn_type: TransactionType,
-    ) -> Self {
-        TxnBuilder {
+    ) -> Result<Transaction, TransactionError> {
+        let fee = self.fee.unwrap_or(MicroAlgos(params.min_fee()));
+        let first_valid = Round(params.last_round());
+        let last_valid = Round(params.last_round() + 1000);
+        Ok(Transaction {
             fee,
             first_valid,
-            genesis_hash,
+            genesis_hash: params.genesis_hash(),
             last_valid,
             txn_type,
-            genesis_id: None,
-            group: None,
-            lease: None,
-            note: None,
-            rekey_to: None,
-        }
-    }
-
-    pub fn genesis_id(mut self, id: String) -> Self {
-        self.genesis_id = Some(id);
-        self
-    }
-
-    pub fn group(mut self, group: HashDigest) -> Self {
-        self.group = Some(group);
-        self
-    }
-
-    pub fn lease(mut self, lease: HashDigest) -> Self {
-        self.lease = Some(lease);
-        self
-    }
-
-    pub fn note(mut self, note: Vec<u8>) -> Self {
-        self.note = Some(note);
-        self
-    }
-
-    pub fn rekey_to(mut self, rekey_to: Address) -> Self {
-        self.rekey_to = Some(rekey_to);
-        self
-    }
-
-    pub fn build(self) -> Result<Transaction, TransactionError> {
-        Ok(self.build_tx(self.fee))
-    }
-
-    fn build_tx(&self, fee: MicroAlgos) -> Transaction {
-        Transaction {
-            fee,
-            first_valid: self.first_valid,
-            genesis_hash: self.genesis_hash,
-            last_valid: self.last_valid,
-            txn_type: self.txn_type.clone(),
-            genesis_id: self.genesis_id.clone(),
+            genesis_id: Some(
+                self.genesis_id
+                    .unwrap_or_else(|| params.genesis_id().clone()),
+            ),
             group: self.group,
             lease: self.lease,
-            note: self.note.clone(),
+            note: self.note,
             rekey_to: self.rekey_to,
-        }
+        })
     }
+}
+
+/// Mint the six fluent header setters (`fee`, `note`, `lease`, `rekey_to`,
+/// `group`, `genesis_id`) on a per-type builder that has a `header:
+/// TxnHeader` field. Used at the bottom of every builder's `impl` block.
+macro_rules! impl_txn_header_setters {
+    ($t:ty) => {
+        impl $t {
+            /// Override the per-byte-estimated fee from
+            /// [`TransactionParams::min_fee`] with an explicit value. Useful
+            /// in transaction groups where one txn pays the fee for others.
+            pub fn fee(mut self, fee: MicroAlgos) -> Self {
+                self.header.fee = Some(fee);
+                self
+            }
+
+            /// Attach an opaque note to the transaction.
+            pub fn note(mut self, note: Vec<u8>) -> Self {
+                self.header.note = Some(note);
+                self
+            }
+
+            /// Attach a lease — prevents a second transaction with the same
+            /// lease + sender from being committed within the validity
+            /// window.
+            pub fn lease(mut self, lease: HashDigest) -> Self {
+                self.header.lease = Some(lease);
+                self
+            }
+
+            /// Rekey the sender's account to a new auth address as part of
+            /// this transaction.
+            pub fn rekey_to(mut self, rekey_to: Address) -> Self {
+                self.header.rekey_to = Some(rekey_to);
+                self
+            }
+
+            /// Stamp a precomputed group ID on this transaction. Normally
+            /// you don't call this directly; [`crate::tx_group::TxGroup`]
+            /// does it via its `TryFrom<Vec<Transaction>>` impl.
+            pub fn group(mut self, group: HashDigest) -> Self {
+                self.header.group = Some(group);
+                self
+            }
+
+            /// Override the suggested-params genesis ID. Rarely needed.
+            pub fn genesis_id(mut self, id: String) -> Self {
+                self.header.genesis_id = Some(id);
+                self
+            }
+        }
+    };
 }
 
 /// A builder for [Payment].
@@ -131,6 +121,7 @@ pub struct Pay {
     receiver: Address,
     amount: MicroAlgos,
     close_remainder_to: Option<Address>,
+    header: TxnHeader,
 }
 
 impl Pay {
@@ -140,6 +131,7 @@ impl Pay {
             receiver,
             amount,
             close_remainder_to: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -148,15 +140,18 @@ impl Pay {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::Payment(Payment {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::Payment(Payment {
             sender: self.sender,
             receiver: self.receiver,
             amount: self.amount,
             close_remainder_to: self.close_remainder_to,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(Pay);
 
 /// A builder for [KeyRegistration].
 pub struct RegisterKey {
@@ -168,6 +163,7 @@ pub struct RegisterKey {
     vote_key_dilution: Option<u64>,
     state_proof_key: Option<StateProofPk>,
     nonparticipating: Option<bool>,
+    header: TxnHeader,
 }
 
 impl RegisterKey {
@@ -193,6 +189,7 @@ impl RegisterKey {
             vote_key_dilution: Some(vote_key_dilution),
             state_proof_key: Some(state_proof_key),
             nonparticipating: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -206,6 +203,7 @@ impl RegisterKey {
             vote_key_dilution: None,
             state_proof_key: None,
             nonparticipating: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -219,11 +217,12 @@ impl RegisterKey {
             vote_key_dilution: None,
             state_proof_key: None,
             nonparticipating: Some(nonparticipating),
+            header: TxnHeader::default(),
         }
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::KeyRegistration(KeyRegistration {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::KeyRegistration(KeyRegistration {
             sender: self.sender,
             vote_pk: self.vote_pk,
             selection_pk: self.selection_pk,
@@ -232,9 +231,12 @@ impl RegisterKey {
             vote_key_dilution: self.vote_key_dilution,
             state_proof_key: self.state_proof_key,
             nonparticipating: self.nonparticipating,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(RegisterKey);
 
 /// A builder for [AssetConfigurationTransaction].
 pub struct CreateAsset {
@@ -250,6 +252,7 @@ pub struct CreateAsset {
     reserve: Option<Address>,
     freeze: Option<Address>,
     clawback: Option<Address>,
+    header: TxnHeader,
 }
 
 impl CreateAsset {
@@ -267,6 +270,7 @@ impl CreateAsset {
             reserve: None,
             freeze: None,
             clawback: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -310,26 +314,30 @@ impl CreateAsset {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
-            sender: self.sender,
-            config_asset: None,
-            params: Some(AssetParams {
-                total: self.total,
-                decimals: self.decimals,
-                default_frozen: self.default_frozen,
-                unit_name: self.unit_name,
-                asset_name: self.asset_name,
-                url: self.url,
-                meta_data_hash: self.meta_data_hash,
-                manager: self.manager,
-                reserve: self.reserve,
-                freeze: self.freeze,
-                clawback: self.clawback,
-            }),
-        })
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type =
+            TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
+                sender: self.sender,
+                config_asset: None,
+                params: Some(AssetParams {
+                    total: self.total,
+                    decimals: self.decimals,
+                    default_frozen: self.default_frozen,
+                    unit_name: self.unit_name,
+                    asset_name: self.asset_name,
+                    url: self.url,
+                    meta_data_hash: self.meta_data_hash,
+                    manager: self.manager,
+                    reserve: self.reserve,
+                    freeze: self.freeze,
+                    clawback: self.clawback,
+                }),
+            });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(CreateAsset);
 
 /// A builder for [AssetConfigurationTransaction].
 pub struct UpdateAsset {
@@ -346,6 +354,7 @@ pub struct UpdateAsset {
     reserve: Option<Address>,
     freeze: Option<Address>,
     clawback: Option<Address>,
+    header: TxnHeader,
 }
 
 impl UpdateAsset {
@@ -364,6 +373,7 @@ impl UpdateAsset {
             reserve: None,
             freeze: None,
             clawback: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -422,46 +432,59 @@ impl UpdateAsset {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
-            sender: self.sender,
-            config_asset: Some(self.asset_id),
-            params: Some(AssetParams {
-                total: self.total,
-                decimals: self.decimals,
-                default_frozen: self.default_frozen,
-                unit_name: self.unit_name,
-                asset_name: self.asset_name,
-                url: self.url,
-                meta_data_hash: self.meta_data_hash,
-                manager: self.manager,
-                reserve: self.reserve,
-                freeze: self.freeze,
-                clawback: self.clawback,
-            }),
-        })
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type =
+            TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
+                sender: self.sender,
+                config_asset: Some(self.asset_id),
+                params: Some(AssetParams {
+                    total: self.total,
+                    decimals: self.decimals,
+                    default_frozen: self.default_frozen,
+                    unit_name: self.unit_name,
+                    asset_name: self.asset_name,
+                    url: self.url,
+                    meta_data_hash: self.meta_data_hash,
+                    manager: self.manager,
+                    reserve: self.reserve,
+                    freeze: self.freeze,
+                    clawback: self.clawback,
+                }),
+            });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(UpdateAsset);
 
 /// A builder for [AssetConfigurationTransaction].
 pub struct DestroyAsset {
     sender: Address,
     asset_id: AssetId,
+    header: TxnHeader,
 }
 
 impl DestroyAsset {
     pub fn new(sender: Address, asset_id: AssetId) -> Self {
-        DestroyAsset { sender, asset_id }
+        DestroyAsset {
+            sender,
+            asset_id,
+            header: TxnHeader::default(),
+        }
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
-            sender: self.sender,
-            config_asset: Some(self.asset_id),
-            params: None,
-        })
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type =
+            TransactionType::AssetConfigurationTransaction(AssetConfigurationTransaction {
+                sender: self.sender,
+                config_asset: Some(self.asset_id),
+                params: None,
+            });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(DestroyAsset);
 
 /// A builder for [AssetTransferTransaction].
 pub struct TransferAsset {
@@ -470,6 +493,7 @@ pub struct TransferAsset {
     amount: u64,
     receiver: Address,
     close_to: Option<Address>,
+    header: TxnHeader,
 }
 
 impl TransferAsset {
@@ -480,6 +504,7 @@ impl TransferAsset {
             amount,
             receiver,
             close_to: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -488,35 +513,46 @@ impl TransferAsset {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::AssetTransferTransaction(AssetTransferTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::AssetTransferTransaction(AssetTransferTransaction {
             sender: self.sender,
             xfer: self.xfer,
             amount: self.amount,
             receiver: self.receiver,
             close_to: self.close_to,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(TransferAsset);
 
 /// A builder for [AssetAcceptTransaction].
 pub struct AcceptAsset {
     sender: Address,
     asset_id: AssetId,
+    header: TxnHeader,
 }
 
 impl AcceptAsset {
     pub fn new(sender: Address, asset_id: AssetId) -> Self {
-        AcceptAsset { sender, asset_id }
+        AcceptAsset {
+            sender,
+            asset_id,
+            header: TxnHeader::default(),
+        }
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::AssetAcceptTransaction(AssetAcceptTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::AssetAcceptTransaction(AssetAcceptTransaction {
             sender: self.sender,
             xfer: self.asset_id,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(AcceptAsset);
 
 /// A builder for [AssetClawbackTransaction].
 pub struct ClawbackAsset {
@@ -526,6 +562,7 @@ pub struct ClawbackAsset {
     asset_sender: Address,
     asset_receiver: Address,
     asset_close_to: Option<Address>,
+    header: TxnHeader,
 }
 
 impl ClawbackAsset {
@@ -543,6 +580,7 @@ impl ClawbackAsset {
             asset_sender,
             asset_receiver,
             asset_close_to: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -551,17 +589,20 @@ impl ClawbackAsset {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::AssetClawbackTransaction(AssetClawbackTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::AssetClawbackTransaction(AssetClawbackTransaction {
             sender: self.sender,
             xfer: self.asset_id,
             asset_amount: self.asset_amount,
             asset_sender: self.asset_sender,
             asset_receiver: self.asset_receiver,
             asset_close_to: self.asset_close_to,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(ClawbackAsset);
 
 /// A builder for [AssetFreezeTransaction].
 pub struct FreezeAsset {
@@ -569,6 +610,7 @@ pub struct FreezeAsset {
     freeze_account: Address,
     asset_id: AssetId,
     frozen: bool,
+    header: TxnHeader,
 }
 
 impl FreezeAsset {
@@ -578,18 +620,22 @@ impl FreezeAsset {
             freeze_account,
             asset_id,
             frozen,
+            header: TxnHeader::default(),
         }
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::AssetFreezeTransaction(AssetFreezeTransaction {
             sender: self.sender,
             freeze_account: self.freeze_account,
             asset_id: self.asset_id,
             frozen: self.frozen,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(FreezeAsset);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct CreateApplication {
@@ -604,6 +650,7 @@ pub struct CreateApplication {
     local_state_schema: Option<StateSchema>,
     extra_pages: u32,
     boxes: Option<Vec<BoxReference>>,
+    header: TxnHeader,
 }
 
 impl CreateApplication {
@@ -626,6 +673,7 @@ impl CreateApplication {
             local_state_schema: Some(local_state_schema),
             extra_pages: 0,
             boxes: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -659,8 +707,8 @@ impl CreateApplication {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: None,
             on_complete: ApplicationCallOnComplete::NoOp,
@@ -674,9 +722,12 @@ impl CreateApplication {
             local_state_schema: self.local_state_schema,
             extra_pages: self.extra_pages,
             boxes: self.boxes,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(CreateApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct UpdateApplication {
@@ -689,6 +740,7 @@ pub struct UpdateApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
+    header: TxnHeader,
 }
 
 impl UpdateApplication {
@@ -708,6 +760,7 @@ impl UpdateApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -736,8 +789,8 @@ impl UpdateApplication {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
             on_complete: ApplicationCallOnComplete::UpdateApplication,
@@ -751,9 +804,12 @@ impl UpdateApplication {
             local_state_schema: None,
             extra_pages: 0,
             boxes: self.boxes,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(UpdateApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct CallApplication {
@@ -764,6 +820,7 @@ pub struct CallApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
+    header: TxnHeader,
 }
 
 impl CallApplication {
@@ -776,6 +833,7 @@ impl CallApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -804,8 +862,8 @@ impl CallApplication {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
             on_complete: ApplicationCallOnComplete::NoOp,
@@ -819,9 +877,12 @@ impl CallApplication {
             local_state_schema: None,
             extra_pages: 0,
             boxes: self.boxes,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(CallApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct ClearApplication {
@@ -832,6 +893,7 @@ pub struct ClearApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
+    header: TxnHeader,
 }
 
 impl ClearApplication {
@@ -844,6 +906,7 @@ impl ClearApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -872,8 +935,8 @@ impl ClearApplication {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
             on_complete: ApplicationCallOnComplete::ClearState,
@@ -887,9 +950,12 @@ impl ClearApplication {
             local_state_schema: None,
             extra_pages: 0,
             boxes: self.boxes,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(ClearApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct CloseApplication {
@@ -900,6 +966,7 @@ pub struct CloseApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
+    header: TxnHeader,
 }
 
 impl CloseApplication {
@@ -912,6 +979,7 @@ impl CloseApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -940,8 +1008,8 @@ impl CloseApplication {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
             on_complete: ApplicationCallOnComplete::CloseOut,
@@ -955,9 +1023,12 @@ impl CloseApplication {
             local_state_schema: None,
             extra_pages: 0,
             boxes: self.boxes,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(CloseApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct DeleteApplication {
@@ -968,6 +1039,7 @@ pub struct DeleteApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
+    header: TxnHeader,
 }
 
 impl DeleteApplication {
@@ -980,6 +1052,7 @@ impl DeleteApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -1008,8 +1081,8 @@ impl DeleteApplication {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
             on_complete: ApplicationCallOnComplete::DeleteApplication,
@@ -1023,9 +1096,12 @@ impl DeleteApplication {
             local_state_schema: None,
             extra_pages: 0,
             boxes: self.boxes,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(DeleteApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct OptInApplication {
@@ -1036,6 +1112,7 @@ pub struct OptInApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
+    header: TxnHeader,
 }
 
 impl OptInApplication {
@@ -1048,6 +1125,7 @@ impl OptInApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
+            header: TxnHeader::default(),
         }
     }
 
@@ -1076,8 +1154,8 @@ impl OptInApplication {
         self
     }
 
-    pub fn build(self) -> TransactionType {
-        TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+    pub fn build(self, params: &impl TransactionParams) -> Result<Transaction, TransactionError> {
+        let txn_type = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
             sender: self.sender,
             app_id: Some(self.app_id),
             on_complete: ApplicationCallOnComplete::OptIn,
@@ -1091,6 +1169,9 @@ impl OptInApplication {
             local_state_schema: None,
             extra_pages: 0,
             boxes: self.boxes,
-        })
+        });
+        self.header.into_transaction(params, txn_type)
     }
 }
+
+impl_txn_header_setters!(OptInApplication);
