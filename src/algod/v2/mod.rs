@@ -17,7 +17,7 @@ use algonaut_algod::{
 };
 use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, ToMsgPack, TxId};
 use algonaut_encoding::decode_base64;
-use algonaut_model::client_responses::{NodeStatus, SuggestedParams, Supply};
+use algonaut_model::client_types::{NodeStatus, SuggestedParams, Supply};
 use algonaut_transaction::SignedTransaction;
 
 /// Whether `teal_compile` should ask algod to include a source-map alongside

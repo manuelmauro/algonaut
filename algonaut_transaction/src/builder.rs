@@ -12,11 +12,11 @@ use algonaut_core::{
 };
 use algonaut_crypto::HashDigest;
 
-// The trait moved to `algonaut_model::client_responses` so the hand-named
+// The trait moved to `algonaut_model::client_types` so the hand-named
 // `SuggestedParams` (D3) can implement it without crossing the workspace
 // cycle. Re-exported here so existing imports
 // `algonaut_transaction::builder::TransactionParams` keep working.
-pub use algonaut_model::client_responses::TransactionParams;
+pub use algonaut_model::client_types::TransactionParams;
 
 /// Shared header fields every transaction can carry. Embedded inside each
 /// per-type builder ([`Pay`], [`CreateAsset`], [`CallApplication`], …), so

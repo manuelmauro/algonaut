@@ -1,7 +1,7 @@
 ---
 id: hide-generated-types
 title: Hand-named response types at the client edge (first cut)
-abstract: New `algonaut_model::client_responses` module with hand-named wrappers — `SuggestedParams`, `NodeStatus`, `Supply` — replacing the OpenAPI-generator names (`TransactionParams200Response`, `GetStatus200Response`, `GetSupply200Response`) on the most-touched algod methods. `TransactionParams` trait moves from `algonaut_transaction::builder` to `algonaut_model::client_responses` so `SuggestedParams` plugs into every `Builder::build(&params)` site. First slice of decision item D3 — the full coverage is staged across follow-up PRs.
+abstract: New `algonaut_model::client_types` module with hand-named wrappers — `SuggestedParams`, `NodeStatus`, `Supply` — replacing the OpenAPI-generator names (`TransactionParams200Response`, `GetStatus200Response`, `GetSupply200Response`) on the most-touched algod methods. `TransactionParams` trait moves from `algonaut_transaction::builder` to `algonaut_model::client_types` so `SuggestedParams` plugs into every `Builder::build(&params)` site. First slice of decision item D3 — the full coverage is staged across follow-up PRs.
 status: proposed
 date: 2026-05-20
 deciders: []
@@ -31,9 +31,9 @@ identical type. There is no single blessed name.
 
 ## Decision
 
-### A new home: `algonaut_model::client_responses`
+### A new home: `algonaut_model::client_types`
 
-Hand-named domain types live in `algonaut_model::client_responses`,
+Hand-named domain types live in `algonaut_model::client_types`,
 constructed by converting the generated response at the client edge
 inside the umbrella crate. The first cut wraps three high-traffic
 types:
@@ -47,18 +47,18 @@ types:
 The remaining algod/indexer/kmd responses keep their generated names
 for now — each migrates as its own follow-up PR. The shape this cut
 establishes is the template: a new struct in
-`algonaut_model::client_responses`, a `From`-shaped conversion at the
+`algonaut_model::client_types`, a `From`-shaped conversion at the
 client edge, the wrapper method's return type changes from the
 generated name to the hand-named one.
 
-### `TransactionParams` trait moves to `algonaut_model::client_responses`
+### `TransactionParams` trait moves to `algonaut_model::client_types`
 
 Today the trait lives in `algonaut_transaction::builder` and the
 generated `TransactionParams200Response` implements it. To let
 `SuggestedParams` (now in `algonaut_model`) implement the same trait —
 without inducing a workspace dependency cycle
 (`algonaut_transaction → algonaut_model` already exists) — the trait
-moves to `algonaut_model::client_responses`.
+moves to `algonaut_model::client_types`.
 `algonaut_transaction::builder` re-exports it via `pub use`, so every
 existing `use algonaut_transaction::builder::TransactionParams` import
 keeps working without change.

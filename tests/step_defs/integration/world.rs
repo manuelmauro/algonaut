@@ -11,7 +11,7 @@ use algonaut_algod::models::{
 };
 use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TxId};
 use algonaut_crypto::Ed25519PublicKey;
-use algonaut_model::client_responses::SuggestedParams;
+use algonaut_model::client_types::SuggestedParams;
 use algonaut_transaction::{
     SignedTransaction, Signer, Transaction,
     account::Account,
