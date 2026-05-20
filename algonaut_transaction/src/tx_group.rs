@@ -18,13 +18,7 @@ impl TxGroup {
     /// copies. Replaces the older `assign_group_id(&mut [&mut Transaction])`
     /// API, whose slice-of-mutable-references shape made it the odd one out
     /// in the public surface.
-    ///
-    /// The constructor returns `Vec<Transaction>` rather than `Self` because
-    /// `TxGroup` (the msgpack-hashing helper) is not what callers want — they
-    /// want the grouped transactions back. Per the
-    /// `identifier-newtypes-at-client-boundary` ADR.
-    #[allow(clippy::new_ret_no_self)]
-    pub fn new(mut txns: Vec<Transaction>) -> Result<Vec<Transaction>, TransactionError> {
+    pub fn assign(mut txns: Vec<Transaction>) -> Result<Vec<Transaction>, TransactionError> {
         let mut refs: Vec<&mut Transaction> = txns.iter_mut().collect();
         let gid = TxGroup::compute_group_id(refs.as_mut_slice())?;
         for tx in txns.iter_mut() {
@@ -39,11 +33,11 @@ impl TxGroup {
     /// `TransactionWithSigner` records and would otherwise have to
     /// drain-and-refill on every `build_group`.
     ///
-    /// `#[doc(hidden)]` because [`TxGroup::new`] is the user-facing API;
+    /// `#[doc(hidden)]` because [`TxGroup::assign`] is the user-facing API;
     /// this stays exposed (across-crate workspace visibility) for the
     /// composer's internal use only.
     #[doc(hidden)]
-    pub fn assign_group_id(txns: &mut [&mut Transaction]) -> Result<(), TransactionError> {
+    pub fn assign_in_place(txns: &mut [&mut Transaction]) -> Result<(), TransactionError> {
         let gid = TxGroup::compute_group_id(txns)?;
         for tx in txns {
             tx.assign_group_id(gid);

@@ -396,7 +396,7 @@ impl AtomicTransactionComposer {
             for tx in self.txs.iter_mut() {
                 group_txs.push(&mut tx.tx);
             }
-            TxGroup::assign_group_id(&mut group_txs)?;
+            TxGroup::assign_in_place(&mut group_txs)?;
         }
 
         self.status = AtomicTransactionComposerStatus::Built;

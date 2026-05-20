@@ -82,19 +82,26 @@ conversion from callers.
 Address` replaces it. Both existing callers (`tests/step_defs/integration/abi.rs`,
 `src/util/dryrun_printer.rs`) drop the `.0` unwrap.
 
-### `TxGroup::new` returns owned transactions
+### `TxGroup::assign` returns owned transactions
 
 `TxGroup::assign_group_id(&mut [&mut t1, &mut t2])` is replaced by
 
 ```rust
-TxGroup::new(vec![t1, t2]) -> Result<Vec<Transaction>, Error>
+TxGroup::assign(vec![t1, t2]) -> Result<Vec<Transaction>, TransactionError>
 ```
 
-which consumes its inputs and returns the grouped copies. The two
-current callers (`examples/atomic_swap.rs`,
-`src/atomic_transaction_composer/mod.rs`) update accordingly. The
-in-place mutation form is removed — no caller would prefer it now that
-the newtype-collecting form exists.
+which consumes its inputs and returns the grouped copies. The verb-y
+name matters: the ADR index originally proposed `TxGroup::new`, but a
+`new` that returns `Vec<Transaction>` rather than a `TxGroup` is exactly
+what `clippy::new_ret_no_self` is built to catch — the caller writes
+`TxGroup::new(...)` expecting a `TxGroup` back and gets something else.
+`assign` describes the action and lets the lint stay on.
+
+The composer-internal in-place form survives as
+`TxGroup::assign_in_place(&mut [&mut Transaction])`, `#[doc(hidden)]
+pub` so the workspace can reach it without leaking it into the public
+surface. The `assign_group_id` name is also retired to avoid the clash
+with the same-named method on `Transaction` itself.
 
 ### `StateSchema` gains constructors
 
