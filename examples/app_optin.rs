@@ -27,9 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let t = TxnBuilder::with(
         &params,
         // TODO set a correct app-id here
-        OptInApplication::new(alice.address(), AppId(11))
-            .app_arguments(vec![vec![1, 0], vec![255]])
-            .build(),
+        OptInApplication::new(alice.address(), AppId(11)).build(),
     )
     .build()?;
 

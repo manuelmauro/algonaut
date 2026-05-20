@@ -1,10 +1,6 @@
 //! Call an ARC-4 method on a deployed application via the
 //! [`AtomicTransactionComposer`] and the fluent [`MethodCall`] builder.
-//!
-//! This is the recommended path for ABI-typed application calls. If
-//! you're calling a contract that does not follow ARC-4, the lower-level
-//! [`CallApplication::app_arguments`] escape hatch on the per-type
-//! builder is still available.
+//! This is the recommended path for application calls.
 
 use algonaut::algod::v2::Algod;
 use algonaut::atomic_transaction_composer::{AbiArgValue, AtomicTransactionComposer, MethodCall};
