@@ -1,6 +1,5 @@
 use algonaut::algod::v2::Algod;
 use algonaut::core::AppId;
-use algonaut::transaction::TxnBuilder;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::CallApplication;
 use dotenv::dotenv;
@@ -24,14 +23,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("building transaction");
-    let t = TxnBuilder::with(
-        &params,
-        // TODO set a correct app-id here
-        CallApplication::new(alice.address(), AppId(5))
-            .app_arguments(vec![vec![1, 0], vec![255]])
-            .build(),
-    )
-    .build()?;
+    // TODO set a correct app-id here
+    let t = CallApplication::new(alice.address(), AppId(5)).build(&params)?;
 
     info!("signing transaction");
     let signed_t = alice.sign_transaction(t)?;

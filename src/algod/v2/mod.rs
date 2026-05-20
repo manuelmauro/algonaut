@@ -45,6 +45,8 @@ impl SourceMap {
 
 /// Error class wrapping errors from algonaut_algod
 pub(crate) mod error;
+mod pending_submission;
+pub use pending_submission::PendingSubmission;
 
 #[derive(Debug, Clone)]
 pub struct Algod {
@@ -497,6 +499,41 @@ impl Algod {
         self.send_raw_txn(&bytes.concat()).await
     }
 
+    /// Wrap an existing transaction id in a [`PendingSubmission`] so callers
+    /// that already have the id (e.g. they submitted earlier and stashed it)
+    /// can still poll for finality with the shared
+    /// [`PendingSubmission::confirm`] implementation.
+    pub fn pending_submission(&self, tx_id: &TxId) -> PendingSubmission {
+        PendingSubmission::new(self.clone(), tx_id.clone())
+    }
+
+    /// Broadcasts a single signed transaction and returns a
+    /// [`PendingSubmission`] handle that polls algod for finality.
+    pub async fn submit(&self, txn: &SignedTransaction) -> Result<PendingSubmission, Error> {
+        let resp = self.send_txn(txn).await?;
+        Ok(PendingSubmission::new(self.clone(), TxId::from(resp.tx_id)))
+    }
+
+    /// Broadcasts a transaction group and returns a [`PendingSubmission`]
+    /// handle for the group's representative transaction id.
+    ///
+    /// Atomic if the transactions share a
+    /// [group](algonaut_transaction::transaction::Transaction::group).
+    pub async fn submit_txns(
+        &self,
+        txns: &[SignedTransaction],
+    ) -> Result<PendingSubmission, Error> {
+        let resp = self.send_txns(txns).await?;
+        Ok(PendingSubmission::new(self.clone(), TxId::from(resp.tx_id)))
+    }
+
+    /// Broadcasts already-encoded msgpack transaction bytes and returns a
+    /// [`PendingSubmission`] handle for the returned transaction id.
+    pub async fn submit_raw(&self, rawtxn: &[u8]) -> Result<PendingSubmission, Error> {
+        let resp = self.send_raw_txn(rawtxn).await?;
+        Ok(PendingSubmission::new(self.clone(), TxId::from(resp.tx_id)))
+    }
+
     /// Broadcasts a raw transaction or transaction group to the network without
     /// performing ahead-of-time checks. Returns as soon as the request is
     /// accepted, without a transaction ID.
@@ -589,9 +626,7 @@ impl Algod {
                 .await
                 .map_err(Into::<AlgodError>::into)?;
         let bytes = decode_base64(api_compiled_teal.result.as_bytes())?;
-        let raw = api_compiled_teal
-            .sourcemap
-            .ok_or_else(|| Error::Msg("algod did not return a sourcemap".to_string()))?;
+        let raw = api_compiled_teal.sourcemap.ok_or(Error::MissingSourcemap)?;
         let json = serde_json::to_string(&raw).map_err(|e| Error::Msg(e.to_string()))?;
         let map = algonaut_abi::sourcemap::SourceMap::from_json(&json)
             .map_err(|e| Error::Msg(e.to_string()))?;

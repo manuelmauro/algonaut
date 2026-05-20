@@ -1,7 +1,6 @@
 use algonaut::algod::v2::Algod;
-use algonaut::transaction::{TxnBuilder, account::Account};
-use algonaut::util::wait_for_pending_tx::wait_for_pending_transaction;
-use algonaut_core::{MicroAlgos, TxId};
+use algonaut::transaction::account::Account;
+use algonaut_core::MicroAlgos;
 use algonaut_transaction::Pay;
 use dotenv::dotenv;
 use std::env;
@@ -38,21 +37,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.txn_params().await?;
 
     info!("creating rekey-ing transaction");
-    // rekey
-    let rekey_tx = TxnBuilder::with(
-        &params,
-        Pay::new(rekeyed_acc_address, rekeyed_acc_address, MicroAlgos(0)).build(),
-    )
-    .rekey_to(rekey_to_acc_address)
-    .build()?;
+    let rekey_tx = Pay::rekey(rekeyed_acc_address, rekey_to_acc_address).build(&params)?;
 
     info!("signing transaction");
     let rekey_signed = rekeyed_acc.sign_transaction(rekey_tx)?;
 
     info!("broadcasting transaction");
-    let rekey_response = algod.send_txn(&rekey_signed).await?;
-    let tx_id: TxId = rekey_response.tx_id.into();
-    wait_for_pending_transaction(&algod, &tx_id).await?;
+    algod.submit(&rekey_signed).await?.confirm().await?;
     info!("rekey success");
 
     info!("verifying the rekey success");
@@ -66,11 +57,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("testing the rekey success");
     // verify: send a tx with the rekeyed address as sender, signing with rekey_to account
     let receiver = "PGCS3D5JL4AIFGTBPDGGMMCT3ODKUUFEFG336MJO25CGBG7ORKVOE3AHSU".parse()?;
-    let payment_tx = TxnBuilder::with(
-        &params,
-        Pay::new(rekeyed_acc_address, receiver, MicroAlgos(10_000)).build(),
-    )
-    .build()?;
+    let payment_tx = Pay::new(rekeyed_acc_address, receiver, MicroAlgos(10_000)).build(&params)?;
 
     info!("signing transaction");
     let payment_signed = rekey_to_acc.sign_transaction(payment_tx)?;

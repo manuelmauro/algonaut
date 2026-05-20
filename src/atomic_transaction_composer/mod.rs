@@ -10,10 +10,11 @@ use algonaut_algod::models::{
     PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
     SimulateTransaction200Response, TransactionParams200Response,
 };
-use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, TxId};
+use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, TxId};
 use algonaut_crypto::{HashDigest, Signature};
 use algonaut_transaction::{
-    SignedTransaction, Signer, Transaction, TransactionType, TxnBuilder,
+    SignedTransaction, Signer, Transaction, TransactionType,
+    builder::TransactionParams,
     error::TransactionError,
     transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
@@ -26,8 +27,43 @@ use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Duration;
 
-use crate::{Error, algod::v2::Algod, util::wait_for_pending_tx::wait_for_pending_transaction};
+use crate::{Error, algod::v2::Algod};
+
+use instant::Instant;
+
+/// Default timeout matching [`crate::algod::v2::PendingSubmission::confirm`].
+const COMPOSER_CONFIRM_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// Poll algod for finality of the given transaction id. The composer
+/// already has the tx ids it wants to wait on (post-`send_txns`), so this
+/// internal helper is the equivalent of `PendingSubmission::confirm`
+/// against an arbitrary id.
+async fn poll_until_confirmed(
+    algod: &Algod,
+    tx_id: &TxId,
+) -> Result<PendingTransactionResponse, Error> {
+    let start = Instant::now();
+    let mut last_round = algod.status().await?.last_round;
+    loop {
+        let pending = algod.pending_txn(tx_id).await?;
+        if pending.confirmed_round.is_some() {
+            return Ok(pending);
+        }
+        if !pending.pool_error.is_empty() {
+            return Err(Error::PendingTransactionPoolError {
+                reason: pending.pool_error,
+            });
+        }
+        if start.elapsed() >= COMPOSER_CONFIRM_TIMEOUT {
+            return Err(Error::PendingTransactionTimeout {
+                timeout: COMPOSER_CONFIRM_TIMEOUT,
+            });
+        }
+        last_round = algod.status_after_block(last_round).await?.last_round;
+    }
+}
 
 /// 4-byte prefix for logged return values, from https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#standard-format
 const ABI_RETURN_HASH: [u8; 4] = [0x15, 0x1f, 0x7c, 0x75];
@@ -278,15 +314,15 @@ impl AtomicTransactionComposer {
     /// or if adding this transaction causes the current group to exceed MaxAtomicGroupSize.
     pub fn add_transaction(&mut self, txn_with_signer: TransactionWithSigner) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(Error::Msg(
-                "status must be BUILDING in order to add transactions".to_owned(),
+            return Err(Error::ComposerStatusInvalid(
+                "add_transaction requires status=Building".to_owned(),
             ));
         }
 
         if self.len() == MAX_ATOMIC_GROUP_SIZE {
-            return Err(Error::Msg(format!(
-                "reached max group size: {MAX_ATOMIC_GROUP_SIZE}"
-            )));
+            return Err(Error::ComposerGroupFull {
+                max: MAX_ATOMIC_GROUP_SIZE,
+            });
         }
 
         validate_tx(&txn_with_signer.tx, TransactionArgType::Any)?;
@@ -298,8 +334,8 @@ impl AtomicTransactionComposer {
 
     pub fn add_method_call(&mut self, params: &mut AddMethodCallParams) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(Error::Msg(
-                "status must be BUILDING in order to add transactions".to_owned(),
+            return Err(Error::ComposerStatusInvalid(
+                "add_method_call requires status=Building".to_owned(),
             ));
         }
         if params.method_args.len() != params.method.args.len() {
@@ -310,9 +346,9 @@ impl AtomicTransactionComposer {
             )));
         }
         if self.len() + params.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
-            return Err(Error::Msg(format!(
-                "reached max group size: {MAX_ATOMIC_GROUP_SIZE}"
-            )));
+            return Err(Error::ComposerGroupFull {
+                max: MAX_ATOMIC_GROUP_SIZE,
+            });
         }
 
         let mut method_types = vec![];
@@ -379,18 +415,19 @@ impl AtomicTransactionComposer {
             boxes: params.boxes.clone(),
         });
 
-        let mut tx_builder = TxnBuilder::with_fee(&params.suggested_params, params.fee, app_call);
-        if let Some(rekey_to) = params.rekey_to {
-            tx_builder = tx_builder.rekey_to(rekey_to);
-        }
-        if let Some(lease) = params.lease {
-            tx_builder = tx_builder.lease(lease);
-        }
-        if let Some(note) = params.note.clone() {
-            tx_builder = tx_builder.note(note);
-        }
-
-        let tx = tx_builder.build()?;
+        let sp = &params.suggested_params;
+        let tx = Transaction {
+            fee: params.fee,
+            first_valid: Round(sp.last_round()),
+            genesis_hash: sp.genesis_hash(),
+            last_valid: Round(sp.last_round() + 1000),
+            txn_type: app_call,
+            genesis_id: Some(sp.genesis_id().clone()),
+            group: None,
+            lease: params.lease,
+            note: params.note.clone(),
+            rekey_to: params.rekey_to,
+        };
 
         self.txs.append(&mut txs_with_signer);
         self.txs.push(TransactionWithSigner {
@@ -411,9 +448,7 @@ impl AtomicTransactionComposer {
         }
 
         if self.txs.is_empty() {
-            return Err(Error::Msg(
-                "should not build transaction group with 0 transactions in composer".to_owned(),
-            ));
+            return Err(Error::EmptyTransactionGroup);
         } else if self.txs.len() > 1 {
             let mut group_txs = vec![];
             for tx in self.txs.iter_mut() {
@@ -478,8 +513,8 @@ impl AtomicTransactionComposer {
 
     pub async fn submit(&mut self, algod: &Algod) -> Result<Vec<String>, Error> {
         if self.status >= AtomicTransactionComposerStatus::Submitted {
-            return Err(Error::Msg(
-                "Atomic Transaction Composer cannot submit committed transaction".to_owned(),
+            return Err(Error::ComposerStatusInvalid(
+                "submit cannot be called after a previous submit/execute".to_owned(),
             ));
         }
 
@@ -494,7 +529,9 @@ impl AtomicTransactionComposer {
 
     pub async fn execute(&mut self, algod: &Algod) -> Result<ExecuteResult, Error> {
         if self.status >= AtomicTransactionComposerStatus::Committed {
-            return Err(Error::Msg("status is already committed".to_owned()));
+            return Err(Error::ComposerStatusInvalid(
+                "execute cannot be called after the composer is committed".to_owned(),
+            ));
         }
 
         self.submit(algod).await?;
@@ -508,7 +545,7 @@ impl AtomicTransactionComposer {
         }
 
         let tx_id = self.signed_txs[index_to_wait].transaction_id.clone();
-        let pending_tx = wait_for_pending_transaction(algod, &tx_id).await?;
+        let pending_tx = poll_until_confirmed(algod, &tx_id).await?;
 
         let mut return_list: Vec<AbiMethodResult> = vec![];
 
@@ -856,18 +893,14 @@ fn get_return_value_with_abi_type(
     abi_type: &AbiType,
 ) -> Result<Result<AbiMethodReturnValue, AbiReturnDecodeError>, Error> {
     if pending_tx.logs.is_none() {
-        return Err(Error::Msg(
-            "App call transaction did not log a return value".to_owned(),
-        ));
+        return Err(Error::MissingReturnLog);
     }
 
     // safe to unwrap given the previous check
     let logs = &pending_tx.logs.clone().unwrap();
 
     if logs.is_empty() {
-        return Err(Error::Msg(
-            "App call transaction did not log a return value".to_owned(),
-        ));
+        return Err(Error::MissingReturnLog);
     }
 
     let ret_line = &logs[logs.len() - 1];
@@ -877,9 +910,7 @@ fn get_return_value_with_abi_type(
         .map_err(|e| Error::Msg(format!("BASE64 Decoding error: {e:?}")))?;
 
     if !check_log_ret(&decoded_ret_line) {
-        return Err(Error::Msg(
-            "App call transaction did not log a return value(2)".to_owned(),
-        ));
+        return Err(Error::MissingReturnLog);
     }
 
     let abi_encoded = &decoded_ret_line[ABI_RETURN_HASH.len()..decoded_ret_line.len()];
