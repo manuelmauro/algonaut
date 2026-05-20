@@ -15,14 +15,8 @@ async fn i_simulate_the_transaction(w: &mut World) {
         // the all-zero placeholder signature; algod's simulator reports
         // this as "signedtxn has no sig".
         let tx = w.tx.clone().expect("tx not set");
-        algonaut_transaction::SignedTransaction {
-            transaction_id: tx.id().unwrap(),
-            transaction: tx,
-            sig: algonaut_transaction::transaction::TransactionSignature::Single(
-                algonaut_crypto::Signature([0; 64]),
-            ),
-            auth_address: None,
-        }
+        algonaut_transaction::signed_transaction::placeholder(tx)
+            .expect("placeholder construction failed")
     } else {
         w.signed_tx.clone().expect("signed tx not set")
     };

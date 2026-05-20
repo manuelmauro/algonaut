@@ -454,13 +454,76 @@ impl StateSchema {
 }
 
 /// Wraps a transaction in a signature. The encoding of this struct is suitable to be broadcast
-/// on the network
+/// on the network.
+///
+/// The fields are crate-private so a `SignedTransaction` can only be
+/// produced through one of the signing paths in this crate
+/// ([`crate::account::Account::sign_transaction`],
+/// [`crate::contract_account::ContractAccount::sign`],
+/// [`crate::signer::MultisigSigningSession`], or the
+/// `#[doc(hidden)]` [`placeholder`] helper used by the atomic
+/// transaction composer's unsigned-simulate path). Read access is
+/// available through the [`transaction`](Self::transaction),
+/// [`transaction_id`](Self::transaction_id), [`sig`](Self::sig), and
+/// [`auth_address`](Self::auth_address) accessors.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SignedTransaction {
-    pub transaction: Transaction,
-    pub transaction_id: TxId,
-    pub sig: TransactionSignature,
-    pub auth_address: Option<Address>,
+    pub(crate) transaction: Transaction,
+    pub(crate) transaction_id: TxId,
+    pub(crate) sig: TransactionSignature,
+    pub(crate) auth_address: Option<Address>,
+}
+
+impl SignedTransaction {
+    /// The underlying unsigned transaction.
+    pub fn transaction(&self) -> &Transaction {
+        &self.transaction
+    }
+
+    /// The transaction id, computed from the unsigned transaction at
+    /// signing time.
+    pub fn transaction_id(&self) -> &TxId {
+        &self.transaction_id
+    }
+
+    /// The carried signature (single, multisig, or logic-sig).
+    pub fn sig(&self) -> &TransactionSignature {
+        &self.sig
+    }
+
+    /// The rekeyed authoriser address, if the signing account differs
+    /// from the transaction's sender.
+    pub fn auth_address(&self) -> Option<&Address> {
+        self.auth_address.as_ref()
+    }
+}
+
+/// Module containing low-level constructors that are not part of the
+/// public API. Re-exported through `algonaut_transaction` so the
+/// composer (in the umbrella `algonaut` crate) can build a placeholder
+/// signed transaction without re-opening the field visibility.
+pub mod signed_transaction {
+    use super::{SignedTransaction, Transaction, TransactionSignature};
+    use crate::error::TransactionError;
+    use algonaut_crypto::Signature;
+
+    /// Build a `SignedTransaction` carrying an all-zero 64-byte
+    /// signature. Algod's simulator detects this as a missing
+    /// signature; never submit it to the live endpoint.
+    ///
+    /// This is exposed only for the atomic transaction composer's
+    /// unsigned-simulate path; it is intentionally not part of the
+    /// crate's stable surface.
+    #[doc(hidden)]
+    pub fn placeholder(transaction: Transaction) -> Result<SignedTransaction, TransactionError> {
+        let transaction_id = transaction.id()?;
+        Ok(SignedTransaction {
+            transaction,
+            transaction_id,
+            sig: TransactionSignature::Single(Signature([0; 64])),
+            auth_address: None,
+        })
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -508,6 +571,23 @@ impl SignedLogic {
             }
             LogicSignature::DelegatedMultiSig(msig) => msig.verify(&self.logic.bytes_to_sign()),
         }
+    }
+
+    /// Wrap an unsigned [`Transaction`] in this logic signature,
+    /// producing a fully-signed [`SignedTransaction`] whose transaction
+    /// id is computed from `transaction`. Use this for delegated
+    /// logic-sig flows ([`LogicSignature::DelegatedSig`] or
+    /// [`LogicSignature::DelegatedMultiSig`]); for contract-account
+    /// logic sigs prefer
+    /// [`crate::contract_account::ContractAccount::sign`], which also
+    /// fills in the rekeyed authoriser address when applicable.
+    pub fn sign(self, transaction: Transaction) -> Result<SignedTransaction, TransactionError> {
+        Ok(SignedTransaction {
+            transaction_id: transaction.id()?,
+            transaction,
+            sig: TransactionSignature::Logic(self),
+            auth_address: None,
+        })
     }
 }
 
