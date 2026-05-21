@@ -2,7 +2,7 @@
 id: async-signer-trait
 title: Async signer trait for remote and interactive signing
 abstract: Replace the synchronous Signer contract with an async, group-aware Signer so WalletConnect and custodial/KMS flows can await approval or I/O.
-status: proposed
+status: accepted
 date: 2026-05-21
 deciders: []
 tags: [api, async, signing]
@@ -12,7 +12,7 @@ tags: [api, async, signing]
 
 ## Status
 
-Proposed. Follow-up to [`signer-trait`](signer-trait.md) and the
+Accepted. Follow-up to [`signer-trait`](signer-trait.md) and the
 async-signer out-of-scope note in
 [`atomic-transaction-composer-typestate`](atomic-transaction-composer-typestate.md).
 Depends on [`external-signature-ingress`](external-signature-ingress.md) for
@@ -185,10 +185,14 @@ pub struct TransactionWithSigner {
 }
 ```
 
-`None` keeps the D7 meaning: an unsigned simulate-only slot that the
-composer fills with the all-zero placeholder signature. The constructor
-shape can stay the same, but all implementations behind the trait use
-the new async contract.
+`None` marks a **simulate-only** slot. It no longer doubles as a "sign
+me with a placeholder" instruction: signing produces a group meant for
+submit/execute, and an all-zero placeholder is not a submittable
+signature, so `sign()` rejects a `None` slot (a `MissingSigner` error)
+rather than emitting one. Placeholder signing now lives only on the
+simulate path (see below), which placeholder-signs every slot regardless
+of its signer. The constructor shape can stay the same, but all
+implementations behind the trait use the new async contract.
 
 `MethodCall::new(...)` also keeps taking `Arc<dyn Signer>`. The breaking
 change is borne by signer implementations and by callers that execute
@@ -210,7 +214,9 @@ The async signing flow is:
 1. Build the full, group-id-stamped transaction array.
 2. Group slot indexes by signer **identity** — `Arc::ptr_eq` on the
    `Arc<dyn Signer>` — so every slot a given signer instance owns is
-   collected into one request and signed in one call.
+   collected into one request and signed in one call. A slot with no
+   signer is a `MissingSigner` error: an unsigned slot cannot produce a
+   submittable signature, and it is valid only for simulate.
 3. Call `Signer::sign_transactions(SigningRequest { transactions,
    indexes })` and await the result.
 4. Validate the result against the request: exactly one signed
@@ -221,8 +227,7 @@ The async signing flow is:
    transaction for the *wrong* transaction is the case this guards
    against. How a signer constructs those values is decided in
    [`external-signature-ingress`](external-signature-ingress.md).
-5. Reassemble the signed group in original transaction order; fill
-   `None` slots with the existing all-zero placeholder used by simulate.
+5. Reassemble the signed group in original transaction order.
 
 **Grouping by `Arc::ptr_eq` is deliberate, and has a caller-visible
 consequence.** The trait exposes no address or key identity — multisig and
@@ -253,10 +258,11 @@ one-group flow.
 
 So simulate does **not** call `Signer::sign_transactions`. It signs every
 slot — `Some(signer)` and `None` alike — with the all-zero placeholder
-signature (the same mechanism the `None` slots already use), setting
-algod's allow-empty-signatures option as needed, and never awaits a real
-signer. Simulate stays cheap and prompt-free; only `sign()` and the
-`execute` path that follows it exercise real signers. A caller that
+signature, setting algod's allow-empty-signatures option as needed, and
+never awaits a real signer. This placeholder path is simulate's alone:
+`sign()` no longer placeholder-signs anything (a `None` slot there is a
+`MissingSigner` error). Simulate stays cheap and prompt-free; only
+`sign()` and the `execute` path that follows it exercise real signers. A caller that
 specifically needs to simulate the *actually-signed* group can
 `sign().await?` first and simulate the signed group — but that is the
 explicit, prompt-incurring choice, not the default. This is a behavioral
@@ -316,6 +322,13 @@ transaction it didn't ask for.
   placeholder signature, even for slots that carry a real signer, so a
   dry-run never prompts a wallet. This is a behavioral change from the
   pre-async composer, which signed `Some(signer)` slots during simulate.
+- **`sign()` rejects unsigned slots.** A `None`-signer slot
+  (`TransactionWithSigner::unsigned`) is a `MissingSigner` error at
+  `sign()` instead of being silently placeholder-signed into an
+  unsubmittable group. Placeholder signing belongs to simulate alone.
+  Pre-async, `sign()` and simulate shared one signing routine, so a
+  `None` slot quietly produced a placeholder; now that simulate has its
+  own all-placeholder path, that behavior was a footgun and is removed.
 - **The `Send` bound excludes `!Send` wasm signers for now.** Native
   multi-threaded executors get a `Send` composer; a single-threaded
   browser WalletConnect signer needs the deferred `?Send` variant. The

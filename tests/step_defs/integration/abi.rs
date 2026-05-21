@@ -109,7 +109,7 @@ async fn i_add_the_current_transaction_with_signer_tothecomposer(w: &mut World) 
 
 #[then(expr = "I gather signatures with the composer.")]
 async fn i_gather_signatures_with_the_composer(w: &mut World) {
-    let signed_group = w.take_signed_group();
+    let signed_group = w.take_signed_group().await;
 
     w.signed_txs = Some(signed_group.signed_transactions().to_vec());
     w.signed_group = Some(signed_group);
@@ -468,7 +468,7 @@ fn i_build_the_transaction_group_with_the_composer(w: &mut World, error_type: St
 #[then(expr = "I execute the current transaction group with the composer.")]
 async fn i_execute_the_current_transaction_group_with_the_composer(w: &mut World) {
     let algod = w.algod.as_ref().unwrap().clone();
-    let signed_group = w.take_signed_group();
+    let signed_group = w.take_signed_group().await;
 
     let res = signed_group
         .execute(&algod)

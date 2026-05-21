@@ -47,7 +47,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let result = AtomicGroupBuilder::new()
         .add_method_call(call)
         .build()?
-        .sign()?
+        .sign()
+        .await?
         .execute(&algod)
         .await?;
     info!("confirmed in round {:?}", result.confirmed_round);

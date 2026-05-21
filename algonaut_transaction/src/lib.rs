@@ -16,5 +16,6 @@ pub use builder::{
 };
 pub use signer::{
     InProgressMultisigSigningSession, MultisigSigner, MultisigSigningSession, Signer,
+    SigningFuture, SigningRequest,
 };
 pub use transaction::{SignedTransaction, Transaction, TransactionType, signed_transaction};

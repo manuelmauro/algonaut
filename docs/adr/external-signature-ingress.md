@@ -2,7 +2,7 @@
 id: external-signature-ingress
 title: Constructing SignedTransaction from an external signature
 abstract: Bless and correct the existing msgpack-deserialize path as the single public ingress by which an out-of-crate signer turns externally-produced signed bytes into a SignedTransaction. Recompute transaction_id from the decoded transaction and preserve the decoded sgnr, fixing a path that today yields an empty id and drops the rekey auth address. Add no new public constructor — the fix reopens nothing D5 closed and matches how reference SDKs return signed transactions as bytes.
-status: proposed
+status: accepted
 date: 2026-05-21
 deciders: []
 tags: [api, signing, type-safety]
@@ -12,7 +12,7 @@ tags: [api, signing, type-safety]
 
 ## Status
 
-Proposed. Amends [`closed-signed-transaction`](closed-signed-transaction.md)
+Accepted. Amends [`closed-signed-transaction`](closed-signed-transaction.md)
 (**D5**) and builds on [`signer-trait`](signer-trait.md) (**D7**).
 Prerequisite for [`async-signer-trait`](async-signer-trait.md): that ADR's
 remote signers cannot produce their return value without the ingress

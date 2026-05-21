@@ -62,6 +62,20 @@ pub enum Error {
     /// [`PendingSubmission::confirm_with`]: crate::algod::v2::PendingSubmission::confirm_with
     #[error("pending transaction timed out ({timeout:?})")]
     PendingTransactionTimeout { timeout: Duration },
+    /// A [`Signer`](algonaut_transaction::Signer) returned output that does
+    /// not match the request the composer made: wrong count, wrong order,
+    /// or a signature wrapping a different transaction than the one asked
+    /// for. The signed group is rejected rather than submitted. `reason`
+    /// is diagnostic only.
+    #[error("signer returned invalid output: {reason}")]
+    SignerOutputInvalid { reason: String },
+    /// [`sign`](crate::atomic_transaction_composer::UnsignedAtomicGroup::sign)
+    /// was called on a group whose slot at `index` has no signer
+    /// (`TransactionWithSigner::unsigned`). An unsigned slot cannot
+    /// produce a submittable signature; it is only valid for `simulate`.
+    /// Attach a signer, or simulate the group instead of signing it.
+    #[error("transaction at index {index} has no signer (only valid for simulate)")]
+    MissingSigner { index: usize },
 
     /// A transaction construction or signing error from
     /// [`algonaut_transaction`], preserved as the error source.
