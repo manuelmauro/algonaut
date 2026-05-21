@@ -463,7 +463,7 @@ async fn add_method_call(
         None
     };
 
-    let mut params = AddMethodCallParams {
+    let params = AddMethodCallParams {
         app_id: application_id,
         method: abi_method.to_owned(),
         method_args: abi_method_args.to_owned(),
@@ -485,7 +485,7 @@ async fn add_method_call(
 
     tx_composer_methods.push(abi_method.to_owned());
 
-    tx_composer.add_method_call(&mut params).unwrap();
+    tx_composer.add_method_call(&params).unwrap();
 }
 
 #[given(regex = r#"I add the nonce "([^"]*)"$"#)]

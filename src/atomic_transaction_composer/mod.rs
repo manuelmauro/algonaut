@@ -274,7 +274,7 @@ impl AtomicTransactionComposer {
         Ok(())
     }
 
-    pub fn add_method_call(&mut self, params: &mut AddMethodCallParams) -> Result<(), Error> {
+    pub fn add_method_call(&mut self, params: &AddMethodCallParams) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
             return Err(Error::ComposerStatusInvalid(
                 "add_method_call requires status=Building".to_owned(),
@@ -300,9 +300,8 @@ impl AtomicTransactionComposer {
         let mut foreign_assets = vec![];
         let mut foreign_apps = vec![];
 
-        for i in 0..params.method.args.len() {
-            let mut arg_type = params.method.args[i].clone();
-            let arg_value = &params.method_args[i];
+        for (arg_type, arg_value) in params.method.args.iter().zip(&params.method_args) {
+            let mut arg_type = arg_type.clone();
 
             match arg_type.type_()? {
                 AbiArgType::Tx(type_) => {
@@ -337,8 +336,8 @@ impl AtomicTransactionComposer {
         }
 
         let mut encoded_abi_args = vec![params.method.get_selector()?.into()];
-        for i in 0..method_args.len() {
-            encoded_abi_args.push(method_types[i].encode(method_args[i].clone())?);
+        for (method_type, method_arg) in method_types.iter().zip(&method_args) {
+            encoded_abi_args.push(method_type.encode(method_arg.clone())?);
         }
 
         let app_call = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
@@ -410,18 +409,20 @@ impl AtomicTransactionComposer {
 
         let tx_and_signers = self.build_group()?;
 
-        let txs: Vec<Transaction> = self.txs.clone().into_iter().map(|t| t.tx).collect();
-
-        let mut visited = vec![false; txs.len()];
-        let mut signed_txs = vec![];
+        // Sign each transaction with its own signer. Transactions sharing a
+        // signer are signed together in one `sign_transactions` call, and each
+        // result is placed back at its original index so the signed group keeps
+        // input order regardless of how many distinct signers are involved.
+        let mut visited = vec![false; tx_and_signers.len()];
+        let mut signed_slots: Vec<Option<SignedTransaction>> = vec![None; tx_and_signers.len()];
 
         for (i, tx_with_signer) in tx_and_signers.iter().enumerate() {
             if visited[i] {
                 continue;
             }
 
+            // `i` always matches its own signer, so `indices_to_sign` is non-empty.
             let mut indices_to_sign = vec![];
-
             for (j, other) in tx_and_signers.iter().enumerate() {
                 if !visited[j] && tx_with_signer.signer == other.signer {
                     indices_to_sign.push(j);
@@ -429,27 +430,37 @@ impl AtomicTransactionComposer {
                 }
             }
 
-            if indices_to_sign.is_empty() {
-                return Err(Error::Msg(
-                    "invalid tx signer provided, isn't equal to self".to_owned(),
-                ));
+            let group: Vec<Transaction> = indices_to_sign
+                .iter()
+                .map(|&j| tx_and_signers[j].tx.clone())
+                .collect();
+            let signed = tx_with_signer.signer.sign_transactions(group)?;
+
+            if signed.len() != indices_to_sign.len() {
+                return Err(Error::Internal(format!(
+                    "signer returned {} signatures for {} transactions",
+                    signed.len(),
+                    indices_to_sign.len()
+                )));
             }
 
-            let filtered_tx_group = indices_to_sign
-                .into_iter()
-                .map(|i| txs[i].clone())
-                .collect();
-            signed_txs = tx_with_signer.signer.sign_transactions(filtered_tx_group)?;
+            for (j, signed_tx) in indices_to_sign.into_iter().zip(signed) {
+                signed_slots[j] = Some(signed_tx);
+            }
         }
 
-        self.signed_txs = signed_txs.clone();
+        let signed_txs = signed_slots
+            .into_iter()
+            .map(|slot| slot.ok_or_else(|| Error::Internal("transaction left unsigned".to_owned())))
+            .collect::<Result<Vec<_>, _>>()?;
 
+        self.signed_txs = signed_txs.clone();
         self.status = AtomicTransactionComposerStatus::Signed;
 
         Ok(signed_txs)
     }
 
-    fn get_txs_ids(&self) -> Vec<String> {
+    fn tx_ids(&self) -> Vec<String> {
         self.signed_txs
             .iter()
             .map(|t| t.transaction_id.0.clone())
@@ -469,7 +480,7 @@ impl AtomicTransactionComposer {
 
         self.status = AtomicTransactionComposerStatus::Submitted;
 
-        Ok(self.get_txs_ids())
+        Ok(self.tx_ids())
     }
 
     pub async fn execute(&mut self, algod: &Algod) -> Result<ExecuteResult, Error> {
@@ -481,13 +492,9 @@ impl AtomicTransactionComposer {
 
         self.submit(algod).await?;
 
-        let mut index_to_wait = 0;
-        for i in 0..self.signed_txs.len() {
-            if self.method_map.contains_key(&i) {
-                index_to_wait = i;
-                break;
-            }
-        }
+        let index_to_wait = (0..self.signed_txs.len())
+            .find(|i| self.method_map.contains_key(i))
+            .unwrap_or(0);
 
         let tx_id = self.signed_txs[index_to_wait].transaction_id.clone();
         let pending_tx = wait_for_pending_transaction(algod, &tx_id).await?;
@@ -533,7 +540,7 @@ impl AtomicTransactionComposer {
 
         Ok(ExecuteResult {
             confirmed_round: pending_tx.confirmed_round,
-            tx_ids: self.get_txs_ids(),
+            tx_ids: self.tx_ids(),
             method_results: return_list,
         })
     }
@@ -561,8 +568,8 @@ impl AtomicTransactionComposer {
         mut request: SimulateRequest,
     ) -> Result<AtcSimulateResult, Error> {
         if self.status >= AtomicTransactionComposerStatus::Submitted {
-            return Err(Error::Msg(
-                "Atomic Transaction Composer cannot simulate after submit/execute".to_owned(),
+            return Err(Error::ComposerStatusInvalid(
+                "simulate cannot be called after a previous submit/execute".to_owned(),
             ));
         }
 
@@ -596,7 +603,7 @@ impl AtomicTransactionComposer {
         self.status = AtomicTransactionComposerStatus::Simulated;
 
         Ok(AtcSimulateResult {
-            tx_ids: self.get_txs_ids(),
+            tx_ids: self.tx_ids(),
             method_results: return_list,
             simulate_response: response,
         })
@@ -837,24 +844,14 @@ fn get_return_value_with_abi_type(
     pending_tx: &PendingTransactionResponse,
     abi_type: &AbiType,
 ) -> Result<Result<AbiMethodReturnValue, AbiReturnDecodeError>, Error> {
-    if pending_tx.logs.is_none() {
-        return Err(Error::MissingReturnLog);
-    }
-
-    // safe to unwrap given the previous check
-    let logs = &pending_tx.logs.clone().unwrap();
-
-    if logs.is_empty() {
-        return Err(Error::MissingReturnLog);
-    }
-
-    let ret_line = &logs[logs.len() - 1];
+    let logs = pending_tx.logs.as_deref().ok_or(Error::MissingReturnLog)?;
+    let ret_line = logs.last().ok_or(Error::MissingReturnLog)?;
 
     let decoded_ret_line: Vec<u8> = BASE64
         .decode(&ret_line.0[..])
         .map_err(|e| Error::Msg(format!("BASE64 Decoding error: {e:?}")))?;
 
-    if !check_log_ret(&decoded_ret_line) {
+    if !decoded_ret_line.starts_with(&ABI_RETURN_HASH) {
         return Err(Error::MissingReturnLog);
     }
 
@@ -865,15 +862,79 @@ fn get_return_value_with_abi_type(
     })
 }
 
-fn check_log_ret(log_line: &[u8]) -> bool {
-    let abi_return_hash_len = ABI_RETURN_HASH.len();
-    if log_line.len() < abi_return_hash_len {
-        return false;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use algonaut_transaction::account::Account;
+    use algonaut_transaction::builder::{Pay, TransactionParams};
+
+    struct StubParams {
+        genesis_id: String,
     }
-    for i in 0..abi_return_hash_len {
-        if log_line[i] != ABI_RETURN_HASH[i] {
-            return false;
+
+    impl TransactionParams for StubParams {
+        fn last_round(&self) -> u64 {
+            1
+        }
+        fn min_fee(&self) -> u64 {
+            1_000
+        }
+        fn genesis_hash(&self) -> HashDigest {
+            HashDigest([0; 32])
+        }
+        fn genesis_id(&self) -> &String {
+            &self.genesis_id
         }
     }
-    true
+
+    fn pay(sender: &Account, receiver: Address) -> Transaction {
+        let params = StubParams {
+            genesis_id: "testnet-v1.0".to_owned(),
+        };
+        Pay::new(sender.address(), receiver, MicroAlgos(1_000))
+            .build(&params)
+            .expect("failed to build payment transaction")
+    }
+
+    /// A group whose transactions are authorized by *different* signers must
+    /// yield exactly one signed transaction per input, in input order. This
+    /// guards against the signing loop overwriting earlier signers' results.
+    #[test]
+    fn gather_signatures_signs_every_tx_with_distinct_signers() {
+        let alice = Account::generate();
+        let bob = Account::generate();
+
+        let tx_alice = pay(&alice, bob.address());
+        let tx_bob = pay(&bob, alice.address());
+
+        let mut atc = AtomicTransactionComposer::default();
+        atc.add_transaction(TransactionWithSigner {
+            tx: tx_alice,
+            signer: TransactionSigner::BasicAccount(alice.clone()),
+        })
+        .unwrap();
+        atc.add_transaction(TransactionWithSigner {
+            tx: tx_bob,
+            signer: TransactionSigner::BasicAccount(bob.clone()),
+        })
+        .unwrap();
+
+        let signed = atc.gather_signatures().unwrap();
+
+        assert_eq!(
+            signed.len(),
+            2,
+            "every input transaction must be signed exactly once"
+        );
+        assert_eq!(
+            signed[0].transaction.sender(),
+            alice.address(),
+            "first signed tx must correspond to the first input"
+        );
+        assert_eq!(
+            signed[1].transaction.sender(),
+            bob.address(),
+            "second signed tx must correspond to the second input"
+        );
+    }
 }
