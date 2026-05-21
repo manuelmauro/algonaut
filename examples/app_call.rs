@@ -3,7 +3,7 @@
 //! builder. This is the recommended path for application calls.
 
 use algonaut::algod::v2::Algod;
-use algonaut::atomic_transaction_composer::{AbiArgValue, AtomicGroupBuilder, MethodCall};
+use algonaut::atomic::{AbiArgValue, AtomicGroupBuilder, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};

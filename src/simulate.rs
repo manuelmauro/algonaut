@@ -25,7 +25,7 @@ use algonaut_algod::models::{
 ///
 /// Keeps the generated `SimulateTransaction200Response` out of the public
 /// composer API
-/// ([`SimulateOutcome`](crate::atomic_transaction_composer::SimulateOutcome)),
+/// ([`SimulateOutcome`](crate::atomic::SimulateOutcome)),
 /// surfacing data through typed accessors. The accessor set is grown on
 /// demand as concrete needs arise, rather than re-exposing the generated
 /// type wholesale.

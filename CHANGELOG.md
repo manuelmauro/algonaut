@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** the `algonaut::atomic_transaction_composer` module is renamed to `algonaut::atomic`. Update imports: `use algonaut::atomic_transaction_composer::{…}` → `use algonaut::atomic::{…}`. No type names, signatures, or behaviour change — the directory was named after the `AtomicTransactionComposer` type the typestate refactor deleted. The module is also reorganized internally into `group`, `method_call`, `encode`, `outcome`, and `signing` submodules (private; the flat public re-exports are unchanged). See `docs/adr/atomic-module-layout.md`
 - **Breaking:** the closed `algonaut::atomic_transaction_composer::transaction_signer::TransactionSigner` enum is replaced by the open `Signer` trait. `TransactionWithSigner.signer` is now `Option<Arc<dyn Signer>>` (`None` mirrors the old `TransactionSigner::Empty` simulate slot — the composer fills it with an all-zero placeholder signature). `AddMethodCallParams.signer` is now `Arc<dyn Signer>`. Migrate constructions: `TransactionSigner::BasicAccount(acc)` → `Arc::new(acc) as Arc<dyn Signer>`; `TransactionSigner::ContractAccount(ca)` → `Arc::new(ca)`; `TransactionSigner::MultisigAccount { address, accounts }` → `Arc::new(MultisigSigner { address, accounts })`; `TransactionSigner::Empty` → drop, use `TransactionWithSigner::unsigned(tx)` or `signer: None`
 
 ## [0.7.0] - 2026-05-20

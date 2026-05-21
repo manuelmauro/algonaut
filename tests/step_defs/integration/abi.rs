@@ -1,5 +1,5 @@
 use crate::step_defs::{integration::world::World, util::read_teal};
-use algonaut::atomic_transaction_composer::{
+use algonaut::atomic::{
     AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicGroupBuilder, MethodCall,
     TransactionWithSigner,
 };
@@ -361,7 +361,7 @@ struct MethodCallCtx {
 }
 
 impl MethodCallCtx {
-    fn builder(&self) -> algonaut::atomic_transaction_composer::MethodCallBuilder {
+    fn builder(&self) -> algonaut::atomic::MethodCallBuilder {
         MethodCall::new(
             self.app_id,
             self.method.clone(),

@@ -20,7 +20,7 @@ pub mod algod;
 pub mod indexer;
 pub mod kmd;
 
-pub mod atomic_transaction_composer;
+pub mod atomic;
 pub mod dryrun;
 pub mod simulate;
 

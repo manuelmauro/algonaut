@@ -1,6 +1,6 @@
 use algonaut::{
     algod::v2::Algod,
-    atomic_transaction_composer::{
+    atomic::{
         AbiArgValue, AtomicGroupBuilder, ExecuteOutcome, SignedAtomicGroup, TransactionWithSigner,
         UnsignedAtomicGroup,
     },

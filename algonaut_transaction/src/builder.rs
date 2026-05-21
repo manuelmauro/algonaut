@@ -704,7 +704,7 @@ impl CreateApplication {
     /// and the TEAL program decides how to interpret it.
     ///
     /// **For ARC-4 (ABI-typed) calls, use
-    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// [`MethodCall`](../atomic/struct.MethodCall.html)
     /// instead** — it encodes the method selector and arguments for you
     /// and decodes the return value. This setter is the lower-level
     /// escape hatch for calling contracts that don't follow ARC-4.
@@ -801,7 +801,7 @@ impl UpdateApplication {
     /// and the TEAL program decides how to interpret it.
     ///
     /// **For ARC-4 (ABI-typed) calls, use
-    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// [`MethodCall`](../atomic/struct.MethodCall.html)
     /// instead** — it encodes the method selector and arguments for you
     /// and decodes the return value. This setter is the lower-level
     /// escape hatch for calling contracts that don't follow ARC-4.
@@ -884,7 +884,7 @@ impl CallApplication {
     /// and the TEAL program decides how to interpret it.
     ///
     /// **For ARC-4 (ABI-typed) calls, use
-    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// [`MethodCall`](../atomic/struct.MethodCall.html)
     /// instead** — it encodes the method selector and arguments for you
     /// and decodes the return value. This setter is the lower-level
     /// escape hatch for calling contracts that don't follow ARC-4.
@@ -967,7 +967,7 @@ impl ClearApplication {
     /// and the TEAL program decides how to interpret it.
     ///
     /// **For ARC-4 (ABI-typed) calls, use
-    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// [`MethodCall`](../atomic/struct.MethodCall.html)
     /// instead** — it encodes the method selector and arguments for you
     /// and decodes the return value. This setter is the lower-level
     /// escape hatch for calling contracts that don't follow ARC-4.
@@ -1050,7 +1050,7 @@ impl CloseApplication {
     /// and the TEAL program decides how to interpret it.
     ///
     /// **For ARC-4 (ABI-typed) calls, use
-    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// [`MethodCall`](../atomic/struct.MethodCall.html)
     /// instead** — it encodes the method selector and arguments for you
     /// and decodes the return value. This setter is the lower-level
     /// escape hatch for calling contracts that don't follow ARC-4.
@@ -1133,7 +1133,7 @@ impl DeleteApplication {
     /// and the TEAL program decides how to interpret it.
     ///
     /// **For ARC-4 (ABI-typed) calls, use
-    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// [`MethodCall`](../atomic/struct.MethodCall.html)
     /// instead** — it encodes the method selector and arguments for you
     /// and decodes the return value. This setter is the lower-level
     /// escape hatch for calling contracts that don't follow ARC-4.
@@ -1216,7 +1216,7 @@ impl OptInApplication {
     /// and the TEAL program decides how to interpret it.
     ///
     /// **For ARC-4 (ABI-typed) calls, use
-    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// [`MethodCall`](../atomic/struct.MethodCall.html)
     /// instead** — it encodes the method selector and arguments for you
     /// and decodes the return value. This setter is the lower-level
     /// escape hatch for calling contracts that don't follow ARC-4.
