@@ -76,19 +76,21 @@ const MAX_ABI_ARG_TYPE_LEN: usize = 15;
 
 const FOREIGN_OBJ_ABI_UINT_SIZE: usize = 8;
 
-/// Represents an unsigned transactions and a signer that can authorize that transaction.
+/// Represents an unsigned transaction and a signer that can authorize that transaction.
 ///
-/// `signer` is optional: when `None`, signing produces a placeholder
-/// `SignedTransaction` whose signature is the all-zero 64-byte sentinel.
-/// That mirrors the old `TransactionSigner::Empty` enum variant and is
-/// useful for the `/v2/transactions/simulate` "allow-empty-signatures =
-/// false" scenarios; never use it against the live submit endpoint.
+/// `signer` is optional. `None` marks a **simulate-only** slot: it has no
+/// signer, so [`UnsignedAtomicGroup::sign`] rejects it with
+/// [`Error::MissingSigner`], but
+/// [`simulate`](UnsignedAtomicGroup::simulate) accepts it (simulate
+/// placeholder-signs every slot and asks algod to allow empty
+/// signatures). Use it to dry-run a transaction you cannot sign — e.g.
+/// one sent from an account you do not control.
 #[derive(Debug, Clone)]
 pub struct TransactionWithSigner {
     /// An unsigned transaction
     pub tx: Transaction,
     /// A transaction signer that can authorize the transaction, or
-    /// `None` for an unsigned simulate slot.
+    /// `None` for a simulate-only slot.
     pub signer: Option<Arc<dyn Signer>>,
 }
 
@@ -102,9 +104,10 @@ impl TransactionWithSigner {
         }
     }
 
-    /// Build a `TransactionWithSigner` that has no real signer
-    /// attached. Signing fills the corresponding slot with an all-zero
-    /// placeholder signature — only safe for simulate.
+    /// Build a `TransactionWithSigner` with no signer attached, for
+    /// **simulate only**. [`UnsignedAtomicGroup::sign`] rejects a group
+    /// containing such a slot ([`Error::MissingSigner`]); only
+    /// [`simulate`](UnsignedAtomicGroup::simulate) accepts it.
     pub fn unsigned(tx: Transaction) -> Self {
         Self { tx, signer: None }
     }
@@ -285,13 +288,19 @@ impl UnsignedAtomicGroup {
     }
 
     /// Sign every transaction with its attached signer, advancing to the
-    /// [`SignedAtomicGroup`] state. Transactions whose signer is `None` get an
-    /// all-zero placeholder signature (simulate-only).
+    /// [`SignedAtomicGroup`] state.
     ///
     /// This is `async`: signers may await user approval (WalletConnect) or
     /// remote I/O (custodial/KMS). Each distinct signer is asked to sign
     /// all of the slots it owns in a single call, so an interactive wallet
     /// prompts once for the whole group.
+    ///
+    /// Every slot must have a signer. A slot with no signer
+    /// ([`TransactionWithSigner::unsigned`]) is an
+    /// [`Error::MissingSigner`]: it cannot produce a submittable
+    /// signature, and the resulting group is meant for `submit`/`execute`.
+    /// Unsigned slots are only valid for
+    /// [`simulate`](Self::simulate)/[`simulate_with`](Self::simulate_with).
     pub async fn sign(self) -> Result<SignedAtomicGroup, Error> {
         let signed_txs = sign_group(&self.txs).await?;
         Ok(SignedAtomicGroup {
@@ -448,8 +457,13 @@ impl SignedAtomicGroup {
 /// wallet. Each signer sees the whole group via
 /// [`SigningRequest::transactions`] but signs only its
 /// [`indexes`](SigningRequest::indexes). Output is validated against the
-/// request and reassembled into original group order; `None`-signer slots
-/// get the all-zero placeholder signature (simulate-only).
+/// request and reassembled into original group order.
+///
+/// Every slot must have a signer: a `None`-signer slot
+/// ([`TransactionWithSigner::unsigned`]) cannot produce a submittable
+/// signature, so it is an [`Error::MissingSigner`] here. Unsigned slots
+/// are only valid for [`simulate`](UnsignedAtomicGroup::simulate), which
+/// uses [`placeholder_group`] instead.
 async fn sign_group(txs: &[TransactionWithSigner]) -> Result<Vec<SignedTransaction>, Error> {
     let all_txs: Vec<Transaction> = txs.iter().map(|t| t.tx.clone()).collect();
     let mut signed: Vec<Option<SignedTransaction>> = (0..txs.len()).map(|_| None).collect();
@@ -463,14 +477,10 @@ async fn sign_group(txs: &[TransactionWithSigner]) -> Result<Vec<SignedTransacti
                 Some((_, indexes)) => indexes.push(i),
                 None => groups.push((Arc::clone(signer), vec![i])),
             },
-            None => {
-                // Mirrors the old `TransactionSigner::Empty` variant:
-                // produce a placeholder `SignedTransaction` whose 64-byte
-                // signature is all zeros. Algod's simulator detects this
-                // as a missing signature; never submit it to the live
-                // endpoint.
-                signed[i] = Some(signed_transaction::placeholder(tx_with_signer.tx.clone())?);
-            }
+            // An unsigned slot has no signature to produce. Signing is the
+            // path to a submittable group, so reject it here rather than
+            // emitting an all-zero placeholder that algod would refuse.
+            None => return Err(Error::MissingSigner { index: i }),
         }
     }
 
@@ -1039,6 +1049,28 @@ mod tests {
             .unwrap_err();
 
         assert!(matches!(err, Error::SignerOutputInvalid { .. }));
+    }
+
+    /// Signing a group that contains an unsigned (simulate-only) slot is
+    /// rejected: an unsigned slot cannot produce a submittable signature.
+    #[tokio::test]
+    async fn sign_rejects_unsigned_slot() {
+        let alice = Account::generate();
+        let bob = Account::generate();
+
+        let err = AtomicGroupBuilder::new()
+            .add_transaction(TransactionWithSigner::new(
+                pay(&alice, bob.address()),
+                Arc::new(alice.clone()),
+            ))
+            .add_transaction(TransactionWithSigner::unsigned(pay(&bob, alice.address())))
+            .build()
+            .unwrap()
+            .sign()
+            .await
+            .unwrap_err();
+
+        assert!(matches!(err, Error::MissingSigner { index: 1 }));
     }
 
     /// Signing a built group whose transactions are authorized by

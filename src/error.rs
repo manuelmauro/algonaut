@@ -69,6 +69,13 @@ pub enum Error {
     /// is diagnostic only.
     #[error("signer returned invalid output: {reason}")]
     SignerOutputInvalid { reason: String },
+    /// [`sign`](crate::atomic_transaction_composer::UnsignedAtomicGroup::sign)
+    /// was called on a group whose slot at `index` has no signer
+    /// (`TransactionWithSigner::unsigned`). An unsigned slot cannot
+    /// produce a submittable signature; it is only valid for `simulate`.
+    /// Attach a signer, or simulate the group instead of signing it.
+    #[error("transaction at index {index} has no signer (only valid for simulate)")]
+    MissingSigner { index: usize },
 
     /// A transaction construction or signing error from
     /// [`algonaut_transaction`], preserved as the error source.
