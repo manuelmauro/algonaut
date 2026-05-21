@@ -18,7 +18,67 @@
 
 use algonaut_algod::models::{
     SimulateRequest, SimulateRequestTransactionGroup, SimulateTraceConfig,
+    SimulateTransaction200Response,
 };
+
+/// Hand-named view over algod's raw simulate response.
+///
+/// Keeps the generated `SimulateTransaction200Response` out of the public
+/// composer API
+/// ([`SimulateOutcome`](crate::atomic_transaction_composer::SimulateOutcome)),
+/// surfacing the commonly-needed bits through typed accessors. For
+/// wire-level detail not covered here — exec traces, initial states,
+/// per-opcode trace units — drop to the raw response with
+/// [`as_raw`](Self::as_raw) or [`into_inner`](Self::into_inner).
+#[derive(Debug, Clone)]
+pub struct SimulateResponse {
+    inner: SimulateTransaction200Response,
+}
+
+impl SimulateResponse {
+    pub(crate) fn new(inner: SimulateTransaction200Response) -> Self {
+        Self { inner }
+    }
+
+    /// `true` if every transaction group would succeed.
+    pub fn would_succeed(&self) -> bool {
+        self.inner.would_succeed
+    }
+
+    /// The round the group was simulated against.
+    pub fn last_round(&self) -> u64 {
+        self.inner.last_round
+    }
+
+    /// Failure message for the transaction group at `index`, if that group
+    /// failed.
+    pub fn failure_message(&self, index: usize) -> Option<&str> {
+        self.inner
+            .txn_groups
+            .get(index)
+            .and_then(|group| group.failure_message.as_deref())
+    }
+
+    /// Extra opcode budget algod applied for this simulation (the
+    /// `extra-opcode-budget` power-pack override), if any.
+    pub fn extra_opcode_budget(&self) -> Option<u64> {
+        self.inner
+            .eval_overrides
+            .as_deref()
+            .and_then(|overrides| overrides.extra_opcode_budget)
+    }
+
+    /// Borrow the raw generated response for wire-level detail not surfaced
+    /// by the typed accessors above.
+    pub fn as_raw(&self) -> &SimulateTransaction200Response {
+        &self.inner
+    }
+
+    /// Consume the wrapper, returning the raw generated response.
+    pub fn into_inner(self) -> SimulateTransaction200Response {
+        self.inner
+    }
+}
 
 /// Fluent builder for [`SimulateRequest`].
 #[derive(Debug, Clone, Default)]

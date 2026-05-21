@@ -26,7 +26,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::{Error, algod::v2::Algod, algod::v2::PendingSubmission};
+use crate::{Error, algod::v2::Algod, algod::v2::PendingSubmission, simulate::SimulateResponse};
 
 use instant::Instant;
 
@@ -156,9 +156,11 @@ pub struct SimulateOutcome {
     /// per-result (the same way [`ExecuteOutcome`] does it) so callers
     /// can inspect partial successes.
     pub method_results: Vec<AbiMethodResult>,
-    /// Raw simulate response from algod, including failure messages,
-    /// budget consumed, eval-overrides, and exec-trace when requested.
-    pub simulate_response: SimulateTransaction200Response,
+    /// Hand-named view over algod's simulate response (success flag,
+    /// per-group failure messages, budget overrides, …). For wire-level
+    /// detail drop to the raw response via
+    /// [`SimulateResponse::as_raw`]/[`SimulateResponse::into_inner`].
+    pub simulate_response: SimulateResponse,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -344,7 +346,7 @@ impl UnsignedAtomicGroup {
         Ok(SimulateOutcome {
             tx_ids: tx_ids(&signed_txs),
             method_results,
-            simulate_response: response,
+            simulate_response: SimulateResponse::new(response),
         })
     }
 }
