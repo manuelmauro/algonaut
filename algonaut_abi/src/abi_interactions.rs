@@ -38,7 +38,16 @@ impl TransactionArgType {
 impl From<CoreError> for AbiError {
     fn from(e: CoreError) -> Self {
         match e {
-            CoreError::General(msg) => Self::Msg(msg),
+            CoreError::Base64Decode(err) => Self::Decode {
+                reason: format!("base64 decode: {err}"),
+            },
+            CoreError::InvalidArraySize { expected, actual } => Self::Decode {
+                reason: format!("expected {expected} bytes, got {actual}"),
+            },
+            CoreError::InvalidTransactionType(s) => Self::TypeParse {
+                input: s.clone(),
+                reason: format!("invalid transaction type: `{s}`"),
+            },
         }
     }
 }
@@ -56,9 +65,10 @@ impl ReferenceArgType {
             "account" => Ok(ReferenceArgType::Account),
             "asset" => Ok(ReferenceArgType::Asset),
             "application" => Ok(ReferenceArgType::Application),
-            _ => Err(AbiError::Msg(format!(
-                "Not supported reference arg type api string: {s}"
-            ))),
+            _ => Err(AbiError::TypeParse {
+                input: s.to_owned(),
+                reason: "not a supported reference arg type".to_owned(),
+            }),
         }
     }
 
@@ -122,9 +132,10 @@ impl AbiMethodArg {
         let type_ = self.type_()?;
         match type_ {
             AbiArgType::AbiObj(obj) => Ok(obj),
-            _ => Err(AbiError::Msg(format!(
-                "The arg: {type_:?} is not an ABI object."
-            ))),
+            _ => Err(AbiError::TypeParse {
+                input: format!("{type_:?}"),
+                reason: "not an ABI object".to_owned(),
+            }),
         }
     }
 
@@ -249,14 +260,18 @@ impl AbiMethod {
     /// Decodes a method signature string into a Method object.
     pub fn from_signature(method_str: &str) -> Result<AbiMethod, AbiError> {
         let open_idx = method_str.chars().position(|c| c == '(').ok_or_else(|| {
-            AbiError::Msg("method signature is missing an open parenthesis".to_owned())
+            AbiError::MethodSignature {
+                input: method_str.to_owned(),
+                reason: "missing an open parenthesis".to_owned(),
+            }
         })?;
 
         let name = &method_str[..open_idx];
         if name.is_empty() {
-            return Err(AbiError::Msg(
-                "method must have a non empty name".to_owned(),
-            ));
+            return Err(AbiError::MethodSignature {
+                input: method_str.to_owned(),
+                reason: "method must have a non-empty name".to_owned(),
+            });
         }
 
         let (arg_types, close_idx) = parse_method_args(method_str, open_idx)?;
@@ -327,9 +342,10 @@ fn parse_method_args(str_method: &str, start_idx: usize) -> Result<(Vec<String>,
         }
 
         if paren_cnt < 0 {
-            return Err(AbiError::Msg(
-                "method signature parentheses mismatch".to_owned(),
-            ));
+            return Err(AbiError::MethodSignature {
+                input: str_method.to_owned(),
+                reason: "parentheses mismatch".to_owned(),
+            });
         } else if paren_cnt > 1 {
             continue;
         }
@@ -349,9 +365,10 @@ fn parse_method_args(str_method: &str, start_idx: usize) -> Result<(Vec<String>,
     if let Some(close_idx) = close_idx {
         Ok((arg_types, close_idx))
     } else {
-        Err(AbiError::Msg(
-            "method signature parentheses mismatch".to_owned(),
-        ))
+        Err(AbiError::MethodSignature {
+            input: str_method.to_owned(),
+            reason: "parentheses mismatch".to_owned(),
+        })
     }
 }
 

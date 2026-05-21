@@ -28,6 +28,4 @@ pub enum TransactionError {
     Deserialization(String),
     #[error("No accounts to sign the transaction.")]
     NoAccountsToSign,
-    #[error("{}", 0)]
-    Msg(String),
 }

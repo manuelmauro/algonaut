@@ -111,9 +111,10 @@ impl AbiType {
     /// The range of type bitSize is [8, 512] and type bitSize % 8 == 0.
     pub fn uint(type_size: usize) -> Result<AbiType, AbiError> {
         if !type_size.is_multiple_of(8) || !(8..=512).contains(&type_size) {
-            return Err(AbiError::Msg(format!(
-                "unsupported uint type bitSize: {type_size}"
-            )));
+            return Err(AbiError::TypeParse {
+                input: format!("uint{type_size}"),
+                reason: "bit size must be 8..=512 and a multiple of 8".to_owned(),
+            });
         }
 
         Ok(AbiType::UInt {
@@ -142,14 +143,16 @@ impl AbiType {
     /// The range of type precision is [1, 160].
     pub fn ufixed(type_size: usize, type_precision: usize) -> Result<AbiType, AbiError> {
         if !type_size.is_multiple_of(8) || !(8..=512).contains(&type_size) {
-            return Err(AbiError::Msg(format!(
-                "unsupported ufixed type bitSize: {type_size}"
-            )));
+            return Err(AbiError::TypeParse {
+                input: format!("ufixed{type_size}x{type_precision}"),
+                reason: "bit size must be 8..=512 and a multiple of 8".to_owned(),
+            });
         }
         if !(1..=160).contains(&type_precision) {
-            return Err(AbiError::Msg(format!(
-                "unsupported ufixed type precision: {type_precision}"
-            )));
+            return Err(AbiError::TypeParse {
+                input: format!("ufixed{type_size}x{type_precision}"),
+                reason: "precision must be 1..=160".to_owned(),
+            });
         }
 
         Ok(AbiType::UFixed {
@@ -161,9 +164,10 @@ impl AbiType {
     /// Makes tuple ABI type with argument types
     pub fn tuple(argument_types: Vec<AbiType>) -> Result<AbiType, AbiError> {
         if argument_types.len() >= u16::MAX as usize {
-            return Err(AbiError::Msg(
-                "tuple type child type number larger than maximum uint16 error".to_owned(),
-            ));
+            return Err(AbiError::TypeParse {
+                input: format!("tuple with {} types", argument_types.len()),
+                reason: "tuple type count exceeds uint16 maximum".to_owned(),
+            });
         }
 
         Ok(AbiType::Tuple {
@@ -186,30 +190,37 @@ impl FromStr for AbiType {
             lazy_static! {
                 static ref RE: Regex = Regex::new(r"^([a-z\d\[\](),]+)\[([1-9][\d]*)]$").unwrap();
             }
-            let caps = RE.captures(s).ok_or_else(|| {
-                AbiError::Msg(format!("Regex for ] ending string: {s} didn't match"))
+            let caps = RE.captures(s).ok_or_else(|| AbiError::TypeParse {
+                input: s.to_owned(),
+                reason: "invalid static array syntax".to_owned(),
             })?;
 
             if caps.len() != 3 {
-                return Err(AbiError::Msg(format!("ill formed uint type: {s}")));
+                return Err(AbiError::TypeParse {
+                    input: s.to_owned(),
+                    reason: "invalid static array syntax".to_owned(),
+                });
             }
             let array_type = caps[1].parse()?;
             let array_len_s = caps[2].to_owned();
 
-            let array_len: usize = array_len_s.parse().map_err(|e| {
-                AbiError::Msg(format!("Error parsing array len: {array_len_s}: {e:?}"))
+            let array_len: usize = array_len_s.parse().map_err(|e| AbiError::TypeParse {
+                input: s.to_owned(),
+                reason: format!("cannot parse array length: {e}"),
             })?;
 
             Ok(AbiType::static_array(
                 array_type,
-                array_len.try_into().map_err(|_| {
-                    AbiError::Msg("Couldn't convert array_len: {array_len} in u16".to_owned())
+                array_len.try_into().map_err(|_| AbiError::TypeParse {
+                    input: s.to_owned(),
+                    reason: format!("array length {array_len} exceeds u16 maximum"),
                 })?,
             ))
         } else if let Some(stripped) = s.strip_prefix("uint") {
-            let type_size = stripped
-                .parse()
-                .map_err(|e| AbiError::Msg(format!("Ill formed uint type: {s}: {e:?}")))?;
+            let type_size = stripped.parse().map_err(|e| AbiError::TypeParse {
+                input: s.to_owned(),
+                reason: format!("cannot parse bit size: {e}"),
+            })?;
 
             AbiType::uint(type_size)
         } else if s == "byte" {
@@ -218,24 +229,30 @@ impl FromStr for AbiType {
             lazy_static! {
                 static ref RE: Regex = Regex::new(r"^ufixed([1-9][\d]*)x([1-9][\d]*)$").unwrap();
             }
-            let caps = RE
-                .captures(s)
-                .ok_or_else(|| AbiError::Msg(format!("Regex for ufixed: {s} didn't match")))?;
+            let caps = RE.captures(s).ok_or_else(|| AbiError::TypeParse {
+                input: s.to_owned(),
+                reason: "invalid ufixed syntax".to_owned(),
+            })?;
 
             if caps.len() != 3 {
-                return Err(AbiError::Msg(format!("ill formed ufixed type: {s}")));
+                return Err(AbiError::TypeParse {
+                    input: s.to_owned(),
+                    reason: "invalid ufixed syntax".to_owned(),
+                });
             }
             let ufixed_size_s = &caps[1].to_owned();
-            let ufixed_size = ufixed_size_s.parse().map_err(|e| {
-                AbiError::Msg(format!("Error parsing ufixed size: {ufixed_size_s}: {e:?}"))
+            let ufixed_size = ufixed_size_s.parse().map_err(|e| AbiError::TypeParse {
+                input: s.to_owned(),
+                reason: format!("cannot parse ufixed size: {e}"),
             })?;
 
             let ufixed_precision_s = &caps[2].to_owned();
-            let ufixed_precision = ufixed_precision_s.parse().map_err(|e| {
-                AbiError::Msg(format!(
-                    "Error parsing ufixed precision: {ufixed_precision_s}: {e:?}"
-                ))
-            })?;
+            let ufixed_precision = ufixed_precision_s
+                .parse()
+                .map_err(|e| AbiError::TypeParse {
+                    input: s.to_owned(),
+                    reason: format!("cannot parse ufixed precision: {e}"),
+                })?;
 
             AbiType::ufixed(ufixed_size, ufixed_precision)
         } else if s == "bool" {
@@ -255,9 +272,10 @@ impl FromStr for AbiType {
 
             AbiType::tuple(tuple_types)
         } else {
-            Err(AbiError::Msg(format!(
-                "cannot convert string: `{s}` to ABI type"
-            )))
+            Err(AbiError::TypeParse {
+                input: s.to_owned(),
+                reason: "unrecognized ABI type".to_owned(),
+            })
         }
     }
 }
@@ -285,13 +303,17 @@ fn parse_tuple_content(str: &str) -> Result<Vec<String>, AbiError> {
 
     // str should not have leading/tailing comma
     if str.ends_with(',') || str.starts_with(',') {
-        return Err(AbiError::Msg(
-            "parsing error: tuple content should not start with comma".to_owned(),
-        ));
+        return Err(AbiError::TypeParse {
+            input: format!("({str})"),
+            reason: "tuple content must not start or end with comma".to_owned(),
+        });
     }
     // str should not have consecutive commas
     if str.contains(",,") {
-        return Err(AbiError::Msg("no consecutive commas".to_owned()));
+        return Err(AbiError::TypeParse {
+            input: format!("({str})"),
+            reason: "consecutive commas not allowed".to_owned(),
+        });
     }
 
     let mut paren_segment_record = vec![];
@@ -307,7 +329,10 @@ fn parse_tuple_content(str: &str) -> Result<Vec<String>, AbiError> {
             stack.push(index);
         } else if chr == ')' {
             if stack.is_empty() {
-                return Err(AbiError::Msg(format!("unpaired parentheses: {str}")));
+                return Err(AbiError::TypeParse {
+                    input: format!("({str})"),
+                    reason: "unpaired closing parenthesis".to_owned(),
+                });
             }
 
             let left_paren_index = stack[stack.len() - 1];
@@ -321,7 +346,10 @@ fn parse_tuple_content(str: &str) -> Result<Vec<String>, AbiError> {
         }
     }
     if !stack.is_empty() {
-        return Err(AbiError::Msg(format!("unpaired parentheses: {str}")));
+        return Err(AbiError::TypeParse {
+            input: format!("({str})"),
+            reason: "unpaired opening parenthesis".to_owned(),
+        });
     }
 
     // take out tuple-formed type str in tuple argument

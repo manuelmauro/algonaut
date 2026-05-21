@@ -27,9 +27,7 @@ impl AbiType {
     fn encode_int(&self, value: AbiValue, bit_size: u16) -> Result<Vec<u8>, AbiError> {
         match value {
             AbiValue::Int(u) => self.encode_u64(u, bit_size / 8),
-            _ => Err(AbiError::Msg(
-                "Incompatible value: {value} for ABI type: {self}".to_owned(),
-            )),
+            _ => Err(incompatible_value_for_type_err(self, &value)),
         }
     }
 
@@ -62,9 +60,9 @@ impl AbiType {
             AbiValue::String(str) => {
                 let str_bytes: Vec<u8> = str.bytes().collect();
                 if str_bytes.len() >= (1 << 16) {
-                    return Err(AbiError::Msg(
-                        "string casted to byte exceeds uint16 maximum, error".to_owned(),
-                    ));
+                    return Err(AbiError::Encode {
+                        reason: "string byte length exceeds uint16 maximum".to_owned(),
+                    });
                 }
 
                 let tuple_type = self.type_cast_to_tuple(&[str_bytes.len()])?;
@@ -104,9 +102,9 @@ impl AbiType {
             AbiValue::Array(array) => array,
             AbiValue::Address(address) => address.0.iter().map(|b| AbiValue::Byte(*b)).collect(),
             _ => {
-                return Err(AbiError::Msg(format!(
-                    "Can't encode tuple: value: {value:?} is not an array."
-                )));
+                return Err(AbiError::Encode {
+                    reason: format!("cannot encode tuple: value {value:?} is not an array"),
+                });
             }
         };
 
@@ -114,11 +112,12 @@ impl AbiType {
         let children_len = children.len();
 
         if values_array.len() != children_len {
-            return Err(AbiError::Msg(format!(
-                "abi tuple child type size ({}) != abi tuple element value size ({})",
-                children_len,
-                values_array.len(),
-            )));
+            return Err(AbiError::Encode {
+                reason: format!(
+                    "tuple child type count ({children_len}) != value count ({})",
+                    values_array.len()
+                ),
+            });
         }
 
         let mut heads: Vec<Vec<u8>> = vec![vec![]; values_array.len()];
@@ -144,9 +143,9 @@ impl AbiType {
                         let before = find_bool_lr(children, i, -1)?;
                         let mut after = find_bool_lr(children, i, 1)?;
                         if before % 8 != 0 {
-                            return Err(AbiError::Msg(
-                                "expected before has number of bool mod 8 == 0".to_owned(),
-                            ));
+                            return Err(AbiError::Encode {
+                                reason: "bool sequence must start at byte boundary".to_owned(),
+                            });
                         }
                         after = after.min(7);
 
@@ -160,9 +159,9 @@ impl AbiType {
                                     }
                                 }
                                 _ => {
-                                    return Err(AbiError::Msg(format!(
-                                        "value: {value:?} is not a bool"
-                                    )));
+                                    return Err(AbiError::Encode {
+                                        reason: format!("value {value:?} is not a bool"),
+                                    });
                                 }
                             }
                         }
@@ -194,9 +193,9 @@ impl AbiType {
             if dynamic_index.contains(&i) {
                 let head_value = (head_length + tail_curr_length) as u32;
                 if head_value >= (1 << 16) {
-                    return Err(AbiError::Msg(
-                        "encoding error: byte length >= 2^16".to_owned(),
-                    ));
+                    return Err(AbiError::Encode {
+                        reason: "encoding byte length exceeds 2^16".to_owned(),
+                    });
                 }
                 heads[i] = BigUint::from(head_value).to_bytes_be_padded(LENGTH_ENCODE_BYTE_SIZE)?;
             }
@@ -217,25 +216,25 @@ impl AbiType {
             }
             AbiType::Bool => {
                 if encoded.len() != 1 {
-                    return Err(AbiError::Msg(
-                        "boolean byte should be length 1 byte".to_owned(),
-                    ));
+                    return Err(AbiError::Decode {
+                        reason: "boolean must be exactly 1 byte".to_owned(),
+                    });
                 }
                 if encoded[0] == 0x00 {
                     Ok(AbiValue::Bool(false))
                 } else if encoded[0] == 0x80 {
                     Ok(AbiValue::Bool(true))
                 } else {
-                    Err(AbiError::Msg(
-                        "single boolean encoded byte should be of form 0x80 or 0x00".to_owned(),
-                    ))
+                    Err(AbiError::Decode {
+                        reason: "boolean byte must be 0x80 or 0x00".to_owned(),
+                    })
                 }
             }
             AbiType::Byte => {
                 if encoded.len() != 1 {
-                    return Err(AbiError::Msg(
-                        "boolean byte should be length 1 byte".to_owned(),
-                    ));
+                    return Err(AbiError::Decode {
+                        reason: "byte must be exactly 1 byte".to_owned(),
+                    });
                 }
                 Ok(AbiValue::Byte(encoded[0]))
             }
@@ -244,16 +243,22 @@ impl AbiType {
                 casted_type.decode(encoded)
             }
             AbiType::Address => Ok(AbiValue::Address(Address(encoded.try_into().map_err(
-                |e| AbiError::Msg(format!("Address couldn't be decoded from: {e}")),
+                |e| AbiError::Decode {
+                    reason: format!("address decode failed: {e}"),
+                },
             )?))),
             AbiType::DynamicArray { .. } => {
                 if encoded.len() < LENGTH_ENCODE_BYTE_SIZE {
-                    return Err(AbiError::Msg("dynamic array format corrupted".to_owned()));
+                    return Err(AbiError::Decode {
+                        reason: "dynamic array too short to contain length prefix".to_owned(),
+                    });
                 }
 
-                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE]
-                    .try_into()
-                    .map_err(|e| AbiError::Msg(format!("Couldn't convert slice to array: {e}")))?;
+                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE].try_into().map_err(
+                    |e| AbiError::Decode {
+                        reason: format!("length prefix conversion failed: {e}"),
+                    },
+                )?;
                 let dynamic_len = u16::from_be_bytes(arr);
                 let casted_type = self.type_cast_to_tuple(&[dynamic_len as usize])?;
 
@@ -261,22 +266,28 @@ impl AbiType {
             }
             AbiType::String => {
                 if encoded.len() < LENGTH_ENCODE_BYTE_SIZE {
-                    return Err(AbiError::Msg("string format corrupted".to_owned()));
+                    return Err(AbiError::Decode {
+                        reason: "string too short to contain length prefix".to_owned(),
+                    });
                 }
 
-                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE]
-                    .try_into()
-                    .map_err(|e| AbiError::Msg(format!("Couldn't convert slice to string: {e}")))?;
+                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE].try_into().map_err(
+                    |e| AbiError::Decode {
+                        reason: format!("length prefix conversion failed: {e}"),
+                    },
+                )?;
                 let byte_len = u16::from_be_bytes(arr);
 
                 if encoded[LENGTH_ENCODE_BYTE_SIZE..].len() != byte_len as usize {
-                    return Err(AbiError::Msg(
-                        "string representation in byte: length not matching".to_owned(),
-                    ));
+                    return Err(AbiError::Decode {
+                        reason: "string length does not match length prefix".to_owned(),
+                    });
                 }
 
                 let s = String::from_utf8(encoded[LENGTH_ENCODE_BYTE_SIZE..].to_vec()).map_err(
-                    |e| AbiError::Msg(format!("Couldn't create string from slice: {e}")),
+                    |e| AbiError::Decode {
+                        reason: format!("invalid UTF-8: {e}"),
+                    },
                 )?;
                 Ok(AbiValue::String(s))
             }
@@ -306,9 +317,10 @@ impl AbiType {
             }
             AbiType::DynamicArray { child_type } => {
                 if tup_len.len() != 1 {
-                    return Err(AbiError::Msg(
-                        "dynamic array type conversion to tuple need 1 length argument".to_owned(),
-                    ));
+                    return Err(AbiError::Encode {
+                        reason: "dynamic array tuple cast requires exactly 1 length argument"
+                            .to_owned(),
+                    });
                 }
                 let mut child_types = Vec::with_capacity(tup_len[0]);
                 for _ in 0..tup_len[0] {
@@ -318,9 +330,9 @@ impl AbiType {
             }
             AbiType::String => {
                 if tup_len.len() != 1 {
-                    return Err(AbiError::Msg(
-                        "string type conversion to tuple need 1 length argument".to_owned(),
-                    ));
+                    return Err(AbiError::Encode {
+                        reason: "string tuple cast requires exactly 1 length argument".to_owned(),
+                    });
                 }
                 let mut child_types = Vec::with_capacity(tup_len[0]);
 
@@ -330,9 +342,9 @@ impl AbiType {
                 child_types
             }
             _ => {
-                return Err(AbiError::Msg(
-                    "type cannot support conversion to tuple".to_owned(),
-                ));
+                return Err(AbiError::Encode {
+                    reason: format!("type {self} cannot be cast to tuple"),
+                });
             }
         };
 
@@ -382,28 +394,28 @@ impl AbiType {
                 }
                 Ok(size)
             }
-            _ => Err(AbiError::Msg(format!(
-                "Can't pre-compute byte length: {} is a dynamic type",
-                self,
-            ))),
+            _ => Err(AbiError::Encode {
+                reason: format!("cannot pre-compute byte length: {self} is a dynamic type"),
+            }),
         }
     }
 }
 
 fn incompatible_value_for_type_err(type_: &AbiType, value: &AbiValue) -> AbiError {
-    AbiError::Msg(format!(
-        "Incompatible value: {value:?} for ABI type: {type_:?}"
-    ))
+    AbiError::Encode {
+        reason: format!("incompatible value {value:?} for ABI type {type_}"),
+    }
 }
 
 fn decode_uint(encoded: &[u8], bit_size: u16) -> Result<AbiValue, AbiError> {
     let byte_size = bit_size / 8;
     if encoded.len() != byte_size as usize {
-        return Err(AbiError::Msg(format!(
-            "uint/ufixed decode: expected byte length {}, but got byte length {}",
-            byte_size,
-            encoded.len()
-        )));
+        return Err(AbiError::Decode {
+            reason: format!(
+                "uint/ufixed expected {byte_size} bytes, got {}",
+                encoded.len()
+            ),
+        });
     }
 
     Ok(AbiValue::Int(BigUint::from_bytes_be(encoded)))
@@ -418,13 +430,15 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
     while i < children.len() {
         if children[i].is_dynamic() {
             if encoded[iter_index..].len() < LENGTH_ENCODE_BYTE_SIZE {
-                return Err(AbiError::Msg(
-                    "ill formed tuple dynamic typed value encoding".to_owned(),
-                ));
+                return Err(AbiError::Decode {
+                    reason: "tuple dynamic element: insufficient bytes for offset".to_owned(),
+                });
             }
             let arr: [u8; 2] = encoded[iter_index..iter_index + LENGTH_ENCODE_BYTE_SIZE]
                 .try_into()
-                .map_err(|e| AbiError::Msg(format!("Couldn't convert slice to array: {e}")))?;
+                .map_err(|e| AbiError::Decode {
+                    reason: format!("offset conversion failed: {e}"),
+                })?;
             let dynamic_index = u16::from_be_bytes(arr);
             dynamic_segments.push(dynamic_index as usize);
             value_partition.push(vec![]);
@@ -453,9 +467,9 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
                         i += after;
                         iter_index += 1;
                     } else {
-                        return Err(AbiError::Msg(
-                            "expected before bool number mod 8 == 0".to_owned(),
-                        ));
+                        return Err(AbiError::Decode {
+                            reason: "bool sequence must start at byte boundary".to_owned(),
+                        });
                     }
                 }
                 _ => {
@@ -463,13 +477,12 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
                     let curr_len = children[i].byte_len()?;
 
                     if iter_index + curr_len > encoded.len() {
-                        return Err(AbiError::Msg(format!(
-                            "ill formed tuple static typed element encoding: not enough bytes. child: {:?} --- iter_index: {}, current_len: {}, encoded len: {}",
-                            children[i],
-                            iter_index,
-                            curr_len,
-                            &encoded.len()
-                        )));
+                        return Err(AbiError::Decode {
+                            reason: format!(
+                                "tuple static element {:?}: need {} bytes at offset {}, but only {} bytes remain",
+                                children[i], curr_len, iter_index, encoded.len() - iter_index
+                            ),
+                        });
                     }
 
                     value_partition.push(encoded[iter_index..iter_index + curr_len].to_vec());
@@ -479,7 +492,9 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
         }
 
         if i != children.len() - 1 && iter_index >= encoded.len() {
-            return Err(AbiError::Msg("input byte not enough to decode".to_owned()));
+            return Err(AbiError::Decode {
+                reason: "input bytes exhausted before all elements decoded".to_owned(),
+            });
         }
 
         i += 1;
@@ -490,10 +505,12 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
         iter_index = encoded.len()
     }
     if iter_index < encoded.len() {
-        return Err(AbiError::Msg(format!(
-            "input byte not fully consumed. children: {:?}",
-            children
-        )));
+        return Err(AbiError::Decode {
+            reason: format!(
+                "trailing bytes after decoding tuple ({} bytes unused)",
+                encoded.len() - iter_index
+            ),
+        });
     }
 
     let mut index_temp: i32 = -1;
@@ -501,10 +518,12 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
         if *var as i32 >= index_temp {
             index_temp = *var as i32;
         } else {
-            return Err(AbiError::Msg(format!(
-                "dynamic segment should display a [l, r] scope with l <= r, dynamic segment: {:?}",
-                dynamic_segments
-            )));
+            return Err(AbiError::Decode {
+                reason: format!(
+                    "dynamic segment offsets must be non-decreasing: {:?}",
+                    dynamic_segments
+                ),
+            });
         }
     }
 
@@ -530,7 +549,9 @@ pub(crate) fn find_bool_lr(types: &[AbiType], index: usize, delta: i32) -> Resul
     loop {
         let current_index: usize = (index as i32 + delta * until as i32)
             .try_into()
-            .map_err(|e| AbiError::Msg(format!("Couldn't convert i32 to usize: {e}")))?;
+            .map_err(|e| AbiError::Decode {
+                reason: format!("bool index calculation overflowed: {e}"),
+            })?;
         match types[current_index] {
             AbiType::Bool => {
                 if current_index != types.len() - 1 && delta > 0 || current_index > 0 && delta < 0 {

@@ -641,7 +641,7 @@ where
                         .as_ref()
                         .and_then(|fa| fa.iter().position(|&id| id == app_id))
                         .ok_or_else(|| {
-                            TransactionError::Msg(format!(
+                            TransactionError::Deserialization(format!(
                                 "app_id {} not found in foreign apps array",
                                 app_id
                             ))

@@ -159,16 +159,59 @@ impl RequestErrorDetails {
 
 impl From<crate::algod::v2::error::AlgodError> for Error {
     fn from(error: crate::algod::v2::error::AlgodError) -> Self {
+        use crate::algod::v2::error::AlgodError;
         match error {
-            crate::algod::v2::error::AlgodError::Msg(msg) => Error::Msg(msg),
+            AlgodError::Reqwest(e) => {
+                let details = if e.is_timeout() {
+                    RequestErrorDetails::Timeout
+                } else {
+                    RequestErrorDetails::Client {
+                        description: e.to_string(),
+                    }
+                };
+                Error::Request(RequestError::new(e.url().map(|u| u.to_string()), details))
+            }
+            AlgodError::Decode(e) => Error::Internal(format!("JSON decode: {e}")),
+            AlgodError::Msgpack(e) => Error::Internal(format!("msgpack decode: {e}")),
+            AlgodError::Io(e) => Error::Internal(format!("I/O: {e}")),
+            AlgodError::ResponseError { status, content } => {
+                Error::Request(RequestError::new(
+                    None,
+                    RequestErrorDetails::Http {
+                        status,
+                        message: content,
+                    },
+                ))
+            }
         }
     }
 }
 
 impl From<crate::indexer::v2::error::IndexerError> for Error {
     fn from(error: crate::indexer::v2::error::IndexerError) -> Self {
+        use crate::indexer::v2::error::IndexerError;
         match error {
-            crate::indexer::v2::error::IndexerError::Msg(msg) => Error::Msg(msg),
+            IndexerError::Reqwest(e) => {
+                let details = if e.is_timeout() {
+                    RequestErrorDetails::Timeout
+                } else {
+                    RequestErrorDetails::Client {
+                        description: e.to_string(),
+                    }
+                };
+                Error::Request(RequestError::new(e.url().map(|u| u.to_string()), details))
+            }
+            IndexerError::Decode(e) => Error::Internal(format!("JSON decode: {e}")),
+            IndexerError::Io(e) => Error::Internal(format!("I/O: {e}")),
+            IndexerError::ResponseError { status, content } => {
+                Error::Request(RequestError::new(
+                    None,
+                    RequestErrorDetails::Http {
+                        status,
+                        message: content,
+                    },
+                ))
+            }
         }
     }
 }
