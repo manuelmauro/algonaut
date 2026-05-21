@@ -15,6 +15,18 @@ tags: [api, async, signing]
 Proposed. Follow-up to [`signer-trait`](signer-trait.md) and the
 async-signer out-of-scope note in
 [`atomic-transaction-composer-typestate`](atomic-transaction-composer-typestate.md).
+Depends on [`external-signature-ingress`](external-signature-ingress.md) for
+the public path that lets an out-of-crate signer turn a remote signature
+into a `SignedTransaction`. That gap is orthogonal to async — it already
+blocks the accepted synchronous trait — so it is decided separately and
+treated here as a prerequisite, not re-litigated.
+
+This ADR makes two coupled changes: signing becomes **async** (so a signer
+can await wallet approval or remote I/O) and **group-aware** (so a wallet
+sees the whole atomic group and signs only its slots). They ship together
+because neither half alone serves the WalletConnect case that motivates
+the work: async-but-per-slot loses the group context the wallet needs to
+show, and group-aware-but-blocking still deadlocks the executor.
 
 ## Context
 
@@ -95,6 +107,13 @@ pub trait Signer: std::fmt::Debug + Send + Sync {
 }
 ```
 
+The future is hand-spelled as a `Pin<Box<dyn Future + Send + 'a>>` alias
+rather than written with `async fn` in the trait on purpose: native
+`async fn` in traits is stable but `dyn`-incompatible, so a `dyn Signer`
+behind an `Arc` could not name the method. The explicit boxed alias keeps
+the trait object safe without pulling in the `async-trait` or
+`trait-variant` proc-macro machinery.
+
 The returned vector contains one `SignedTransaction` per requested index,
 in `request.indexes` order. It remains all-or-error: a signer that
 cannot sign any requested transaction returns an error instead of a
@@ -104,6 +123,29 @@ The request is group-aware so WalletConnect-style implementations can
 send the full atomic group to the wallet and mark which slots should be
 signed. Local signers can ignore non-requested slots and sign only the
 indexed transactions.
+
+### The `Send` bound and single-threaded runtimes
+
+`SigningFuture` is `+ Send`, and `Signer` keeps the `Send + Sync` bound it
+has today. That is what lets `UnsignedAtomicGroup::sign()` stay `Send`, so
+the composer's signing step can run inside `tokio::spawn`-ed,
+multi-threaded tasks — the common native case, and the path of least
+surprise there.
+
+The cost is real and worth naming, because it is exactly the wasm/browser
+scenario the Context invokes. A WalletConnect signer built on
+`wasm-bindgen` JS interop typically yields a `!Send` future, which cannot
+satisfy `SigningFuture: Send`. So async removes the `block_on` deadlock
+problem for wasm, but the `Send` bound does not by itself make the trait
+usable from a `!Send` browser signer — the two points in the Context
+bullet are not the same win.
+
+We take the `Send` bound for the first cut: the native multi-threaded
+executor is the primary target, and a non-`Send` composer would surprise
+those callers. A `?Send` variant — a second future alias behind a feature
+flag, or a `maybe-send` shim — is the known escape hatch if and when a
+real wasm WalletConnect integration lands. It is deferred deliberately,
+not by oversight, rather than designed speculatively now.
 
 ### Local signers implement the async trait directly
 
@@ -166,31 +208,76 @@ impl UnsignedAtomicGroup {
 The async signing flow is:
 
 1. Build the full, group-id-stamped transaction array.
-2. For each distinct signer object, collect the indexes it must sign.
+2. Group slot indexes by signer **identity** — `Arc::ptr_eq` on the
+   `Arc<dyn Signer>` — so every slot a given signer instance owns is
+   collected into one request and signed in one call.
 3. Call `Signer::sign_transactions(SigningRequest { transactions,
    indexes })` and await the result.
-4. Validate that the signer returns exactly one signed transaction per
-   requested index, in order, and that each signed transaction wraps the
-   expected unsigned transaction.
+4. Validate the result against the request: exactly one signed
+   transaction per requested index — no missing, duplicate, or extra
+   entries — in `request.indexes` order, each wrapping the *expected*
+   unsigned transaction (the id recomputed from the request's transaction
+   must match the returned id). A signer returning a valid signed
+   transaction for the *wrong* transaction is the case this guards
+   against. How a signer constructs those values is decided in
+   [`external-signature-ingress`](external-signature-ingress.md).
 5. Reassemble the signed group in original transaction order; fill
    `None` slots with the existing all-zero placeholder used by simulate.
+
+**Grouping by `Arc::ptr_eq` is deliberate, and has a caller-visible
+consequence.** The trait exposes no address or key identity — multisig and
+HSM signers cannot supply a sender, which is the D6/D7 rationale — so
+pointer identity is the only thing the composer can group on. Two slots
+built from *separate* `Arc::new(signer)` calls for the same logical wallet
+are therefore two signers, and produce two approval prompts. The caller
+contract is: **share one `Arc<dyn Signer>` clone across every slot a
+single wallet owns.** That is consistent with
+[`atomic-transaction-composer-typestate`](atomic-transaction-composer-typestate.md),
+which already leans on `Arc<dyn Signer>` being cheap to clone.
 
 The implementation may call signers sequentially at first. Parallel
 signing can be added later if we can do it without surprising
 WalletConnect users with concurrent approval prompts.
 
-Existing async composer operations that internally sign, such as
-`simulate_with`, await the same signing machinery. Callers that want to
-simulate without prompting a wallet still attach
-`TransactionWithSigner::unsigned(tx)` for those slots, exactly as in D7.
+### Simulate does not invoke real signers
 
-### Validate remote signer output
+`UnsignedAtomicGroup::simulate`/`simulate_with` borrow `&self` so the group
+survives to be signed and executed afterwards — the property
+[`atomic-transaction-composer-typestate`](atomic-transaction-composer-typestate.md)
+introduced. Async interactive signers turn that property into a trap if
+simulate runs the real signing flow: dry-running a group that carries a
+WalletConnect signer would pop an approval prompt in the user's wallet,
+and the "attach `unsigned(tx)` instead" workaround would force the caller
+to build a *different* group for simulate than for execute, defeating the
+one-group flow.
 
-A remote signer may return signed msgpack blobs rather than SDK-native
-`SignedTransaction` values. Implementations may deserialize those blobs,
-but the composer must still validate the result against the request:
-wrong count, wrong order, wrong transaction, or mismatched transaction id
-is a signing error, not something to submit to algod.
+So simulate does **not** call `Signer::sign_transactions`. It signs every
+slot — `Some(signer)` and `None` alike — with the all-zero placeholder
+signature (the same mechanism the `None` slots already use), setting
+algod's allow-empty-signatures option as needed, and never awaits a real
+signer. Simulate stays cheap and prompt-free; only `sign()` and the
+`execute` path that follows it exercise real signers. A caller that
+specifically needs to simulate the *actually-signed* group can
+`sign().await?` first and simulate the signed group — but that is the
+explicit, prompt-incurring choice, not the default. This is a behavioral
+change from the pre-async composer, which signed `Some(signer)` slots
+during simulate.
+
+### Constructing remote signer output is a prerequisite, not part of this ADR
+
+A remote signer holds either a raw signature (the HSM/KMS/MPC case) or a
+fully-formed signed msgpack blob (some custodial APIs). Neither can be
+turned into a `SignedTransaction` from outside `algonaut_transaction`
+today, because [`closed-signed-transaction`](closed-signed-transaction.md)
+(D5) closed the fields. That ingress —
+`SignedTransaction::with_signature` for the raw-signature case and a
+corrected msgpack-deserialize path for the blob case — is decided in
+[`external-signature-ingress`](external-signature-ingress.md). This ADR
+assumes it exists; without it, the async trait's own motivating signers
+cannot produce the `Vec<SignedTransaction>` the method returns. The
+composer's responsibility, regardless of how the value was built, is the
+request-side validation in step 4 above: it never trusts a returned
+transaction it didn't ask for.
 
 ## Consequences
 
@@ -218,6 +305,24 @@ is a signing error, not something to submit to algod.
   reuse `TransactionError` for signer failures, but wallet rejection,
   timeout, malformed remote response, and validation mismatches are
   worth typed variants once the implementation lands.
+- **One wallet, one prompt — if the caller cooperates.** Because slots
+  are grouped by `Arc::ptr_eq`, sharing a single `Arc<dyn Signer>` clone
+  across a wallet's slots yields one approval round-trip; building
+  separate `Arc`s for the same wallet yields several. The headline
+  ergonomic win is contingent on that caller contract, which the API
+  cannot enforce.
+- **Simulate stops signing for real.** Simulate now always uses the
+  placeholder signature, even for slots that carry a real signer, so a
+  dry-run never prompts a wallet. This is a behavioral change from the
+  pre-async composer, which signed `Some(signer)` slots during simulate.
+- **The `Send` bound excludes `!Send` wasm signers for now.** Native
+  multi-threaded executors get a `Send` composer; a single-threaded
+  browser WalletConnect signer needs the deferred `?Send` variant. The
+  trade is made deliberately, not by omission.
+- **The remote-signer construction path is a separate, prerequisite
+  decision.** [`external-signature-ingress`](external-signature-ingress.md)
+  amends D5 to make `SignedTransaction` buildable from an external
+  signature. This ADR is not implementable without it.
 - **Out of scope.** This ADR does not define a concrete WalletConnect
   client, custodial HTTP protocol, retry policy, or UI callback model.
   It only defines the SDK extension point and composer plumbing those
