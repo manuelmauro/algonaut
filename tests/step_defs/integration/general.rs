@@ -1,9 +1,6 @@
-use crate::step_defs::{
-    integration::world::World,
-    util::{account_from_kmd_response, wait_for_pending_transaction},
-};
+use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
-use algonaut_core::{Address, MicroAlgos, TxId};
+use algonaut_core::{Address, MicroAlgos, Round, TxId};
 use algonaut_transaction::Pay;
 use cucumber::{given, then, when};
 use rand::Rng;
@@ -39,7 +36,7 @@ async fn an_algod_v2_client(w: &mut World) -> Result<(), Box<dyn Error>> {
     )
     .unwrap();
 
-    algod.status_after_block(1).await?;
+    algod.status_after_block(Round(1)).await?;
     w.algod = Some(algod);
 
     Ok(())
@@ -141,9 +138,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
 
     let s_tx = sender_account.sign_transaction(tx)?;
 
-    let send_response = algod.send_txn(&s_tx).await?;
-    let tx_id: TxId = send_response.tx_id.into();
-    wait_for_pending_transaction(algod, &tx_id).await?;
+    algod.submit(&s_tx).await?.confirm().await?;
 
     w.transient_account = Some(sender_account);
 
@@ -186,7 +181,9 @@ async fn i_wait_for_the_transaction_to_be_confirmed(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
     let tx_id = w.tx_id.as_ref().expect("tx id not set");
 
-    wait_for_pending_transaction(&algod, tx_id)
+    algod
+        .pending_submission(tx_id)
+        .confirm()
         .await
         .expect("couldn't get pending tx");
 }

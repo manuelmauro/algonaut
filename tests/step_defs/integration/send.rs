@@ -1,8 +1,6 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
 use algonaut_core::{MicroAlgos, MultisigAddress, Round, StateProofPk, TxId, VotePk, VrfPk};
-use algonaut_transaction::{
-    Pay, RegisterKey, SignedTransaction, transaction::TransactionSignature,
-};
+use algonaut_transaction::{Pay, RegisterKey, signer::MultisigSigningSession};
 use cucumber::{given, then, when};
 use data_encoding::BASE64;
 use std::error::Error;
@@ -113,14 +111,10 @@ async fn i_sign_the_multisig_transaction_with_the_private_key(
     let msig = w.multisig.as_ref().expect("multisig not set");
     let tx = w.tx.as_ref().expect("tx not set");
 
-    let multisig_sig = account.init_transaction_msig(tx, msig)?;
-    let transaction_id = tx.id()?;
-    w.signed_tx = Some(SignedTransaction {
-        transaction: tx.clone(),
-        transaction_id,
-        sig: TransactionSignature::Multi(multisig_sig),
-        auth_address: None,
-    });
+    let signed = MultisigSigningSession::new(msig.clone())
+        .sign(tx.clone(), account)?
+        .finish()?;
+    w.signed_tx = Some(signed);
     Ok(())
 }
 

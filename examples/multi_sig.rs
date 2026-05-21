@@ -1,8 +1,8 @@
 use algonaut::algod::v2::Algod;
-use algonaut::core::{MicroAlgos, MultisigAddress, TxId};
+use algonaut::core::{MicroAlgos, MultisigAddress};
+use algonaut::transaction::Pay;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::transaction::TransactionSignature;
-use algonaut::transaction::{Pay, SignedTransaction};
+use algonaut::transaction::signer::MultisigSigningSession;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -38,22 +38,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .build(&params)?;
 
-    info!("initializing multisig");
-    let msig = alice.init_transaction_msig(&t, &multisig_address)?;
-
-    info!("appending to multisig");
-    let msig = bob.append_to_transaction_msig(&t, msig)?;
-
-    info!("creating signature");
-    let sig = TransactionSignature::Multi(msig);
-
-    info!("signing transaction");
-    let signed_t = SignedTransaction {
-        transaction: t,
-        transaction_id: TxId::default(),
-        sig,
-        auth_address: None,
-    };
+    info!("signing transaction through a multisig session");
+    let signed_t = MultisigSigningSession::new(multisig_address)
+        .sign(t, &alice)?
+        .sign_more(&bob)?
+        .finish()?;
 
     info!("broadcasting transaction");
     // the transaction will fail because the multisig address has no funds

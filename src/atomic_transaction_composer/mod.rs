@@ -1,5 +1,3 @@
-pub mod transaction_signer;
-
 use algonaut_abi::{
     abi_error::AbiError,
     abi_interactions::{
@@ -10,14 +8,15 @@ use algonaut_abi::{
 };
 use algonaut_algod::models::{
     PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
-    SimulateTransaction200Response, TransactionParams200Response,
+    SimulateTransaction200Response,
 };
 use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, TxId};
 use algonaut_crypto::HashDigest;
 use algonaut_transaction::{
-    SignedTransaction, Transaction, TransactionType,
+    SignedTransaction, Signer, Transaction, TransactionType,
     builder::TransactionParams,
     error::TransactionError,
+    signed_transaction,
     transaction::{
         ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
         to_tx_type_enum,
@@ -28,10 +27,44 @@ use data_encoding::BASE64;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
 
-use crate::{Error, algod::v2::Algod, util::wait_for_pending_tx::wait_for_pending_transaction};
+use crate::{Error, algod::v2::Algod};
 
-use self::transaction_signer::TransactionSigner;
+use instant::Instant;
+
+/// Default timeout matching [`crate::algod::v2::PendingSubmission::confirm`].
+const COMPOSER_CONFIRM_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// Poll algod for finality of the given transaction id. The composer
+/// already has the tx ids it wants to wait on (post-`send_txns`), so this
+/// internal helper is the equivalent of `PendingSubmission::confirm`
+/// against an arbitrary id.
+async fn poll_until_confirmed(
+    algod: &Algod,
+    tx_id: &TxId,
+) -> Result<PendingTransactionResponse, Error> {
+    let start = Instant::now();
+    let mut last_round = algod.status().await?.last_round;
+    loop {
+        let pending = algod.pending_txn(tx_id).await?;
+        if pending.confirmed_round.is_some() {
+            return Ok(pending);
+        }
+        if !pending.pool_error.is_empty() {
+            return Err(Error::PendingTransactionPoolError {
+                reason: pending.pool_error,
+            });
+        }
+        if start.elapsed() >= COMPOSER_CONFIRM_TIMEOUT {
+            return Err(Error::PendingTransactionTimeout {
+                timeout: COMPOSER_CONFIRM_TIMEOUT,
+            });
+        }
+        last_round = algod.status_after_block(last_round).await?.last_round;
+    }
+}
 
 /// 4-byte prefix for logged return values, from https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0004.md#standard-format
 const ABI_RETURN_HASH: [u8; 4] = [0x15, 0x1f, 0x7c, 0x75];
@@ -45,12 +78,38 @@ const MAX_ABI_ARG_TYPE_LEN: usize = 15;
 const FOREIGN_OBJ_ABI_UINT_SIZE: usize = 8;
 
 /// Represents an unsigned transactions and a signer that can authorize that transaction.
+///
+/// `signer` is optional: when `None`, the composer will produce a
+/// placeholder `SignedTransaction` whose signature is the all-zero
+/// 64-byte sentinel. That mirrors the old `TransactionSigner::Empty`
+/// enum variant and is useful for the `/v2/transactions/simulate`
+/// "allow-empty-signatures = false" scenarios; never use it against
+/// the live submit endpoint.
 #[derive(Debug, Clone)]
 pub struct TransactionWithSigner {
     /// An unsigned transaction
     pub tx: Transaction,
-    /// A transaction signer that can authorize the transaction
-    pub signer: TransactionSigner,
+    /// A transaction signer that can authorize the transaction, or
+    /// `None` for an unsigned simulate slot.
+    pub signer: Option<Arc<dyn Signer>>,
+}
+
+impl TransactionWithSigner {
+    /// Build a `TransactionWithSigner` from a transaction and a signer
+    /// that will authorize it.
+    pub fn new(tx: Transaction, signer: Arc<dyn Signer>) -> Self {
+        Self {
+            tx,
+            signer: Some(signer),
+        }
+    }
+
+    /// Build a `TransactionWithSigner` that has no real signer
+    /// attached. The composer will fill the corresponding slot with an
+    /// all-zero placeholder signature — only safe for simulate.
+    pub fn unsigned(tx: Transaction) -> Self {
+        Self { tx, signer: None }
+    }
 }
 
 /// Represents the output from a successful ABI method call.
@@ -86,7 +145,7 @@ pub struct AddMethodCallParams {
     /// The address of the sender of this application call
     pub sender: Address,
     /// Transactions params to use for this application call
-    pub suggested_params: TransactionParams200Response,
+    pub suggested_params: algonaut_model::client_types::SuggestedParams,
     /// The OnComplete action to take for this application call
     pub on_complete: ApplicationCallOnComplete,
     /// The approval program for this application call. Only set this if this is an application
@@ -109,7 +168,7 @@ pub struct AddMethodCallParams {
     /// If provided, the address that the sender will be rekeyed to at the conclusion of this application call
     pub rekey_to: Option<Address>,
     /// A transaction Signer that can authorize this application call from sender
-    pub signer: TransactionSigner,
+    pub signer: Arc<dyn Signer>,
     /// A list of boxes that the app call has access to
     pub boxes: Option<Vec<BoxReference>>,
 }
@@ -373,7 +432,7 @@ impl AtomicTransactionComposer {
         self.txs.append(&mut txs_with_signer);
         self.txs.push(TransactionWithSigner {
             tx,
-            signer: params.signer.clone(),
+            signer: Some(params.signer.clone()),
         });
         self.method_map
             .insert(self.txs.len() - 1, params.method.clone());
@@ -409,50 +468,32 @@ impl AtomicTransactionComposer {
 
         let tx_and_signers = self.build_group()?;
 
-        // Sign each transaction with its own signer. Transactions sharing a
-        // signer are signed together in one `sign_transactions` call, and each
-        // result is placed back at its original index so the signed group keeps
-        // input order regardless of how many distinct signers are involved.
-        let mut visited = vec![false; tx_and_signers.len()];
-        let mut signed_slots: Vec<Option<SignedTransaction>> = vec![None; tx_and_signers.len()];
-
-        for (i, tx_with_signer) in tx_and_signers.iter().enumerate() {
-            if visited[i] {
-                continue;
-            }
-
-            // `i` always matches its own signer, so `indices_to_sign` is non-empty.
-            let mut indices_to_sign = vec![];
-            for (j, other) in tx_and_signers.iter().enumerate() {
-                if !visited[j] && tx_with_signer.signer == other.signer {
-                    indices_to_sign.push(j);
-                    visited[j] = true;
+        // Sign each transaction with its own signer, one input at a time, so
+        // the signed group keeps input order regardless of how many distinct
+        // signers are involved. (The previous closed-enum `TransactionSigner`
+        // could be compared for equality to batch same-signer transactions
+        // into one call; the open `Signer` trait can't, so we sign per input.)
+        let mut signed_txs = Vec::with_capacity(tx_and_signers.len());
+        for tx_with_signer in tx_and_signers.iter() {
+            let signed = match &tx_with_signer.signer {
+                Some(signer) => {
+                    let one = [tx_with_signer.tx.clone()];
+                    let mut out = signer.sign_transactions(&one)?;
+                    out.pop().ok_or_else(|| {
+                        Error::Msg("signer returned no signed transactions".to_owned())
+                    })?
                 }
-            }
-
-            let group: Vec<Transaction> = indices_to_sign
-                .iter()
-                .map(|&j| tx_and_signers[j].tx.clone())
-                .collect();
-            let signed = tx_with_signer.signer.sign_transactions(group)?;
-
-            if signed.len() != indices_to_sign.len() {
-                return Err(Error::Internal(format!(
-                    "signer returned {} signatures for {} transactions",
-                    signed.len(),
-                    indices_to_sign.len()
-                )));
-            }
-
-            for (j, signed_tx) in indices_to_sign.into_iter().zip(signed) {
-                signed_slots[j] = Some(signed_tx);
-            }
+                None => {
+                    // Mirrors the old `TransactionSigner::Empty` variant:
+                    // produce a placeholder `SignedTransaction` whose
+                    // 64-byte signature is all zeros. Algod's simulator
+                    // detects this as a missing signature; never submit
+                    // it to the live endpoint.
+                    signed_transaction::placeholder(tx_with_signer.tx.clone())?
+                }
+            };
+            signed_txs.push(signed);
         }
-
-        let signed_txs = signed_slots
-            .into_iter()
-            .map(|slot| slot.ok_or_else(|| Error::Internal("transaction left unsigned".to_owned())))
-            .collect::<Result<Vec<_>, _>>()?;
 
         self.signed_txs = signed_txs.clone();
         self.status = AtomicTransactionComposerStatus::Signed;
@@ -463,7 +504,7 @@ impl AtomicTransactionComposer {
     fn tx_ids(&self) -> Vec<String> {
         self.signed_txs
             .iter()
-            .map(|t| t.transaction_id.0.clone())
+            .map(|t| t.transaction_id().0.clone())
             .collect()
     }
 
@@ -496,8 +537,8 @@ impl AtomicTransactionComposer {
             .find(|i| self.method_map.contains_key(i))
             .unwrap_or(0);
 
-        let tx_id = self.signed_txs[index_to_wait].transaction_id.clone();
-        let pending_tx = wait_for_pending_transaction(algod, &tx_id).await?;
+        let tx_id = self.signed_txs[index_to_wait].transaction_id().clone();
+        let pending_tx = poll_until_confirmed(algod, &tx_id).await?;
 
         let mut return_list: Vec<AbiMethodResult> = vec![];
 
@@ -512,7 +553,7 @@ impl AtomicTransactionComposer {
             let mut current_pending_tx = pending_tx.clone();
 
             if i != index_to_wait {
-                let tx_id = self.signed_txs[i].transaction_id.clone();
+                let tx_id = self.signed_txs[i].transaction_id().clone();
 
                 match algod.pending_txn(&tx_id).await {
                     Ok(p) => {
@@ -589,7 +630,7 @@ impl AtomicTransactionComposer {
                 if !self.method_map.contains_key(&i) {
                     continue;
                 }
-                let tx_id = self.signed_txs[i].transaction_id.clone();
+                let tx_id = self.signed_txs[i].transaction_id().clone();
                 let pending_tx = (*txn_result.txn_result).clone();
                 let return_type = self.method_map[&i].returns.clone().type_()?;
                 return_list.push(get_return_value_with_return_type(
@@ -908,16 +949,13 @@ mod tests {
         let tx_bob = pay(&bob, alice.address());
 
         let mut atc = AtomicTransactionComposer::default();
-        atc.add_transaction(TransactionWithSigner {
-            tx: tx_alice,
-            signer: TransactionSigner::BasicAccount(alice.clone()),
-        })
+        atc.add_transaction(TransactionWithSigner::new(
+            tx_alice,
+            Arc::new(alice.clone()),
+        ))
         .unwrap();
-        atc.add_transaction(TransactionWithSigner {
-            tx: tx_bob,
-            signer: TransactionSigner::BasicAccount(bob.clone()),
-        })
-        .unwrap();
+        atc.add_transaction(TransactionWithSigner::new(tx_bob, Arc::new(bob.clone())))
+            .unwrap();
 
         let signed = atc.gather_signatures().unwrap();
 
@@ -927,12 +965,12 @@ mod tests {
             "every input transaction must be signed exactly once"
         );
         assert_eq!(
-            signed[0].transaction.sender(),
+            signed[0].transaction().sender(),
             alice.address(),
             "first signed tx must correspond to the first input"
         );
         assert_eq!(
-            signed[1].transaction.sender(),
+            signed[1].transaction().sender(),
             bob.address(),
             "second signed tx must correspond to the second input"
         );
