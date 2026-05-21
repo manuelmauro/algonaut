@@ -2,17 +2,17 @@
 id: closed-signed-transaction
 title: SignedTransaction constructable only via signing
 abstract: Close `SignedTransaction`'s pub fields, compute `transaction_id` from the transaction inside the signing paths, and add a `MultisigSigningSession` builder + `SignedLogic::sign` convenience so no example writes a `SignedTransaction` struct literal. Fifth sub-ADR addressing decision item D5 of the ideal-type-safe-ergonomic-api index.
-status: proposed
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics, type-safety, signing]
 ---
 
-# `SignedTransaction` constructable only via signing
+# SignedTransaction constructable only via signing
 
 ## Status
 
-Proposed. Implements decision item **D5** of
+Accepted. Implements decision item **D5** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 Depends on **D7** ([`signer-trait`](signer-trait.md)) — the
 `MultisigSigningSession` builder shares its accumulation logic with the
