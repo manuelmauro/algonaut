@@ -14,7 +14,6 @@ use algonaut_core::{Address, AppId, AssetId, Round, TxId};
 use algonaut_transaction::{
     SignedTransaction, Signer, Transaction, TransactionType,
     builder::TransactionParams,
-    error::TransactionError,
     signed_transaction,
     transaction::{ApplicationCallTransaction, to_tx_type_enum},
     tx_group,
@@ -27,7 +26,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::{Error, algod::v2::Algod};
+use crate::{Error, algod::v2::Algod, algod::v2::PendingSubmission, simulate::SimulateResponse};
 
 use instant::Instant;
 
@@ -37,7 +36,7 @@ pub use method_call::{MethodCall, MethodCallBuilder};
 /// Default timeout matching [`crate::algod::v2::PendingSubmission::confirm`].
 const COMPOSER_CONFIRM_TIMEOUT: Duration = Duration::from_secs(60);
 
-/// Poll algod for finality of the given transaction id. The composer
+/// Poll algod for finality of the given transaction id. A signed group
 /// already has the tx ids it wants to wait on (post-`send_txns`), so this
 /// internal helper is the equivalent of `PendingSubmission::confirm`
 /// against an arbitrary id.
@@ -79,12 +78,11 @@ const FOREIGN_OBJ_ABI_UINT_SIZE: usize = 8;
 
 /// Represents an unsigned transactions and a signer that can authorize that transaction.
 ///
-/// `signer` is optional: when `None`, the composer will produce a
-/// placeholder `SignedTransaction` whose signature is the all-zero
-/// 64-byte sentinel. That mirrors the old `TransactionSigner::Empty`
-/// enum variant and is useful for the `/v2/transactions/simulate`
-/// "allow-empty-signatures = false" scenarios; never use it against
-/// the live submit endpoint.
+/// `signer` is optional: when `None`, signing produces a placeholder
+/// `SignedTransaction` whose signature is the all-zero 64-byte sentinel.
+/// That mirrors the old `TransactionSigner::Empty` enum variant and is
+/// useful for the `/v2/transactions/simulate` "allow-empty-signatures =
+/// false" scenarios; never use it against the live submit endpoint.
 #[derive(Debug, Clone)]
 pub struct TransactionWithSigner {
     /// An unsigned transaction
@@ -105,8 +103,8 @@ impl TransactionWithSigner {
     }
 
     /// Build a `TransactionWithSigner` that has no real signer
-    /// attached. The composer will fill the corresponding slot with an
-    /// all-zero placeholder signature — only safe for simulate.
+    /// attached. Signing fills the corresponding slot with an all-zero
+    /// placeholder signature — only safe for simulate.
     pub fn unsigned(tx: Transaction) -> Self {
         Self { tx, signer: None }
     }
@@ -132,10 +130,11 @@ pub enum AbiMethodReturnValue {
     Void,
 }
 
+/// Results of successfully [`executing`](SignedAtomicGroup::execute) a
+/// transaction group: the confirmed round, the group's transaction ids,
+/// and the decoded ABI return value for each method call.
 #[derive(Debug, Clone)]
-/// ExecuteResult contains the results of successfully calling the Execute method on an
-/// AtomicTransactionComposer object.
-pub struct ExecuteResult {
+pub struct ExecuteOutcome {
     /// The round in which the executed transaction group was confirmed on chain
     /// (optional, because the transaction's confirmed round is optional).
     pub confirmed_round: Option<u64>,
@@ -145,55 +144,22 @@ pub struct ExecuteResult {
     pub method_results: Vec<AbiMethodResult>,
 }
 
-/// AtcSimulateResult is the result of calling `simulate` on an
-/// AtomicTransactionComposer. Mirrors `ExecuteResult` with the raw
-/// simulate response attached, but the composer is not transitioned to
-/// `Committed` — a subsequent `execute()` is still legal.
+/// Result of [`simulating`](UnsignedAtomicGroup::simulate) a group. Mirrors
+/// [`ExecuteOutcome`] with the raw simulate response attached. Because
+/// simulate borrows the group (`&self`), the same group can still be
+/// signed and executed afterwards.
 #[derive(Debug, Clone)]
-pub struct AtcSimulateResult {
+pub struct SimulateOutcome {
     /// TxIDs for each transaction in the simulated group.
     pub tx_ids: Vec<String>,
     /// ABI return values per method call. Errors are surfaced
-    /// per-result (the same way `ExecuteResult` does it) so callers can
-    /// inspect partial successes.
+    /// per-result (the same way [`ExecuteOutcome`] does it) so callers
+    /// can inspect partial successes.
     pub method_results: Vec<AbiMethodResult>,
-    /// Raw simulate response from algod, including failure messages,
-    /// budget consumed, eval-overrides, and exec-trace when requested.
-    pub simulate_response: algonaut_algod::models::SimulateTransaction200Response,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum AtomicTransactionComposerStatus {
-    /// The atomic group is still under construction.
-    Building,
-    /// The atomic group has been finalized, but not yet signed.
-    Built,
-    /// The atomic group has been finalized and signed, but not yet submitted to the network.
-    Signed,
-    /// The atomic group has been finalized and signed, then simulated against the simulate
-    /// endpoint. Simulate is non-destructive: the composer can still be submitted/executed
-    /// afterwards, which is why this variant sits between Signed and Submitted in the
-    /// monotonic chain.
-    Simulated,
-    /// The atomic group has been finalized, signed, and submitted to the network.
-    Submitted,
-    /// The atomic group has been finalized, signed, submitted, and successfully committed to a block.
-    Committed,
-}
-
-/// Helper used to construct and execute atomic transaction groups
-#[derive(Debug)]
-pub struct AtomicTransactionComposer {
-    /// The current status of the composer. The status increases monotonically.
-    status: AtomicTransactionComposerStatus,
-
-    /// The transaction contexts in the group with their respective signers.
-    /// If status is greater than BUILDING then this slice cannot change.
-    method_map: HashMap<usize, AbiMethod>,
-
-    txs: Vec<TransactionWithSigner>,
-
-    signed_txs: Vec<SignedTransaction>,
+    /// Hand-named view over algod's simulate response (success flag,
+    /// per-group failure messages, budget overrides, …), exposing typed
+    /// accessors rather than the generated response type.
+    pub simulate_response: SimulateResponse,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -219,296 +185,207 @@ impl AbiArgValue {
     }
 }
 
-impl Default for AtomicTransactionComposer {
-    fn default() -> Self {
-        AtomicTransactionComposer {
-            status: AtomicTransactionComposerStatus::Building,
-            method_map: HashMap::new(),
-            txs: vec![],
-            signed_txs: vec![],
-        }
-    }
+/// A pending entry in an [`AtomicGroupBuilder`]. Entries are only assembled and
+/// validated when [`AtomicGroupBuilder::build`] is called, so the `add_*`
+/// methods can stay infallible.
+#[derive(Debug, Clone)]
+enum AtomicGroupEntry {
+    Transaction(TransactionWithSigner),
+    MethodCall(MethodCall),
 }
 
-impl AtomicTransactionComposer {
-    /// Returns the number of transactions currently in this atomic group.
-    pub fn len(&self) -> usize {
-        self.txs.len()
+/// Builder state of an atomic transaction group.
+///
+/// Add pre-built transactions and ABI method calls in any mix, then
+/// [`build`](AtomicGroupBuilder::build) to stamp the group id and advance to
+/// the [`UnsignedAtomicGroup`] state. The `add_*` methods are infallible and
+/// only record intent; all validation — group-size limit, ABI argument
+/// counts, per-transaction checks — happens in `build`.
+///
+/// `AtomicGroupBuilder` is `Clone`: clone it to snapshot a common prefix and
+/// build several groups from it (this replaces the old
+/// `clone_composer`).
+#[derive(Debug, Clone, Default)]
+pub struct AtomicGroupBuilder {
+    entries: Vec<AtomicGroupEntry>,
+}
+
+impl AtomicGroupBuilder {
+    /// Start a new, empty group builder.
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
+    /// Add a pre-built transaction with its signer to the group.
+    pub fn add_transaction(mut self, txn_with_signer: TransactionWithSigner) -> Self {
+        self.entries
+            .push(AtomicGroupEntry::Transaction(txn_with_signer));
+        self
     }
 
-    pub fn status(&self) -> AtomicTransactionComposerStatus {
-        self.status
+    /// Add an ABI method call to the group. Build the [`MethodCall`]
+    /// with [`MethodCall::new`] and the [`MethodCallBuilder`] setters.
+    pub fn add_method_call(mut self, call: MethodCall) -> Self {
+        self.entries.push(AtomicGroupEntry::MethodCall(call));
+        self
     }
 
-    /// Creates a new composer with the same underlying transactions.
-    /// The new composer's status will be BUILDING, so additional transactions may be added to it.
-    /// This probably can be named better, as it's not strictly a clone - for now keeping it like in the official SDKs.
-    pub fn clone_composer(&self) -> AtomicTransactionComposer {
-        let mut cloned = AtomicTransactionComposer {
-            status: AtomicTransactionComposerStatus::Building,
-            method_map: self.method_map.clone(),
-            txs: vec![],
-            signed_txs: vec![],
-        };
-
-        for tx_with_signer in &self.txs {
-            let mut tx = tx_with_signer.tx.clone();
-            tx.group = None;
-            let new_tx_with_signer = TransactionWithSigner {
-                tx,
-                signer: tx_with_signer.signer.clone(),
-            };
-            cloned.txs.push(new_tx_with_signer);
-        }
-
-        cloned
-    }
-
-    /// Adds a transaction to this atomic group.
+    /// Finalize the group: assemble every entry, enforce the size and
+    /// ABI-argument invariants, stamp the group id, and produce an
+    /// [`UnsignedAtomicGroup`].
     ///
-    /// An error will be thrown if the composer's status is not Building,
-    /// or if adding this transaction causes the current group to exceed MaxAtomicGroupSize.
-    pub fn add_transaction(&mut self, txn_with_signer: TransactionWithSigner) -> Result<(), Error> {
-        if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(Error::ComposerStatusInvalid(
-                "add_transaction requires status=Building".to_owned(),
-            ));
-        }
+    /// Returns [`Error::EmptyTransactionGroup`] if no entries were
+    /// added, or [`Error::ComposerGroupFull`] if the assembled group
+    /// would exceed the protocol's 16-transaction limit.
+    pub fn build(self) -> Result<UnsignedAtomicGroup, Error> {
+        let mut txs: Vec<TransactionWithSigner> = Vec::new();
+        let mut method_map: HashMap<usize, AbiMethod> = HashMap::new();
 
-        if self.len() == MAX_ATOMIC_GROUP_SIZE {
-            return Err(Error::ComposerGroupFull {
-                max: MAX_ATOMIC_GROUP_SIZE,
-            });
-        }
-
-        validate_tx(&txn_with_signer.tx, TransactionArgType::Any)?;
-
-        self.txs.push(txn_with_signer);
-
-        Ok(())
-    }
-
-    /// Add an ABI method call to this atomic group.
-    ///
-    /// Build the [`MethodCall`] via [`MethodCall::new`] and the fluent
-    /// setters on [`MethodCallBuilder`]. The composer takes ownership
-    /// of the call.
-    pub fn add_method_call(&mut self, call: MethodCall) -> Result<(), Error> {
-        if self.status != AtomicTransactionComposerStatus::Building {
-            return Err(Error::ComposerStatusInvalid(
-                "add_method_call requires status=Building".to_owned(),
-            ));
-        }
-        if call.method_args.len() != call.method.args.len() {
-            return Err(Error::Msg(format!(
-                "incorrect number of arguments were provided: {} != {}",
-                call.method_args.len(),
-                call.method.args.len()
-            )));
-        }
-        if self.len() + call.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
-            return Err(Error::ComposerGroupFull {
-                max: MAX_ATOMIC_GROUP_SIZE,
-            });
-        }
-
-        let mut method_types = vec![];
-        let mut method_args: Vec<AbiValue> = vec![];
-        let mut txs_with_signer = vec![];
-        let mut foreign_accounts = vec![];
-        let mut foreign_assets = vec![];
-        let mut foreign_apps = vec![];
-
-        for i in 0..call.method.args.len() {
-            let mut arg_type = call.method.args[i].clone();
-            let arg_value = &call.method_args[i];
-
-            match arg_type.type_()? {
-                AbiArgType::Tx(type_) => {
-                    add_tx_arg_type_to_method_call(arg_value, type_, &mut txs_with_signer)?
+        for entry in self.entries {
+            match entry {
+                AtomicGroupEntry::Transaction(txn_with_signer) => {
+                    if txs.len() == MAX_ATOMIC_GROUP_SIZE {
+                        return Err(Error::ComposerGroupFull {
+                            max: MAX_ATOMIC_GROUP_SIZE,
+                        });
+                    }
+                    validate_tx(&txn_with_signer.tx, TransactionArgType::Any)?;
+                    txs.push(txn_with_signer);
                 }
-                AbiArgType::Ref(type_) => add_ref_arg_to_method_call(
-                    &type_,
-                    arg_value,
-                    &mut foreign_accounts,
-                    &mut foreign_assets,
-                    &mut foreign_apps,
-                    &mut method_types,
-                    &mut method_args,
-                    call.sender,
-                    call.app_id,
-                )?,
-                AbiArgType::AbiObj(type_) => {
-                    add_abi_obj_arg_to_method_call(
-                        &type_,
-                        arg_value,
-                        &mut method_types,
-                        &mut method_args,
-                    )?;
+                AtomicGroupEntry::MethodCall(call) => {
+                    process_method_call(call, &mut txs, &mut method_map)?;
                 }
-            };
-        }
-
-        if method_args.len() > MAX_ABI_ARG_TYPE_LEN {
-            let (type_, value) = wrap_overflowing_values(&method_types, &method_args)?;
-            method_types.push(type_);
-            method_args.push(value);
-        }
-
-        let mut encoded_abi_args = vec![call.method.get_selector()?.into()];
-        for i in 0..method_args.len() {
-            encoded_abi_args.push(method_types[i].encode(method_args[i].clone())?);
-        }
-
-        let app_call = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
-            sender: call.sender,
-            app_id: Some(call.app_id),
-            on_complete: call.on_complete.clone(),
-            accounts: Some(foreign_accounts),
-            approval_program: call.approval_program.clone(),
-            app_arguments: Some(encoded_abi_args),
-            clear_state_program: call.clear_program.clone(),
-            foreign_apps: Some(foreign_apps),
-            foreign_assets: Some(foreign_assets),
-            global_state_schema: call.global_schema.clone(),
-            local_state_schema: call.local_schema.clone(),
-            extra_pages: call.extra_pages,
-            boxes: call.boxes.clone(),
-        });
-
-        let sp = &call.suggested_params;
-        let tx = Transaction {
-            fee: call.fee,
-            first_valid: Round(sp.last_round()),
-            genesis_hash: sp.genesis_hash(),
-            last_valid: Round(sp.last_round() + 1000),
-            txn_type: app_call,
-            genesis_id: Some(sp.genesis_id().clone()),
-            group: None,
-            lease: call.lease,
-            note: call.note.clone(),
-            rekey_to: call.rekey_to,
-        };
-
-        self.txs.append(&mut txs_with_signer);
-        self.txs.push(TransactionWithSigner {
-            tx,
-            signer: Some(call.signer.clone()),
-        });
-        self.method_map.insert(self.txs.len() - 1, call.method);
-
-        Ok(())
-    }
-
-    /// Finalize the transaction group and returned the finalized transactions.
-    /// The composer's status will be at least BUILT after executing this method.
-    pub fn build_group(&mut self) -> Result<Vec<TransactionWithSigner>, Error> {
-        if self.status >= AtomicTransactionComposerStatus::Built {
-            return Ok(self.txs.clone());
-        }
-
-        if self.txs.is_empty() {
-            return Err(Error::EmptyTransactionGroup);
-        } else if self.txs.len() > 1 {
-            let mut group_txs = vec![];
-            for tx in self.txs.iter_mut() {
-                group_txs.push(&mut tx.tx);
             }
+        }
+
+        if txs.is_empty() {
+            return Err(Error::EmptyTransactionGroup);
+        }
+        if txs.len() > 1 {
+            let mut group_txs: Vec<&mut Transaction> = txs.iter_mut().map(|t| &mut t.tx).collect();
             tx_group::assign_in_place(&mut group_txs)?;
         }
 
-        self.status = AtomicTransactionComposerStatus::Built;
-        Ok(self.txs.clone())
+        Ok(UnsignedAtomicGroup { txs, method_map })
+    }
+}
+
+/// A built, group-id-stamped transaction group, ready to sign or
+/// simulate. Reach this state via [`AtomicGroupBuilder::build`].
+#[derive(Debug, Clone)]
+pub struct UnsignedAtomicGroup {
+    txs: Vec<TransactionWithSigner>,
+    method_map: HashMap<usize, AbiMethod>,
+}
+
+impl UnsignedAtomicGroup {
+    /// The group's transactions, in order, each with its signer.
+    pub fn transactions(&self) -> &[TransactionWithSigner] {
+        &self.txs
     }
 
-    pub fn gather_signatures(&mut self) -> Result<Vec<SignedTransaction>, Error> {
-        if self.status >= AtomicTransactionComposerStatus::Signed {
-            return Ok(self.signed_txs.clone());
-        }
+    /// Sign every transaction with its attached signer, advancing to the
+    /// [`SignedAtomicGroup`] state. Transactions whose signer is `None` get an
+    /// all-zero placeholder signature (simulate-only).
+    pub fn sign(self) -> Result<SignedAtomicGroup, Error> {
+        let signed_txs = sign_group(&self.txs)?;
+        Ok(SignedAtomicGroup {
+            signed_txs,
+            method_map: self.method_map,
+        })
+    }
 
-        let tx_and_signers = self.build_group()?;
+    /// Simulate the group through algod's `/v2/transactions/simulate`
+    /// endpoint with no power-pack overrides.
+    ///
+    /// Takes `&self`: simulation is non-destructive, so the same group
+    /// can still be signed and executed afterwards.
+    pub async fn simulate(&self, algod: &Algod) -> Result<SimulateOutcome, Error> {
+        self.simulate_with(algod, SimulateRequest::new(vec![]))
+            .await
+    }
 
-        let mut signed_txs = Vec::with_capacity(tx_and_signers.len());
-        for tx_with_signer in tx_and_signers.iter() {
-            let signed = match &tx_with_signer.signer {
-                Some(signer) => {
-                    let one = [tx_with_signer.tx.clone()];
-                    let mut out = signer.sign_transactions(&one)?;
-                    out.pop().ok_or_else(|| {
-                        Error::Msg("signer returned no signed transactions".to_owned())
-                    })?
+    /// Simulate with a caller-supplied [`SimulateRequest`] — use this to
+    /// toggle the power-pack fields (extra opcode budget,
+    /// allow-more-logging, exec-trace-config, etc.).
+    ///
+    /// The request's `txn_groups` is ignored; this method always
+    /// substitutes the group's own (placeholder-)signed transactions.
+    /// Any other field on the request is forwarded as given.
+    pub async fn simulate_with(
+        &self,
+        algod: &Algod,
+        mut request: SimulateRequest,
+    ) -> Result<SimulateOutcome, Error> {
+        let signed_txs = sign_group(&self.txs)?;
+
+        request.txn_groups = vec![SimulateRequestTransactionGroup::new(signed_txs.clone())];
+
+        let response: SimulateTransaction200Response = algod.simulate_txns(request).await?;
+
+        // Build per-method ABI return values from the pending-txn
+        // payloads embedded in the simulate response (mirrors execute()).
+        let mut method_results: Vec<AbiMethodResult> = Vec::new();
+        if let Some(group) = response.txn_groups.first() {
+            for (i, txn_result) in group.txn_results.iter().enumerate() {
+                if !self.method_map.contains_key(&i) {
+                    continue;
                 }
-                None => {
-                    // Mirrors the old `TransactionSigner::Empty` variant:
-                    // produce a placeholder `SignedTransaction` whose
-                    // 64-byte signature is all zeros. Algod's simulator
-                    // detects this as a missing signature; never submit
-                    // it to the live endpoint.
-                    signed_transaction::placeholder(tx_with_signer.tx.clone())?
-                }
-            };
-            signed_txs.push(signed);
-        }
-
-        self.signed_txs = signed_txs.clone();
-
-        self.status = AtomicTransactionComposerStatus::Signed;
-
-        Ok(signed_txs)
-    }
-
-    fn get_txs_ids(&self) -> Vec<String> {
-        self.signed_txs
-            .iter()
-            .map(|t| t.transaction_id().0.clone())
-            .collect()
-    }
-
-    pub async fn submit(&mut self, algod: &Algod) -> Result<Vec<String>, Error> {
-        if self.status >= AtomicTransactionComposerStatus::Submitted {
-            return Err(Error::ComposerStatusInvalid(
-                "submit cannot be called after a previous submit/execute".to_owned(),
-            ));
-        }
-
-        self.gather_signatures()?;
-
-        algod.send_txns(&self.signed_txs).await?;
-
-        self.status = AtomicTransactionComposerStatus::Submitted;
-
-        Ok(self.get_txs_ids())
-    }
-
-    pub async fn execute(&mut self, algod: &Algod) -> Result<ExecuteResult, Error> {
-        if self.status >= AtomicTransactionComposerStatus::Committed {
-            return Err(Error::ComposerStatusInvalid(
-                "execute cannot be called after the composer is committed".to_owned(),
-            ));
-        }
-
-        self.submit(algod).await?;
-
-        let mut index_to_wait = 0;
-        for i in 0..self.signed_txs.len() {
-            if self.method_map.contains_key(&i) {
-                index_to_wait = i;
-                break;
+                let tx_id = signed_txs[i].transaction_id().clone();
+                let pending_tx = (*txn_result.txn_result).clone();
+                let return_type = self.method_map[&i].returns.clone().type_()?;
+                method_results.push(get_return_value_with_return_type(
+                    &pending_tx,
+                    &tx_id,
+                    return_type,
+                )?);
             }
         }
+
+        Ok(SimulateOutcome {
+            tx_ids: tx_ids(&signed_txs),
+            method_results,
+            simulate_response: SimulateResponse::new(response),
+        })
+    }
+}
+
+/// A signed transaction group, ready to submit or execute. Reach this
+/// state via [`UnsignedAtomicGroup::sign`].
+#[derive(Debug, Clone)]
+pub struct SignedAtomicGroup {
+    signed_txs: Vec<SignedTransaction>,
+    method_map: HashMap<usize, AbiMethod>,
+}
+
+impl SignedAtomicGroup {
+    /// The signed transactions, in group order.
+    pub fn signed_transactions(&self) -> &[SignedTransaction] {
+        &self.signed_txs
+    }
+
+    /// Broadcast the group and return a [`PendingSubmission`] handle.
+    /// Call [`PendingSubmission::confirm`] to await finality, or hold the
+    /// handle and confirm later.
+    pub async fn submit(self, algod: &Algod) -> Result<PendingSubmission, Error> {
+        algod.submit_txns(&self.signed_txs).await
+    }
+
+    /// Submit the group, wait for it to be confirmed, and decode each ABI
+    /// method call's return value.
+    pub async fn execute(self, algod: &Algod) -> Result<ExecuteOutcome, Error> {
+        algod.send_txns(&self.signed_txs).await?;
+
+        let index_to_wait = (0..self.signed_txs.len())
+            .find(|i| self.method_map.contains_key(i))
+            .unwrap_or(0);
 
         let tx_id = self.signed_txs[index_to_wait].transaction_id().clone();
         let pending_tx = poll_until_confirmed(algod, &tx_id).await?;
 
-        let mut return_list: Vec<AbiMethodResult> = vec![];
+        let mut method_results: Vec<AbiMethodResult> = vec![];
 
-        self.status = AtomicTransactionComposerStatus::Committed;
-
-        for i in 0..self.txs.len() {
+        for i in 0..self.signed_txs.len() {
             if !self.method_map.contains_key(&i) {
                 continue;
             }
@@ -525,7 +402,7 @@ impl AtomicTransactionComposer {
                         current_pending_tx = p;
                     }
                     Err(e) => {
-                        return_list.push(AbiMethodResult {
+                        method_results.push(AbiMethodResult {
                             tx_id,
                             tx_info: pending_tx.clone(),
                             return_value: Err(AbiReturnDecodeError(format!("{e:?}"))),
@@ -536,83 +413,163 @@ impl AtomicTransactionComposer {
             }
 
             let return_type = self.method_map[&i].returns.clone().type_()?;
-            return_list.push(get_return_value_with_return_type(
+            method_results.push(get_return_value_with_return_type(
                 &current_pending_tx,
                 &current_tx_id,
                 return_type,
             )?);
         }
 
-        Ok(ExecuteResult {
+        Ok(ExecuteOutcome {
             confirmed_round: pending_tx.confirmed_round,
-            tx_ids: self.get_txs_ids(),
-            method_results: return_list,
+            tx_ids: tx_ids(&self.signed_txs),
+            method_results,
         })
     }
+}
 
-    /// Simulate the composed group through algod's `/v2/transactions/simulate`
-    /// endpoint with no power-pack overrides. Equivalent to:
-    /// `simulate_with(algod, SimulateRequest::new(vec![default_group]))`.
-    pub async fn simulate(&mut self, algod: &Algod) -> Result<AtcSimulateResult, Error> {
-        let default = SimulateRequest::new(vec![]);
-        self.simulate_with(algod, default).await
-    }
-
-    /// Simulate the composed group with a caller-supplied
-    /// [`SimulateRequest`] — use this when you need to toggle the
-    /// power-pack fields (extra opcode budget, allow-more-logging,
-    /// exec-trace-config, etc.).
-    ///
-    /// The request's `txn_groups` is ignored; this method always
-    /// substitutes the composer's own signed group. Any other field on
-    /// the request (toggles, exec-trace config, round) is forwarded as
-    /// given.
-    pub async fn simulate_with(
-        &mut self,
-        algod: &Algod,
-        mut request: SimulateRequest,
-    ) -> Result<AtcSimulateResult, Error> {
-        if self.status >= AtomicTransactionComposerStatus::Submitted {
-            return Err(Error::Msg(
-                "Atomic Transaction Composer cannot simulate after submit/execute".to_owned(),
-            ));
-        }
-
-        self.gather_signatures()?;
-
-        request.txn_groups = vec![SimulateRequestTransactionGroup::new(
-            self.signed_txs.clone(),
-        )];
-
-        let response: SimulateTransaction200Response = algod.simulate_txns(request).await?;
-
-        // Build per-method ABI return values from the pending-txn
-        // payloads embedded in the simulate response (mirrors execute()).
-        let mut return_list: Vec<AbiMethodResult> = Vec::new();
-        if let Some(group) = response.txn_groups.first() {
-            for (i, txn_result) in group.txn_results.iter().enumerate() {
-                if !self.method_map.contains_key(&i) {
-                    continue;
-                }
-                let tx_id = self.signed_txs[i].transaction_id().clone();
-                let pending_tx = (*txn_result.txn_result).clone();
-                let return_type = self.method_map[&i].returns.clone().type_()?;
-                return_list.push(get_return_value_with_return_type(
-                    &pending_tx,
-                    &tx_id,
-                    return_type,
-                )?);
+/// Sign every transaction in `txs` with its own signer, one input at a
+/// time, so the signed group keeps input order regardless of how many
+/// distinct signers are involved. Transactions whose signer is `None`
+/// get an all-zero placeholder signature (simulate-only).
+fn sign_group(txs: &[TransactionWithSigner]) -> Result<Vec<SignedTransaction>, Error> {
+    let mut signed_txs = Vec::with_capacity(txs.len());
+    for tx_with_signer in txs {
+        let signed = match &tx_with_signer.signer {
+            Some(signer) => {
+                let one = [tx_with_signer.tx.clone()];
+                signer.sign_transactions(&one)?.pop().ok_or_else(|| {
+                    Error::Internal("signer returned no signed transactions".to_owned())
+                })?
             }
-        }
-
-        self.status = AtomicTransactionComposerStatus::Simulated;
-
-        Ok(AtcSimulateResult {
-            tx_ids: self.get_txs_ids(),
-            method_results: return_list,
-            simulate_response: response,
-        })
+            None => {
+                // Mirrors the old `TransactionSigner::Empty` variant:
+                // produce a placeholder `SignedTransaction` whose 64-byte
+                // signature is all zeros. Algod's simulator detects this
+                // as a missing signature; never submit it to the live
+                // endpoint.
+                signed_transaction::placeholder(tx_with_signer.tx.clone())?
+            }
+        };
+        signed_txs.push(signed);
     }
+    Ok(signed_txs)
+}
+
+/// Collect the base32 transaction ids of a signed group, in order.
+fn tx_ids(signed_txs: &[SignedTransaction]) -> Vec<String> {
+    signed_txs
+        .iter()
+        .map(|t| t.transaction_id().0.clone())
+        .collect()
+}
+
+/// Encode an ABI method call into its application-call transaction (plus
+/// any transaction-typed arguments) and append the result to `txs`,
+/// recording the method at the app-call's index in `method_map`.
+fn process_method_call(
+    call: MethodCall,
+    txs: &mut Vec<TransactionWithSigner>,
+    method_map: &mut HashMap<usize, AbiMethod>,
+) -> Result<(), Error> {
+    if call.method_args.len() != call.method.args.len() {
+        return Err(Error::Msg(format!(
+            "incorrect number of arguments were provided: {} != {}",
+            call.method_args.len(),
+            call.method.args.len()
+        )));
+    }
+    if txs.len() + call.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
+        return Err(Error::ComposerGroupFull {
+            max: MAX_ATOMIC_GROUP_SIZE,
+        });
+    }
+
+    let mut method_types = vec![];
+    let mut method_args: Vec<AbiValue> = vec![];
+    let mut txs_with_signer = vec![];
+    let mut foreign_accounts = vec![];
+    let mut foreign_assets = vec![];
+    let mut foreign_apps = vec![];
+
+    for (arg_type, arg_value) in call.method.args.iter().zip(&call.method_args) {
+        let mut arg_type = arg_type.clone();
+
+        match arg_type.type_()? {
+            AbiArgType::Tx(type_) => {
+                add_tx_arg_type_to_method_call(arg_value, type_, &mut txs_with_signer)?
+            }
+            AbiArgType::Ref(type_) => add_ref_arg_to_method_call(
+                &type_,
+                arg_value,
+                &mut foreign_accounts,
+                &mut foreign_assets,
+                &mut foreign_apps,
+                &mut method_types,
+                &mut method_args,
+                call.sender,
+                call.app_id,
+            )?,
+            AbiArgType::AbiObj(type_) => {
+                add_abi_obj_arg_to_method_call(
+                    &type_,
+                    arg_value,
+                    &mut method_types,
+                    &mut method_args,
+                )?;
+            }
+        };
+    }
+
+    if method_args.len() > MAX_ABI_ARG_TYPE_LEN {
+        let (type_, value) = wrap_overflowing_values(&method_types, &method_args)?;
+        method_types.push(type_);
+        method_args.push(value);
+    }
+
+    let mut encoded_abi_args = vec![call.method.get_selector()?.into()];
+    for (method_type, method_arg) in method_types.iter().zip(&method_args) {
+        encoded_abi_args.push(method_type.encode(method_arg.clone())?);
+    }
+
+    let app_call = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
+        sender: call.sender,
+        app_id: Some(call.app_id),
+        on_complete: call.on_complete.clone(),
+        accounts: Some(foreign_accounts),
+        approval_program: call.approval_program.clone(),
+        app_arguments: Some(encoded_abi_args),
+        clear_state_program: call.clear_program.clone(),
+        foreign_apps: Some(foreign_apps),
+        foreign_assets: Some(foreign_assets),
+        global_state_schema: call.global_schema.clone(),
+        local_state_schema: call.local_schema.clone(),
+        extra_pages: call.extra_pages,
+        boxes: call.boxes.clone(),
+    });
+
+    let sp = &call.suggested_params;
+    let tx = Transaction {
+        fee: call.fee,
+        first_valid: Round(sp.last_round()),
+        genesis_hash: sp.genesis_hash(),
+        last_valid: Round(sp.last_round() + 1000),
+        txn_type: app_call,
+        genesis_id: Some(sp.genesis_id().clone()),
+        group: None,
+        lease: call.lease,
+        note: call.note.clone(),
+        rekey_to: call.rekey_to,
+    };
+
+    txs.append(&mut txs_with_signer);
+    txs.push(TransactionWithSigner {
+        tx,
+        signer: Some(call.signer.clone()),
+    });
+    method_map.insert(txs.len() - 1, call.method);
+
+    Ok(())
 }
 
 fn get_return_value_with_return_type(
@@ -632,20 +589,6 @@ fn get_return_value_with_return_type(
         tx_info: pending_tx.clone(),
         return_value,
     })
-}
-
-impl From<TransactionError> for Error {
-    fn from(e: TransactionError) -> Self {
-        Self::Msg(format!("{e:?}"))
-    }
-}
-
-impl From<AbiError> for Error {
-    fn from(e: AbiError) -> Self {
-        match e {
-            AbiError::Msg(msg) => Self::Msg(msg),
-        }
-    }
 }
 
 fn validate_tx(tx: &Transaction, expected_type: TransactionArgType) -> Result<(), Error> {
@@ -849,24 +792,14 @@ fn get_return_value_with_abi_type(
     pending_tx: &PendingTransactionResponse,
     abi_type: &AbiType,
 ) -> Result<Result<AbiMethodReturnValue, AbiReturnDecodeError>, Error> {
-    if pending_tx.logs.is_none() {
-        return Err(Error::MissingReturnLog);
-    }
-
-    // safe to unwrap given the previous check
-    let logs = &pending_tx.logs.clone().unwrap();
-
-    if logs.is_empty() {
-        return Err(Error::MissingReturnLog);
-    }
-
-    let ret_line = &logs[logs.len() - 1];
+    let logs = pending_tx.logs.as_deref().ok_or(Error::MissingReturnLog)?;
+    let ret_line = logs.last().ok_or(Error::MissingReturnLog)?;
 
     let decoded_ret_line: Vec<u8> = BASE64
         .decode(&ret_line.0[..])
         .map_err(|e| Error::Msg(format!("BASE64 Decoding error: {e:?}")))?;
 
-    if !check_log_ret(&decoded_ret_line) {
+    if !decoded_ret_line.starts_with(&ABI_RETURN_HASH) {
         return Err(Error::MissingReturnLog);
     }
 
@@ -877,15 +810,78 @@ fn get_return_value_with_abi_type(
     })
 }
 
-fn check_log_ret(log_line: &[u8]) -> bool {
-    let abi_return_hash_len = ABI_RETURN_HASH.len();
-    if log_line.len() < abi_return_hash_len {
-        return false;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use algonaut_core::MicroAlgos;
+    use algonaut_crypto::HashDigest;
+    use algonaut_transaction::account::Account;
+    use algonaut_transaction::builder::{Pay, TransactionParams};
+
+    struct StubParams {
+        genesis_id: String,
     }
-    for i in 0..abi_return_hash_len {
-        if log_line[i] != ABI_RETURN_HASH[i] {
-            return false;
+
+    impl TransactionParams for StubParams {
+        fn last_round(&self) -> u64 {
+            1
+        }
+        fn min_fee(&self) -> u64 {
+            1_000
+        }
+        fn genesis_hash(&self) -> HashDigest {
+            HashDigest([0; 32])
+        }
+        fn genesis_id(&self) -> &String {
+            &self.genesis_id
         }
     }
-    true
+
+    fn pay(sender: &Account, receiver: Address) -> Transaction {
+        let params = StubParams {
+            genesis_id: "testnet-v1.0".to_owned(),
+        };
+        Pay::new(sender.address(), receiver, MicroAlgos(1_000))
+            .build(&params)
+            .expect("failed to build payment transaction")
+    }
+
+    /// Signing a built group whose transactions are authorized by
+    /// *different* signers must yield exactly one signed transaction per
+    /// input, in input order.
+    #[test]
+    fn sign_signs_every_tx_with_distinct_signers() {
+        let alice = Account::generate();
+        let bob = Account::generate();
+
+        let signed = AtomicGroupBuilder::new()
+            .add_transaction(TransactionWithSigner::new(
+                pay(&alice, bob.address()),
+                Arc::new(alice.clone()),
+            ))
+            .add_transaction(TransactionWithSigner::new(
+                pay(&bob, alice.address()),
+                Arc::new(bob.clone()),
+            ))
+            .build()
+            .unwrap()
+            .sign()
+            .unwrap();
+
+        let txs = signed.signed_transactions();
+        assert_eq!(
+            txs.len(),
+            2,
+            "every input transaction must be signed exactly once"
+        );
+        assert_eq!(txs[0].transaction().sender(), alice.address());
+        assert_eq!(txs[1].transaction().sender(), bob.address());
+    }
+
+    /// `build` rejects a group with no entries.
+    #[test]
+    fn build_rejects_empty_group() {
+        let err = AtomicGroupBuilder::new().build().unwrap_err();
+        assert!(matches!(err, Error::EmptyTransactionGroup));
+    }
 }

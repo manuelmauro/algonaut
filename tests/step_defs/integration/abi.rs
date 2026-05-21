@@ -1,7 +1,7 @@
 use crate::step_defs::{integration::world::World, util::read_teal};
 use algonaut::atomic_transaction_composer::{
-    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicTransactionComposer,
-    AtomicTransactionComposerStatus, MethodCall, TransactionWithSigner,
+    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicGroupBuilder, MethodCall,
+    TransactionWithSigner,
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
@@ -34,7 +34,7 @@ async fn i_make_a_transaction_signer_for_the_account(w: &mut World, account_str:
 
 #[given(expr = "a new AtomicTransactionComposer")]
 async fn a_new_atomic_transaction_composer(w: &mut World) {
-    w.tx_composer = Some(AtomicTransactionComposer::default());
+    w.group_builder = Some(AtomicGroupBuilder::new());
     w.tx_composer_methods = Some(vec![]);
 }
 
@@ -102,41 +102,51 @@ async fn i_create_a_transaction_with_an_empty_signer_with_the_current_transactio
 #[when(expr = "I add the current transaction with signer to the composer.")]
 async fn i_add_the_current_transaction_with_signer_tothecomposer(w: &mut World) {
     let tx_with_signer = w.tx_with_signer.clone().unwrap();
-    let tx_composer = w.tx_composer.as_mut().unwrap();
+    let builder = w.group_builder.take().unwrap();
 
-    tx_composer.add_transaction(tx_with_signer).unwrap();
+    w.group_builder = Some(builder.add_transaction(tx_with_signer));
 }
 
 #[then(expr = "I gather signatures with the composer.")]
 async fn i_gather_signatures_with_the_composer(w: &mut World) {
-    let tx_composer = w.tx_composer.as_mut().unwrap();
+    let signed_group = w.take_signed_group();
 
-    w.signed_txs = Some(tx_composer.gather_signatures().unwrap());
+    w.signed_txs = Some(signed_group.signed_transactions().to_vec());
+    w.signed_group = Some(signed_group);
 }
 
 #[then(regex = r#"^The composer should have a status of "([^"]*)"\.$"#)]
 async fn the_composer_should_have_a_status_of(w: &mut World, status_str: String) {
-    let tx_composer = w.tx_composer.as_mut().unwrap();
-
-    let status = match status_str.as_ref() {
-        "BUILDING" => AtomicTransactionComposerStatus::Building,
-        "BUILT" => AtomicTransactionComposerStatus::Built,
-        "SIGNED" => AtomicTransactionComposerStatus::Signed,
-        "SUBMITTED" => AtomicTransactionComposerStatus::Submitted,
-        "COMMITTED" => AtomicTransactionComposerStatus::Committed,
-        _ => panic!("Not handled status string: {}", status_str),
+    // The typestate has no runtime status; map the harness's status names
+    // onto which staged state the World currently holds.
+    let actual = if w.signed_group.is_some() {
+        "SIGNED"
+    } else if w.unsigned_group.is_some() {
+        "BUILT"
+    } else if w.group_builder.is_some() {
+        "BUILDING"
+    } else {
+        "NONE"
     };
 
-    if status != tx_composer.status() {
-        panic!("status doesn't match");
+    // SUBMITTED/COMMITTED consume the group, leaving no World state to
+    // inspect; the harness's unit feature only asserts BUILDING/BUILT/SIGNED.
+    let expected = match status_str.as_ref() {
+        s @ ("BUILDING" | "BUILT" | "SIGNED") => s,
+        other => panic!("Not handled status string: {}", other),
+    };
+
+    if actual != expected {
+        panic!("status doesn't match: expected {expected}, in state {actual}");
     }
 }
 
 #[then(expr = "I clone the composer.")]
 async fn i_clone_the_composer(w: &mut World) {
-    let tx_composer = w.tx_composer.as_mut().unwrap();
-
-    w.tx_composer = Some(tx_composer.clone_composer());
+    // AtomicGroupBuilder is Clone (group ids are only assigned at build), so the
+    // "snapshot a common prefix" use case is a plain clone.
+    let builder = w.group_builder.as_ref().expect("composer not building");
+    w.group_builder = Some(builder.clone());
 }
 
 #[when(regex = r#"I create the Method object from method signature "([^"]*)"$"#)]
@@ -367,11 +377,8 @@ impl MethodCallCtx {
             .as_mut()
             .unwrap()
             .push(self.method.clone());
-        w.tx_composer
-            .as_mut()
-            .unwrap()
-            .add_method_call(call)
-            .unwrap();
+        let builder = w.group_builder.take().unwrap();
+        w.group_builder = Some(builder.add_method_call(call));
     }
 }
 
@@ -440,14 +447,14 @@ fn i_append_the_current_transaction_with_signer_to_the_method_arguments_array(w:
     regex = r#"^I build the transaction group with the composer. If there is an error it is "([^"]*)".$"#
 )]
 fn i_build_the_transaction_group_with_the_composer(w: &mut World, error_type: String) {
-    let tx_composer = w.tx_composer.as_mut().unwrap();
+    let builder = w.group_builder.take().unwrap();
 
-    let build_res = tx_composer.build_group();
+    let build_res = builder.build();
 
     match error_type.as_ref() {
         "" => {
             // no error expected
-            build_res.unwrap();
+            w.unsigned_group = Some(build_res.unwrap());
         }
         "zero group size error" => match build_res {
             Err(algonaut::Error::EmptyTransactionGroup) => {}
@@ -460,12 +467,13 @@ fn i_build_the_transaction_group_with_the_composer(w: &mut World, error_type: St
 
 #[then(expr = "I execute the current transaction group with the composer.")]
 async fn i_execute_the_current_transaction_group_with_the_composer(w: &mut World) {
-    let algod = w.algod.as_ref().unwrap();
-    let tx_composer = w.tx_composer.as_mut().unwrap();
+    let algod = w.algod.as_ref().unwrap().clone();
+    let signed_group = w.take_signed_group();
 
-    let res = tx_composer.execute(algod).await;
-
-    let res = res.expect("Failed executing");
+    let res = signed_group
+        .execute(&algod)
+        .await
+        .expect("Failed executing");
 
     w.tx_composer_res = Some(res)
 }

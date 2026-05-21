@@ -2,7 +2,7 @@
 id: one-build-per-transaction
 title: One build per transaction
 abstract: Fold the outer `TxnBuilder` into each per-type builder (`Pay`, `CreateAsset`, `CallApplication`, …). Each builder grows the six header setters (`fee`, `note`, `lease`, `rekey_to`, `group`, `genesis_id`) and a single terminal `build(&params) -> Result<Transaction, TransactionError>` — replacing today's two-stage `TxnBuilder::with(&params, Inner::new(...).build()).build()?` pattern. Second sub-ADR addressing decision item D1 of the ideal-type-safe-ergonomic-api index.
-status: proposed
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics, type-safety]
@@ -12,7 +12,7 @@ tags: [api, ergonomics, type-safety]
 
 ## Status
 
-Proposed. Implements decision item **D1** of
+Accepted. Implements decision item **D1** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 
 ## Context

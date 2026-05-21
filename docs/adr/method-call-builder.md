@@ -2,7 +2,7 @@
 id: method-call-builder
 title: MethodCall fluent builder
 abstract: Replace the 18-field `AddMethodCallParams` and `add_method_call(&mut params)` with a `MethodCall::new(app_id, method, sender, signer).args(...).on_complete(...).boxes(...).build(&params)?` fluent builder. The twelve-positional-arg helper in the ABI step-def collapses to a one-line builder. Seventh sub-ADR addressing decision item D6 of the ideal-type-safe-ergonomic-api index.
-status: proposed
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics, abi]
@@ -12,7 +12,7 @@ tags: [api, ergonomics, abi]
 
 ## Status
 
-Proposed. Implements decision item **D6** of
+Accepted. Implements decision item **D6** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 Depends on **D7** ([`signer-trait`](signer-trait.md)) — the builder's
 `signer` argument is `Arc<dyn Signer>`.

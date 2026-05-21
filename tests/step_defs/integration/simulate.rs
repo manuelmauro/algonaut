@@ -87,12 +87,27 @@ async fn the_simulation_should_report_a_failure_at_group(
 #[when(expr = "I simulate the current transaction group with the composer")]
 async fn i_simulate_the_current_transaction_group_with_the_composer(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set").clone();
-    let composer = w.tx_composer.as_mut().expect("composer not set");
-    let result = composer
+    let unsigned_group = w.take_unsigned_group();
+    let result = unsigned_group
         .simulate(&algod)
         .await
         .expect("composer simulate failed");
-    w.simulate_response = Some(result.simulate_response);
+    // simulate borrows the group, so it survives for a later sign/execute.
+    w.unsigned_group = Some(unsigned_group);
+    w.simulate_outcome = Some(result.simulate_response);
+}
+
+#[then(expr = "the composer simulation should succeed.")]
+async fn the_composer_simulation_should_succeed(w: &mut World) {
+    let outcome = w
+        .simulate_outcome
+        .as_ref()
+        .expect("no composer simulate outcome");
+    assert!(
+        outcome.would_succeed(),
+        "composer simulation reported failure: {:?}",
+        outcome.failure_message(0)
+    );
 }
 
 #[when(expr = "I make a new simulate request.")]
@@ -158,12 +173,13 @@ async fn i_simulate_the_transaction_group_with_the_simulate_request(w: &mut Worl
         .simulate_request
         .clone()
         .expect("no simulate request — call `I make a new simulate request.` first");
-    let composer = w.tx_composer.as_mut().expect("composer not set");
-    let result = composer
+    let unsigned_group = w.take_unsigned_group();
+    let result = unsigned_group
         .simulate_with(&algod, req)
         .await
         .expect("composer simulate_with failed");
-    w.simulate_response = Some(result.simulate_response);
+    w.unsigned_group = Some(unsigned_group);
+    w.simulate_outcome = Some(result.simulate_response);
 }
 
 #[then(expr = "I check the simulation result has power packs allow-more-logging.")]

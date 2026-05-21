@@ -1,9 +1,9 @@
 //! Call an ARC-4 method on a deployed application via the
-//! [`AtomicTransactionComposer`] and the fluent [`MethodCall`] builder.
-//! This is the recommended path for application calls.
+//! [`AtomicGroupBuilder`] typestate chain and the fluent [`MethodCall`]
+//! builder. This is the recommended path for application calls.
 
 use algonaut::algod::v2::Algod;
-use algonaut::atomic_transaction_composer::{AbiArgValue, AtomicTransactionComposer, MethodCall};
+use algonaut::atomic_transaction_composer::{AbiArgValue, AtomicGroupBuilder, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
@@ -44,9 +44,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .build(&params);
 
     info!("composing and executing");
-    let mut composer = AtomicTransactionComposer::default();
-    composer.add_method_call(call)?;
-    let result = composer.execute(&algod).await?;
+    let result = AtomicGroupBuilder::new()
+        .add_method_call(call)
+        .build()?
+        .sign()?
+        .execute(&algod)
+        .await?;
     info!("confirmed in round {:?}", result.confirmed_round);
     for r in result.method_results {
         info!("method return: {:?}", r.return_value);

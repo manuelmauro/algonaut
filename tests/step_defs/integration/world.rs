@@ -1,9 +1,12 @@
 use algonaut::{
     algod::v2::Algod,
-    atomic_transaction_composer::AtomicTransactionComposer,
-    atomic_transaction_composer::{AbiArgValue, ExecuteResult, TransactionWithSigner},
+    atomic_transaction_composer::{
+        AbiArgValue, AtomicGroupBuilder, ExecuteOutcome, SignedAtomicGroup, TransactionWithSigner,
+        UnsignedAtomicGroup,
+    },
     indexer::v2::Indexer,
     kmd::v1::Kmd,
+    simulate::SimulateResponse,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::SourceMap};
 use algonaut_algod::models::{
@@ -44,13 +47,15 @@ pub struct World {
 
     pub tx_signer: Option<Arc<dyn Signer>>,
     pub tx_with_signer: Option<TransactionWithSigner>,
-    pub tx_composer: Option<AtomicTransactionComposer>,
+    pub group_builder: Option<AtomicGroupBuilder>,
+    pub unsigned_group: Option<UnsignedAtomicGroup>,
+    pub signed_group: Option<SignedAtomicGroup>,
     pub tx_composer_methods: Option<Vec<AbiMethod>>,
     pub signed_txs: Option<Vec<SignedTransaction>>,
     pub abi_method: Option<AbiMethod>,
     pub abi_method_arg_types: Option<Vec<AbiType>>,
     pub abi_method_arg_values: Option<Vec<AbiArgValue>>,
-    pub tx_composer_res: Option<ExecuteResult>,
+    pub tx_composer_res: Option<ExecuteOutcome>,
 
     pub versions: Option<Vec<String>>,
 
@@ -89,6 +94,37 @@ pub struct World {
     pub dryrun_response: Option<TealDryrun200Response>,
 
     pub simulate_request: Option<SimulateRequest>,
+    /// Raw response from a direct `algod.simulate_txns` call; the deep
+    /// wire-level assertions (exec traces, state changes) read this.
     pub simulate_response: Option<SimulateTransaction200Response>,
+    /// Typed composer simulate result, from the `UnsignedAtomicGroup`
+    /// simulate path.
+    pub simulate_outcome: Option<SimulateResponse>,
     pub simulate_unsigned: bool,
+}
+
+impl World {
+    /// Take the staged group as an [`UnsignedAtomicGroup`], building it from the
+    /// [`AtomicGroupBuilder`] if `build` hasn't been called yet.
+    pub fn take_unsigned_group(&mut self) -> UnsignedAtomicGroup {
+        if let Some(unsigned) = self.unsigned_group.take() {
+            unsigned
+        } else {
+            self.group_builder
+                .take()
+                .expect("no composer in progress")
+                .build()
+                .expect("group build failed")
+        }
+    }
+
+    /// Take the staged group as a [`SignedAtomicGroup`], building and signing as
+    /// needed.
+    pub fn take_signed_group(&mut self) -> SignedAtomicGroup {
+        if let Some(signed) = self.signed_group.take() {
+            signed
+        } else {
+            self.take_unsigned_group().sign().expect("signing failed")
+        }
+    }
 }

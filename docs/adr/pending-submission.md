@@ -1,8 +1,8 @@
 ---
 id: pending-submission
 title: Finality polling is a client capability
-abstract: '`algod.submit(&signed)` returns a `PendingSubmission` handle whose `.confirm()` polls to finality and `.confirm_with(Duration)` overrides the default timeout. The three pasted copies of `wait_for_pending_transaction` (per-example, in `step_defs/util.rs`, in `src/util/`) retire. Sixth sub-ADR addressing decision item D2 of the ideal-type-safe-ergonomic-api index.'
-status: proposed
+abstract: "`algod.submit(&signed)` returns a `PendingSubmission` handle whose `.confirm()` polls to finality and `.confirm_with(Duration)` overrides the default timeout. The three pasted copies of `wait_for_pending_transaction` (per-example, in `step_defs/util.rs`, in `src/util/`) retire. Sixth sub-ADR addressing decision item D2 of the ideal-type-safe-ergonomic-api index."
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics]
@@ -12,7 +12,7 @@ tags: [api, ergonomics]
 
 ## Status
 
-Proposed. Implements decision item **D2** of
+Accepted. Implements decision item **D2** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 
 ## Context
