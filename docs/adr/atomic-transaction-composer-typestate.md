@@ -2,7 +2,7 @@
 id: atomic-transaction-composer-typestate
 title: Atomic transaction composer as typestate, not status enum
 abstract: Split `AtomicTransactionComposer` into a chain of state-specific types — `GroupBuilder` → `UnsignedGroup` → `SignedGroup` — replacing the runtime-checked `AtomicTransactionComposerStatus` enum with compile-time enforcement. Calls that don't make sense in a given state (signing twice, submitting before signing, adding transactions after `build_group`) stop compiling instead of returning `Err(Error::ComposerStatusInvalid)`. Fourth sub-ADR refining the composer-touching items D2, D6, and D7 of the ideal-type-safe-ergonomic-api index.
-status: proposed
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics, type-safety, atomic-transaction-composer]
@@ -12,11 +12,15 @@ tags: [api, ergonomics, type-safety, atomic-transaction-composer]
 
 ## Status
 
-Proposed. Refines and complements the composer-touching items
-([D2](ideal-type-safe-ergonomic-api.md#d2--finality-is-a-client-capability),
-[D6](ideal-type-safe-ergonomic-api.md#d6--a-builder-for-method-calls),
-[D7](ideal-type-safe-ergonomic-api.md#d7--signer-is-a-trait)) of the
-now-accepted [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
+Accepted and implemented, on top of the now-landed
+[D2](ideal-type-safe-ergonomic-api.md#d2--finality-is-a-client-capability),
+[D6](ideal-type-safe-ergonomic-api.md#d6--a-builder-for-method-calls), and
+[D7](ideal-type-safe-ergonomic-api.md#d7--signer-is-a-trait) of the accepted
+[`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
+
+As built, `simulate_with` takes algod's `SimulateRequest` directly rather
+than a bespoke `SimulateOptions` (a dedicated options type remains a
+possible follow-up).
 
 ## Context
 
@@ -166,7 +170,7 @@ impl UnsignedGroup {
     pub fn transactions(&self) -> &[TransactionWithSigner];
     pub fn sign(self) -> Result<SignedGroup, Error>;
     pub async fn simulate(&self, algod: &Algod) -> Result<SimulateOutcome, Error>;
-    pub async fn simulate_with(&self, algod: &Algod, opts: SimulateOptions) -> Result<SimulateOutcome, Error>;
+    pub async fn simulate_with(&self, algod: &Algod, request: SimulateRequest) -> Result<SimulateOutcome, Error>;
 }
 
 // Signed state — ready to submit or execute.
