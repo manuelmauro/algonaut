@@ -1,7 +1,7 @@
 ---
 id: atomic-transaction-composer-typestate
 title: Atomic transaction composer as typestate, not status enum
-abstract: Split `AtomicTransactionComposer` into a chain of state-specific types — `GroupBuilder` → `UnsignedGroup` → `SignedGroup` — replacing the runtime-checked `AtomicTransactionComposerStatus` enum with compile-time enforcement. Calls that don't make sense in a given state (signing twice, submitting before signing, adding transactions after `build_group`) stop compiling instead of returning `Err(Error::ComposerStatusInvalid)`. Fourth sub-ADR refining the composer-touching items D2, D6, and D7 of the ideal-type-safe-ergonomic-api index.
+abstract: Split `AtomicTransactionComposer` into a chain of state-specific types — `AtomicGroupBuilder` → `UnsignedAtomicGroup` → `SignedAtomicGroup` — replacing the runtime-checked `AtomicTransactionComposerStatus` enum with compile-time enforcement. Calls that don't make sense in a given state (signing twice, submitting before signing, adding transactions after `build_group`) stop compiling instead of returning `Err(Error::ComposerStatusInvalid)`. Fourth sub-ADR refining the composer-touching items D2, D6, and D7 of the ideal-type-safe-ergonomic-api index.
 status: accepted
 date: 2026-05-20
 deciders: []
@@ -154,29 +154,29 @@ ordering.
 
 ```rust
 // Building state — accepts add_*; no submit/sign/simulate methods exist.
-pub struct GroupBuilder { /* txs, method_map */ }
+pub struct AtomicGroupBuilder { /* txs, method_map */ }
 
-impl GroupBuilder {
+impl AtomicGroupBuilder {
     pub fn new() -> Self;
     pub fn add_transaction(self, t: TransactionWithSigner) -> Self;
     pub fn add_method_call(self, m: MethodCall)            -> Self;
-    pub fn build(self) -> Result<UnsignedGroup, Error>;
+    pub fn build(self) -> Result<UnsignedAtomicGroup, Error>;
 }
 
 // Built state — group IDs assigned, ready to sign or simulate.
-pub struct UnsignedGroup { /* txs with group-ids stamped, method_map */ }
+pub struct UnsignedAtomicGroup { /* txs with group-ids stamped, method_map */ }
 
-impl UnsignedGroup {
+impl UnsignedAtomicGroup {
     pub fn transactions(&self) -> &[TransactionWithSigner];
-    pub fn sign(self) -> Result<SignedGroup, Error>;
+    pub fn sign(self) -> Result<SignedAtomicGroup, Error>;
     pub async fn simulate(&self, algod: &Algod) -> Result<SimulateOutcome, Error>;
     pub async fn simulate_with(&self, algod: &Algod, request: SimulateRequest) -> Result<SimulateOutcome, Error>;
 }
 
 // Signed state — ready to submit or execute.
-pub struct SignedGroup { /* signed_txs, method_map */ }
+pub struct SignedAtomicGroup { /* signed_txs, method_map */ }
 
-impl SignedGroup {
+impl SignedAtomicGroup {
     pub fn signed_transactions(&self) -> &[SignedTransaction];
     /// Submit and return a PendingSubmission (per D2). Caller decides
     /// whether to .confirm().await? or hold the handle.
@@ -190,12 +190,12 @@ impl SignedGroup {
 `Result<Self>`, so the chain reads without a `?` at every step. The
 checks they run today — group-size limit, ABI argument count,
 per-transaction validation — move to `build`, which is the fallible
-boundary (`-> Result<UnsignedGroup, Error>`).
+boundary (`-> Result<UnsignedAtomicGroup, Error>`).
 
 The quickstart end-to-end:
 
 ```rust
-let outcome = GroupBuilder::new()
+let outcome = AtomicGroupBuilder::new()
     .add_method_call(call_1)
     .add_method_call(call_2)
     .build()?
@@ -205,18 +205,18 @@ let outcome = GroupBuilder::new()
 ```
 
 Each `.foo()` consumes `self` and returns the next state's type.
-Calling `.submit()` on `GroupBuilder` doesn't compile. Calling
-`.add_method_call()` on `SignedGroup` doesn't compile. The
+Calling `.submit()` on `AtomicGroupBuilder` doesn't compile. Calling
+`.add_method_call()` on `SignedAtomicGroup` doesn't compile. The
 `AtomicTransactionComposerStatus` enum, the `ComposerStatusInvalid`
 error variant introduced in D8, and the runtime status checks all
 retire together.
 
 ### What replaces `clone_composer`
 
-`GroupBuilder` derives `Clone` (it's just owned state). The "snapshot
+`AtomicGroupBuilder` derives `Clone` (it's just owned state). The "snapshot
 for parallel construction" use case becomes `let snapshot =
-builder.clone();`. No special method needed. `UnsignedGroup` and
-`SignedGroup` are also `Clone` since the signing-path types
+builder.clone();`. No special method needed. `UnsignedAtomicGroup` and
+`SignedAtomicGroup` are also `Clone` since the signing-path types
 (`Arc<dyn Signer>`, the typed transactions) are themselves cheap to
 clone.
 
@@ -234,9 +234,9 @@ The overlap collapses to one decision per state:
 type already exists). `ExecuteOutcome` is the renamed `ExecuteResult`,
 unchanged in shape. `SimulateOutcome` keeps `AtcSimulateResult`'s
 shape but the "the composer can still be executed after a simulate"
-property is automatic: simulate borrows `UnsignedGroup` (`&self`)
+property is automatic: simulate borrows `UnsignedAtomicGroup` (`&self`)
 instead of consuming it — `pub async fn simulate(&self, ...)`. The
-`UnsignedGroup` value survives, so `unsigned.simulate(&algod).await?`
+`UnsignedAtomicGroup` value survives, so `unsigned.simulate(&algod).await?`
 followed by `unsigned.sign()?.execute(&algod).await?` is legal at the
 type level.
 
@@ -281,12 +281,12 @@ type level.
   `Simulated`-between-`Signed`-and-`Submitted` enum gymnastics retire
   with the enum.
 - **Simulate moves before signing.** Today the `Simulated` state sits
-  *after* `Signed`; here `simulate` hangs off `UnsignedGroup`, so it
+  *after* `Signed`; here `simulate` hangs off `UnsignedAtomicGroup`, so it
   runs on the unsigned group. This is a deliberate shift — algod's
   simulate endpoint does not require real signatures — but it is a
   behavioral change, not a free consequence of the refactor. If a
   caller ever needs to simulate the actually-signed group, `simulate`
-  would have to be offered on `SignedGroup` too.
+  would have to be offered on `SignedAtomicGroup` too.
 - **Result types collapse.** `ExecuteResult` and `AtcSimulateResult`
   become `ExecuteOutcome` / `SimulateOutcome` — same fields, the
   rename just stops them from looking like sibling types of a thing

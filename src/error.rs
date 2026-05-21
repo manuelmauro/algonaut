@@ -30,7 +30,7 @@ pub enum Error {
     Request(RequestError),
 
     /// Tried to
-    /// [`build`](crate::atomic_transaction_composer::GroupBuilder::build) a
+    /// [`build`](crate::atomic_transaction_composer::AtomicGroupBuilder::build) a
     /// transaction group with zero transactions. Equivalent of
     /// [`algonaut_transaction::error::TransactionError::EmptyTransactionListError`]
     /// at the top-level error layer.

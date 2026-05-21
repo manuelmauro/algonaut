@@ -1,6 +1,6 @@
 use crate::step_defs::{integration::world::World, util::read_teal};
 use algonaut::atomic_transaction_composer::{
-    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, GroupBuilder, MethodCall,
+    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicGroupBuilder, MethodCall,
     TransactionWithSigner,
 };
 use algonaut_abi::{
@@ -34,7 +34,7 @@ async fn i_make_a_transaction_signer_for_the_account(w: &mut World, account_str:
 
 #[given(expr = "a new AtomicTransactionComposer")]
 async fn a_new_atomic_transaction_composer(w: &mut World) {
-    w.group_builder = Some(GroupBuilder::new());
+    w.group_builder = Some(AtomicGroupBuilder::new());
     w.tx_composer_methods = Some(vec![]);
 }
 
@@ -143,7 +143,7 @@ async fn the_composer_should_have_a_status_of(w: &mut World, status_str: String)
 
 #[then(expr = "I clone the composer.")]
 async fn i_clone_the_composer(w: &mut World) {
-    // GroupBuilder is Clone (group ids are only assigned at build), so the
+    // AtomicGroupBuilder is Clone (group ids are only assigned at build), so the
     // "snapshot a common prefix" use case is a plain clone.
     let builder = w.group_builder.as_ref().expect("composer not building");
     w.group_builder = Some(builder.clone());

@@ -1,9 +1,9 @@
 //! Call an ARC-4 method on a deployed application via the
-//! [`GroupBuilder`] typestate chain and the fluent [`MethodCall`]
+//! [`AtomicGroupBuilder`] typestate chain and the fluent [`MethodCall`]
 //! builder. This is the recommended path for application calls.
 
 use algonaut::algod::v2::Algod;
-use algonaut::atomic_transaction_composer::{AbiArgValue, GroupBuilder, MethodCall};
+use algonaut::atomic_transaction_composer::{AbiArgValue, AtomicGroupBuilder, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .build(&params);
 
     info!("composing and executing");
-    let result = GroupBuilder::new()
+    let result = AtomicGroupBuilder::new()
         .add_method_call(call)
         .build()?
         .sign()?

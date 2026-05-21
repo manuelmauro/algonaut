@@ -130,7 +130,7 @@ pub enum AbiMethodReturnValue {
     Void,
 }
 
-/// Results of successfully [`executing`](SignedGroup::execute) a
+/// Results of successfully [`executing`](SignedAtomicGroup::execute) a
 /// transaction group: the confirmed round, the group's transaction ids,
 /// and the decoded ABI return value for each method call.
 #[derive(Debug, Clone)]
@@ -144,7 +144,7 @@ pub struct ExecuteOutcome {
     pub method_results: Vec<AbiMethodResult>,
 }
 
-/// Result of [`simulating`](UnsignedGroup::simulate) a group. Mirrors
+/// Result of [`simulating`](UnsignedAtomicGroup::simulate) a group. Mirrors
 /// [`ExecuteOutcome`] with the raw simulate response attached. Because
 /// simulate borrows the group (`&self`), the same group can still be
 /// signed and executed afterwards.
@@ -184,11 +184,11 @@ impl AbiArgValue {
     }
 }
 
-/// A pending entry in a [`GroupBuilder`]. Entries are only assembled and
-/// validated when [`GroupBuilder::build`] is called, so the `add_*`
+/// A pending entry in an [`AtomicGroupBuilder`]. Entries are only assembled and
+/// validated when [`AtomicGroupBuilder::build`] is called, so the `add_*`
 /// methods can stay infallible.
 #[derive(Debug, Clone)]
-enum GroupEntry {
+enum AtomicGroupEntry {
     Transaction(TransactionWithSigner),
     MethodCall(MethodCall),
 }
@@ -196,20 +196,20 @@ enum GroupEntry {
 /// Builder state of an atomic transaction group.
 ///
 /// Add pre-built transactions and ABI method calls in any mix, then
-/// [`build`](GroupBuilder::build) to stamp the group id and advance to
-/// the [`UnsignedGroup`] state. The `add_*` methods are infallible and
+/// [`build`](AtomicGroupBuilder::build) to stamp the group id and advance to
+/// the [`UnsignedAtomicGroup`] state. The `add_*` methods are infallible and
 /// only record intent; all validation — group-size limit, ABI argument
 /// counts, per-transaction checks — happens in `build`.
 ///
-/// `GroupBuilder` is `Clone`: clone it to snapshot a common prefix and
+/// `AtomicGroupBuilder` is `Clone`: clone it to snapshot a common prefix and
 /// build several groups from it (this replaces the old
 /// `clone_composer`).
 #[derive(Debug, Clone, Default)]
-pub struct GroupBuilder {
-    entries: Vec<GroupEntry>,
+pub struct AtomicGroupBuilder {
+    entries: Vec<AtomicGroupEntry>,
 }
 
-impl GroupBuilder {
+impl AtomicGroupBuilder {
     /// Start a new, empty group builder.
     pub fn new() -> Self {
         Self::default()
@@ -217,31 +217,32 @@ impl GroupBuilder {
 
     /// Add a pre-built transaction with its signer to the group.
     pub fn add_transaction(mut self, txn_with_signer: TransactionWithSigner) -> Self {
-        self.entries.push(GroupEntry::Transaction(txn_with_signer));
+        self.entries
+            .push(AtomicGroupEntry::Transaction(txn_with_signer));
         self
     }
 
     /// Add an ABI method call to the group. Build the [`MethodCall`]
     /// with [`MethodCall::new`] and the [`MethodCallBuilder`] setters.
     pub fn add_method_call(mut self, call: MethodCall) -> Self {
-        self.entries.push(GroupEntry::MethodCall(call));
+        self.entries.push(AtomicGroupEntry::MethodCall(call));
         self
     }
 
     /// Finalize the group: assemble every entry, enforce the size and
     /// ABI-argument invariants, stamp the group id, and produce an
-    /// [`UnsignedGroup`].
+    /// [`UnsignedAtomicGroup`].
     ///
     /// Returns [`Error::EmptyTransactionGroup`] if no entries were
     /// added, or [`Error::ComposerGroupFull`] if the assembled group
     /// would exceed the protocol's 16-transaction limit.
-    pub fn build(self) -> Result<UnsignedGroup, Error> {
+    pub fn build(self) -> Result<UnsignedAtomicGroup, Error> {
         let mut txs: Vec<TransactionWithSigner> = Vec::new();
         let mut method_map: HashMap<usize, AbiMethod> = HashMap::new();
 
         for entry in self.entries {
             match entry {
-                GroupEntry::Transaction(txn_with_signer) => {
+                AtomicGroupEntry::Transaction(txn_with_signer) => {
                     if txs.len() == MAX_ATOMIC_GROUP_SIZE {
                         return Err(Error::ComposerGroupFull {
                             max: MAX_ATOMIC_GROUP_SIZE,
@@ -250,7 +251,7 @@ impl GroupBuilder {
                     validate_tx(&txn_with_signer.tx, TransactionArgType::Any)?;
                     txs.push(txn_with_signer);
                 }
-                GroupEntry::MethodCall(call) => {
+                AtomicGroupEntry::MethodCall(call) => {
                     process_method_call(call, &mut txs, &mut method_map)?;
                 }
             }
@@ -264,30 +265,30 @@ impl GroupBuilder {
             tx_group::assign_in_place(&mut group_txs)?;
         }
 
-        Ok(UnsignedGroup { txs, method_map })
+        Ok(UnsignedAtomicGroup { txs, method_map })
     }
 }
 
 /// A built, group-id-stamped transaction group, ready to sign or
-/// simulate. Reach this state via [`GroupBuilder::build`].
+/// simulate. Reach this state via [`AtomicGroupBuilder::build`].
 #[derive(Debug, Clone)]
-pub struct UnsignedGroup {
+pub struct UnsignedAtomicGroup {
     txs: Vec<TransactionWithSigner>,
     method_map: HashMap<usize, AbiMethod>,
 }
 
-impl UnsignedGroup {
+impl UnsignedAtomicGroup {
     /// The group's transactions, in order, each with its signer.
     pub fn transactions(&self) -> &[TransactionWithSigner] {
         &self.txs
     }
 
     /// Sign every transaction with its attached signer, advancing to the
-    /// [`SignedGroup`] state. Transactions whose signer is `None` get an
+    /// [`SignedAtomicGroup`] state. Transactions whose signer is `None` get an
     /// all-zero placeholder signature (simulate-only).
-    pub fn sign(self) -> Result<SignedGroup, Error> {
+    pub fn sign(self) -> Result<SignedAtomicGroup, Error> {
         let signed_txs = sign_group(&self.txs)?;
-        Ok(SignedGroup {
+        Ok(SignedAtomicGroup {
             signed_txs,
             method_map: self.method_map,
         })
@@ -349,14 +350,14 @@ impl UnsignedGroup {
 }
 
 /// A signed transaction group, ready to submit or execute. Reach this
-/// state via [`UnsignedGroup::sign`].
+/// state via [`UnsignedAtomicGroup::sign`].
 #[derive(Debug, Clone)]
-pub struct SignedGroup {
+pub struct SignedAtomicGroup {
     signed_txs: Vec<SignedTransaction>,
     method_map: HashMap<usize, AbiMethod>,
 }
 
-impl SignedGroup {
+impl SignedAtomicGroup {
     /// The signed transactions, in group order.
     pub fn signed_transactions(&self) -> &[SignedTransaction] {
         &self.signed_txs
@@ -852,7 +853,7 @@ mod tests {
         let alice = Account::generate();
         let bob = Account::generate();
 
-        let signed = GroupBuilder::new()
+        let signed = AtomicGroupBuilder::new()
             .add_transaction(TransactionWithSigner::new(
                 pay(&alice, bob.address()),
                 Arc::new(alice.clone()),
@@ -879,7 +880,7 @@ mod tests {
     /// `build` rejects a group with no entries.
     #[test]
     fn build_rejects_empty_group() {
-        let err = GroupBuilder::new().build().unwrap_err();
+        let err = AtomicGroupBuilder::new().build().unwrap_err();
         assert!(matches!(err, Error::EmptyTransactionGroup));
     }
 }
