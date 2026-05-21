@@ -399,6 +399,11 @@ pub struct StateProofTransaction {
     pub message: StateProofMessage,
 }
 
+/// Ergonomic alias for [`ApplicationCallOnComplete`]. Lets callers write
+/// `OnComplete::NoOp` instead of the longer `ApplicationCallOnComplete::NoOp`
+/// when constructing ABI method calls.
+pub use ApplicationCallOnComplete as OnComplete;
+
 /// An application transaction must indicate the action to be taken following the execution of its approvalProgram or clearStateProgram. The variants below describe the available actions.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ApplicationCallOnComplete {

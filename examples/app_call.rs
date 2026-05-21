@@ -1,10 +1,17 @@
+//! Call an ARC-4 method on a deployed application via the
+//! [`AtomicTransactionComposer`] and the fluent [`MethodCall`] builder.
+//! This is the recommended path for application calls.
+
 use algonaut::algod::v2::Algod;
+use algonaut::atomic_transaction_composer::{AbiArgValue, AtomicTransactionComposer, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::builder::CallApplication;
+use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
 use dotenv::dotenv;
+use num_bigint::BigUint;
 use std::env;
 use std::error::Error;
+use std::sync::Arc;
 #[macro_use]
 extern crate log;
 
@@ -18,20 +25,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("creating account for alice");
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
+    let signer = Arc::new(alice.clone());
 
     info!("retrieving suggested params");
     let params = algod.txn_params().await?;
 
-    info!("building transaction");
-    // TODO set a correct app-id here
-    let t = CallApplication::new(alice.address(), AppId(5)).build(&params)?;
+    // TODO point this at a real ARC-4 method on a real deployed contract.
+    // The signature here is illustrative — `add(uint64,uint64)uint64`
+    // takes two unsigned-64 arguments and returns one.
+    let method = AbiMethod::from_signature("add(uint64,uint64)uint64")?;
 
-    info!("signing transaction");
-    let signed_t = alice.sign_transaction(t)?;
+    info!("building method call");
+    let call = MethodCall::new(AppId(5), method, alice.address(), signer)
+        .args(vec![
+            AbiArgValue::AbiValue(AbiValue::Int(BigUint::from(2u64))),
+            AbiArgValue::AbiValue(AbiValue::Int(BigUint::from(3u64))),
+        ])
+        .build(&params);
 
-    info!("broadcasting transaction");
-    let send_response = algod.send_txn(&signed_t).await?;
-    info!("response: {:?}", send_response);
+    info!("composing and executing");
+    let mut composer = AtomicTransactionComposer::default();
+    composer.add_method_call(call)?;
+    let result = composer.execute(&algod).await?;
+    info!("confirmed in round {:?}", result.confirmed_round);
+    for r in result.method_results {
+        info!("method return: {:?}", r.return_value);
+    }
 
     Ok(())
 }

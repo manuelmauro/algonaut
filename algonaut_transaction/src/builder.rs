@@ -703,10 +703,11 @@ impl CreateApplication {
     /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
     /// and the TEAL program decides how to interpret it.
     ///
-    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
-    /// encodes the method selector and arguments for you and decodes
-    /// the return value. This setter is the lower-level escape hatch
-    /// for calling contracts that don't follow ARC-4.
+    /// **For ARC-4 (ABI-typed) calls, use
+    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// instead** — it encodes the method selector and arguments for you
+    /// and decodes the return value. This setter is the lower-level
+    /// escape hatch for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -799,10 +800,11 @@ impl UpdateApplication {
     /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
     /// and the TEAL program decides how to interpret it.
     ///
-    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
-    /// encodes the method selector and arguments for you and decodes
-    /// the return value. This setter is the lower-level escape hatch
-    /// for calling contracts that don't follow ARC-4.
+    /// **For ARC-4 (ABI-typed) calls, use
+    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// instead** — it encodes the method selector and arguments for you
+    /// and decodes the return value. This setter is the lower-level
+    /// escape hatch for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -881,10 +883,11 @@ impl CallApplication {
     /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
     /// and the TEAL program decides how to interpret it.
     ///
-    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
-    /// encodes the method selector and arguments for you and decodes
-    /// the return value. This setter is the lower-level escape hatch
-    /// for calling contracts that don't follow ARC-4.
+    /// **For ARC-4 (ABI-typed) calls, use
+    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// instead** — it encodes the method selector and arguments for you
+    /// and decodes the return value. This setter is the lower-level
+    /// escape hatch for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -963,10 +966,11 @@ impl ClearApplication {
     /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
     /// and the TEAL program decides how to interpret it.
     ///
-    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
-    /// encodes the method selector and arguments for you and decodes
-    /// the return value. This setter is the lower-level escape hatch
-    /// for calling contracts that don't follow ARC-4.
+    /// **For ARC-4 (ABI-typed) calls, use
+    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// instead** — it encodes the method selector and arguments for you
+    /// and decodes the return value. This setter is the lower-level
+    /// escape hatch for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -1045,10 +1049,11 @@ impl CloseApplication {
     /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
     /// and the TEAL program decides how to interpret it.
     ///
-    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
-    /// encodes the method selector and arguments for you and decodes
-    /// the return value. This setter is the lower-level escape hatch
-    /// for calling contracts that don't follow ARC-4.
+    /// **For ARC-4 (ABI-typed) calls, use
+    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// instead** — it encodes the method selector and arguments for you
+    /// and decodes the return value. This setter is the lower-level
+    /// escape hatch for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -1127,10 +1132,11 @@ impl DeleteApplication {
     /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
     /// and the TEAL program decides how to interpret it.
     ///
-    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
-    /// encodes the method selector and arguments for you and decodes
-    /// the return value. This setter is the lower-level escape hatch
-    /// for calling contracts that don't follow ARC-4.
+    /// **For ARC-4 (ABI-typed) calls, use
+    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// instead** — it encodes the method selector and arguments for you
+    /// and decodes the return value. This setter is the lower-level
+    /// escape hatch for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self
@@ -1209,10 +1215,11 @@ impl OptInApplication {
     /// here — each `Vec<u8>` lands on the AVM stack as a `bytes` value,
     /// and the TEAL program decides how to interpret it.
     ///
-    /// **For ARC-4 (ABI-typed) calls, use `MethodCall` instead** — it
-    /// encodes the method selector and arguments for you and decodes
-    /// the return value. This setter is the lower-level escape hatch
-    /// for calling contracts that don't follow ARC-4.
+    /// **For ARC-4 (ABI-typed) calls, use
+    /// [`MethodCall`](../atomic_transaction_composer/struct.MethodCall.html)
+    /// instead** — it encodes the method selector and arguments for you
+    /// and decodes the return value. This setter is the lower-level
+    /// escape hatch for calling contracts that don't follow ARC-4.
     pub fn app_arguments(mut self, app_arguments: Vec<Vec<u8>>) -> Self {
         self.app_arguments = Some(app_arguments);
         self

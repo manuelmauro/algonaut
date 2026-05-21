@@ -10,19 +10,16 @@ use algonaut_algod::models::{
     PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
     SimulateTransaction200Response,
 };
-use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, TxId};
-use algonaut_crypto::HashDigest;
+use algonaut_core::{Address, AppId, AssetId, Round, TxId};
 use algonaut_transaction::{
     SignedTransaction, Signer, Transaction, TransactionType,
     builder::TransactionParams,
     error::TransactionError,
     signed_transaction,
-    transaction::{
-        ApplicationCallOnComplete, ApplicationCallTransaction, BoxReference, StateSchema,
-        to_tx_type_enum,
-    },
+    transaction::{ApplicationCallTransaction, to_tx_type_enum},
     tx_group,
 };
+
 use data_encoding::BASE64;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
@@ -33,6 +30,9 @@ use std::time::Duration;
 use crate::{Error, algod::v2::Algod};
 
 use instant::Instant;
+
+mod method_call;
+pub use method_call::{MethodCall, MethodCallBuilder};
 
 /// Default timeout matching [`crate::algod::v2::PendingSubmission::confirm`].
 const COMPOSER_CONFIRM_TIMEOUT: Duration = Duration::from_secs(60);
@@ -130,47 +130,6 @@ pub struct AbiReturnDecodeError(pub String);
 pub enum AbiMethodReturnValue {
     Some(AbiValue),
     Void,
-}
-
-/// Contains the parameters for the method AtomicTransactionComposer.AddMethodCall
-pub struct AddMethodCallParams {
-    /// The ID of the smart contract to call. Set this to 0 to indicate an application creation call.
-    pub app_id: AppId,
-    /// The method to call on the smart contract
-    pub method: AbiMethod,
-    /// The arguments to include in the method call. If omitted, no arguments will be passed to the method.
-    pub method_args: Vec<AbiArgValue>,
-    /// Fee
-    pub fee: MicroAlgos,
-    /// The address of the sender of this application call
-    pub sender: Address,
-    /// Transactions params to use for this application call
-    pub suggested_params: algonaut_model::client_types::SuggestedParams,
-    /// The OnComplete action to take for this application call
-    pub on_complete: ApplicationCallOnComplete,
-    /// The approval program for this application call. Only set this if this is an application
-    /// creation call, or if onComplete is UpdateApplicationOC.
-    pub approval_program: Option<CompiledTeal>,
-    /// The clear program for this application call. Only set this if this is an application creation
-    /// call, or if onComplete is UpdateApplicationOC.
-    pub clear_program: Option<CompiledTeal>,
-    /// The global schema sizes. Only set this if this is an application creation call.
-    pub global_schema: Option<StateSchema>,
-    /// The local schema sizes. Only set this if this is an application creation call.
-    pub local_schema: Option<StateSchema>,
-    /// The number of extra pages to allocate for the application's programs. Only set this if this
-    /// is an application creation call.
-    pub extra_pages: u32,
-    /// The note value for this application call
-    pub note: Option<Vec<u8>>,
-    /// The lease value for this application call
-    pub lease: Option<HashDigest>,
-    /// If provided, the address that the sender will be rekeyed to at the conclusion of this application call
-    pub rekey_to: Option<Address>,
-    /// A transaction Signer that can authorize this application call from sender
-    pub signer: Arc<dyn Signer>,
-    /// A list of boxes that the app call has access to
-    pub boxes: Option<Vec<BoxReference>>,
 }
 
 #[derive(Debug, Clone)]
@@ -333,20 +292,25 @@ impl AtomicTransactionComposer {
         Ok(())
     }
 
-    pub fn add_method_call(&mut self, params: &mut AddMethodCallParams) -> Result<(), Error> {
+    /// Add an ABI method call to this atomic group.
+    ///
+    /// Build the [`MethodCall`] via [`MethodCall::new`] and the fluent
+    /// setters on [`MethodCallBuilder`]. The composer takes ownership
+    /// of the call.
+    pub fn add_method_call(&mut self, call: MethodCall) -> Result<(), Error> {
         if self.status != AtomicTransactionComposerStatus::Building {
             return Err(Error::ComposerStatusInvalid(
                 "add_method_call requires status=Building".to_owned(),
             ));
         }
-        if params.method_args.len() != params.method.args.len() {
+        if call.method_args.len() != call.method.args.len() {
             return Err(Error::Msg(format!(
                 "incorrect number of arguments were provided: {} != {}",
-                params.method_args.len(),
-                params.method.args.len()
+                call.method_args.len(),
+                call.method.args.len()
             )));
         }
-        if self.len() + params.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
+        if self.len() + call.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
             return Err(Error::ComposerGroupFull {
                 max: MAX_ATOMIC_GROUP_SIZE,
             });
@@ -359,9 +323,9 @@ impl AtomicTransactionComposer {
         let mut foreign_assets = vec![];
         let mut foreign_apps = vec![];
 
-        for i in 0..params.method.args.len() {
-            let mut arg_type = params.method.args[i].clone();
-            let arg_value = &params.method_args[i];
+        for i in 0..call.method.args.len() {
+            let mut arg_type = call.method.args[i].clone();
+            let arg_value = &call.method_args[i];
 
             match arg_type.type_()? {
                 AbiArgType::Tx(type_) => {
@@ -375,8 +339,8 @@ impl AtomicTransactionComposer {
                     &mut foreign_apps,
                     &mut method_types,
                     &mut method_args,
-                    params.sender,
-                    params.app_id,
+                    call.sender,
+                    call.app_id,
                 )?,
                 AbiArgType::AbiObj(type_) => {
                     add_abi_obj_arg_to_method_call(
@@ -395,48 +359,47 @@ impl AtomicTransactionComposer {
             method_args.push(value);
         }
 
-        let mut encoded_abi_args = vec![params.method.get_selector()?.into()];
+        let mut encoded_abi_args = vec![call.method.get_selector()?.into()];
         for i in 0..method_args.len() {
             encoded_abi_args.push(method_types[i].encode(method_args[i].clone())?);
         }
 
         let app_call = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
-            sender: params.sender,
-            app_id: Some(params.app_id),
-            on_complete: params.on_complete.clone(),
+            sender: call.sender,
+            app_id: Some(call.app_id),
+            on_complete: call.on_complete.clone(),
             accounts: Some(foreign_accounts),
-            approval_program: params.approval_program.clone(),
+            approval_program: call.approval_program.clone(),
             app_arguments: Some(encoded_abi_args),
-            clear_state_program: params.clear_program.clone(),
+            clear_state_program: call.clear_program.clone(),
             foreign_apps: Some(foreign_apps),
             foreign_assets: Some(foreign_assets),
-            global_state_schema: params.global_schema.clone(),
-            local_state_schema: params.local_schema.clone(),
-            extra_pages: params.extra_pages,
-            boxes: params.boxes.clone(),
+            global_state_schema: call.global_schema.clone(),
+            local_state_schema: call.local_schema.clone(),
+            extra_pages: call.extra_pages,
+            boxes: call.boxes.clone(),
         });
 
-        let sp = &params.suggested_params;
+        let sp = &call.suggested_params;
         let tx = Transaction {
-            fee: params.fee,
+            fee: call.fee,
             first_valid: Round(sp.last_round()),
             genesis_hash: sp.genesis_hash(),
             last_valid: Round(sp.last_round() + 1000),
             txn_type: app_call,
             genesis_id: Some(sp.genesis_id().clone()),
             group: None,
-            lease: params.lease,
-            note: params.note.clone(),
-            rekey_to: params.rekey_to,
+            lease: call.lease,
+            note: call.note.clone(),
+            rekey_to: call.rekey_to,
         };
 
         self.txs.append(&mut txs_with_signer);
         self.txs.push(TransactionWithSigner {
             tx,
-            signer: Some(params.signer.clone()),
+            signer: Some(call.signer.clone()),
         });
-        self.method_map
-            .insert(self.txs.len() - 1, params.method.clone());
+        self.method_map.insert(self.txs.len() - 1, call.method);
 
         Ok(())
     }
