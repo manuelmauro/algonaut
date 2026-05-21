@@ -1,7 +1,9 @@
 use algonaut::{
     algod::v2::Algod,
-    atomic_transaction_composer::AtomicTransactionComposer,
-    atomic_transaction_composer::{AbiArgValue, ExecuteResult, TransactionWithSigner},
+    atomic_transaction_composer::{
+        AbiArgValue, ExecuteOutcome, GroupBuilder, SignedGroup, TransactionWithSigner,
+        UnsignedGroup,
+    },
     indexer::v2::Indexer,
     kmd::v1::Kmd,
 };
@@ -44,13 +46,15 @@ pub struct World {
 
     pub tx_signer: Option<Arc<dyn Signer>>,
     pub tx_with_signer: Option<TransactionWithSigner>,
-    pub tx_composer: Option<AtomicTransactionComposer>,
+    pub group_builder: Option<GroupBuilder>,
+    pub unsigned_group: Option<UnsignedGroup>,
+    pub signed_group: Option<SignedGroup>,
     pub tx_composer_methods: Option<Vec<AbiMethod>>,
     pub signed_txs: Option<Vec<SignedTransaction>>,
     pub abi_method: Option<AbiMethod>,
     pub abi_method_arg_types: Option<Vec<AbiType>>,
     pub abi_method_arg_values: Option<Vec<AbiArgValue>>,
-    pub tx_composer_res: Option<ExecuteResult>,
+    pub tx_composer_res: Option<ExecuteOutcome>,
 
     pub versions: Option<Vec<String>>,
 
@@ -91,4 +95,30 @@ pub struct World {
     pub simulate_request: Option<SimulateRequest>,
     pub simulate_response: Option<SimulateTransaction200Response>,
     pub simulate_unsigned: bool,
+}
+
+impl World {
+    /// Take the staged group as an [`UnsignedGroup`], building it from the
+    /// [`GroupBuilder`] if `build` hasn't been called yet.
+    pub fn take_unsigned_group(&mut self) -> UnsignedGroup {
+        if let Some(unsigned) = self.unsigned_group.take() {
+            unsigned
+        } else {
+            self.group_builder
+                .take()
+                .expect("no composer in progress")
+                .build()
+                .expect("group build failed")
+        }
+    }
+
+    /// Take the staged group as a [`SignedGroup`], building and signing as
+    /// needed.
+    pub fn take_signed_group(&mut self) -> SignedGroup {
+        if let Some(signed) = self.signed_group.take() {
+            signed
+        } else {
+            self.take_unsigned_group().sign().expect("signing failed")
+        }
+    }
 }
