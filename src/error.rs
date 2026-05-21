@@ -30,7 +30,7 @@ pub enum Error {
     Request(RequestError),
 
     /// Tried to
-    /// [`build`](crate::atomic_transaction_composer::AtomicGroupBuilder::build) a
+    /// [`build`](crate::atomic::AtomicGroupBuilder::build) a
     /// transaction group with zero transactions. Equivalent of
     /// [`algonaut_transaction::error::TransactionError::EmptyTransactionListError`]
     /// at the top-level error layer.
@@ -69,7 +69,7 @@ pub enum Error {
     /// is diagnostic only.
     #[error("signer returned invalid output: {reason}")]
     SignerOutputInvalid { reason: String },
-    /// [`sign`](crate::atomic_transaction_composer::UnsignedAtomicGroup::sign)
+    /// [`sign`](crate::atomic::UnsignedAtomicGroup::sign)
     /// was called on a group whose slot at `index` has no signer
     /// (`TransactionWithSigner::unsigned`). An unsigned slot cannot
     /// produce a submittable signature; it is only valid for `simulate`.

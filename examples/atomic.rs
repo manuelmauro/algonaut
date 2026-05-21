@@ -1,5 +1,5 @@
-//! Compose and run a multi-transaction atomic group with the Atomic
-//! Transaction Composer.
+//! Compose and run a multi-transaction atomic group with the
+//! `algonaut::atomic` typestate API.
 //!
 //! The group bundles three operations, committed all-or-nothing:
 //!   1. a payment from alice to bob (signed by alice),
@@ -19,9 +19,7 @@
 //! return-value decoding for you.
 
 use algonaut::algod::v2::Algod;
-use algonaut::atomic_transaction_composer::{
-    AbiArgValue, AtomicGroupBuilder, MethodCall, TransactionWithSigner,
-};
+use algonaut::atomic::{AbiArgValue, AtomicGroupBuilder, MethodCall, TransactionWithSigner};
 use algonaut::core::{AppId, MicroAlgos};
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Signer};

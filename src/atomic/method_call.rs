@@ -1,5 +1,5 @@
-//! Fluent builder for ABI method calls on the
-//! [`AtomicTransactionComposer`](super::AtomicTransactionComposer).
+//! Fluent builder for ABI method calls added to an atomic group via
+//! [`AtomicGroupBuilder::add_method_call`](super::AtomicGroupBuilder::add_method_call).
 //!
 //! Replaces the previous 18-field `AddMethodCallParams` struct. Only the
 //! four genuinely required inputs are positional on
@@ -8,7 +8,7 @@
 
 use std::sync::Arc;
 
-use algonaut_abi::abi_interactions::AbiMethod;
+use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_crypto::HashDigest;
 use algonaut_model::client_types::SuggestedParams;
@@ -16,11 +16,38 @@ use algonaut_transaction::{
     Signer,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
 };
+use num_bigint::BigUint;
 
-use super::AbiArgValue;
+use super::TransactionWithSigner;
+
+/// An argument to an ABI [`MethodCall`]. Either a transaction-typed
+/// argument (which contributes its own slot to the group) or a plain ABI
+/// value.
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, Clone)]
+pub enum AbiArgValue {
+    TxWithSigner(TransactionWithSigner),
+    AbiValue(AbiValue),
+}
+
+impl AbiArgValue {
+    pub(super) fn address(&self) -> Option<Address> {
+        match self {
+            AbiArgValue::AbiValue(AbiValue::Address(address)) => Some(*address),
+            _ => None,
+        }
+    }
+
+    pub(super) fn int(&self) -> Option<BigUint> {
+        match self {
+            AbiArgValue::AbiValue(AbiValue::Int(int)) => Some(int.clone()),
+            _ => None,
+        }
+    }
+}
 
 /// A fully-built ABI method call, ready to be handed to
-/// [`AtomicTransactionComposer::add_method_call`](super::AtomicTransactionComposer::add_method_call).
+/// [`AtomicGroupBuilder::add_method_call`](super::AtomicGroupBuilder::add_method_call).
 ///
 /// Construct one with the fluent [`MethodCallBuilder`] returned by
 /// [`MethodCall::new`].
@@ -185,7 +212,7 @@ impl MethodCallBuilder {
 
     /// Finalise the builder with the network's current suggested
     /// parameters, producing a [`MethodCall`] that can be passed to
-    /// [`AtomicTransactionComposer::add_method_call`](super::AtomicTransactionComposer::add_method_call).
+    /// [`AtomicGroupBuilder::add_method_call`](super::AtomicGroupBuilder::add_method_call).
     ///
     /// The fee defaults to `params.min_fee` if no [`fee`](Self::fee)
     /// override was supplied.
