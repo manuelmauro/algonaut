@@ -62,6 +62,13 @@ pub enum Error {
     /// [`PendingSubmission::confirm_with`]: crate::algod::v2::PendingSubmission::confirm_with
     #[error("pending transaction timed out ({timeout:?})")]
     PendingTransactionTimeout { timeout: Duration },
+    /// A [`Signer`](algonaut_transaction::Signer) returned output that does
+    /// not match the request the composer made: wrong count, wrong order,
+    /// or a signature wrapping a different transaction than the one asked
+    /// for. The signed group is rejected rather than submitted. `reason`
+    /// is diagnostic only.
+    #[error("signer returned invalid output: {reason}")]
+    SignerOutputInvalid { reason: String },
 
     /// A transaction construction or signing error from
     /// [`algonaut_transaction`], preserved as the error source.

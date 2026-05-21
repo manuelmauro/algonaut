@@ -2,7 +2,7 @@
 id: async-signer-trait
 title: Async signer trait for remote and interactive signing
 abstract: Replace the synchronous Signer contract with an async, group-aware Signer so WalletConnect and custodial/KMS flows can await approval or I/O.
-status: proposed
+status: accepted
 date: 2026-05-21
 deciders: []
 tags: [api, async, signing]
@@ -12,7 +12,7 @@ tags: [api, async, signing]
 
 ## Status
 
-Proposed. Follow-up to [`signer-trait`](signer-trait.md) and the
+Accepted. Follow-up to [`signer-trait`](signer-trait.md) and the
 async-signer out-of-scope note in
 [`atomic-transaction-composer-typestate`](atomic-transaction-composer-typestate.md).
 Depends on [`external-signature-ingress`](external-signature-ingress.md) for

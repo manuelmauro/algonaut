@@ -349,11 +349,21 @@ impl TryFrom<ApiSignedTransaction> for SignedTransaction {
     type Error = TransactionError;
 
     fn try_from(api_t: ApiSignedTransaction) -> Result<Self, Self::Error> {
+        let transaction: Transaction = api_t.transaction.clone().try_into()?;
+        // The wire format carries no `txid` (it is `#[serde(skip)]` on
+        // `ApiSignedTransaction`), so recompute the id from the decoded
+        // transaction instead of trusting the default-empty field. This
+        // keeps the D5 invariant — a `SignedTransaction`'s id is always
+        // the hash of its transaction — on the deserialize ingress that
+        // out-of-crate signers rely on (see the `external-signature-ingress`
+        // ADR). Preserve the decoded `sgnr` auth address rather than
+        // dropping it.
+        let transaction_id = transaction.id()?;
         Ok(SignedTransaction {
-            transaction: api_t.transaction.clone().try_into()?,
-            transaction_id: api_t.transaction_id.clone(),
+            transaction,
+            transaction_id,
             sig: transaction_signature(&api_t)?,
-            auth_address: None,
+            auth_address: api_t.auth_address,
         })
     }
 }
@@ -735,6 +745,58 @@ impl<'a> TryFrom<ApiBoxesInfo<'a, &ApiTransaction>> for Option<Vec<BoxReference>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::account::Account;
+    use crate::builder::{Pay, TransactionParams};
+    use algonaut_crypto::HashDigest;
+
+    struct StubParams {
+        genesis_id: String,
+    }
+
+    impl TransactionParams for StubParams {
+        fn last_round(&self) -> u64 {
+            1
+        }
+        fn min_fee(&self) -> u64 {
+            1_000
+        }
+        fn genesis_hash(&self) -> HashDigest {
+            HashDigest([0; 32])
+        }
+        fn genesis_id(&self) -> &String {
+            &self.genesis_id
+        }
+    }
+
+    /// The msgpack-deserialize path is the public ingress out-of-crate
+    /// signers use to turn signed bytes into a `SignedTransaction` (see the
+    /// `external-signature-ingress` ADR). It must recompute the id (the
+    /// wire format omits `txid`) and preserve the decoded `sgnr` rather
+    /// than dropping it — the two bugs that path previously had.
+    #[test]
+    fn signed_transaction_msgpack_round_trip_recomputes_id_and_keeps_auth_address() {
+        let params = StubParams {
+            genesis_id: "testnet-v1.0".to_owned(),
+        };
+        let alice = Account::generate();
+        let bob = Account::generate();
+
+        // Sender is alice but bob signs, so the signed transaction carries
+        // a rekey `auth_address` of bob.
+        let tx = Pay::new(alice.address(), alice.address(), MicroAlgos(1_000))
+            .build(&params)
+            .unwrap();
+        let signed = bob.sign_transaction(tx).unwrap();
+        assert_eq!(signed.auth_address(), Some(&bob.address()));
+        assert!(!signed.transaction_id().0.is_empty());
+
+        let bytes = signed.to_msg_pack().unwrap();
+        let round_tripped: SignedTransaction = rmp_serde::from_slice(&bytes).unwrap();
+
+        assert_eq!(round_tripped.transaction_id(), signed.transaction_id());
+        assert!(!round_tripped.transaction_id().0.is_empty());
+        assert_eq!(round_tripped.auth_address(), Some(&bob.address()));
+    }
 
     struct DummyAppCall {
         app_id: Option<AppId>,

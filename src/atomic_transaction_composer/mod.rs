@@ -12,7 +12,7 @@ use algonaut_algod::models::{
 };
 use algonaut_core::{Address, AppId, AssetId, Round, TxId};
 use algonaut_transaction::{
-    SignedTransaction, Signer, Transaction, TransactionType,
+    SignedTransaction, Signer, SigningRequest, Transaction, TransactionType,
     builder::TransactionParams,
     signed_transaction,
     transaction::{ApplicationCallTransaction, to_tx_type_enum},
@@ -287,8 +287,13 @@ impl UnsignedAtomicGroup {
     /// Sign every transaction with its attached signer, advancing to the
     /// [`SignedAtomicGroup`] state. Transactions whose signer is `None` get an
     /// all-zero placeholder signature (simulate-only).
-    pub fn sign(self) -> Result<SignedAtomicGroup, Error> {
-        let signed_txs = sign_group(&self.txs)?;
+    ///
+    /// This is `async`: signers may await user approval (WalletConnect) or
+    /// remote I/O (custodial/KMS). Each distinct signer is asked to sign
+    /// all of the slots it owns in a single call, so an interactive wallet
+    /// prompts once for the whole group.
+    pub async fn sign(self) -> Result<SignedAtomicGroup, Error> {
+        let signed_txs = sign_group(&self.txs).await?;
         Ok(SignedAtomicGroup {
             signed_txs,
             method_map: self.method_map,
@@ -309,17 +314,24 @@ impl UnsignedAtomicGroup {
     /// toggle the power-pack fields (extra opcode budget,
     /// allow-more-logging, exec-trace-config, etc.).
     ///
-    /// The request's `txn_groups` is ignored; this method always
-    /// substitutes the group's own (placeholder-)signed transactions.
-    /// Any other field on the request is forwarded as given.
+    /// Simulate never invokes the real signers: it signs every slot with
+    /// the all-zero placeholder signature and asks algod to allow empty
+    /// signatures, so dry-running a group that carries an interactive
+    /// signer (e.g. WalletConnect) never pops an approval prompt. To
+    /// simulate the actually-signed group, [`sign`](Self::sign) it first
+    /// and simulate that.
+    ///
+    /// The request's `txn_groups` and `allow_empty_signatures` are
+    /// overwritten; any other field is forwarded as given.
     pub async fn simulate_with(
         &self,
         algod: &Algod,
         mut request: SimulateRequest,
     ) -> Result<SimulateOutcome, Error> {
-        let signed_txs = sign_group(&self.txs)?;
+        let signed_txs = placeholder_group(&self.txs)?;
 
         request.txn_groups = vec![SimulateRequestTransactionGroup::new(signed_txs.clone())];
+        request.allow_empty_signatures = Some(true);
 
         let response: SimulateTransaction200Response = algod.simulate_txns(request).await?;
 
@@ -428,32 +440,94 @@ impl SignedAtomicGroup {
     }
 }
 
-/// Sign every transaction in `txs` with its own signer, one input at a
-/// time, so the signed group keeps input order regardless of how many
-/// distinct signers are involved. Transactions whose signer is `None`
-/// get an all-zero placeholder signature (simulate-only).
-fn sign_group(txs: &[TransactionWithSigner]) -> Result<Vec<SignedTransaction>, Error> {
-    let mut signed_txs = Vec::with_capacity(txs.len());
-    for tx_with_signer in txs {
-        let signed = match &tx_with_signer.signer {
-            Some(signer) => {
-                let one = [tx_with_signer.tx.clone()];
-                signer.sign_transactions(&one)?.pop().ok_or_else(|| {
-                    Error::Internal("signer returned no signed transactions".to_owned())
-                })?
-            }
+/// Sign the group with its attached signers, awaiting each one.
+///
+/// Slots are grouped by signer **identity** (`Arc::ptr_eq`) so every slot
+/// a given signer instance owns is signed in a single
+/// [`Signer::sign_transactions`] call — one approval round-trip per
+/// wallet. Each signer sees the whole group via
+/// [`SigningRequest::transactions`] but signs only its
+/// [`indexes`](SigningRequest::indexes). Output is validated against the
+/// request and reassembled into original group order; `None`-signer slots
+/// get the all-zero placeholder signature (simulate-only).
+async fn sign_group(txs: &[TransactionWithSigner]) -> Result<Vec<SignedTransaction>, Error> {
+    let all_txs: Vec<Transaction> = txs.iter().map(|t| t.tx.clone()).collect();
+    let mut signed: Vec<Option<SignedTransaction>> = (0..txs.len()).map(|_| None).collect();
+
+    // Group slot indexes by signer identity, preserving first-appearance
+    // order so any approval prompts happen in a deterministic order.
+    let mut groups: Vec<(Arc<dyn Signer>, Vec<usize>)> = Vec::new();
+    for (i, tx_with_signer) in txs.iter().enumerate() {
+        match &tx_with_signer.signer {
+            Some(signer) => match groups.iter_mut().find(|(s, _)| Arc::ptr_eq(s, signer)) {
+                Some((_, indexes)) => indexes.push(i),
+                None => groups.push((Arc::clone(signer), vec![i])),
+            },
             None => {
                 // Mirrors the old `TransactionSigner::Empty` variant:
                 // produce a placeholder `SignedTransaction` whose 64-byte
                 // signature is all zeros. Algod's simulator detects this
                 // as a missing signature; never submit it to the live
                 // endpoint.
-                signed_transaction::placeholder(tx_with_signer.tx.clone())?
+                signed[i] = Some(signed_transaction::placeholder(tx_with_signer.tx.clone())?);
             }
-        };
-        signed_txs.push(signed);
+        }
     }
-    Ok(signed_txs)
+
+    for (signer, indexes) in &groups {
+        let request = SigningRequest {
+            transactions: &all_txs,
+            indexes,
+        };
+        let result = signer.sign_transactions(request).await?;
+
+        if result.len() != indexes.len() {
+            return Err(Error::SignerOutputInvalid {
+                reason: format!(
+                    "signer returned {} signed transaction(s) for {} requested",
+                    result.len(),
+                    indexes.len()
+                ),
+            });
+        }
+
+        // Each returned transaction must wrap the transaction we asked the
+        // signer to sign, in `indexes` order — this catches a signer that
+        // returns a valid signature for the wrong transaction (or returns
+        // them out of order).
+        for (&index, signed_tx) in indexes.iter().zip(result) {
+            let expected_id = all_txs[index].id()?;
+            if signed_tx.transaction_id() != &expected_id {
+                return Err(Error::SignerOutputInvalid {
+                    reason: format!(
+                        "signer returned a signature for an unexpected transaction at index {index}"
+                    ),
+                });
+            }
+            signed[index] = Some(signed_tx);
+        }
+    }
+
+    signed
+        .into_iter()
+        .enumerate()
+        .map(|(i, slot)| {
+            slot.ok_or_else(|| {
+                Error::Internal(format!(
+                    "no signature produced for transaction at index {i}"
+                ))
+            })
+        })
+        .collect()
+}
+
+/// Sign every slot with the all-zero placeholder signature, ignoring the
+/// attached signers entirely. Used by the simulate path so a dry-run
+/// never invokes a real (possibly interactive) signer.
+fn placeholder_group(txs: &[TransactionWithSigner]) -> Result<Vec<SignedTransaction>, Error> {
+    txs.iter()
+        .map(|t| signed_transaction::placeholder(t.tx.clone()).map_err(Error::from))
+        .collect()
 }
 
 /// Collect the base32 transaction ids of a signed group, in order.
@@ -815,8 +889,10 @@ mod tests {
     use super::*;
     use algonaut_core::MicroAlgos;
     use algonaut_crypto::HashDigest;
+    use algonaut_transaction::SigningFuture;
     use algonaut_transaction::account::Account;
     use algonaut_transaction::builder::{Pay, TransactionParams};
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     struct StubParams {
         genesis_id: String,
@@ -846,11 +922,130 @@ mod tests {
             .expect("failed to build payment transaction")
     }
 
+    /// Wraps an [`Account`] and counts how many times the composer calls
+    /// it, so a test can assert that slots sharing one `Arc` are signed in
+    /// a single request.
+    #[derive(Debug)]
+    struct CountingSigner {
+        inner: Account,
+        calls: AtomicUsize,
+    }
+
+    impl Signer for CountingSigner {
+        fn sign_transactions<'a>(&'a self, request: SigningRequest<'a>) -> SigningFuture<'a> {
+            self.calls.fetch_add(1, Ordering::SeqCst);
+            Box::pin(async move {
+                request
+                    .indexes
+                    .iter()
+                    .map(|&i| self.inner.sign_transaction(request.transactions[i].clone()))
+                    .collect()
+            })
+        }
+    }
+
+    /// Returns a fixed, caller-supplied output regardless of the request —
+    /// used to drive the composer's signer-output validation.
+    #[derive(Debug)]
+    struct CannedSigner {
+        output: Vec<SignedTransaction>,
+    }
+
+    impl Signer for CannedSigner {
+        fn sign_transactions<'a>(&'a self, _request: SigningRequest<'a>) -> SigningFuture<'a> {
+            let output = self.output.clone();
+            Box::pin(async move { Ok(output) })
+        }
+    }
+
+    /// Two slots that share one `Arc<dyn Signer>` are grouped by identity
+    /// and signed in a single call — one approval round-trip per wallet.
+    #[tokio::test]
+    async fn sign_groups_slots_sharing_one_signer_into_one_call() {
+        let alice = Account::generate();
+        let bob = Account::generate();
+        let signer = Arc::new(CountingSigner {
+            inner: alice.clone(),
+            calls: AtomicUsize::new(0),
+        });
+
+        let signed = AtomicGroupBuilder::new()
+            .add_transaction(TransactionWithSigner::new(
+                pay(&alice, bob.address()),
+                signer.clone(),
+            ))
+            .add_transaction(TransactionWithSigner::new(
+                pay(&alice, alice.address()),
+                signer.clone(),
+            ))
+            .build()
+            .unwrap()
+            .sign()
+            .await
+            .unwrap();
+
+        assert_eq!(signed.signed_transactions().len(), 2);
+        assert_eq!(
+            signer.calls.load(Ordering::SeqCst),
+            1,
+            "slots sharing one signer instance must be signed in a single call"
+        );
+    }
+
+    /// A signer that returns a signature for a transaction other than the
+    /// one requested is rejected, not submitted.
+    #[tokio::test]
+    async fn sign_rejects_signer_returning_wrong_transaction() {
+        let alice = Account::generate();
+        let bob = Account::generate();
+        // A signed transaction over an unrelated transaction.
+        let decoy = bob.sign_transaction(pay(&bob, alice.address())).unwrap();
+        let signer = Arc::new(CannedSigner {
+            output: vec![decoy],
+        });
+
+        let err = AtomicGroupBuilder::new()
+            .add_transaction(TransactionWithSigner::new(
+                pay(&alice, bob.address()),
+                signer,
+            ))
+            .build()
+            .unwrap()
+            .sign()
+            .await
+            .unwrap_err();
+
+        assert!(matches!(err, Error::SignerOutputInvalid { .. }));
+    }
+
+    /// A signer that returns the wrong number of signed transactions is
+    /// rejected.
+    #[tokio::test]
+    async fn sign_rejects_signer_returning_wrong_count() {
+        let alice = Account::generate();
+        let bob = Account::generate();
+        // Asked to sign one slot, returns none.
+        let signer = Arc::new(CannedSigner { output: vec![] });
+
+        let err = AtomicGroupBuilder::new()
+            .add_transaction(TransactionWithSigner::new(
+                pay(&alice, bob.address()),
+                signer,
+            ))
+            .build()
+            .unwrap()
+            .sign()
+            .await
+            .unwrap_err();
+
+        assert!(matches!(err, Error::SignerOutputInvalid { .. }));
+    }
+
     /// Signing a built group whose transactions are authorized by
     /// *different* signers must yield exactly one signed transaction per
     /// input, in input order.
-    #[test]
-    fn sign_signs_every_tx_with_distinct_signers() {
+    #[tokio::test]
+    async fn sign_signs_every_tx_with_distinct_signers() {
         let alice = Account::generate();
         let bob = Account::generate();
 
@@ -866,6 +1061,7 @@ mod tests {
             .build()
             .unwrap()
             .sign()
+            .await
             .unwrap();
 
         let txs = signed.signed_transactions();

@@ -120,11 +120,14 @@ impl World {
 
     /// Take the staged group as a [`SignedAtomicGroup`], building and signing as
     /// needed.
-    pub fn take_signed_group(&mut self) -> SignedAtomicGroup {
+    pub async fn take_signed_group(&mut self) -> SignedAtomicGroup {
         if let Some(signed) = self.signed_group.take() {
             signed
         } else {
-            self.take_unsigned_group().sign().expect("signing failed")
+            self.take_unsigned_group()
+                .sign()
+                .await
+                .expect("signing failed")
         }
     }
 }

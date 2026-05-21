@@ -91,10 +91,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
 
     // Sign every transaction with its own signer, then submit and wait for
-    // confirmation. (For fire-and-forget, `unsigned.sign()?.submit(&algod)`
+    // confirmation. (For fire-and-forget, `unsigned.sign().await?.submit(&algod)`
     // returns a `PendingSubmission` handle you can `.confirm()` later.)
     info!("signing and executing the group");
-    let outcome = unsigned.sign()?.execute(&algod).await?;
+    let outcome = unsigned.sign().await?.execute(&algod).await?;
     info!("group confirmed in round {:?}", outcome.confirmed_round);
     for (i, result) in outcome.method_results.iter().enumerate() {
         info!("method call {i} returned: {:?}", result.return_value);

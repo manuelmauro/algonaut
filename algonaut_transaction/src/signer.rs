@@ -12,6 +12,9 @@
 //! between multiple `TransactionWithSigner` values inside an atomic
 //! group.
 
+use std::future::Future;
+use std::pin::Pin;
+
 use algonaut_core::{MultisigAddress, MultisigSignature};
 
 use crate::account::Account;
@@ -19,48 +22,70 @@ use crate::contract_account::ContractAccount;
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
 
-/// Anything that can turn a slice of unsigned [`Transaction`]s into a
-/// matching `Vec<SignedTransaction>`. Implementors must be `Send +
-/// Sync` so the atomic transaction composer can hand them out across
-/// threads, and `Debug` so the composer keeps its derived `Debug` impl.
+/// The future returned by [`Signer::sign_transactions`].
+///
+/// Spelled out as an explicit boxed future rather than `async fn` in the
+/// trait so that `Signer` stays object safe (the composer stores signers
+/// behind `Arc<dyn Signer>`, and native `async fn` in traits is
+/// `dyn`-incompatible). The future is `Send` so that the composer's
+/// signing step stays `Send` on multi-threaded executors.
+pub type SigningFuture<'a> =
+    Pin<Box<dyn Future<Output = Result<Vec<SignedTransaction>, TransactionError>> + Send + 'a>>;
+
+/// What a [`Signer`] is asked to sign: the whole group, plus the slots it
+/// owns.
+///
+/// `transactions` is the full, group-id-stamped array, so a remote wallet
+/// can display the entire atomic group; `indexes` are the positions in it
+/// this signer must produce signatures for. Group-awareness lets a
+/// WalletConnect-style signer sign every slot it controls in a single
+/// approval round-trip while still seeing the full context.
+pub struct SigningRequest<'a> {
+    /// The full group, after group ids have been assigned.
+    pub transactions: &'a [Transaction],
+    /// Positions in `transactions` this signer is expected to sign.
+    pub indexes: &'a [usize],
+}
+
+/// Anything that can sign the requested slots of an atomic group,
+/// possibly awaiting remote I/O or user approval. Implementors must be
+/// `Send + Sync` so the atomic transaction composer can hand them out
+/// across threads, and `Debug` so the composer keeps its derived `Debug`
+/// impl.
 pub trait Signer: std::fmt::Debug + Send + Sync {
-    /// Sign every transaction in `txs`, returning one
-    /// [`SignedTransaction`] per input in the same order. Implementors
-    /// should return an error if any single transaction can't be signed
-    /// rather than producing a partial result.
-    fn sign_transactions(
-        &self,
-        txs: &[Transaction],
-    ) -> Result<Vec<SignedTransaction>, TransactionError>;
+    /// Sign the slots named by `request.indexes`, returning one
+    /// [`SignedTransaction`] per requested index, in `request.indexes`
+    /// order. Implementors should return an error if any requested
+    /// transaction can't be signed rather than producing a partial
+    /// result.
+    fn sign_transactions<'a>(&'a self, request: SigningRequest<'a>) -> SigningFuture<'a>;
 }
 
 impl Signer for Account {
-    fn sign_transactions(
-        &self,
-        txs: &[Transaction],
-    ) -> Result<Vec<SignedTransaction>, TransactionError> {
-        let mut signed = Vec::with_capacity(txs.len());
-        for tx in txs {
-            signed.push(self.sign_transaction(tx.clone())?);
-        }
-        Ok(signed)
+    fn sign_transactions<'a>(&'a self, request: SigningRequest<'a>) -> SigningFuture<'a> {
+        Box::pin(async move {
+            request
+                .indexes
+                .iter()
+                .map(|&i| self.sign_transaction(request.transactions[i].clone()))
+                .collect()
+        })
     }
 }
 
 impl Signer for ContractAccount {
-    fn sign_transactions(
-        &self,
-        txs: &[Transaction],
-    ) -> Result<Vec<SignedTransaction>, TransactionError> {
-        let mut signed = Vec::with_capacity(txs.len());
-        for tx in txs {
-            // The previous `TransactionSigner::ContractAccount` enum
-            // variant always signed with an empty program-args list.
-            // Callers that need non-empty args should call
-            // `ContractAccount::sign` directly.
-            signed.push(self.sign(tx.clone(), vec![])?);
-        }
-        Ok(signed)
+    fn sign_transactions<'a>(&'a self, request: SigningRequest<'a>) -> SigningFuture<'a> {
+        Box::pin(async move {
+            request
+                .indexes
+                .iter()
+                // The previous `TransactionSigner::ContractAccount` enum
+                // variant always signed with an empty program-args list.
+                // Callers that need non-empty args should call
+                // `ContractAccount::sign` directly.
+                .map(|&i| self.sign(request.transactions[i].clone(), vec![]))
+                .collect()
+        })
     }
 }
 
@@ -84,15 +109,20 @@ impl MultisigSigner {
 }
 
 impl Signer for MultisigSigner {
-    fn sign_transactions(
-        &self,
-        txs: &[Transaction],
-    ) -> Result<Vec<SignedTransaction>, TransactionError> {
-        let mut signed = Vec::with_capacity(txs.len());
-        for tx in txs {
-            signed.push(sign_msig_tx(&self.address, &self.accounts, tx.clone())?);
-        }
-        Ok(signed)
+    fn sign_transactions<'a>(&'a self, request: SigningRequest<'a>) -> SigningFuture<'a> {
+        Box::pin(async move {
+            request
+                .indexes
+                .iter()
+                .map(|&i| {
+                    sign_msig_tx(
+                        &self.address,
+                        &self.accounts,
+                        request.transactions[i].clone(),
+                    )
+                })
+                .collect()
+        })
     }
 }
 
