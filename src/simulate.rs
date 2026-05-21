@@ -21,15 +21,14 @@ use algonaut_algod::models::{
     SimulateTransaction200Response,
 };
 
-/// Hand-named view over algod's raw simulate response.
+/// Hand-named view over algod's simulate response.
 ///
 /// Keeps the generated `SimulateTransaction200Response` out of the public
 /// composer API
 /// ([`SimulateOutcome`](crate::atomic_transaction_composer::SimulateOutcome)),
-/// surfacing the commonly-needed bits through typed accessors. For
-/// wire-level detail not covered here — exec traces, initial states,
-/// per-opcode trace units — drop to the raw response with
-/// [`as_raw`](Self::as_raw) or [`into_inner`](Self::into_inner).
+/// surfacing data through typed accessors. The accessor set is grown on
+/// demand as concrete needs arise, rather than re-exposing the generated
+/// type wholesale.
 #[derive(Debug, Clone)]
 pub struct SimulateResponse {
     inner: SimulateTransaction200Response,
@@ -66,17 +65,6 @@ impl SimulateResponse {
             .eval_overrides
             .as_deref()
             .and_then(|overrides| overrides.extra_opcode_budget)
-    }
-
-    /// Borrow the raw generated response for wire-level detail not surfaced
-    /// by the typed accessors above.
-    pub fn as_raw(&self) -> &SimulateTransaction200Response {
-        &self.inner
-    }
-
-    /// Consume the wrapper, returning the raw generated response.
-    pub fn into_inner(self) -> SimulateTransaction200Response {
-        self.inner
     }
 }
 

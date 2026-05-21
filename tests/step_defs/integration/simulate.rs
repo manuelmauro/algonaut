@@ -94,7 +94,20 @@ async fn i_simulate_the_current_transaction_group_with_the_composer(w: &mut Worl
         .expect("composer simulate failed");
     // simulate borrows the group, so it survives for a later sign/execute.
     w.unsigned_group = Some(unsigned_group);
-    w.simulate_response = Some(result.simulate_response.into_inner());
+    w.simulate_outcome = Some(result.simulate_response);
+}
+
+#[then(expr = "the composer simulation should succeed.")]
+async fn the_composer_simulation_should_succeed(w: &mut World) {
+    let outcome = w
+        .simulate_outcome
+        .as_ref()
+        .expect("no composer simulate outcome");
+    assert!(
+        outcome.would_succeed(),
+        "composer simulation reported failure: {:?}",
+        outcome.failure_message(0)
+    );
 }
 
 #[when(expr = "I make a new simulate request.")]
@@ -166,7 +179,7 @@ async fn i_simulate_the_transaction_group_with_the_simulate_request(w: &mut Worl
         .await
         .expect("composer simulate_with failed");
     w.unsigned_group = Some(unsigned_group);
-    w.simulate_response = Some(result.simulate_response.into_inner());
+    w.simulate_outcome = Some(result.simulate_response);
 }
 
 #[then(expr = "I check the simulation result has power packs allow-more-logging.")]

@@ -6,6 +6,7 @@ use algonaut::{
     },
     indexer::v2::Indexer,
     kmd::v1::Kmd,
+    simulate::SimulateResponse,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::SourceMap};
 use algonaut_algod::models::{
@@ -93,7 +94,12 @@ pub struct World {
     pub dryrun_response: Option<TealDryrun200Response>,
 
     pub simulate_request: Option<SimulateRequest>,
+    /// Raw response from a direct `algod.simulate_txns` call; the deep
+    /// wire-level assertions (exec traces, state changes) read this.
     pub simulate_response: Option<SimulateTransaction200Response>,
+    /// Typed composer simulate result, from the `UnsignedAtomicGroup`
+    /// simulate path.
+    pub simulate_outcome: Option<SimulateResponse>,
     pub simulate_unsigned: bool,
 }
 

@@ -157,9 +157,8 @@ pub struct SimulateOutcome {
     /// can inspect partial successes.
     pub method_results: Vec<AbiMethodResult>,
     /// Hand-named view over algod's simulate response (success flag,
-    /// per-group failure messages, budget overrides, …). For wire-level
-    /// detail drop to the raw response via
-    /// [`SimulateResponse::as_raw`]/[`SimulateResponse::into_inner`].
+    /// per-group failure messages, budget overrides, …), exposing typed
+    /// accessors rather than the generated response type.
     pub simulate_response: SimulateResponse,
 }
 
