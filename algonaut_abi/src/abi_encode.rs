@@ -254,11 +254,11 @@ impl AbiType {
                     });
                 }
 
-                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE].try_into().map_err(
-                    |e| AbiError::Decode {
+                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE].try_into().map_err(|e| {
+                    AbiError::Decode {
                         reason: format!("length prefix conversion failed: {e}"),
-                    },
-                )?;
+                    }
+                })?;
                 let dynamic_len = u16::from_be_bytes(arr);
                 let casted_type = self.type_cast_to_tuple(&[dynamic_len as usize])?;
 
@@ -271,11 +271,11 @@ impl AbiType {
                     });
                 }
 
-                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE].try_into().map_err(
-                    |e| AbiError::Decode {
+                let arr: [u8; 2] = encoded[..LENGTH_ENCODE_BYTE_SIZE].try_into().map_err(|e| {
+                    AbiError::Decode {
                         reason: format!("length prefix conversion failed: {e}"),
-                    },
-                )?;
+                    }
+                })?;
                 let byte_len = u16::from_be_bytes(arr);
 
                 if encoded[LENGTH_ENCODE_BYTE_SIZE..].len() != byte_len as usize {
@@ -480,7 +480,10 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
                         return Err(AbiError::Decode {
                             reason: format!(
                                 "tuple static element {:?}: need {} bytes at offset {}, but only {} bytes remain",
-                                children[i], curr_len, iter_index, encoded.len() - iter_index
+                                children[i],
+                                curr_len,
+                                iter_index,
+                                encoded.len() - iter_index
                             ),
                         });
                     }
@@ -547,11 +550,12 @@ fn decode_tuple(encoded: &[u8], children: &[AbiType]) -> Result<Vec<AbiValue>, A
 pub(crate) fn find_bool_lr(types: &[AbiType], index: usize, delta: i32) -> Result<usize, AbiError> {
     let mut until: usize = 0;
     loop {
-        let current_index: usize = (index as i32 + delta * until as i32)
-            .try_into()
-            .map_err(|e| AbiError::Decode {
-                reason: format!("bool index calculation overflowed: {e}"),
-            })?;
+        let current_index: usize =
+            (index as i32 + delta * until as i32)
+                .try_into()
+                .map_err(|e| AbiError::Decode {
+                    reason: format!("bool index calculation overflowed: {e}"),
+                })?;
         match types[current_index] {
             AbiType::Bool => {
                 if current_index != types.len() - 1 && delta > 0 || current_index > 0 && delta < 0 {

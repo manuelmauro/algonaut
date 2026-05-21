@@ -259,12 +259,14 @@ impl AbiMethod {
 
     /// Decodes a method signature string into a Method object.
     pub fn from_signature(method_str: &str) -> Result<AbiMethod, AbiError> {
-        let open_idx = method_str.chars().position(|c| c == '(').ok_or_else(|| {
-            AbiError::MethodSignature {
-                input: method_str.to_owned(),
-                reason: "missing an open parenthesis".to_owned(),
-            }
-        })?;
+        let open_idx =
+            method_str
+                .chars()
+                .position(|c| c == '(')
+                .ok_or_else(|| AbiError::MethodSignature {
+                    input: method_str.to_owned(),
+                    reason: "missing an open parenthesis".to_owned(),
+                })?;
 
         let name = &method_str[..open_idx];
         if name.is_empty() {

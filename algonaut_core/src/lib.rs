@@ -356,12 +356,12 @@ impl Debug for StateProofPk {
 impl StateProofPk {
     pub fn from_base64_str(base64_str: &str) -> Result<StateProofPk, CoreError> {
         let bytes = BASE64.decode(base64_str.as_bytes())?;
-        let arr: [u8; 64] = bytes.try_into().map_err(|v: Vec<u8>| {
-            CoreError::InvalidArraySize {
+        let arr: [u8; 64] = bytes
+            .try_into()
+            .map_err(|v: Vec<u8>| CoreError::InvalidArraySize {
                 expected: 64,
                 actual: v.len(),
-            }
-        })?;
+            })?;
         Ok(StateProofPk(arr))
     }
 

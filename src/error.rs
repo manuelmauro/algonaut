@@ -174,15 +174,13 @@ impl From<crate::algod::v2::error::AlgodError> for Error {
             AlgodError::Decode(e) => Error::Internal(format!("JSON decode: {e}")),
             AlgodError::Msgpack(e) => Error::Internal(format!("msgpack decode: {e}")),
             AlgodError::Io(e) => Error::Internal(format!("I/O: {e}")),
-            AlgodError::ResponseError { status, content } => {
-                Error::Request(RequestError::new(
-                    None,
-                    RequestErrorDetails::Http {
-                        status,
-                        message: content,
-                    },
-                ))
-            }
+            AlgodError::ResponseError { status, content } => Error::Request(RequestError::new(
+                None,
+                RequestErrorDetails::Http {
+                    status,
+                    message: content,
+                },
+            )),
         }
     }
 }
@@ -203,15 +201,13 @@ impl From<crate::indexer::v2::error::IndexerError> for Error {
             }
             IndexerError::Decode(e) => Error::Internal(format!("JSON decode: {e}")),
             IndexerError::Io(e) => Error::Internal(format!("I/O: {e}")),
-            IndexerError::ResponseError { status, content } => {
-                Error::Request(RequestError::new(
-                    None,
-                    RequestErrorDetails::Http {
-                        status,
-                        message: content,
-                    },
-                ))
-            }
+            IndexerError::ResponseError { status, content } => Error::Request(RequestError::new(
+                None,
+                RequestErrorDetails::Http {
+                    status,
+                    message: content,
+                },
+            )),
         }
     }
 }
