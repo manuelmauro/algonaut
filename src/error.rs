@@ -1,8 +1,14 @@
+use algonaut_abi::abi_error::AbiError;
+use algonaut_transaction::error::TransactionError;
 use std::fmt::Debug;
 use std::time::Duration;
 use thiserror::Error;
 
-#[derive(Error, Clone, Debug, PartialEq, Eq)]
+// `Error` is intentionally not `Clone`/`PartialEq`/`Eq`: it carries source
+// errors (`TransactionError`, `AbiError`) via `#[from]` to preserve the
+// `std::error::Error::source()` chain, and those sources aren't `Eq`.
+// Match on the variant rather than comparing error values.
+#[derive(Error, Debug)]
 pub enum Error {
     /// URL parse error.
     #[error("Url parsing error.")]
@@ -23,26 +29,14 @@ pub enum Error {
     #[error("http error: {0}")]
     Request(RequestError),
 
-    /// Tried to build / submit / execute a transaction group with zero
-    /// transactions in the [`AtomicTransactionComposer`]. Equivalent of
+    /// Tried to
+    /// [`build`](crate::atomic_transaction_composer::GroupBuilder::build) a
+    /// transaction group with zero transactions. Equivalent of
     /// [`algonaut_transaction::error::TransactionError::EmptyTransactionListError`]
     /// at the top-level error layer.
-    ///
-    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
     #[error("transaction group is empty")]
     EmptyTransactionGroup,
-    /// An [`AtomicTransactionComposer`] operation was attempted in the wrong
-    /// status. The original `String` captures the operation and expected
-    /// status for diagnostics; tests should match on the variant, not the
-    /// message.
-    ///
-    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
-    #[error("composer status invalid: {0}")]
-    ComposerStatusInvalid(String),
-    /// The [`AtomicTransactionComposer`] is at maximum capacity (16 txns by
-    /// protocol).
-    ///
-    /// [`AtomicTransactionComposer`]: crate::atomic_transaction_composer::AtomicTransactionComposer
+    /// The transaction group is at maximum capacity (16 txns by protocol).
     #[error("composer group full (max {max} transactions)")]
     ComposerGroupFull { max: usize },
     /// An ABI method call returned but the application did not emit a
@@ -68,6 +62,15 @@ pub enum Error {
     /// [`PendingSubmission::confirm_with`]: crate::algod::v2::PendingSubmission::confirm_with
     #[error("pending transaction timed out ({timeout:?})")]
     PendingTransactionTimeout { timeout: Duration },
+
+    /// A transaction construction or signing error from
+    /// [`algonaut_transaction`], preserved as the error source.
+    #[error(transparent)]
+    Transaction(#[from] TransactionError),
+    /// An ABI encode/decode error from [`algonaut_abi`], preserved as the
+    /// error source.
+    #[error(transparent)]
+    Abi(#[from] AbiError),
 
     /// General text-only errors. Dedicated error variants can be created, if needed.
     #[error("Msg: {0}")]

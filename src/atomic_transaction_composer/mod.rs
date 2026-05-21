@@ -14,7 +14,6 @@ use algonaut_core::{Address, AppId, AssetId, Round, TxId};
 use algonaut_transaction::{
     SignedTransaction, Signer, Transaction, TransactionType,
     builder::TransactionParams,
-    error::TransactionError,
     signed_transaction,
     transaction::{ApplicationCallTransaction, to_tx_type_enum},
     tx_group,
@@ -588,20 +587,6 @@ fn get_return_value_with_return_type(
         tx_info: pending_tx.clone(),
         return_value,
     })
-}
-
-impl From<TransactionError> for Error {
-    fn from(e: TransactionError) -> Self {
-        Self::Msg(format!("{e:?}"))
-    }
-}
-
-impl From<AbiError> for Error {
-    fn from(e: AbiError) -> Self {
-        match e {
-            AbiError::Msg(msg) => Self::Msg(msg),
-        }
-    }
 }
 
 fn validate_tx(tx: &Transaction, expected_type: TransactionArgType) -> Result<(), Error> {
