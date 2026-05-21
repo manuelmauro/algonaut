@@ -1,7 +1,7 @@
 ---
 id: atomic-transaction-composer-typestate
 title: Atomic transaction composer as typestate, not status enum
-abstract: Split `AtomicTransactionComposer` into a chain of state-specific types — `GroupBuilder` → `UnsignedGroup` → `SignedGroup` — replacing the runtime-checked `AtomicTransactionComposerStatus` enum with compile-time enforcement. Calls that don't make sense in a given state (signing twice, submitting before signing, adding transactions after `build_group`) stop compiling instead of returning `Err(Error::ComposerStatusInvalid)`. Eighth sub-ADR refining the composer-touching items D2, D6, and D7 of the ideal-type-safe-ergonomic-api index.
+abstract: Split `AtomicTransactionComposer` into a chain of state-specific types — `GroupBuilder` → `UnsignedGroup` → `SignedGroup` — replacing the runtime-checked `AtomicTransactionComposerStatus` enum with compile-time enforcement. Calls that don't make sense in a given state (signing twice, submitting before signing, adding transactions after `build_group`) stop compiling instead of returning `Err(Error::ComposerStatusInvalid)`. Fourth sub-ADR refining the composer-touching items D2, D6, and D7 of the ideal-type-safe-ergonomic-api index.
 status: proposed
 date: 2026-05-20
 deciders: []
