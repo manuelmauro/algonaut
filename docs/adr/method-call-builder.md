@@ -8,7 +8,7 @@ deciders: []
 tags: [api, ergonomics, abi]
 ---
 
-# `MethodCall` fluent builder
+# MethodCall fluent builder
 
 ## Status
 

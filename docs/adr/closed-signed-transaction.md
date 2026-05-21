@@ -8,7 +8,7 @@ deciders: []
 tags: [api, ergonomics, type-safety, signing]
 ---
 
-# `SignedTransaction` constructable only via signing
+# SignedTransaction constructable only via signing
 
 ## Status
 
