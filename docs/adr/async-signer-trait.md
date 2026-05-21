@@ -265,17 +265,18 @@ during simulate.
 
 ### Constructing remote signer output is a prerequisite, not part of this ADR
 
-A remote signer holds either a raw signature (the HSM/KMS/MPC case) or a
-fully-formed signed msgpack blob (some custodial APIs). Neither can be
-turned into a `SignedTransaction` from outside `algonaut_transaction`
-today, because [`closed-signed-transaction`](closed-signed-transaction.md)
-(D5) closed the fields. That ingress —
-`SignedTransaction::with_signature` for the raw-signature case and a
-corrected msgpack-deserialize path for the blob case — is decided in
-[`external-signature-ingress`](external-signature-ingress.md). This ADR
-assumes it exists; without it, the async trait's own motivating signers
-cannot produce the `Vec<SignedTransaction>` the method returns. The
-composer's responsibility, regardless of how the value was built, is the
+A remote signer returns its result as bytes: a canonical signed-transaction
+msgpack blob, which is what WalletConnect wallets and custodial APIs hand
+back (and what the Go/JS reference SDKs treat as signer output). Turning
+those bytes into the `SignedTransaction` this trait returns is
+`rmp_serde::from_slice::<SignedTransaction>(&blob)?` — but that decode path
+is closed and currently buggy under
+[`closed-signed-transaction`](closed-signed-transaction.md) (D5).
+[`external-signature-ingress`](external-signature-ingress.md) blesses and
+corrects it as the single public construction ingress. This ADR assumes it
+exists; without it, the async trait's own motivating signers cannot produce
+the `Vec<SignedTransaction>` the method returns. The composer's
+responsibility, regardless of how the value was decoded, is the
 request-side validation in step 4 above: it never trusts a returned
 transaction it didn't ask for.
 
