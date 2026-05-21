@@ -18,7 +18,55 @@
 
 use algonaut_algod::models::{
     SimulateRequest, SimulateRequestTransactionGroup, SimulateTraceConfig,
+    SimulateTransaction200Response,
 };
+
+/// Hand-named view over algod's simulate response.
+///
+/// Keeps the generated `SimulateTransaction200Response` out of the public
+/// composer API
+/// ([`SimulateOutcome`](crate::atomic_transaction_composer::SimulateOutcome)),
+/// surfacing data through typed accessors. The accessor set is grown on
+/// demand as concrete needs arise, rather than re-exposing the generated
+/// type wholesale.
+#[derive(Debug, Clone)]
+pub struct SimulateResponse {
+    inner: SimulateTransaction200Response,
+}
+
+impl SimulateResponse {
+    pub(crate) fn new(inner: SimulateTransaction200Response) -> Self {
+        Self { inner }
+    }
+
+    /// `true` if every transaction group would succeed.
+    pub fn would_succeed(&self) -> bool {
+        self.inner.would_succeed
+    }
+
+    /// The round the group was simulated against.
+    pub fn last_round(&self) -> u64 {
+        self.inner.last_round
+    }
+
+    /// Failure message for the transaction group at `index`, if that group
+    /// failed.
+    pub fn failure_message(&self, index: usize) -> Option<&str> {
+        self.inner
+            .txn_groups
+            .get(index)
+            .and_then(|group| group.failure_message.as_deref())
+    }
+
+    /// Extra opcode budget algod applied for this simulation (the
+    /// `extra-opcode-budget` power-pack override), if any.
+    pub fn extra_opcode_budget(&self) -> Option<u64> {
+        self.inner
+            .eval_overrides
+            .as_deref()
+            .and_then(|overrides| overrides.extra_opcode_budget)
+    }
+}
 
 /// Fluent builder for [`SimulateRequest`].
 #[derive(Debug, Clone, Default)]

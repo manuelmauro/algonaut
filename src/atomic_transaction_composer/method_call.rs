@@ -24,7 +24,7 @@ use super::AbiArgValue;
 ///
 /// Construct one with the fluent [`MethodCallBuilder`] returned by
 /// [`MethodCall::new`].
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MethodCall {
     pub(super) app_id: AppId,
     pub(super) method: AbiMethod,

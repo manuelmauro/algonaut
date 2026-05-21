@@ -2,7 +2,7 @@
 id: structured-errors
 title: Structured error variants
 abstract: Promote the `Error::Msg("...")` sites that callers actually branch on into typed variants — `EmptyTransactionGroup`, `ComposerStatusInvalid`, `ComposerGroupFull`, `MissingReturnLog`, `MissingSourcemap`. Reserve `Msg` / `Internal` for the genuinely unstructured cases. Third sub-ADR addressing decision item D8 of the ideal-type-safe-ergonomic-api index.
-status: proposed
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, errors, type-safety]
@@ -12,7 +12,7 @@ tags: [api, errors, type-safety]
 
 ## Status
 
-Proposed. Implements decision item **D8** of
+Accepted. Implements decision item **D8** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 
 ## Context

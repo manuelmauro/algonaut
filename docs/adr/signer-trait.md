@@ -2,7 +2,7 @@
 id: signer-trait
 title: Signer is a trait
 abstract: Replace the closed `TransactionSigner` enum (with its inhabitable `Empty` do-nothing variant) with an open `Signer` trait. `Account`, `ContractAccount`, and a new `MultisigSigner` struct implement it; third parties can implement it for an HSM or remote KMS. `TransactionWithSigner.signer` becomes `Option<Arc<dyn Signer>>`, so "no signer yet" is `None`, not an enum variant that can be passed to the submit path by mistake. Fourth sub-ADR addressing decision item D7 of the ideal-type-safe-ergonomic-api index.
-status: proposed
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics, type-safety, signing]
@@ -12,7 +12,7 @@ tags: [api, ergonomics, type-safety, signing]
 
 ## Status
 
-Proposed. Implements decision item **D7** of
+Accepted. Implements decision item **D7** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 
 ## Context

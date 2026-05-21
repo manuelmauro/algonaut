@@ -2,7 +2,7 @@
 id: ideal-type-safe-ergonomic-api
 title: An ideal type-safe, ergonomic API for algonaut
 abstract: Set a north-star direction for the algonaut public API — newtype identifiers, single-stage transaction builders, client-bound submit/confirm helpers, a Signer trait, a method-call builder, domain types at the network boundary, and structured errors — so the common flows in examples/ and tests/step_defs stop repeating boilerplate and stop relying on stringly-typed escape hatches.
-status: proposed
+status: accepted
 date: 2026-05-19
 deciders: []
 tags: [api, ergonomics, type-safety]
@@ -12,7 +12,7 @@ tags: [api, ergonomics, type-safety]
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
