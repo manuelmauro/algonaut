@@ -1,7 +1,7 @@
 ---
 id: atomic-transaction-composer-typestate
 title: Atomic transaction composer as typestate, not status enum
-abstract: Split `AtomicTransactionComposer` into a chain of state-specific types — `GroupBuilder` → `UnsignedGroup` → `SignedGroup` — replacing the runtime-checked `AtomicTransactionComposerStatus` enum with compile-time enforcement. Calls that don't make sense in a given state (signing twice, submitting before signing, adding transactions after `build_group`) stop compiling instead of returning `Err(Error::ComposerStatusInvalid)`. Eighth sub-ADR addressing the composer-specific friction not covered by D1–D9 of the ideal-type-safe-ergonomic-api index.
+abstract: Split `AtomicTransactionComposer` into a chain of state-specific types — `GroupBuilder` → `UnsignedGroup` → `SignedGroup` — replacing the runtime-checked `AtomicTransactionComposerStatus` enum with compile-time enforcement. Calls that don't make sense in a given state (signing twice, submitting before signing, adding transactions after `build_group`) stop compiling instead of returning `Err(Error::ComposerStatusInvalid)`. Eighth sub-ADR refining the composer-touching items D2, D6, and D7 of the ideal-type-safe-ergonomic-api index.
 status: proposed
 date: 2026-05-20
 deciders: []
@@ -13,9 +13,10 @@ tags: [api, ergonomics, type-safety, atomic-transaction-composer]
 ## Status
 
 Proposed. Refines and complements the composer-touching items
-([D2](pending-submission.md), [D6](method-call-builder.md),
-[D7](signer-trait.md)) of
-[`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
+([D2](ideal-type-safe-ergonomic-api.md#d2--finality-is-a-client-capability),
+[D6](ideal-type-safe-ergonomic-api.md#d6--a-builder-for-method-calls),
+[D7](ideal-type-safe-ergonomic-api.md#d7--signer-is-a-trait)) of the
+now-accepted [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 
 ## Context
 
@@ -164,8 +165,8 @@ pub struct UnsignedGroup { /* txs with group-ids stamped, method_map */ }
 impl UnsignedGroup {
     pub fn transactions(&self) -> &[TransactionWithSigner];
     pub fn sign(self) -> Result<SignedGroup, Error>;
-    pub async fn simulate(self, algod: &Algod) -> Result<SimulateOutcome, Error>;
-    pub async fn simulate_with(self, algod: &Algod, opts: SimulateOptions) -> Result<SimulateOutcome, Error>;
+    pub async fn simulate(&self, algod: &Algod) -> Result<SimulateOutcome, Error>;
+    pub async fn simulate_with(&self, algod: &Algod, opts: SimulateOptions) -> Result<SimulateOutcome, Error>;
 }
 
 // Signed state — ready to submit or execute.
@@ -180,6 +181,12 @@ impl SignedGroup {
     pub async fn execute(self, algod: &Algod) -> Result<ExecuteOutcome, Error>;
 }
 ```
+
+`add_transaction` and `add_method_call` return `Self`, not
+`Result<Self>`, so the chain reads without a `?` at every step. The
+checks they run today — group-size limit, ABI argument count,
+per-transaction validation — move to `build`, which is the fallible
+boundary (`-> Result<UnsignedGroup, Error>`).
 
 The quickstart end-to-end:
 
@@ -215,7 +222,7 @@ The overlap collapses to one decision per state:
 
 | Current API                                       | After                                                                  |
 |---------------------------------------------------|------------------------------------------------------------------------|
-| `composer.submit(&algod)` → `Vec<String>`         | `signed.submit(&algod)` → [`PendingSubmission`](pending-submission.md) |
+| `composer.submit(&algod)` → `Vec<String>`         | `signed.submit(&algod)` → [`PendingSubmission`](ideal-type-safe-ergonomic-api.md#d2--finality-is-a-client-capability) |
 | `composer.execute(&algod)` → `ExecuteResult`      | `signed.execute(&algod)` → `ExecuteOutcome`                            |
 | `composer.simulate(&algod)` → `AtcSimulateResult` | `unsigned.simulate(&algod)` → `SimulateOutcome`                        |
 
@@ -223,8 +230,8 @@ The overlap collapses to one decision per state:
 type already exists). `ExecuteOutcome` is the renamed `ExecuteResult`,
 unchanged in shape. `SimulateOutcome` keeps `AtcSimulateResult`'s
 shape but the "the composer can still be executed after a simulate"
-property is automatic: simulate consumes `UnsignedGroup` by reference,
-not by value — `pub async fn simulate(&self, ...)`. The
+property is automatic: simulate borrows `UnsignedGroup` (`&self`)
+instead of consuming it — `pub async fn simulate(&self, ...)`. The
 `UnsignedGroup` value survives, so `unsigned.simulate(&algod).await?`
 followed by `unsigned.sign()?.execute(&algod).await?` is legal at the
 type level.
@@ -269,6 +276,13 @@ type level.
   through `simulate` taking `&self`. The composer's
   `Simulated`-between-`Signed`-and-`Submitted` enum gymnastics retire
   with the enum.
+- **Simulate moves before signing.** Today the `Simulated` state sits
+  *after* `Signed`; here `simulate` hangs off `UnsignedGroup`, so it
+  runs on the unsigned group. This is a deliberate shift — algod's
+  simulate endpoint does not require real signatures — but it is a
+  behavioral change, not a free consequence of the refactor. If a
+  caller ever needs to simulate the actually-signed group, `simulate`
+  would have to be offered on `SignedGroup` too.
 - **Result types collapse.** `ExecuteResult` and `AtcSimulateResult`
   become `ExecuteOutcome` / `SimulateOutcome` — same fields, the
   rename just stops them from looking like sibling types of a thing

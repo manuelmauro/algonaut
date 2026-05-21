@@ -2,7 +2,7 @@
 id: identifier-newtypes-at-client-boundary
 title: Identifier newtypes and domain types at the client boundary
 abstract: Push the AppId / AssetId / Address / TxId newtypes through the algod / indexer / kmd public method signatures, turn the to_app_address free function into AppId::address, replace the TxGroup::assign_group_id slice-of-mut-refs API with a TxGroup::new constructor, add StateSchema::empty / new, and replace teal_compile's Option<bool> with a SourceMap two-variant enum. First sub-ADR addressing items D4 and D9 of the ideal-type-safe-ergonomic-api index.
-status: proposed
+status: accepted
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics, type-safety]
@@ -12,7 +12,7 @@ tags: [api, ergonomics, type-safety]
 
 ## Status
 
-Proposed. Implements decision items **D4** and **D9** of
+Accepted. Implements decision items **D4** and **D9** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
 
 ## Context
