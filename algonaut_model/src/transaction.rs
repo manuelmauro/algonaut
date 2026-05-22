@@ -1,6 +1,6 @@
 use algonaut_core::{
-    Address, AppId, AssetId, MicroAlgos, MultisigSignature, Round, StateProofPk, ToMsgPack, TxId,
-    VotePk, VrfPk,
+    Address, AppId, AssetId, MicroAlgos, MultisigSignature, Round, StateProofPk, ToMsgPack,
+    TransactionId, VotePk, VrfPk,
 };
 use algonaut_crypto::{HashDigest, HashType, Signature};
 use algonaut_encoding::{deserialize_bytes64, serialize_bytes};
@@ -209,7 +209,7 @@ pub struct ApiSignedTransaction {
     pub auth_address: Option<Address>,
 
     #[serde(skip)]
-    pub transaction_id: TxId,
+    pub transaction_id: TransactionId,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]

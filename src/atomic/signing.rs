@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::TxId;
+use algonaut_core::TransactionId;
 use algonaut_transaction::{
     SignedTransaction, Signer, SigningRequest, Transaction, signed_transaction,
 };
@@ -25,17 +25,17 @@ use super::TransactionWithSigner;
 const COMPOSER_CONFIRM_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// Poll algod for finality of the given transaction id. A signed group
-/// already has the tx ids it wants to wait on (post-`send_txns`), so this
+/// already has the tx ids it wants to wait on (post-`send_transactions`), so this
 /// internal helper is the equivalent of `PendingSubmission::confirm`
 /// against an arbitrary id.
 pub(super) async fn poll_until_confirmed(
     algod: &Algod,
-    tx_id: &TxId,
+    transaction_id: &TransactionId,
 ) -> Result<PendingTransactionResponse, Error> {
     let start = Instant::now();
     let mut last_round = algod.status().await?.last_round;
     loop {
-        let pending = algod.pending_txn(tx_id).await?;
+        let pending = algod.pending_transaction(transaction_id).await?;
         if pending.confirmed_round.is_some() {
             return Ok(pending);
         }
@@ -71,7 +71,7 @@ pub(super) async fn poll_until_confirmed(
 pub(super) async fn sign_group(
     txs: &[TransactionWithSigner],
 ) -> Result<Vec<SignedTransaction>, Error> {
-    let all_txs: Vec<Transaction> = txs.iter().map(|t| t.tx.clone()).collect();
+    let all_txs: Vec<Transaction> = txs.iter().map(|t| t.transaction.clone()).collect();
     let mut signed: Vec<Option<SignedTransaction>> = (0..txs.len()).map(|_| None).collect();
 
     // Group slot indexes by signer identity, preserving first-appearance
@@ -138,12 +138,12 @@ pub(super) fn placeholder_group(
     txs: &[TransactionWithSigner],
 ) -> Result<Vec<SignedTransaction>, Error> {
     txs.iter()
-        .map(|t| signed_transaction::placeholder(t.tx.clone()).map_err(Error::from))
+        .map(|t| signed_transaction::placeholder(t.transaction.clone()).map_err(Error::from))
         .collect()
 }
 
 /// Collect the transaction ids of a signed group, in order.
-pub(super) fn tx_ids(signed_txs: &[SignedTransaction]) -> Vec<TxId> {
+pub(super) fn transaction_ids(signed_txs: &[SignedTransaction]) -> Vec<TransactionId> {
     signed_txs
         .iter()
         .map(|t| t.transaction_id().clone())

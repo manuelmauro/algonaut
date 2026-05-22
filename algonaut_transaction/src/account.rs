@@ -120,10 +120,7 @@ impl Account {
     }
 
     /// Sign transaction and generate a single signature SignedTransaction
-    pub fn sign_transaction(
-        &self,
-        transaction: Transaction,
-    ) -> Result<SignedTransaction, TransactionError> {
+    pub fn sign(&self, transaction: Transaction) -> Result<SignedTransaction, TransactionError> {
         let transaction_id = transaction.id()?;
         let sig = TransactionSignature::Single(self.generate_transaction_sig(&transaction)?);
         let auth_address = auth_address(&transaction, &self.address);

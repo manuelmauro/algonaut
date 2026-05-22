@@ -47,7 +47,7 @@ Every per-type builder (`Pay`, `RegisterKey`, `CreateAsset`,
 `ClawbackAsset`, `FreezeAsset`, `CreateApplication`,
 `UpdateApplication`, `CallApplication`, `ClearApplication`,
 `CloseApplication`, `DeleteApplication`, `OptInApplication`) embeds a
-shared `TxnHeader` and exposes the six header setters directly. The
+shared `TransactionHeader` and exposes the six header setters directly. The
 terminal `build(self) -> TransactionType` is replaced by
 `build(self, params: &impl TransactionParams) -> Result<Transaction,
 TransactionError>`, which finalises both the header and the
@@ -61,32 +61,32 @@ let t = Pay::new(alice.address(), bob.address(), MicroAlgos(123_456))
 
 The outer `TxnBuilder` retires.
 
-### `TxnHeader` and `impl_txn_header_setters!`
+### `TransactionHeader` and `impl_transaction_header_setters!`
 
-A new `TxnHeader { fee, note, lease, rekey_to, group, genesis_id }`
+A new `TransactionHeader { fee, note, lease, rekey_to, group, genesis_id }`
 struct lives in `algonaut_transaction::builder` and stores the six
 optional header fields. Every per-type builder gains a
-`header: TxnHeader` field, defaulted in its constructor(s).
+`header: TransactionHeader` field, defaulted in its constructor(s).
 
-A `macro_rules! impl_txn_header_setters!` at the top of the same module
+A `macro_rules! impl_transaction_header_setters!` at the top of the same module
 mints the six fluent setters (`fee`, `note`, `lease`, `rekey_to`,
 `group`, `genesis_id`) on a target builder. The macro is applied once
 per builder — at the bottom of its `impl` block — so the setters are
 inherent methods, callable without a trait import:
 
 ```rust
-impl_txn_header_setters!(Pay);
-impl_txn_header_setters!(CreateAsset);
+impl_transaction_header_setters!(Pay);
+impl_transaction_header_setters!(CreateAsset);
 // ...
 ```
 
-A trait + blanket-impl alternative was considered (`HasTxnHeader` plus
-`TxnHeaderSetters` default methods). The macro wins on grep-ability: a
+A trait + blanket-impl alternative was considered (`HasTransactionHeader` plus
+`TransactionHeaderSetters` default methods). The macro wins on grep-ability: a
 reader looking for `Pay::note` finds it via `rustdoc`, IDE
 auto-complete, and `rg '\.note\('` without needing to know the trait
 exists.
 
-### `TxnHeader::apply`
+### `TransactionHeader::apply`
 
 Each builder's new `build(&params)` finishes by calling
 `self.header.apply(params, txn_type)`, the helper that formerly lived
@@ -109,7 +109,7 @@ txn_type" — without making a promise the type signature won't keep.
 `TxnBuilder::with_fee(&params, fee, app_call).rekey_to(...)...build()?`.
 After this change, the same construction happens inline (the
 `Transaction` struct's fields are `pub`), using the same `last_round +
-1000` shape `TxnHeader::apply` uses. The composer does not go through
+1000` shape `TransactionHeader::apply` uses. The composer does not go through
 any per-type builder because its `AddMethodCallParams` is the union of
 every application-call variant — the `MethodCall` fluent builder (D6)
 is the eventual replacement for that path.

@@ -52,7 +52,7 @@ async fn i_build_a_payment_transaction_with_sender_receiver_amount_close_remaind
     close_to: String,
 ) {
     let transient_account = w.transient_account.clone().unwrap();
-    let tx_params = w.tx_params.as_ref().unwrap();
+    let tx_params = w.suggested_params.as_ref().unwrap();
 
     let close_to = if close_to == "" {
         None
@@ -413,7 +413,7 @@ fn method_call_ctx(w: &World, account_type: &str, on_complete: &str) -> MethodCa
         method: abi_method,
         method_args: abi_method_args,
         app_id: w.app_id.clone().unwrap(),
-        params: w.tx_params.clone().unwrap(),
+        params: w.suggested_params.clone().unwrap(),
         sender: use_account.address(),
         signer: w.tx_signer.clone().unwrap(),
         on_complete,
@@ -687,12 +687,12 @@ async fn check_inner_txn_group_ids(w: &mut World, colon_separated_paths_string: 
 
     for path in paths {
         let mut current: PendingTransactionResponse =
-            tx_composer_res.method_results[0].tx_info.clone();
+            tx_composer_res.method_results[0].transaction_info.clone();
         for path_index in 1..path.len() {
             let inner_txn_index = path[path_index];
             if path_index == 0 {
                 current = tx_composer_res.method_results[inner_txn_index]
-                    .tx_info
+                    .transaction_info
                     .clone();
             } else {
                 current = current
@@ -790,14 +790,14 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
 
     let app_address = app_id.address();
 
-    let tx_params = algod.txn_params().await.expect("couldn't get params");
+    let tx_params = algod.suggested_params().await.expect("couldn't get params");
 
     let tx = Pay::new(first_account, app_address, MicroAlgos(micro_algos))
         .build(&tx_params)
         .unwrap();
 
     let signed_tx = kmd
-        .sign_transaction(kmd_handle, kmd_pw, &tx)
+        .sign(kmd_handle, kmd_pw, &tx)
         .await
         .expect("couldn't sign tx");
 

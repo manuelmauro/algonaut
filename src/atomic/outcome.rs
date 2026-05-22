@@ -12,7 +12,7 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
 };
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::TxId;
+use algonaut_core::TransactionId;
 use data_encoding::BASE64;
 
 use crate::{Error, simulate::SimulateResponse};
@@ -24,9 +24,9 @@ const ABI_RETURN_HASH: [u8; 4] = [0x15, 0x1f, 0x7c, 0x75];
 #[derive(Debug, Clone)]
 pub struct AbiMethodResult {
     /// The TxID of the transaction that invoked the ABI method call.
-    pub tx_id: TxId,
+    pub transaction_id: TransactionId,
     /// Information about the confirmed transaction that invoked the ABI method call.
-    pub tx_info: PendingTransactionResponse,
+    pub transaction_info: PendingTransactionResponse,
     /// The method's return value
     pub return_value: Result<AbiMethodReturnValue, AbiReturnDecodeError>,
 }
@@ -49,7 +49,7 @@ pub struct ExecuteOutcome {
     /// (optional, because the transaction's confirmed round is optional).
     pub confirmed_round: Option<u64>,
     /// A list of the TxIDs for each transaction in the executed group
-    pub tx_ids: Vec<TxId>,
+    pub transaction_ids: Vec<TransactionId>,
     /// Return values for all the ABI method calls in the executed group
     pub method_results: Vec<AbiMethodResult>,
 }
@@ -61,7 +61,7 @@ pub struct ExecuteOutcome {
 #[derive(Debug, Clone)]
 pub struct SimulateOutcome {
     /// TxIDs for each transaction in the simulated group.
-    pub tx_ids: Vec<TxId>,
+    pub transaction_ids: Vec<TransactionId>,
     /// ABI return values per method call. Errors are surfaced
     /// per-result (the same way [`ExecuteOutcome`] does it) so callers
     /// can inspect partial successes.
@@ -74,7 +74,7 @@ pub struct SimulateOutcome {
 
 pub(super) fn get_return_value_with_return_type(
     pending_tx: &PendingTransactionResponse,
-    tx_id: &TxId, // our txn in PendingTransaction currently has no fields, so the tx id is passed separately
+    transaction_id: &TransactionId, // our txn in PendingTransaction currently has no fields, so the tx id is passed separately
     return_type: AbiReturnType,
 ) -> Result<AbiMethodResult, Error> {
     let return_value = match return_type {
@@ -85,8 +85,8 @@ pub(super) fn get_return_value_with_return_type(
     };
 
     Ok(AbiMethodResult {
-        tx_id: tx_id.to_owned(),
-        tx_info: pending_tx.clone(),
+        transaction_id: transaction_id.to_owned(),
+        transaction_info: pending_tx.clone(),
         return_value,
     })
 }

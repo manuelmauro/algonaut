@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let signer = Arc::new(alice.clone());
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     // TODO point this at a real ARC-4 method on a real deployed contract.
     // The signature here is illustrative — `add(uint64,uint64)uint64`

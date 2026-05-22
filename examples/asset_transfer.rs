@@ -21,18 +21,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building TransferAsset transaction");
     let t = TransferAsset::new(alice.address(), AssetId(16), 1, bob.address()).build(&params)?;
 
     info!("signing transaction");
-    let sign_response = alice.sign_transaction(t)?;
+    let sign_response = alice.sign(t)?;
 
     info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.send_txn(&sign_response).await;
+    let send_response = algod.send(&sign_response).await;
     info!("response: {:?}", send_response);
 
     Ok(())

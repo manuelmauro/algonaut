@@ -14,7 +14,7 @@
 //! method call's ABI return value.
 //!
 //! Contrast with `examples/atomic_swap.rs`, which assembles and signs an
-//! atomic group by hand with `TxGroup`; the composer also handles ABI
+//! atomic group by hand with `TransactionGroup`; the composer also handles ABI
 //! argument encoding, group-id assignment, per-transaction signers, and
 //! return-value decoding for you.
 
@@ -49,7 +49,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let bob_signer: Arc<dyn Signer> = Arc::new(bob.clone());
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     // TODO point this at a real ARC-4 method on a deployed contract.
     // `add(uint64,uint64)uint64` takes two unsigned-64 args, returns one.
@@ -79,7 +79,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let sim = unsigned.simulate(&algod).await?;
     info!(
         "simulate ok: {} transaction(s), {} method result(s)",
-        sim.tx_ids.len(),
+        sim.transaction_ids.len(),
         sim.method_results.len()
     );
 

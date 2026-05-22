@@ -1,6 +1,6 @@
 use self::error::IndexerError;
 use crate::Error;
-use algonaut_core::{Address, AppId, AssetId, TxId};
+use algonaut_core::{Address, AppId, AssetId, TransactionId};
 use algonaut_indexer::{
     apis::configuration::{ApiKey, Configuration},
     models::{
@@ -171,7 +171,7 @@ impl Indexer {
         note_prefix: Option<&str>,
         tx_type: Option<&str>,
         sig_type: Option<&str>,
-        txid: Option<&TxId>,
+        transaction_id: Option<&TransactionId>,
         round: Option<u64>,
         min_round: Option<u64>,
         max_round: Option<u64>,
@@ -191,7 +191,7 @@ impl Indexer {
                 note_prefix,
                 tx_type,
                 sig_type,
-                txid.map(TxId::as_str),
+                transaction_id.map(TransactionId::as_str),
                 round,
                 min_round,
                 max_round,
@@ -248,7 +248,7 @@ impl Indexer {
         app_id: AppId,
         limit: Option<u64>,
         next: Option<&str>,
-        txid: Option<&TxId>,
+        transaction_id: Option<&TransactionId>,
         min_round: Option<u64>,
         max_round: Option<u64>,
         sender_address: Option<&str>,
@@ -259,7 +259,7 @@ impl Indexer {
                 app_id.0,
                 limit,
                 next,
-                txid.map(TxId::as_str),
+                transaction_id.map(TransactionId::as_str),
                 min_round,
                 max_round,
                 sender_address,
@@ -317,7 +317,7 @@ impl Indexer {
         note_prefix: Option<&str>,
         tx_type: Option<&str>,
         sig_type: Option<&str>,
-        txid: Option<&TxId>,
+        transaction_id: Option<&TransactionId>,
         round: Option<u64>,
         min_round: Option<u64>,
         max_round: Option<u64>,
@@ -340,7 +340,7 @@ impl Indexer {
                 note_prefix,
                 tx_type,
                 sig_type,
-                txid.map(TxId::as_str),
+                transaction_id.map(TransactionId::as_str),
                 round,
                 min_round,
                 max_round,
@@ -376,11 +376,11 @@ impl Indexer {
     /// Lookup a single transaction.
     pub async fn lookup_transaction(
         &self,
-        txid: &TxId,
+        transaction_id: &TransactionId,
     ) -> Result<LookupTransaction200Response, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_transaction(
             &self.configuration,
-            txid.as_str(),
+            transaction_id.as_str(),
         )
         .await
         .map_err(Into::<IndexerError>::into)?)
@@ -528,7 +528,7 @@ impl Indexer {
         note_prefix: Option<&str>,
         tx_type: Option<&str>,
         sig_type: Option<&str>,
-        txid: Option<&TxId>,
+        transaction_id: Option<&TransactionId>,
         round: Option<u64>,
         min_round: Option<u64>,
         max_round: Option<u64>,
@@ -551,7 +551,7 @@ impl Indexer {
             note_prefix,
             tx_type,
             sig_type,
-            txid.map(TxId::as_str),
+            transaction_id.map(TransactionId::as_str),
             round,
             min_round,
             max_round,
