@@ -162,7 +162,7 @@ Three corollaries:
 | Today       | After                | Notes                                                          |
 |-------------|----------------------|----------------------------------------------------------------|
 | `TxId`      | `TransactionId`      | `algonaut_core`; `#[serde(transparent)]` over `String` is unchanged |
-| `TxGroup`   | `TransactionGroup`   | `algonaut_transaction`; the module file `tx_group.rs` → `transaction_group.rs` |
+| `TxGroup`   | `TransactionGroup`   | `algonaut_transaction`; the module `tx_group` → `group` (the crate already carries the noun, so `transaction::group::TransactionGroup` reads without repetition) |
 | `TxnHeader` | `TransactionHeader`  | `algonaut_transaction`; applies to whatever shape [`one-build-per-transaction`](one-build-per-transaction.md) leaves of the header family |
 
 The per-kind transaction structs and every other `Transaction*` type already

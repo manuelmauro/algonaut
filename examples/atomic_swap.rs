@@ -2,7 +2,7 @@ use algonaut::algod::v2::Algod;
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::Pay;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::transaction_group::TransactionGroup;
+use algonaut::transaction::group::TransactionGroup;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

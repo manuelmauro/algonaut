@@ -15,7 +15,8 @@ use algonaut_abi::abi_interactions::{AbiMethod, TransactionArgType};
 use algonaut_algod::models::{
     SimulateRequest, SimulateRequestTransactionGroup, SimulateTransaction200Response,
 };
-use algonaut_transaction::{SignedTransaction, Signer, Transaction, transaction_group};
+use algonaut_transaction::group::assign_in_place;
+use algonaut_transaction::{SignedTransaction, Signer, Transaction};
 
 use crate::{
     Error,
@@ -154,7 +155,7 @@ impl AtomicGroupBuilder {
         if txs.len() > 1 {
             let mut group_txs: Vec<&mut Transaction> =
                 txs.iter_mut().map(|t| &mut t.transaction).collect();
-            transaction_group::assign_in_place(&mut group_txs)?;
+            assign_in_place(&mut group_txs)?;
         }
 
         Ok(UnsignedAtomicGroup { txs, method_map })

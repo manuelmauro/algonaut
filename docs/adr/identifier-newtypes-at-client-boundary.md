@@ -112,8 +112,8 @@ for tx in group {
 `TransactionGroup::into_transactions(self) -> Vec<Transaction>` consumes.
 
 The msgpack hashing form (the previous public struct) moves to a
-private `TransactionGroupDigests` inside `transaction_group.rs`; the in-place mutating
-form survives as `transaction_group::assign_in_place(&mut [&mut Transaction])` —
+private `TransactionGroupDigests` inside `group.rs`; the in-place mutating
+form survives as `group::assign_in_place(&mut [&mut Transaction])` —
 a free function in the module, `#[doc(hidden)] pub` so the atomic
 transaction composer can reach it across the workspace boundary without
 leaking it into the public surface.

@@ -103,7 +103,7 @@ macro_rules! impl_transaction_header_setters {
             }
 
             /// Stamp a precomputed group ID on this transaction. Normally
-            /// you don't call this directly; [`crate::transaction_group::TransactionGroup`]
+            /// you don't call this directly; [`crate::group::TransactionGroup`]
             /// does it via its `TryFrom<Vec<Transaction>>` impl.
             pub fn group(mut self, group: HashDigest) -> Self {
                 self.header.group = Some(group);
