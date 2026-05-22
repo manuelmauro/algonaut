@@ -362,7 +362,7 @@ struct MethodCallCtx {
 
 impl MethodCallCtx {
     fn builder(&self) -> algonaut::atomic::MethodCallBuilder {
-        MethodCall::new(
+        MethodCall::builder(
             self.app_id,
             self.method.clone(),
             self.sender,
@@ -434,7 +434,7 @@ fn i_append_the_current_transaction_with_signer_to_the_method_arguments_array(w:
     let method_args = w.abi_method_arg_values.as_mut().expect("no method args");
     let tx_with_signer = w.tx_with_signer.clone().expect("no tx signer");
 
-    method_args.push(AbiArgValue::TxWithSigner(tx_with_signer));
+    method_args.push(AbiArgValue::from(tx_with_signer));
 }
 
 #[when(

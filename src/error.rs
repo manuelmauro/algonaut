@@ -76,6 +76,43 @@ pub enum Error {
     /// Attach a signer, or simulate the group instead of signing it.
     #[error("transaction at index {index} has no signer (only valid for simulate)")]
     MissingSigner { index: usize },
+    /// An ABI [`MethodCall`](crate::atomic::MethodCall) was given a number
+    /// of arguments that does not match its method signature.
+    #[error("ABI method expected {expected} argument(s), got {actual}")]
+    AbiArgumentCountMismatch { expected: usize, actual: usize },
+    /// A transaction handed to the composer already carries a group id, so
+    /// it cannot be added to a new atomic group.
+    #[error("transaction already belongs to a group")]
+    TransactionAlreadyGrouped,
+    /// A transaction-typed ABI argument did not match the transaction type
+    /// the method signature requires. `expected`/`actual` are diagnostic
+    /// only — match on the variant.
+    #[error("expected transaction of type {expected}, got {actual}")]
+    TransactionTypeMismatch { expected: String, actual: String },
+    /// The method signature declared a transaction-typed argument, but the
+    /// supplied value was a plain ABI value rather than a transaction.
+    #[error("expected a transaction argument")]
+    ExpectedTransactionArgument,
+    /// An ABI argument could not be converted to the type the method
+    /// signature requires. `actual` is a diagnostic rendering of the value
+    /// that was supplied.
+    #[error("invalid ABI argument: expected {expected}, got {actual}")]
+    InvalidAbiArgument {
+        expected: &'static str,
+        actual: String,
+    },
+    /// A logged ABI return value was not valid base64 and could not be
+    /// decoded. The source carries the underlying decode failure.
+    #[error("failed to base64-decode a logged ABI return value")]
+    Base64DecodeError {
+        #[source]
+        source: data_encoding::DecodeError,
+    },
+    /// The composer reassembled signer output but found no signature for
+    /// the slot at `index`. This is an SDK-internal invariant violation
+    /// (please open an [issue](https://github.com/manuelmauro/algonaut/issues)!).
+    #[error("internal error: no signature produced for transaction at index {index}")]
+    InternalSigningIncomplete { index: usize },
 
     /// A transaction construction or signing error from
     /// [`algonaut_transaction`], preserved as the error source.

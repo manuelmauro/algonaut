@@ -32,6 +32,55 @@ pub enum AbiValue {
     Array(Vec<AbiValue>),
 }
 
+// Ergonomic constructors for the common cases, so callers write
+// `AbiValue::from(2u64)` (or `2u64.into()`) instead of
+// `AbiValue::Int(BigUint::from(2u64))`. The ARC-4 ABI supports `uint8`
+// through `uint512`, hence `BigUint` for the general case; these cover
+// the native integer widths that fit without ceremony.
+impl From<u64> for AbiValue {
+    fn from(n: u64) -> Self {
+        AbiValue::Int(BigUint::from(n))
+    }
+}
+
+impl From<u128> for AbiValue {
+    fn from(n: u128) -> Self {
+        AbiValue::Int(BigUint::from(n))
+    }
+}
+
+impl From<bool> for AbiValue {
+    fn from(b: bool) -> Self {
+        AbiValue::Bool(b)
+    }
+}
+
+impl From<Address> for AbiValue {
+    fn from(a: Address) -> Self {
+        AbiValue::Address(a)
+    }
+}
+
+impl From<&str> for AbiValue {
+    fn from(s: &str) -> Self {
+        AbiValue::String(s.to_owned())
+    }
+}
+
+impl From<String> for AbiValue {
+    fn from(s: String) -> Self {
+        AbiValue::String(s)
+    }
+}
+
+/// A `byte[]` ABI value: each byte becomes an [`AbiValue::Byte`] element of
+/// a dynamic array, the canonical ARC-4 representation.
+impl From<Vec<u8>> for AbiValue {
+    fn from(bytes: Vec<u8>) -> Self {
+        AbiValue::Array(bytes.into_iter().map(AbiValue::Byte).collect())
+    }
+}
+
 impl AbiType {
     /// Returns true if the type has children and any of the children is dynamic, false otherwise.
     fn has_dynamic_child(&self) -> bool {

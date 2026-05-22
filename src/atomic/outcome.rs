@@ -49,7 +49,7 @@ pub struct ExecuteOutcome {
     /// (optional, because the transaction's confirmed round is optional).
     pub confirmed_round: Option<u64>,
     /// A list of the TxIDs for each transaction in the executed group
-    pub tx_ids: Vec<String>,
+    pub tx_ids: Vec<TxId>,
     /// Return values for all the ABI method calls in the executed group
     pub method_results: Vec<AbiMethodResult>,
 }
@@ -61,7 +61,7 @@ pub struct ExecuteOutcome {
 #[derive(Debug, Clone)]
 pub struct SimulateOutcome {
     /// TxIDs for each transaction in the simulated group.
-    pub tx_ids: Vec<String>,
+    pub tx_ids: Vec<TxId>,
     /// ABI return values per method call. Errors are surfaced
     /// per-result (the same way [`ExecuteOutcome`] does it) so callers
     /// can inspect partial successes.
@@ -100,7 +100,7 @@ fn get_return_value_with_abi_type(
 
     let decoded_ret_line: Vec<u8> = BASE64
         .decode(&ret_line.0[..])
-        .map_err(|e| Error::Msg(format!("BASE64 Decoding error: {e:?}")))?;
+        .map_err(|source| Error::Base64DecodeError { source })?;
 
     if !decoded_ret_line.starts_with(&ABI_RETURN_HASH) {
         return Err(Error::MissingReturnLog);

@@ -2,7 +2,7 @@
 id: idiomatic-rust-in-algonaut-atomic
 title: Idiomatic Rust in algonaut::atomic
 abstract: 'Deep refactoring of the atomic module: eliminate all clippy suppressions, introduce helper structs to replace long argument lists, reduce cloning, box the large enum variant, use From/TryFrom traits for ergonomic ABI arguments, return typed identifiers, and replace all Error::Msg sites with structured variants.'
-status: proposed
+status: accepted
 date: 2026-05-21
 deciders: []
 tags: [api, ergonomics, atomic, idiomatic-rust, refactoring]
@@ -12,7 +12,7 @@ tags: [api, ergonomics, atomic, idiomatic-rust, refactoring]
 
 ## Status
 
-Proposed. Follows the accepted
+Accepted. Follows the accepted
 [`atomic-transaction-composer-typestate`](atomic-transaction-composer-typestate.md),
 [`atomic-module-layout`](atomic-module-layout.md),
 [`method-call-builder`](method-call-builder.md), and

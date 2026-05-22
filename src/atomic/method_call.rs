@@ -3,13 +3,13 @@
 //!
 //! Replaces the previous 18-field `AddMethodCallParams` struct. Only the
 //! four genuinely required inputs are positional on
-//! [`MethodCall::new`]; everything else is an optional setter, so the
+//! [`MethodCall::builder`]; everything else is an optional setter, so the
 //! common call carries no `None`s.
 
 use std::sync::Arc;
 
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
-use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
+use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::HashDigest;
 use algonaut_model::client_types::SuggestedParams;
 use algonaut_transaction::{
@@ -18,30 +18,83 @@ use algonaut_transaction::{
 };
 use num_bigint::BigUint;
 
+use crate::Error;
+
 use super::TransactionWithSigner;
 
 /// An argument to an ABI [`MethodCall`]. Either a transaction-typed
 /// argument (which contributes its own slot to the group) or a plain ABI
 /// value.
-#[allow(clippy::large_enum_variant)]
+///
+/// Build one with `.into()`: native types (`u64`, `bool`, [`Address`],
+/// `&str`, `Vec<u8>`, …) and [`AbiValue`] convert into
+/// [`AbiArgValue::AbiValue`], and a [`TransactionWithSigner`] converts into
+/// [`AbiArgValue::TxWithSigner`]. The transaction-typed variant is boxed so
+/// the enum stays small for the common plain-value case.
 #[derive(Debug, Clone)]
 pub enum AbiArgValue {
-    TxWithSigner(TransactionWithSigner),
+    TxWithSigner(Box<TransactionWithSigner>),
     AbiValue(AbiValue),
 }
 
-impl AbiArgValue {
-    pub(super) fn address(&self) -> Option<Address> {
-        match self {
-            AbiArgValue::AbiValue(AbiValue::Address(address)) => Some(*address),
-            _ => None,
+impl From<AbiValue> for AbiArgValue {
+    fn from(v: AbiValue) -> Self {
+        Self::AbiValue(v)
+    }
+}
+
+impl From<TransactionWithSigner> for AbiArgValue {
+    fn from(t: TransactionWithSigner) -> Self {
+        Self::TxWithSigner(Box::new(t))
+    }
+}
+
+// Native-type conveniences mirror `AbiValue`'s `From` impls so that
+// `.args([2u64, 3u64])` works without spelling out `AbiValue`. A blanket
+// `impl<T: Into<AbiValue>> From<T> for AbiArgValue` would collide with both
+// the reflexive `From<AbiArgValue>` and the `TransactionWithSigner` impl
+// above, so the conversions are enumerated.
+macro_rules! abi_arg_value_from {
+    ($($t:ty),* $(,)?) => {$(
+        impl From<$t> for AbiArgValue {
+            fn from(v: $t) -> Self {
+                Self::AbiValue(AbiValue::from(v))
+            }
+        }
+    )*};
+}
+
+abi_arg_value_from!(u64, u128, bool, Address, &str, String, Vec<u8>);
+
+/// Extract an [`Address`] from an account-typed ABI argument. Replaces the
+/// old `AbiArgValue::address(&self) -> Option<Address>` helper so the
+/// fallible extraction integrates with `?`.
+impl TryFrom<&AbiArgValue> for Address {
+    type Error = Error;
+
+    fn try_from(value: &AbiArgValue) -> Result<Self, Self::Error> {
+        match value {
+            AbiArgValue::AbiValue(AbiValue::Address(address)) => Ok(*address),
+            other => Err(Error::InvalidAbiArgument {
+                expected: "address",
+                actual: format!("{other:?}"),
+            }),
         }
     }
+}
 
-    pub(super) fn int(&self) -> Option<BigUint> {
-        match self {
-            AbiArgValue::AbiValue(AbiValue::Int(int)) => Some(int.clone()),
-            _ => None,
+/// Extract a [`BigUint`] from an integer-typed ABI argument. Replaces the
+/// old `AbiArgValue::int(&self) -> Option<BigUint>` helper.
+impl TryFrom<&AbiArgValue> for BigUint {
+    type Error = Error;
+
+    fn try_from(value: &AbiArgValue) -> Result<Self, Self::Error> {
+        match value {
+            AbiArgValue::AbiValue(AbiValue::Int(int)) => Ok(int.clone()),
+            other => Err(Error::InvalidAbiArgument {
+                expected: "uint",
+                actual: format!("{other:?}"),
+            }),
         }
     }
 }
@@ -50,7 +103,7 @@ impl AbiArgValue {
 /// [`AtomicGroupBuilder::add_method_call`](super::AtomicGroupBuilder::add_method_call).
 ///
 /// Construct one with the fluent [`MethodCallBuilder`] returned by
-/// [`MethodCall::new`].
+/// [`MethodCall::builder`].
 #[derive(Clone, Debug)]
 pub struct MethodCall {
     pub(super) app_id: AppId,
@@ -58,18 +111,24 @@ pub struct MethodCall {
     pub(super) method_args: Vec<AbiArgValue>,
     pub(super) fee: MicroAlgos,
     pub(super) sender: Address,
-    pub(super) suggested_params: SuggestedParams,
+    // The transaction-validity window and genesis identifiers resolved from
+    // the suggested params at build time. Storing the primitives we use
+    // avoids cloning the whole `SuggestedParams` (and its heap strings).
+    pub(super) first_valid: Round,
+    pub(super) last_valid: Round,
+    pub(super) genesis_hash: HashDigest,
+    pub(super) genesis_id: String,
     pub(super) on_complete: ApplicationCallOnComplete,
     pub(super) approval_program: Option<CompiledTeal>,
     pub(super) clear_program: Option<CompiledTeal>,
     pub(super) global_schema: Option<StateSchema>,
     pub(super) local_schema: Option<StateSchema>,
     pub(super) extra_pages: u32,
-    pub(super) note: Option<Vec<u8>>,
+    pub(super) note: Vec<u8>,
     pub(super) lease: Option<HashDigest>,
     pub(super) rekey_to: Option<Address>,
     pub(super) signer: Arc<dyn Signer>,
-    pub(super) boxes: Option<Vec<BoxReference>>,
+    pub(super) boxes: Vec<BoxReference>,
 }
 
 impl MethodCall {
@@ -80,8 +139,11 @@ impl MethodCall {
     /// underlying address is the multisig address, not necessarily the
     /// sender of any one transaction). Pass the address the call
     /// should be sent from explicitly.
-    #[allow(clippy::new_ret_no_self)] // intentional: builder API
-    pub fn new(
+    ///
+    /// Named `builder` (not `new`) because it returns a
+    /// [`MethodCallBuilder`], following `http::Request::builder()` and the
+    /// rest of the ecosystem.
+    pub fn builder(
         app_id: AppId,
         method: AbiMethod,
         sender: Address,
@@ -100,15 +162,15 @@ impl MethodCall {
             global_schema: None,
             local_schema: None,
             extra_pages: 0,
-            note: None,
+            note: Vec::new(),
             lease: None,
             rekey_to: None,
-            boxes: None,
+            boxes: Vec::new(),
         }
     }
 }
 
-/// Fluent builder produced by [`MethodCall::new`].
+/// Fluent builder produced by [`MethodCall::builder`].
 ///
 /// All setters take ownership and return `self`. Call
 /// [`MethodCallBuilder::build`] with the network's suggested params to
@@ -126,17 +188,19 @@ pub struct MethodCallBuilder {
     global_schema: Option<StateSchema>,
     local_schema: Option<StateSchema>,
     extra_pages: u32,
-    note: Option<Vec<u8>>,
+    note: Vec<u8>,
     lease: Option<HashDigest>,
     rekey_to: Option<Address>,
-    boxes: Option<Vec<BoxReference>>,
+    boxes: Vec<BoxReference>,
 }
 
 impl MethodCallBuilder {
     /// ABI method arguments, in the order declared by the method
-    /// signature. If the method takes no arguments, omit this setter.
-    pub fn args(mut self, args: Vec<AbiArgValue>) -> Self {
-        self.method_args = args;
+    /// signature. Each element converts into an [`AbiArgValue`], so native
+    /// types work directly: `.args([2u64, 3u64])`. If the method takes no
+    /// arguments, omit this setter.
+    pub fn args(mut self, args: impl IntoIterator<Item = impl Into<AbiArgValue>>) -> Self {
+        self.method_args = args.into_iter().map(Into::into).collect();
         self
     }
 
@@ -186,9 +250,9 @@ impl MethodCallBuilder {
         self
     }
 
-    /// Transaction note.
+    /// Transaction note. Defaults to empty (no note).
     pub fn note(mut self, note: Vec<u8>) -> Self {
-        self.note = Some(note);
+        self.note = note;
         self
     }
 
@@ -204,9 +268,9 @@ impl MethodCallBuilder {
         self
     }
 
-    /// Box references this call is permitted to access.
+    /// Box references this call is permitted to access. Defaults to empty.
     pub fn boxes(mut self, boxes: Vec<BoxReference>) -> Self {
-        self.boxes = Some(boxes);
+        self.boxes = boxes;
         self
     }
 
@@ -215,7 +279,8 @@ impl MethodCallBuilder {
     /// [`AtomicGroupBuilder::add_method_call`](super::AtomicGroupBuilder::add_method_call).
     ///
     /// The fee defaults to `params.min_fee` if no [`fee`](Self::fee)
-    /// override was supplied.
+    /// override was supplied. Only the validity-window and genesis
+    /// primitives are read out of `params`; the struct is not cloned.
     pub fn build(self, params: &SuggestedParams) -> MethodCall {
         let fee = self.fee.unwrap_or(params.min_fee);
         MethodCall {
@@ -224,7 +289,10 @@ impl MethodCallBuilder {
             method_args: self.method_args,
             fee,
             sender: self.sender,
-            suggested_params: params.clone(),
+            first_valid: params.last_round,
+            last_valid: Round(params.last_round.0 + 1000),
+            genesis_hash: params.genesis_hash,
+            genesis_id: params.genesis_id.clone(),
             on_complete: self.on_complete,
             approval_program: self.approval_program,
             clear_program: self.clear_program,

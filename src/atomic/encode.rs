@@ -7,6 +7,11 @@
 //! 15-argument limit into a tuple, and appends the result (plus any
 //! transaction-typed arguments) to the group. [`validate_tx`] is the shared
 //! per-transaction check applied to every slot, method call or not.
+//!
+//! Two helper structs carry the state that used to be threaded through
+//! long argument lists: [`ForeignArrays`] accumulates the foreign
+//! account/asset/app references, and [`EncodedArgs`] accumulates the
+//! encoded ABI argument types and values.
 
 use std::collections::HashMap;
 
@@ -16,12 +21,12 @@ use algonaut_abi::{
     abi_type::{AbiType, AbiValue},
     make_tuple_type,
 };
-use algonaut_core::{Address, AppId, AssetId, Round};
+use algonaut_core::{Address, AppId, AssetId};
 use algonaut_transaction::{
     Transaction, TransactionType,
-    builder::TransactionParams,
     transaction::{ApplicationCallTransaction, to_tx_type_enum},
 };
+use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 
 use crate::Error;
@@ -41,104 +46,129 @@ pub(super) fn process_method_call(
     txs: &mut Vec<TransactionWithSigner>,
     method_map: &mut HashMap<usize, AbiMethod>,
 ) -> Result<(), Error> {
-    if call.method_args.len() != call.method.args.len() {
-        return Err(Error::Msg(format!(
-            "incorrect number of arguments were provided: {} != {}",
-            call.method_args.len(),
-            call.method.args.len()
-        )));
+    // Destructure once so every field is moved exactly where it is needed,
+    // rather than cloned out of a borrowed `call`.
+    let MethodCall {
+        app_id,
+        mut method,
+        method_args,
+        fee,
+        sender,
+        first_valid,
+        last_valid,
+        genesis_hash,
+        genesis_id,
+        on_complete,
+        approval_program,
+        clear_program,
+        global_schema,
+        local_schema,
+        extra_pages,
+        note,
+        lease,
+        rekey_to,
+        signer,
+        boxes,
+    } = call;
+
+    if method_args.len() != method.args.len() {
+        return Err(Error::AbiArgumentCountMismatch {
+            expected: method.args.len(),
+            actual: method_args.len(),
+        });
     }
-    if txs.len() + call.method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
+    if txs.len() + method.get_tx_count() > MAX_ATOMIC_GROUP_SIZE {
         return Err(Error::ComposerGroupFull {
             max: MAX_ATOMIC_GROUP_SIZE,
         });
     }
 
-    let mut method_types = vec![];
-    let mut method_args: Vec<AbiValue> = vec![];
-    let mut txs_with_signer = vec![];
-    let mut foreign_accounts = vec![];
-    let mut foreign_assets = vec![];
-    let mut foreign_apps = vec![];
+    let mut foreign = ForeignArrays::default();
+    let mut args = EncodedArgs::default();
+    let mut tx_args: Vec<TransactionWithSigner> = Vec::new();
 
-    for (arg_type, arg_value) in call.method.args.iter().zip(&call.method_args) {
-        let mut arg_type = arg_type.clone();
-
-        match arg_type.type_()? {
-            AbiArgType::Tx(type_) => {
-                add_tx_arg_type_to_method_call(arg_value, type_, &mut txs_with_signer)?
+    for (arg_spec, arg_value) in method.args.iter_mut().zip(method_args) {
+        match arg_spec.type_()? {
+            AbiArgType::Tx(expected_type) => {
+                let tx_with_signer = match arg_value {
+                    AbiArgValue::TxWithSigner(tx_with_signer) => *tx_with_signer,
+                    AbiArgValue::AbiValue(_) => return Err(Error::ExpectedTransactionArgument),
+                };
+                validate_tx(&tx_with_signer.tx, expected_type)?;
+                tx_args.push(tx_with_signer);
             }
-            AbiArgType::Ref(type_) => add_ref_arg_to_method_call(
-                &type_,
-                arg_value,
-                &mut foreign_accounts,
-                &mut foreign_assets,
-                &mut foreign_apps,
-                &mut method_types,
-                &mut method_args,
-                call.sender,
-                call.app_id,
-            )?,
-            AbiArgType::AbiObj(type_) => {
-                add_abi_obj_arg_to_method_call(
-                    &type_,
-                    arg_value,
-                    &mut method_types,
-                    &mut method_args,
-                )?;
+            AbiArgType::Ref(ref_type) => {
+                let index = foreign.add_ref(&ref_type, &arg_value, sender, app_id)?;
+                args.push_ref_index(index)?;
             }
-        };
+            AbiArgType::AbiObj(abi_type) => match arg_value {
+                AbiArgValue::AbiValue(value) => args.push(abi_type, value),
+                AbiArgValue::TxWithSigner(_) => {
+                    return Err(Error::InvalidAbiArgument {
+                        expected: "ABI value",
+                        actual: "transaction".to_owned(),
+                    });
+                }
+            },
+        }
     }
 
-    if method_args.len() > MAX_ABI_ARG_TYPE_LEN {
-        let (type_, value) = wrap_overflowing_values(&method_types, &method_args)?;
-        method_types.push(type_);
-        method_args.push(value);
-    }
+    args.wrap_overflow()?;
+    let app_arguments = args.encode(method.get_selector()?)?;
 
-    let mut encoded_abi_args = vec![call.method.get_selector()?.into()];
-    for (method_type, method_arg) in method_types.iter().zip(&method_args) {
-        encoded_abi_args.push(method_type.encode(method_arg.clone())?);
-    }
+    let ForeignArrays {
+        accounts,
+        assets,
+        apps,
+    } = foreign;
 
     let app_call = TransactionType::ApplicationCallTransaction(ApplicationCallTransaction {
-        sender: call.sender,
-        app_id: Some(call.app_id),
-        on_complete: call.on_complete.clone(),
-        accounts: Some(foreign_accounts),
-        approval_program: call.approval_program.clone(),
-        app_arguments: Some(encoded_abi_args),
-        clear_state_program: call.clear_program.clone(),
-        foreign_apps: Some(foreign_apps),
-        foreign_assets: Some(foreign_assets),
-        global_state_schema: call.global_schema.clone(),
-        local_state_schema: call.local_schema.clone(),
-        extra_pages: call.extra_pages,
-        boxes: call.boxes.clone(),
+        sender,
+        app_id: Some(app_id),
+        on_complete,
+        accounts: Some(accounts),
+        approval_program,
+        app_arguments: Some(app_arguments),
+        clear_state_program: clear_program,
+        foreign_apps: Some(apps),
+        foreign_assets: Some(assets),
+        global_state_schema: global_schema,
+        local_state_schema: local_schema,
+        extra_pages,
+        boxes: to_option(boxes),
     });
 
-    let sp = &call.suggested_params;
     let tx = Transaction {
-        fee: call.fee,
-        first_valid: Round(sp.last_round()),
-        genesis_hash: sp.genesis_hash(),
-        last_valid: Round(sp.last_round() + 1000),
+        fee,
+        first_valid,
+        genesis_hash,
+        last_valid,
         txn_type: app_call,
-        genesis_id: Some(sp.genesis_id().clone()),
+        genesis_id: Some(genesis_id),
         group: None,
-        lease: call.lease,
-        note: call.note.clone(),
-        rekey_to: call.rekey_to,
+        lease,
+        note: to_option(note),
+        rekey_to,
     };
 
-    txs.append(&mut txs_with_signer);
+    txs.append(&mut tx_args);
     txs.push(TransactionWithSigner {
         tx,
-        signer: Some(call.signer.clone()),
+        signer: Some(signer),
     });
-    method_map.insert(txs.len() - 1, call.method);
+    method_map.insert(txs.len() - 1, method);
 
     Ok(())
+}
+
+/// `Vec::new()` is the builder's "absent" sentinel; the transaction model
+/// uses `Option`, so map an empty vec back to `None` at the boundary.
+fn to_option<T>(values: Vec<T>) -> Option<Vec<T>> {
+    if values.is_empty() {
+        None
+    } else {
+        Some(values)
+    }
 }
 
 /// Shared per-transaction validity check: the transaction must carry no
@@ -149,167 +179,139 @@ pub(super) fn validate_tx(
     expected_type: TransactionArgType,
 ) -> Result<(), Error> {
     if tx.group.is_some() {
-        return Err(Error::Msg("Expected empty group id".to_owned()));
+        return Err(Error::TransactionAlreadyGrouped);
     }
 
+    let actual_type = to_tx_type_enum(&tx.txn_type);
     if expected_type != TransactionArgType::Any
-        && expected_type != TransactionArgType::One(to_tx_type_enum(&tx.txn_type))
+        && expected_type != TransactionArgType::One(actual_type.clone())
     {
-        return Err(Error::Msg(format!(
-            "expected transaction with type {expected_type:?}, but got type {:?}",
-            tx.txn_type
-        )));
+        return Err(Error::TransactionTypeMismatch {
+            expected: format!("{expected_type:?}"),
+            actual: format!("{actual_type:?}"),
+        });
     }
 
     Ok(())
 }
 
-fn add_tx_arg_type_to_method_call(
-    arg_value: &AbiArgValue,
-    expected_type: TransactionArgType,
-    txs_with_signer: &mut Vec<TransactionWithSigner>,
-) -> Result<(), Error> {
-    let txn_and_signer = match arg_value {
-        AbiArgValue::TxWithSigner(tx_with_signer) => tx_with_signer,
-        _ => {
-            return Err(Error::Msg(
-                "invalid arg value, expected transaction".to_owned(),
-            ));
-        }
-    };
-
-    validate_tx(&txn_and_signer.tx, expected_type)?;
-    txs_with_signer.push(txn_and_signer.to_owned());
-
-    Ok(())
+/// Accumulates foreign-array references during ABI method encoding. The
+/// three arrays correspond to an application call's `accounts`,
+/// `foreign_assets`, and `foreign_apps`.
+#[derive(Default)]
+struct ForeignArrays {
+    accounts: Vec<Address>,
+    assets: Vec<AssetId>,
+    apps: Vec<AppId>,
 }
 
-fn add_abi_obj_arg_to_method_call(
-    abi_type: &AbiType,
-    arg_value: &AbiArgValue,
-    method_types: &mut Vec<AbiType>,
-    method_args: &mut Vec<AbiValue>,
-) -> Result<(), Error> {
-    match arg_value {
-        AbiArgValue::AbiValue(value) => {
-            method_types.push(abi_type.clone());
-            method_args.push(value.clone());
-        }
-        AbiArgValue::TxWithSigner(_) => {
-            return Err(Error::Msg(
-                "Invalid state: shouldn't be here with a tx with signer value type".to_owned(),
-            ));
-        }
-    }
-
-    Ok(())
-}
-
-#[allow(clippy::too_many_arguments)]
-fn add_ref_arg_to_method_call(
-    arg_type: &ReferenceArgType,
-    arg_value: &AbiArgValue,
-
-    foreign_accounts: &mut Vec<Address>,
-    foreign_assets: &mut Vec<AssetId>,
-    foreign_apps: &mut Vec<AppId>,
-
-    method_types: &mut Vec<AbiType>,
-    method_args: &mut Vec<AbiValue>,
-
-    sender: Address,
-    app_id: AppId,
-) -> Result<(), Error> {
-    let index = add_to_foreign_array(
-        arg_type,
-        arg_value,
-        foreign_accounts,
-        foreign_assets,
-        foreign_apps,
-        sender,
-        app_id,
-    )?;
-
-    method_types.push(AbiType::uint(FOREIGN_OBJ_ABI_UINT_SIZE)?);
-    method_args.push(AbiValue::Int(index.into()));
-
-    Ok(())
-}
-
-/// Adds arg value to its respective foreign array
-/// Returns index that can be used to reference `arg_value` in its foreign array (in TEAL).
-fn add_to_foreign_array(
-    arg_type: &ReferenceArgType,
-    arg_value: &AbiArgValue,
-    foreign_accounts: &mut Vec<Address>,
-    foreign_assets: &mut Vec<AssetId>,
-    foreign_apps: &mut Vec<AppId>,
-    sender: Address,
-    app_id: AppId,
-) -> Result<usize, Error> {
-    match arg_type {
-        ReferenceArgType::Account => match arg_value.address() {
-            Some(address) => Ok(populate_foreign_array(
-                address,
-                foreign_accounts,
-                Some(sender),
-            )),
-            _ => Err(Error::Msg(format!(
-                "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
-            ))),
-        },
-        ReferenceArgType::Asset => match arg_value.int() {
-            Some(int) => {
-                let intu64 = int.to_u64().ok_or_else(|| AbiError::ValueOutOfRange {
-                    abi_type: "uint64".to_owned(),
-                    reason: format!("value {int} exceeds u64 capacity"),
-                })?;
-
+impl ForeignArrays {
+    /// Add a reference argument to its respective foreign array and return
+    /// the index that can be used to reference it (in TEAL).
+    fn add_ref(
+        &mut self,
+        arg_type: &ReferenceArgType,
+        arg_value: &AbiArgValue,
+        sender: Address,
+        app_id: AppId,
+    ) -> Result<usize, Error> {
+        match arg_type {
+            ReferenceArgType::Account => {
+                let address = Address::try_from(arg_value)?;
                 Ok(populate_foreign_array(
-                    AssetId(intu64),
-                    foreign_assets,
+                    address,
+                    &mut self.accounts,
+                    Some(sender),
+                ))
+            }
+            ReferenceArgType::Asset => {
+                let asset_id = ref_arg_u64(arg_value)?;
+                Ok(populate_foreign_array(
+                    AssetId(asset_id),
+                    &mut self.assets,
                     None,
                 ))
             }
-            _ => Err(Error::Msg(format!(
-                "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
-            ))),
-        },
-        ReferenceArgType::Application => match arg_value.int() {
-            Some(int) => {
-                let intu64 = int.to_u64().ok_or_else(|| AbiError::ValueOutOfRange {
-                    abi_type: "uint64".to_owned(),
-                    reason: format!("value {int} exceeds u64 capacity"),
-                })?;
-
+            ReferenceArgType::Application => {
+                let referenced_app = ref_arg_u64(arg_value)?;
                 Ok(populate_foreign_array(
-                    AppId(intu64),
-                    foreign_apps,
+                    AppId(referenced_app),
+                    &mut self.apps,
                     Some(app_id),
                 ))
             }
-            _ => Err(Error::Msg(format!(
-                "Invalid value type: {arg_value:?} for arg type: {arg_type:?}"
-            ))),
-        },
+        }
     }
 }
 
-fn wrap_overflowing_values(
-    method_types: &[AbiType],
-    method_args: &[AbiValue],
-) -> Result<(AbiType, AbiValue), Error> {
-    let mut wrapped_abi_types = vec![];
-    let mut wrapped_value_list = vec![];
+/// Extract a `u64` foreign-array index (asset or app id) from an
+/// integer-typed ABI argument.
+fn ref_arg_u64(arg_value: &AbiArgValue) -> Result<u64, Error> {
+    let int = BigUint::try_from(arg_value)?;
+    int.to_u64()
+        .ok_or_else(|| AbiError::ValueOutOfRange {
+            abi_type: "uint64".to_owned(),
+            reason: format!("value {int} exceeds u64 capacity"),
+        })
+        .map_err(Error::from)
+}
 
-    for i in (MAX_ABI_ARG_TYPE_LEN - 1)..method_args.len() {
-        wrapped_abi_types.push(method_types[i].clone());
-        wrapped_value_list.push(method_args[i].clone());
+/// Accumulates encoded ABI argument types and values during method
+/// encoding, then encodes them (prefixed by the method selector) into the
+/// application call's `app_arguments`.
+#[derive(Default)]
+struct EncodedArgs {
+    types: Vec<AbiType>,
+    values: Vec<AbiValue>,
+}
+
+impl EncodedArgs {
+    /// Append a plain ABI argument.
+    fn push(&mut self, ty: AbiType, value: AbiValue) {
+        self.types.push(ty);
+        self.values.push(value);
     }
 
-    let tuple_type = make_tuple_type(&wrapped_abi_types)?;
+    /// Append a foreign-array index argument (a `uint8` referencing a slot
+    /// in `accounts`/`foreign_assets`/`foreign_apps`).
+    fn push_ref_index(&mut self, index: usize) -> Result<(), Error> {
+        self.types.push(AbiType::uint(FOREIGN_OBJ_ABI_UINT_SIZE)?);
+        self.values.push(AbiValue::Int(index.into()));
+        Ok(())
+    }
 
-    Ok((tuple_type, AbiValue::Array(wrapped_value_list)))
+    /// If more than 15 ABI arguments were collected, wrap the overflow
+    /// (everything from index 14 onward) into a single trailing tuple, as
+    /// ARC-4 requires.
+    fn wrap_overflow(&mut self) -> Result<(), Error> {
+        if self.values.len() <= MAX_ABI_ARG_TYPE_LEN {
+            return Ok(());
+        }
+
+        let mut wrapped_types = Vec::new();
+        let mut wrapped_values = Vec::new();
+        for i in (MAX_ABI_ARG_TYPE_LEN - 1)..self.values.len() {
+            wrapped_types.push(self.types[i].clone());
+            wrapped_values.push(self.values[i].clone());
+        }
+
+        let tuple_type = make_tuple_type(&wrapped_types)?;
+        self.types.push(tuple_type);
+        self.values.push(AbiValue::Array(wrapped_values));
+        Ok(())
+    }
+
+    /// Encode the collected arguments, prefixed by the 4-byte method
+    /// selector, into the `app_arguments` byte vectors. Consumes `self`,
+    /// moving each value into [`AbiType::encode`] rather than cloning it.
+    fn encode(self, selector: [u8; 4]) -> Result<Vec<Vec<u8>>, Error> {
+        let mut encoded = Vec::with_capacity(self.values.len() + 1);
+        encoded.push(selector.to_vec());
+        for (ty, value) in self.types.iter().zip(self.values) {
+            encoded.push(ty.encode(value)?);
+        }
+        Ok(encoded)
+    }
 }
 
 /// Add a value to an application call's foreign array. The addition will be as compact as possible,
