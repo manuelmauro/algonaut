@@ -14,10 +14,19 @@ algonaut_encoding = { workspace = true }
 algonaut_model = { workspace = true }
 algonaut_transaction = { workspace = true }
 data-encoding = { workspace = true }
-reqwest = { workspace = true, features = ["json", "multipart", "query"] }
+# default-features = false (workspace) drops reqwest's default TLS so the
+# backend is feature-selected; the other former defaults are re-added here.
+reqwest = { workspace = true, features = ["json", "multipart", "query", "charset", "http2", "system-proxy"] }
 rmp-serde = { workspace = true }
 serde = { workspace = true }
 serde_derive = { workspace = true }
 serde_json = { workspace = true }
 url = { workspace = true }
 uuid = { workspace = true }
+
+# TLS backend. `default-features = false` on reqwest above means exactly one
+# of these picks the backend; the umbrella crate forwards its own native/rustls.
+[features]
+default = ["rustls"]
+native = ["reqwest/native-tls"]
+rustls = ["reqwest/rustls"]

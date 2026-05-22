@@ -30,11 +30,11 @@ members = [
 algonaut_abi = { path = "algonaut_abi", version = "0.7.0" }
 algonaut_abi_sig = { path = "algonaut_abi_sig", version = "0.7.0" }
 algonaut_abi_macros = { path = "algonaut_abi_macros", version = "0.7.0" }
-algonaut_algod = { path = "algonaut_algod", version = "0.7.0" }
+algonaut_algod = { path = "algonaut_algod", version = "0.7.0", default-features = false }
 algonaut_core = { path = "algonaut_core", version = "0.7.0" }
 algonaut_crypto = { path = "algonaut_crypto", version = "0.7.0" }
 algonaut_encoding = { path = "algonaut_encoding", version = "0.7.0" }
-algonaut_indexer = { path = "algonaut_indexer", version = "0.7.0" }
+algonaut_indexer = { path = "algonaut_indexer", version = "0.7.0", default-features = false }
 algonaut_kmd = { path = "algonaut_kmd", version = "0.7.0", default-features = false }
 algonaut_model = { path = "algonaut_model", version = "0.7.0" }
 algonaut_transaction = { path = "algonaut_transaction", version = "0.7.0" }
@@ -60,7 +60,9 @@ syn = { version = "2.0", features = ["full"] }
 ed25519-dalek = "2.2.0"
 rand = "0.8.5"
 regex = "1.12.3"
-reqwest = "0.13.3"
+# default-features = false so each client crate picks exactly one TLS backend
+# via its own native/rustls feature (no always-on native-tls). See ADR D4.
+reqwest = { version = "0.13.3", default-features = false }
 rmp-serde = "1.3.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11.19"
@@ -78,14 +80,16 @@ wiremock = "0.6.5"
 
 [dependencies]
 algonaut_abi = { workspace = true }
-algonaut_algod = { workspace = true }
 algonaut_core = { workspace = true }
 algonaut_crypto = { workspace = true }
 algonaut_encoding = { workspace = true }
-algonaut_indexer = { workspace = true }
-algonaut_kmd = { workspace = true }
 algonaut_model = { workspace = true }
 algonaut_transaction = { workspace = true }
+
+# Generated network clients — gated behind their respective features.
+algonaut_algod = { workspace = true, optional = true }
+algonaut_indexer = { workspace = true, optional = true }
+algonaut_kmd = { workspace = true, optional = true }
 
 data-encoding = { workspace = true }
 env_logger = { workspace = true }
@@ -94,7 +98,8 @@ instant = { workspace = true, features = ["now"] }
 log = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
-reqwest = { workspace = true }
+# Only the algod/indexer wrappers build a reqwest client; pulled by those features.
+reqwest = { workspace = true, optional = true }
 rmp-serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = { workspace = true }
@@ -115,12 +120,148 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 wiremock = { workspace = true }
 
 [features]
-default = ["native"]
-native = ["algonaut_kmd/native"]
-rustls = ["algonaut_kmd/rustls"]
+# rustls is the default TLS backend: pure-Rust, no system OpenSSL.
+default = ["algod", "indexer", "kmd", "rustls"]
+
+# High-level network clients. Each pulls its generated client crate and
+# unlocks the matching hand-written module(s). `algod` also gates the
+# atomic / simulate / dryrun modules, which build on algod's models.
+algod = ["dep:algonaut_algod", "dep:reqwest"]
+indexer = ["dep:algonaut_indexer", "dep:reqwest"]
+kmd = ["dep:algonaut_kmd"]
+
+# TLS backend, forwarded to every enabled client. The weak `?` deps mean an
+# unselected client is never pulled in just to set its TLS feature.
+native = ["algonaut_algod?/native", "algonaut_indexer?/native", "algonaut_kmd?/native"]
+rustls = ["algonaut_algod?/rustls", "algonaut_indexer?/rustls", "algonaut_kmd?/rustls"]
 
 [[test]]
 name = "features_runner"
 # Allows Cucumber to print output instead of libtest
 harness = false
 test = false
+# The cucumber acceptance suite drives the live algod/indexer/kmd clients.
+required-features = ["algod", "indexer", "kmd"]
+
+# Examples declare the client features they exercise, so a slimmer build
+# (e.g. `--no-default-features --features algod`) skips the ones it cannot
+# compile instead of failing.
+[[example]]
+name = "algod_client"
+required-features = ["algod"]
+
+[[example]]
+name = "app_call"
+required-features = ["algod"]
+
+[[example]]
+name = "app_clear_state"
+required-features = ["algod"]
+
+[[example]]
+name = "app_close_out"
+required-features = ["algod"]
+
+[[example]]
+name = "app_create"
+required-features = ["algod"]
+
+[[example]]
+name = "app_delete"
+required-features = ["algod"]
+
+[[example]]
+name = "app_optin"
+required-features = ["algod"]
+
+[[example]]
+name = "app_update"
+required-features = ["algod"]
+
+[[example]]
+name = "asset_clawback"
+required-features = ["algod"]
+
+[[example]]
+name = "asset_create"
+required-features = ["algod"]
+
+[[example]]
+name = "asset_optin"
+required-features = ["algod"]
+
+[[example]]
+name = "asset_transfer"
+required-features = ["algod"]
+
+[[example]]
+name = "atomic"
+required-features = ["algod"]
+
+[[example]]
+name = "atomic_swap"
+required-features = ["algod"]
+
+[[example]]
+name = "indexer_query"
+required-features = ["indexer"]
+
+[[example]]
+name = "key_reg"
+required-features = ["algod"]
+
+[[example]]
+name = "kmd_client"
+required-features = ["kmd"]
+
+[[example]]
+name = "kmd_sign_submit_transaction"
+required-features = ["algod", "kmd"]
+
+[[example]]
+name = "last_block"
+required-features = ["algod"]
+
+[[example]]
+name = "logic_sig_contract_account"
+required-features = ["algod"]
+
+[[example]]
+name = "logic_sig_delegated"
+required-features = ["algod"]
+
+[[example]]
+name = "logic_sig_delegated_multi"
+required-features = ["algod"]
+
+[[example]]
+name = "multi_sig"
+required-features = ["algod"]
+
+[[example]]
+name = "payment"
+required-features = ["algod"]
+
+[[example]]
+name = "quickstart"
+required-features = ["algod", "indexer", "kmd"]
+
+[[example]]
+name = "rekey"
+required-features = ["algod"]
+
+[[example]]
+name = "sign_offline"
+required-features = ["algod"]
+
+[[example]]
+name = "submit_file"
+required-features = ["algod"]
+
+[[example]]
+name = "wallet_backup"
+required-features = ["kmd"]
+
+[[example]]
+name = "wallet_restore"
+required-features = ["kmd"]
