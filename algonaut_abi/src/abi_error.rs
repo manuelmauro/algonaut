@@ -24,3 +24,15 @@ pub enum AbiError {
     #[error("value out of range for {abi_type}: {reason}")]
     ValueOutOfRange { abi_type: String, reason: String },
 }
+
+/// A grammar error from [`algonaut_abi_sig`] is, from this crate's point of
+/// view, a type-parse failure: the shared grammar is what `AbiType::from_str`
+/// delegates to.
+impl From<algonaut_abi_sig::SigError> for AbiError {
+    fn from(e: algonaut_abi_sig::SigError) -> Self {
+        AbiError::TypeParse {
+            input: e.input,
+            reason: e.reason,
+        }
+    }
+}

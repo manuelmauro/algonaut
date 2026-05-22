@@ -1,14 +1,18 @@
 //! Fluent builder for ABI method calls added to an atomic group via
 //! [`AtomicGroupBuilder::add_method_call`](super::AtomicGroupBuilder::add_method_call).
 //!
-//! Replaces the previous 18-field `AddMethodCallParams` struct. Only the
-//! four genuinely required inputs are positional on
-//! [`MethodCall::builder`]; everything else is an optional setter, so the
-//! common call carries no `None`s.
+//! Replaces the previous 18-field `AddMethodCallParams` struct. The
+//! call-context inputs (`app_id`, `sender`, `signer`) are positional on
+//! [`MethodCall::builder`]; the method and its arguments arrive together via
+//! [`MethodCallBuilder::invoke`] (typically `.invoke(abi_call!(…))`), and
+//! everything else is an optional setter, so the common call carries no
+//! `None`s.
 
 use std::sync::Arc;
 
-use algonaut_abi::{abi_error::AbiError, abi_interactions::AbiMethod, abi_type::AbiValue};
+use algonaut_abi::{
+    MethodInvocation, abi_error::AbiError, abi_interactions::AbiMethod, abi_type::AbiValue,
+};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::HashDigest;
 use algonaut_model::client_types::SuggestedParams;
@@ -51,10 +55,10 @@ impl From<TransactionWithSigner> for AbiArgValue {
 }
 
 // Native-type conveniences mirror `AbiValue`'s `From` impls so that
-// `.args([2u64, 3u64])` works without spelling out `AbiValue`. A blanket
-// `impl<T: Into<AbiValue>> From<T> for AbiArgValue` would collide with both
-// the reflexive `From<AbiArgValue>` and the `TransactionWithSigner` impl
-// above, so the conversions are enumerated.
+// `Invocation::new(method, [2u64, 3u64])` works without spelling out
+// `AbiValue`. A blanket `impl<T: Into<AbiValue>> From<T> for AbiArgValue`
+// would collide with both the reflexive `From<AbiArgValue>` and the
+// `TransactionWithSigner` impl above, so the conversions are enumerated.
 macro_rules! abi_arg_value_from {
     ($($t:ty),* $(,)?) => {$(
         impl From<$t> for AbiArgValue {
@@ -117,6 +121,53 @@ impl TryFrom<&AbiArgValue> for u64 {
     }
 }
 
+/// A method paired with its arguments — what [`MethodCallBuilder::invoke`]
+/// consumes. Arguments only make sense relative to a method, so they arrive
+/// together rather than through a separate `.args(...)` setter.
+///
+/// Two ways to build one:
+///
+/// - **Compile-time checked** — the [`abi_call!`](algonaut_abi::abi_call) macro
+///   produces an [`algonaut_abi::MethodInvocation`] that converts in:
+///   `.invoke(abi_call!("add(uint64,uint64)uint64", 2u64, 3u64))`. The
+///   signature and every argument's type are checked by `cargo build`.
+/// - **Dynamic** — for signatures sourced at run time (app-spec JSON, user
+///   input), or for transaction- and reference-typed arguments, use
+///   [`Invocation::new`] with an [`AbiMethod`] from
+///   [`AbiMethod::from_signature`] and arguments as [`AbiArgValue`]s.
+#[derive(Clone, Debug)]
+pub struct Invocation {
+    method: AbiMethod,
+    args: Vec<AbiArgValue>,
+}
+
+impl Invocation {
+    /// Pair a method with arguments supplied at run time. Arguments convert
+    /// into [`AbiArgValue`], so native types, [`AbiValue`]s, and
+    /// transaction-typed [`TransactionWithSigner`](super::TransactionWithSigner)
+    /// arguments are all accepted — the path for app-spec-loaded contracts and
+    /// transaction/reference arguments the `abi_call!` macro does not yet bind.
+    pub fn new(method: AbiMethod, args: impl IntoIterator<Item = impl Into<AbiArgValue>>) -> Self {
+        Invocation {
+            method,
+            args: args.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+/// The compile-time-checked [`abi_call!`](algonaut_abi::abi_call) output drops
+/// straight into [`MethodCallBuilder::invoke`]: its already-encoded
+/// [`AbiValue`]s become plain value arguments.
+impl From<MethodInvocation> for Invocation {
+    fn from(invocation: MethodInvocation) -> Self {
+        let (method, values) = invocation.into_parts();
+        Invocation {
+            method,
+            args: values.into_iter().map(AbiArgValue::AbiValue).collect(),
+        }
+    }
+}
+
 /// A fully-built ABI method call, ready to be handed to
 /// [`AtomicGroupBuilder::add_method_call`](super::AtomicGroupBuilder::add_method_call).
 ///
@@ -161,15 +212,14 @@ impl MethodCall {
     /// Named `builder` (not `new`) because it returns a
     /// [`MethodCallBuilder`], following `http::Request::builder()` and the
     /// rest of the ecosystem.
-    pub fn builder(
-        app_id: AppId,
-        method: AbiMethod,
-        sender: Address,
-        signer: Arc<dyn Signer>,
-    ) -> MethodCallBuilder {
+    ///
+    /// The method and its arguments are supplied together via
+    /// [`MethodCallBuilder::invoke`] — typically `.invoke(abi_call!(…))` — so
+    /// they are not positional here.
+    pub fn builder(app_id: AppId, sender: Address, signer: Arc<dyn Signer>) -> MethodCallBuilder {
         MethodCallBuilder {
             app_id,
-            method,
+            method: None,
             sender,
             signer,
             method_args: Vec::new(),
@@ -195,7 +245,8 @@ impl MethodCall {
 /// finalise the call into a [`MethodCall`].
 pub struct MethodCallBuilder {
     app_id: AppId,
-    method: AbiMethod,
+    /// Set by [`MethodCallBuilder::invoke`]; required before [`build`](Self::build).
+    method: Option<AbiMethod>,
     sender: Address,
     signer: Arc<dyn Signer>,
     method_args: Vec<AbiArgValue>,
@@ -213,12 +264,17 @@ pub struct MethodCallBuilder {
 }
 
 impl MethodCallBuilder {
-    /// ABI method arguments, in the order declared by the method
-    /// signature. Each element converts into an [`AbiArgValue`], so native
-    /// types work directly: `.args([2u64, 3u64])`. If the method takes no
-    /// arguments, omit this setter.
-    pub fn args(mut self, args: impl IntoIterator<Item = impl Into<AbiArgValue>>) -> Self {
-        self.method_args = args.into_iter().map(Into::into).collect();
+    /// Supply the method and its arguments as one checked [`Invocation`].
+    ///
+    /// The common form is `.invoke(abi_call!("add(uint64,uint64)uint64", 2u64,
+    /// 3u64))`: the macro validates the signature and type-checks the
+    /// arguments at compile time. For runtime-sourced signatures, pass
+    /// `Invocation::new(method, args)`. This is required before
+    /// [`build`](Self::build).
+    pub fn invoke(mut self, invocation: impl Into<Invocation>) -> Self {
+        let Invocation { method, args } = invocation.into();
+        self.method = Some(method);
+        self.method_args = args;
         self
     }
 
@@ -301,9 +357,12 @@ impl MethodCallBuilder {
     /// primitives are read out of `params`; the struct is not cloned.
     pub fn build(self, params: &SuggestedParams) -> MethodCall {
         let fee = self.fee.unwrap_or(params.min_fee);
+        let method = self
+            .method
+            .expect("MethodCall: call `.invoke(...)` before `.build(...)`");
         MethodCall {
             app_id: self.app_id,
-            method: self.method,
+            method,
             method_args: self.method_args,
             fee,
             sender: self.sender,
@@ -323,5 +382,51 @@ impl MethodCallBuilder {
             signer: self.signer,
             boxes: self.boxes,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use algonaut_abi::abi_call;
+
+    /// The `abi_call!` macro expands to a checked invocation that converts into
+    /// the builder's [`Invocation`]: the right method and the encoded value
+    /// arguments, in order.
+    #[test]
+    fn abi_call_macro_produces_checked_invocation() {
+        let invocation: Invocation = abi_call!("add(uint64,uint64)uint64", 2u64, 3u64).into();
+
+        assert_eq!(invocation.method.name, "add");
+        assert_eq!(invocation.method.args.len(), 2);
+        assert_eq!(invocation.args.len(), 2);
+
+        let values: Vec<&AbiValue> = invocation
+            .args
+            .iter()
+            .map(|a| match a {
+                AbiArgValue::AbiValue(v) => v,
+                AbiArgValue::TxWithSigner(_) => panic!("expected plain ABI values"),
+            })
+            .collect();
+        assert_eq!(values[0], &AbiValue::from(2u64));
+        assert_eq!(values[1], &AbiValue::from(3u64));
+    }
+
+    /// A widening native type (`u32` where `uint64` is expected) is accepted,
+    /// matching the `format!`-style "value fits" rule the `AbiArg` impls encode.
+    #[test]
+    fn abi_call_macro_allows_widening() {
+        let invocation: Invocation = abi_call!("add(uint64,uint64)uint64", 2u32, 3u8).into();
+        assert_eq!(invocation.args.len(), 2);
+    }
+
+    /// `abi_call!` also checks `bool`, `string`, and `byte[]` slots.
+    #[test]
+    fn abi_call_macro_checks_non_integer_value_types() {
+        let invocation: Invocation =
+            abi_call!("f(bool,string,byte[])void", true, "hi", vec![1u8, 2u8]).into();
+        assert_eq!(invocation.method.name, "f");
+        assert_eq!(invocation.args.len(), 3);
     }
 }

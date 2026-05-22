@@ -1,7 +1,7 @@
 use crate::step_defs::{integration::world::World, util::read_teal};
 use algonaut::atomic::{
-    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicGroupBuilder, MethodCall,
-    TransactionWithSigner,
+    AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicGroupBuilder, Invocation,
+    MethodCall, TransactionWithSigner,
 };
 use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
@@ -362,14 +362,15 @@ struct MethodCallCtx {
 
 impl MethodCallCtx {
     fn builder(&self) -> algonaut::atomic::MethodCallBuilder {
-        MethodCall::builder(
-            self.app_id,
-            self.method.clone(),
-            self.sender,
-            self.signer.clone(),
-        )
-        .args(self.method_args.clone())
-        .on_complete(self.on_complete.clone())
+        // The signature is sourced at run time from the feature file, so this
+        // is the dynamic path: `from_signature` + `Invocation::new`, supplying
+        // already-built `AbiArgValue`s (including transaction-typed args).
+        MethodCall::builder(self.app_id, self.sender, self.signer.clone())
+            .invoke(Invocation::new(
+                self.method.clone(),
+                self.method_args.clone(),
+            ))
+            .on_complete(self.on_complete.clone())
     }
 
     fn commit(self, w: &mut World, call: MethodCall) {

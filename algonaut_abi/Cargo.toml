@@ -9,11 +9,11 @@ repository = "https://github.com/manuelmauro/algonaut"
 version = "0.7.0"
 
 [dependencies]
+algonaut_abi_macros = { workspace = true }
+algonaut_abi_sig = { workspace = true }
 algonaut_core = { workspace = true }
 derive_more = { workspace = true, features = ["display", "from"] }
-lazy_static = { workspace = true }
 num-bigint = { workspace = true }
-regex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 sha2 = { workspace = true }

@@ -2,11 +2,11 @@
 //! [`AtomicGroupBuilder`] typestate chain and the fluent [`MethodCall`]
 //! builder. This is the recommended path for application calls.
 
+use algonaut::abi::abi_call;
 use algonaut::algod::v2::Algod;
 use algonaut::atomic::{AtomicGroupBuilder, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
-use algonaut_abi::abi_interactions::AbiMethod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -31,12 +31,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // TODO point this at a real ARC-4 method on a real deployed contract.
     // The signature here is illustrative — `add(uint64,uint64)uint64`
-    // takes two unsigned-64 arguments and returns one.
-    let method = AbiMethod::from_signature("add(uint64,uint64)uint64")?;
-
+    // takes two unsigned-64 arguments and returns one. `abi_call!` validates
+    // the signature and type-checks the two `u64` arguments at compile time,
+    // so there is no `?` here: a typo or a wrong argument is a build error.
     info!("building method call");
-    let call = MethodCall::builder(AppId(5), method, alice.address(), signer)
-        .args([2u64, 3u64])
+    let call = MethodCall::builder(AppId(5), alice.address(), signer)
+        .invoke(abi_call!("add(uint64,uint64)uint64", 2u64, 3u64))
         .build(&params);
 
     info!("composing and executing");

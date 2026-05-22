@@ -22,10 +22,14 @@ members = [
   "algonaut_kmd",
   "algonaut_transaction",
   "algonaut_abi",
+  "algonaut_abi_sig",
+  "algonaut_abi_macros",
 ]
 
 [workspace.dependencies]
 algonaut_abi = { path = "algonaut_abi", version = "0.7.0" }
+algonaut_abi_sig = { path = "algonaut_abi_sig", version = "0.7.0" }
+algonaut_abi_macros = { path = "algonaut_abi_macros", version = "0.7.0" }
 algonaut_algod = { path = "algonaut_algod", version = "0.7.0" }
 algonaut_core = { path = "algonaut_core", version = "0.7.0" }
 algonaut_crypto = { path = "algonaut_crypto", version = "0.7.0" }
@@ -50,6 +54,9 @@ lazy_static = "1.5.0"
 log = "0.4.29"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "2.0", features = ["full"] }
 ed25519-dalek = "2.2.0"
 rand = "0.8.5"
 regex = "1.12.3"

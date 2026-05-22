@@ -1,0 +1,18 @@
+[package]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+description = "Compile-time checked ARC-4 ABI method-call macros (abi_call!/abi_method!) for algonaut_abi."
+edition = "2024"
+keywords = ["Algorand", "sdk", "abi", "macros"]
+license = "MIT OR Apache-2.0"
+name = "algonaut_abi_macros"
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.7.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+algonaut_abi_sig = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true }
