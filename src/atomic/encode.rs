@@ -16,7 +16,6 @@
 use std::collections::HashMap;
 
 use algonaut_abi::{
-    abi_error::AbiError,
     abi_interactions::{AbiArgType, AbiMethod, ReferenceArgType, TransactionArgType},
     abi_type::{AbiType, AbiValue},
     make_tuple_type,
@@ -26,8 +25,6 @@ use algonaut_transaction::{
     Transaction, TransactionType,
     transaction::{ApplicationCallTransaction, to_tx_type_enum},
 };
-use num_bigint::BigUint;
-use num_traits::ToPrimitive;
 
 use crate::Error;
 
@@ -217,7 +214,7 @@ impl ForeignArrays {
                 ))
             }
             ReferenceArgType::Asset => {
-                let asset_id = ref_arg_u64(arg_value)?;
+                let asset_id = u64::try_from(arg_value)?;
                 Ok(populate_foreign_array(
                     AssetId(asset_id),
                     &mut self.assets,
@@ -225,7 +222,7 @@ impl ForeignArrays {
                 ))
             }
             ReferenceArgType::Application => {
-                let referenced_app = ref_arg_u64(arg_value)?;
+                let referenced_app = u64::try_from(arg_value)?;
                 Ok(populate_foreign_array(
                     AppId(referenced_app),
                     &mut self.apps,
@@ -234,18 +231,6 @@ impl ForeignArrays {
             }
         }
     }
-}
-
-/// Extract a `u64` foreign-array index (asset or app id) from an
-/// integer-typed ABI argument.
-fn ref_arg_u64(arg_value: &AbiArgValue) -> Result<u64, Error> {
-    let int = BigUint::try_from(arg_value)?;
-    int.to_u64()
-        .ok_or_else(|| AbiError::ValueOutOfRange {
-            abi_type: "uint64".to_owned(),
-            reason: format!("value {int} exceeds u64 capacity"),
-        })
-        .map_err(Error::from)
 }
 
 /// Accumulates encoded ABI argument types and values during method

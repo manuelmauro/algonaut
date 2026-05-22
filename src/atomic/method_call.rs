@@ -8,7 +8,7 @@
 
 use std::sync::Arc;
 
-use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
+use algonaut_abi::{abi_error::AbiError, abi_interactions::AbiMethod, abi_type::AbiValue};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::HashDigest;
 use algonaut_model::client_types::SuggestedParams;
@@ -17,6 +17,7 @@ use algonaut_transaction::{
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},
 };
 use num_bigint::BigUint;
+use num_traits::ToPrimitive;
 
 use crate::Error;
 
@@ -96,6 +97,23 @@ impl TryFrom<&AbiArgValue> for BigUint {
                 actual: format!("{other:?}"),
             }),
         }
+    }
+}
+
+/// Extract a `u64` from an integer-typed ABI argument — used for the asset-
+/// and application-id foreign-array references, which are `u64` on the
+/// wire. Errors if the value is not an integer, or if it overflows `u64`.
+impl TryFrom<&AbiArgValue> for u64 {
+    type Error = Error;
+
+    fn try_from(value: &AbiArgValue) -> Result<Self, Self::Error> {
+        let int = BigUint::try_from(value)?;
+        int.to_u64().ok_or_else(|| {
+            Error::from(AbiError::ValueOutOfRange {
+                abi_type: "uint64".to_owned(),
+                reason: format!("value {int} exceeds u64 capacity"),
+            })
+        })
     }
 }
 
