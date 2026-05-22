@@ -1,10 +1,26 @@
 extern crate derive_more;
-use derive_more::{Display, From};
 use std::fmt::Debug;
 use thiserror::Error;
 
-#[derive(Debug, Display, Error, From, Clone)]
+#[derive(Debug, Error, Clone)]
 pub enum AbiError {
-    #[display("{_0}")]
-    Msg(String),
+    /// An ABI type string could not be parsed (e.g. "uint256[]").
+    #[error("invalid ABI type {input:?}: {reason}")]
+    TypeParse { input: String, reason: String },
+
+    /// Encoding a value into its ABI byte representation failed.
+    #[error("ABI encode error: {reason}")]
+    Encode { reason: String },
+
+    /// Decoding ABI bytes failed (corrupted framing, short input, etc.).
+    #[error("ABI decode error: {reason}")]
+    Decode { reason: String },
+
+    /// A method selector / signature string could not be parsed.
+    #[error("invalid ABI method signature {input:?}: {reason}")]
+    MethodSignature { input: String, reason: String },
+
+    /// A value was outside the range its ABI type allows.
+    #[error("value out of range for {abi_type}: {reason}")]
+    ValueOutOfRange { abi_type: String, reason: String },
 }

@@ -2,7 +2,7 @@
 id: structured-leaf-errors
 title: Structured leaf-crate errors
 abstract: 'Eliminate the pure-Msg(String) error types in the leaf crates: give AbiError a typed parse/encode/decode/signature taxonomy, replace the AlgodError/IndexerError placeholders (which discard their serde source) with real #[from] source-chaining variants, and retire TransactionError::Msg and CoreError::General. Follow-up to structured-errors (D8), covering the leaf-crate sites that ADR explicitly reserved.'
-status: proposed
+status: accepted
 date: 2026-05-21
 deciders: []
 tags: [api, errors, type-safety]
@@ -12,7 +12,7 @@ tags: [api, errors, type-safety]
 
 ## Status
 
-Proposed. Follow-up to [`structured-errors`](structured-errors.md), which
+Accepted. Follow-up to [`structured-errors`](structured-errors.md), which
 implemented decision item **D8** of
 [`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md) for the
 top-level `Error` and explicitly deferred the leaf-crate error types:

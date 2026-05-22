@@ -260,8 +260,9 @@ fn add_to_foreign_array(
         },
         ReferenceArgType::Asset => match arg_value.int() {
             Some(int) => {
-                let intu64 = int.to_u64().ok_or_else(|| {
-                    AbiError::Msg(format!("big int: {int} couldn't be converted to u64"))
+                let intu64 = int.to_u64().ok_or_else(|| AbiError::ValueOutOfRange {
+                    abi_type: "uint64".to_owned(),
+                    reason: format!("value {int} exceeds u64 capacity"),
                 })?;
 
                 Ok(populate_foreign_array(
@@ -276,8 +277,9 @@ fn add_to_foreign_array(
         },
         ReferenceArgType::Application => match arg_value.int() {
             Some(int) => {
-                let intu64 = int.to_u64().ok_or_else(|| {
-                    AbiError::Msg(format!("big int: {int} couldn't be converted to u64"))
+                let intu64 = int.to_u64().ok_or_else(|| AbiError::ValueOutOfRange {
+                    abi_type: "uint64".to_owned(),
+                    reason: format!("value {int} exceeds u64 capacity"),
                 })?;
 
                 Ok(populate_foreign_array(

@@ -11,9 +11,10 @@ pub trait BigUintExt {
 impl BigUintExt for BigUint {
     fn to_bytes_be_padded(&self, len: usize) -> Result<Vec<u8>, AbiError> {
         if self >= &BigUint::from(1u8).shl(len * 8) {
-            return Err(AbiError::Msg(format!(
-                "Encode int to byte: integer size for: {self} exceeds the given byte number: {len}"
-            )));
+            return Err(AbiError::ValueOutOfRange {
+                abi_type: format!("uint{}", len * 8),
+                reason: format!("value {self} exceeds {len}-byte capacity"),
+            });
         }
 
         let bytes = self.to_bytes_be();

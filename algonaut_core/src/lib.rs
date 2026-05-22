@@ -355,12 +355,13 @@ impl Debug for StateProofPk {
 
 impl StateProofPk {
     pub fn from_base64_str(base64_str: &str) -> Result<StateProofPk, CoreError> {
-        let bytes = BASE64
-            .decode(base64_str.as_bytes())
-            .map_err(|e| CoreError::General(e.to_string()))?;
-        let arr: [u8; 64] = bytes.try_into().map_err(|v: Vec<u8>| {
-            CoreError::General(format!("expected 64 bytes, got {}", v.len()))
-        })?;
+        let bytes = BASE64.decode(base64_str.as_bytes())?;
+        let arr: [u8; 64] = bytes
+            .try_into()
+            .map_err(|v: Vec<u8>| CoreError::InvalidArraySize {
+                expected: 64,
+                actual: v.len(),
+            })?;
         Ok(StateProofPk(arr))
     }
 
@@ -407,7 +408,10 @@ fn base64_str_to_u8_array<const N: usize>(base64_str: &str) -> Result<[u8; N], C
     BASE64
         .decode(base64_str.as_bytes())?
         .try_into()
-        .map_err(|v| CoreError::General(format!("Couldn't convert vec: {:?} into u8 array", v)))
+        .map_err(|v: Vec<u8>| CoreError::InvalidArraySize {
+            expected: N,
+            actual: v.len(),
+        })
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -454,9 +458,7 @@ impl TransactionTypeEnum {
             "afrz" => Ok(TransactionTypeEnum::AssetFreeze),
             "appl" => Ok(TransactionTypeEnum::ApplicationCall),
             "stpf" => Ok(TransactionTypeEnum::StateProof),
-            _ => Err(CoreError::General(format!(
-                "Couldn't convert tx type str: `{s}` to tx type"
-            ))),
+            _ => Err(CoreError::InvalidTransactionType(s.to_owned())),
         }
     }
 }
