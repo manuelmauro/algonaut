@@ -17,6 +17,13 @@ Accepted. Implements decision item **D6** of
 Depends on **D7** ([`signer-trait`](signer-trait.md)) — the builder's
 `signer` argument is `Arc<dyn Signer>`.
 
+Amended by
+[`abi-method-signature-macro`](abi-method-signature-macro.md): its **D4**
+replaces this builder's `.args(...)` setter with `.invoke(...)` (fed by the
+`abi_call!` macro or `Invocation::new`) and drops `method` from the
+positional `builder(...)` arguments. The core decision here — replacing the
+18-field params struct with a fluent builder — stands.
+
 ## Context
 
 `AddMethodCallParams` is an 18-field struct: `app_id`, `method`,

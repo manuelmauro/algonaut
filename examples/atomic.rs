@@ -18,12 +18,12 @@
 //! argument encoding, group-id assignment, per-transaction signers, and
 //! return-value decoding for you.
 
+use algonaut::abi::abi_call;
 use algonaut::algod::v2::Algod;
 use algonaut::atomic::{AtomicGroupBuilder, MethodCall, TransactionWithSigner};
 use algonaut::core::{AppId, MicroAlgos};
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Signer};
-use algonaut_abi::abi_interactions::AbiMethod;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -54,7 +54,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // TODO point this at a real ARC-4 method on a deployed contract.
     // `add(uint64,uint64)uint64` takes two unsigned-64 args, returns one.
     let app_id = AppId(123);
-    let method = AbiMethod::from_signature("add(uint64,uint64)uint64")?;
 
     info!("building the two payment legs");
     let alice_to_bob =
@@ -63,8 +62,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Pay::new(bob.address(), alice.address(), MicroAlgos(1_000)).build(&params)?;
 
     info!("building the method call add(2, 3)");
-    let call = MethodCall::builder(app_id, method, alice.address(), alice_signer.clone())
-        .args([2u64, 3u64])
+    let call = MethodCall::builder(app_id, alice.address(), alice_signer.clone())
+        .invoke(abi_call!("add(uint64,uint64)uint64", 2u64, 3u64))
         .build(&params);
 
     info!("composing the atomic group");

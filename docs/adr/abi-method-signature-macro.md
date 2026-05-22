@@ -2,7 +2,7 @@
 id: abi-method-signature-macro
 title: Compile-time checked ABI method calls, modeled on format!
 abstract: Model ABI method calls on the format!/println! family. abi_call!("add(uint64,uint64)uint64", 2u64, 3u64) treats the ARC-4 signature literal as a format string whose argument types are the specifiers — validating the signature against the canonical grammar, checking argument arity, and checking each argument's type via a per-type AbiArg trait bound, all at compile time with format!-quality spans. abi_method!("…") is the signature-only base. from_signature stays for dynamically sourced signatures.
-status: proposed
+status: accepted
 date: 2026-05-22
 deciders: []
 tags: [api, abi, macros, type-safety, ergonomics]
@@ -12,7 +12,17 @@ tags: [api, abi, macros, type-safety, ergonomics]
 
 ## Status
 
-Proposed
+Accepted. Implemented: the grammar lives in the new `algonaut_abi_sig`
+crate; `abi_call!`/`abi_method!` in the new `algonaut_abi_macros` proc-macro
+crate (re-exported as `algonaut_abi::abi_call!`); the `AbiArg<T>` trait,
+marker types, and `MethodInvocation` in `algonaut_abi::macro_support`;
+`from_signature` and `AbiType::from_str` reimplemented on `algonaut_abi_sig`.
+The `MethodCall` builder's `.args(...)` is replaced by
+`.invoke(...)` (D4), fed either by `abi_call!` or, for runtime-sourced
+signatures, by `Invocation::new`. The first cut checks value arguments with
+a canonical Rust representation (D5); transaction/reference/`ufixed`
+arguments are routed through the dynamic `Invocation::new` path, a
+documented gap rather than a silent one.
 
 ## Context
 

@@ -33,7 +33,7 @@ mod signing;
 pub use group::{
     AtomicGroupBuilder, SignedAtomicGroup, TransactionWithSigner, UnsignedAtomicGroup,
 };
-pub use method_call::{AbiArgValue, MethodCall, MethodCallBuilder};
+pub use method_call::{AbiArgValue, Invocation, MethodCall, MethodCallBuilder};
 pub use outcome::{
     AbiMethodResult, AbiMethodReturnValue, AbiReturnDecodeError, ExecuteOutcome, SimulateOutcome,
 };

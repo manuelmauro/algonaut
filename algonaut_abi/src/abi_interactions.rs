@@ -258,118 +258,56 @@ impl AbiMethod {
     }
 
     /// Decodes a method signature string into a Method object.
+    ///
+    /// The signature is split by the shared [`algonaut_abi_sig`] grammar — the
+    /// same grammar the `abi_call!`/`abi_method!` macros validate against — and
+    /// each argument's ABI type is parsed (and cached) exactly as before. Use
+    /// this for signatures that arrive at run time (app-spec JSON, user input);
+    /// for compile-time literals, prefer `abi_method!` / `abi_call!`, which
+    /// perform this validation at build time.
     pub fn from_signature(method_str: &str) -> Result<AbiMethod, AbiError> {
-        let open_idx =
-            method_str
-                .chars()
-                .position(|c| c == '(')
-                .ok_or_else(|| AbiError::MethodSignature {
-                    input: method_str.to_owned(),
-                    reason: "missing an open parenthesis".to_owned(),
-                })?;
-
-        let name = &method_str[..open_idx];
-        if name.is_empty() {
-            return Err(AbiError::MethodSignature {
-                input: method_str.to_owned(),
-                reason: "method must have a non-empty name".to_owned(),
-            });
-        }
-
-        let (arg_types, close_idx) = parse_method_args(method_str, open_idx)?;
+        let sig = algonaut_abi_sig::split_signature(method_str).map_err(|e| {
+            AbiError::MethodSignature {
+                input: e.input,
+                reason: e.reason,
+            }
+        })?;
 
         let mut return_type = AbiReturn {
-            type_: method_str[close_idx + 1..].to_owned(),
+            type_: sig.ret,
             description: None,
             parsed: None,
         };
 
-        // fill type object cache
+        // fill type object cache (also validates the return type)
         return_type.type_()?;
 
-        let mut args: Vec<AbiMethodArg> = Vec::with_capacity(arg_types.len());
+        let mut args: Vec<AbiMethodArg> = Vec::with_capacity(sig.args.len());
 
-        for (i, arg_type) in arg_types.into_iter().enumerate() {
-            let arg = AbiMethodArg {
+        for arg_type in sig.args {
+            let mut arg = AbiMethodArg {
                 type_: arg_type.clone(),
                 name: None,
                 description: None,
                 parsed: None,
             };
-            args.push(arg);
 
-            if TransactionArgType::is_valid_api_str(&arg_type)
-                || ReferenceArgType::is_valid_api_str(&arg_type)
+            // Transaction- and reference-typed args have no `AbiType`; for
+            // everything else, parse and cache the type object (validating it).
+            if !(TransactionArgType::is_valid_api_str(&arg_type)
+                || ReferenceArgType::is_valid_api_str(&arg_type))
             {
-                continue;
+                arg.type_()?;
             }
 
-            // fill type object cache
-            args[i].type_()?;
+            args.push(arg);
         }
 
         Ok(AbiMethod {
-            name: name.to_owned(),
+            name: sig.name,
             args,
             returns: return_type,
             description: None,
-        })
-    }
-}
-
-/// Parses the arguments from a method signature string.
-/// str_method is the complete method signature and start_idx is the index of the
-/// opening parenthesis of the arguments list. This function returns a list of
-/// the argument types from the method signature and the index of the closing
-/// parenthesis of the arguments list.
-fn parse_method_args(str_method: &str, start_idx: usize) -> Result<(Vec<String>, usize), AbiError> {
-    // handle no args
-    if start_idx < str_method.len() - 1 && str_method.chars().nth(start_idx + 1) == Some(')') {
-        return Ok((vec![], start_idx + 1));
-    }
-
-    let mut arg_types = vec![];
-
-    let mut paren_cnt = 1;
-    let mut prev_pos = start_idx + 1;
-    let mut close_idx = None;
-    let init_prev_pos = prev_pos;
-
-    for cur_pos in init_prev_pos..str_method.len() {
-        let chars = str_method.chars().collect::<Vec<_>>();
-        if chars[cur_pos] == '(' {
-            paren_cnt += 1;
-        } else if chars[cur_pos] == ')' {
-            paren_cnt -= 1;
-        }
-
-        if paren_cnt < 0 {
-            return Err(AbiError::MethodSignature {
-                input: str_method.to_owned(),
-                reason: "parentheses mismatch".to_owned(),
-            });
-        } else if paren_cnt > 1 {
-            continue;
-        }
-
-        if chars[cur_pos] == ',' || paren_cnt == 0 {
-            let str_arg = &str_method[prev_pos..cur_pos];
-            arg_types.push(str_arg.to_owned());
-            prev_pos = cur_pos + 1;
-        }
-
-        if paren_cnt == 0 {
-            close_idx = Some(cur_pos);
-            break;
-        }
-    }
-
-    if let Some(close_idx) = close_idx {
-        Ok((arg_types, close_idx))
-    } else {
-        Err(AbiError::MethodSignature {
-            input: str_method.to_owned(),
-            reason: "parentheses mismatch".to_owned(),
         })
     }
 }

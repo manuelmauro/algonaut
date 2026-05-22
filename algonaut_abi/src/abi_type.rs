@@ -1,9 +1,8 @@
 use crate::abi_error::AbiError;
+use algonaut_abi_sig::SigType;
 use algonaut_core::Address;
-use lazy_static::lazy_static;
 use num_bigint::BigUint;
-use regex::Regex;
-use std::{convert::TryInto, fmt::Display, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 
 pub const ADDRESS_BYTE_SIZE: usize = 32;
 pub const LENGTH_ENCODE_BYTE_SIZE: usize = 2;
@@ -229,205 +228,51 @@ impl AbiType {
 impl FromStr for AbiType {
     type Err = AbiError;
 
-    /// Parses an ABI type string.
-    /// For example: `from_str("(uint64,byte[])")`
+    /// Parses an ABI type string, e.g. `"(uint64,byte[])"`.
+    ///
+    /// Delegates to the shared [`algonaut_abi_sig`] grammar, so the runtime
+    /// parser and the `abi_call!`/`abi_method!` macros accept exactly the same
+    /// inputs — a signature the macros reject at compile time fails here too,
+    /// and vice-versa.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some(stripped) = s.strip_suffix("[]") {
-            let array_arg_type = stripped.parse()?;
-            Ok(AbiType::dynamic_array(array_arg_type))
-        } else if s.ends_with(']') {
-            lazy_static! {
-                static ref RE: Regex = Regex::new(r"^([a-z\d\[\](),]+)\[([1-9][\d]*)]$").unwrap();
-            }
-            let caps = RE.captures(s).ok_or_else(|| AbiError::TypeParse {
-                input: s.to_owned(),
-                reason: "invalid static array syntax".to_owned(),
-            })?;
-
-            if caps.len() != 3 {
-                return Err(AbiError::TypeParse {
-                    input: s.to_owned(),
-                    reason: "invalid static array syntax".to_owned(),
-                });
-            }
-            let array_type = caps[1].parse()?;
-            let array_len_s = caps[2].to_owned();
-
-            let array_len: usize = array_len_s.parse().map_err(|e| AbiError::TypeParse {
-                input: s.to_owned(),
-                reason: format!("cannot parse array length: {e}"),
-            })?;
-
-            Ok(AbiType::static_array(
-                array_type,
-                array_len.try_into().map_err(|_| AbiError::TypeParse {
-                    input: s.to_owned(),
-                    reason: format!("array length {array_len} exceeds u16 maximum"),
-                })?,
-            ))
-        } else if let Some(stripped) = s.strip_prefix("uint") {
-            let type_size = stripped.parse().map_err(|e| AbiError::TypeParse {
-                input: s.to_owned(),
-                reason: format!("cannot parse bit size: {e}"),
-            })?;
-
-            AbiType::uint(type_size)
-        } else if s == "byte" {
-            Ok(AbiType::byte())
-        } else if s.starts_with("ufixed") {
-            lazy_static! {
-                static ref RE: Regex = Regex::new(r"^ufixed([1-9][\d]*)x([1-9][\d]*)$").unwrap();
-            }
-            let caps = RE.captures(s).ok_or_else(|| AbiError::TypeParse {
-                input: s.to_owned(),
-                reason: "invalid ufixed syntax".to_owned(),
-            })?;
-
-            if caps.len() != 3 {
-                return Err(AbiError::TypeParse {
-                    input: s.to_owned(),
-                    reason: "invalid ufixed syntax".to_owned(),
-                });
-            }
-            let ufixed_size_s = &caps[1].to_owned();
-            let ufixed_size = ufixed_size_s.parse().map_err(|e| AbiError::TypeParse {
-                input: s.to_owned(),
-                reason: format!("cannot parse ufixed size: {e}"),
-            })?;
-
-            let ufixed_precision_s = &caps[2].to_owned();
-            let ufixed_precision = ufixed_precision_s
-                .parse()
-                .map_err(|e| AbiError::TypeParse {
-                    input: s.to_owned(),
-                    reason: format!("cannot parse ufixed precision: {e}"),
-                })?;
-
-            AbiType::ufixed(ufixed_size, ufixed_precision)
-        } else if s == "bool" {
-            Ok(AbiType::bool())
-        } else if s == "address" {
-            Ok(AbiType::address())
-        } else if s == "string" {
-            Ok(AbiType::string())
-        } else if s.len() >= 2 && s.starts_with('(') && s.ends_with(')') {
-            let tuple_content = parse_tuple_content(&s[1..s.len() - 1])?;
-            let mut tuple_types = Vec::with_capacity(tuple_content.len());
-
-            for t in tuple_content {
-                let ti = t.parse()?;
-                tuple_types.push(ti);
-            }
-
-            AbiType::tuple(tuple_types)
-        } else {
-            Err(AbiError::TypeParse {
-                input: s.to_owned(),
-                reason: "unrecognized ABI type".to_owned(),
-            })
-        }
+        algonaut_abi_sig::parse_type(s)
+            .map(AbiType::from_sig_type)
+            .map_err(AbiError::from)
     }
 }
 
-/// Keeps track of the start and end of a segment in a string.
-struct Segment {
-    left: usize,
-    right: usize,
-}
-
-/// Splits an ABI encoded string for tuple type into multiple sub-strings.
-/// Each sub-string represents a content type of the tuple type.
-/// The argument str is the content between parentheses of tuple, i.e.
-/// (...... str ......)
-///  ^               ^
-fn parse_tuple_content(str: &str) -> Result<Vec<String>, AbiError> {
-    // if the tuple type content is empty (which is also allowed)
-    // just return the empty string list
-    if str.is_empty() {
-        return Ok(vec![]);
-    }
-
-    // the following 2 checks want to make sure input string can be separated by comma
-    // with form: "...substr_0,...substr_1,...,...substr_k"
-
-    // str should not have leading/tailing comma
-    if str.ends_with(',') || str.starts_with(',') {
-        return Err(AbiError::TypeParse {
-            input: format!("({str})"),
-            reason: "tuple content must not start or end with comma".to_owned(),
-        });
-    }
-    // str should not have consecutive commas
-    if str.contains(",,") {
-        return Err(AbiError::TypeParse {
-            input: format!("({str})"),
-            reason: "consecutive commas not allowed".to_owned(),
-        });
-    }
-
-    let mut paren_segment_record = vec![];
-    let mut stack = vec![];
-
-    // get the most exterior parentheses segment (not overlapped by other parentheses)
-    // illustration: "*****,(*****),*****" => ["*****", "(*****)", "*****"]
-    // once iterate to left paren (, stack up by 1 in stack
-    // iterate to right paren ), pop 1 in stack
-    // if iterate to right paren ) with stack height 0, find a parenthesis segment "(******)"
-    for (index, chr) in str.chars().enumerate() {
-        if chr == '(' {
-            stack.push(index);
-        } else if chr == ')' {
-            if stack.is_empty() {
-                return Err(AbiError::TypeParse {
-                    input: format!("({str})"),
-                    reason: "unpaired closing parenthesis".to_owned(),
-                });
-            }
-
-            let left_paren_index = stack[stack.len() - 1];
-            stack.pop();
-            if stack.is_empty() {
-                paren_segment_record.push(Segment {
-                    left: left_paren_index,
-                    right: index,
-                });
-            }
+impl AbiType {
+    /// Lift a grammar [`SigType`] into the richer [`AbiType`]. The grammar
+    /// crate carries no encoding logic, so this is a pure structural mapping.
+    fn from_sig_type(ty: SigType) -> AbiType {
+        match ty {
+            SigType::UInt { bit_size } => AbiType::UInt { bit_size },
+            SigType::Byte => AbiType::Byte,
+            SigType::UFixed {
+                bit_size,
+                precision,
+            } => AbiType::UFixed {
+                bit_size,
+                precision,
+            },
+            SigType::Bool => AbiType::Bool,
+            SigType::Address => AbiType::Address,
+            SigType::StaticArray { len, child_type } => AbiType::StaticArray {
+                len,
+                child_type: Box::new(AbiType::from_sig_type(*child_type)),
+            },
+            SigType::DynamicArray { child_type } => AbiType::DynamicArray {
+                child_type: Box::new(AbiType::from_sig_type(*child_type)),
+            },
+            SigType::String => AbiType::String,
+            SigType::Tuple { child_types } => AbiType::Tuple {
+                // The grammar already caps tuple arity at `u16::MAX`.
+                len: child_types.len() as u16,
+                child_types: child_types
+                    .into_iter()
+                    .map(AbiType::from_sig_type)
+                    .collect(),
+            },
         }
     }
-    if !stack.is_empty() {
-        return Err(AbiError::TypeParse {
-            input: format!("({str})"),
-            reason: "unpaired opening parenthesis".to_owned(),
-        });
-    }
-
-    // take out tuple-formed type str in tuple argument
-    let mut str_copied = str.to_owned();
-
-    for paren_seg in paren_segment_record.iter().rev() {
-        str_copied = format!(
-            "{}{}",
-            str_copied[..paren_seg.left].to_owned(),
-            str_copied[paren_seg.right + 1..].to_owned()
-        );
-    }
-
-    // split the string without parenthesis segments
-    let tuple_str_segs: Vec<&str> = str_copied.split(',').collect();
-    let mut tuple_str_segs_res: Vec<String> = Vec::with_capacity(tuple_str_segs.len());
-
-    // the empty strings are placeholders for parenthesis segments
-    // put the parenthesis segments back into segment list
-    let mut paren_seg_count = 0;
-    for seg_str in tuple_str_segs.iter() {
-        if seg_str.is_empty() {
-            let paren_seg = &paren_segment_record[paren_seg_count];
-            tuple_str_segs_res.push(str[paren_seg.left..paren_seg.right + 1].to_owned());
-            paren_seg_count += 1;
-        } else {
-            tuple_str_segs_res.push((*seg_str).to_owned());
-        }
-    }
-
-    Ok(tuple_str_segs_res)
 }

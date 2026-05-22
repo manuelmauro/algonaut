@@ -1,0 +1,15 @@
+[package]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
+description = "Pure ARC-4 ABI signature and type grammar shared by algonaut_abi and its compile-time macros."
+edition = "2024"
+keywords = ["Algorand", "sdk", "abi"]
+license = "MIT OR Apache-2.0"
+name = "algonaut_abi_sig"
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.7.0"
+
+# Intentionally dependency-free: this crate is the single source of truth for
+# the ABI grammar, shared by the runtime parser (algonaut_abi) and the
+# proc-macros (algonaut_abi_macros). Keeping it free of I/O and heavy deps lets
+# the macro crate pull it in cheaply.
+[dependencies]
