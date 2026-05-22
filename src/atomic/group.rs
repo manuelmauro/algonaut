@@ -108,7 +108,7 @@ impl AtomicGroupBuilder {
     }
 
     /// Add an ABI method call to the group. Build the [`MethodCall`]
-    /// with [`MethodCall::new`] and the [`MethodCallBuilder`](super::MethodCallBuilder) setters.
+    /// with [`MethodCall::builder`] and the [`MethodCallBuilder`](super::MethodCallBuilder) setters.
     pub fn add_method_call(mut self, call: MethodCall) -> Self {
         self.entries.push(AtomicGroupEntry::MethodCall(call));
         self
@@ -234,10 +234,9 @@ impl UnsignedAtomicGroup {
                     continue;
                 }
                 let tx_id = signed_txs[i].transaction_id().clone();
-                let pending_tx = (*txn_result.txn_result).clone();
                 let return_type = self.method_map[&i].returns.clone().type_()?;
                 method_results.push(get_return_value_with_return_type(
-                    &pending_tx,
+                    &txn_result.txn_result,
                     &tx_id,
                     return_type,
                 )?);
@@ -292,34 +291,35 @@ impl SignedAtomicGroup {
                 continue;
             }
 
-            let mut current_tx_id = tx_id.clone(); // this variable wouldn't be needed if our txn in PendingTransaction was complete / able to generate an id
-            let mut current_pending_tx = pending_tx.clone();
+            let return_type = self.method_map[&i].returns.clone().type_()?;
 
-            if i != index_to_wait {
-                let tx_id = self.signed_txs[i].transaction_id().clone();
-
-                match algod.pending_txn(&tx_id).await {
-                    Ok(p) => {
-                        current_tx_id = tx_id;
-                        current_pending_tx = p;
-                    }
-                    Err(e) => {
-                        method_results.push(AbiMethodResult {
-                            tx_id,
-                            tx_info: pending_tx.clone(),
-                            return_value: Err(AbiReturnDecodeError(format!("{e:?}"))),
-                        });
-                        continue;
-                    }
-                };
+            // The slot we already polled needs no extra fetch — decode it
+            // straight from the confirmed response we are holding.
+            if i == index_to_wait {
+                method_results.push(get_return_value_with_return_type(
+                    &pending_tx,
+                    &tx_id,
+                    return_type,
+                )?);
+                continue;
             }
 
-            let return_type = self.method_map[&i].returns.clone().type_()?;
-            method_results.push(get_return_value_with_return_type(
-                &current_pending_tx,
-                &current_tx_id,
-                return_type,
-            )?);
+            // Other method calls in the group: fetch each one's own pending
+            // transaction. A fetch failure is surfaced per-result rather
+            // than failing the whole group.
+            let other_tx_id = self.signed_txs[i].transaction_id().clone();
+            match algod.pending_txn(&other_tx_id).await {
+                Ok(other_pending_tx) => method_results.push(get_return_value_with_return_type(
+                    &other_pending_tx,
+                    &other_tx_id,
+                    return_type,
+                )?),
+                Err(e) => method_results.push(AbiMethodResult {
+                    tx_id: other_tx_id,
+                    tx_info: pending_tx.clone(),
+                    return_value: Err(AbiReturnDecodeError(format!("{e:?}"))),
+                }),
+            }
         }
 
         Ok(ExecuteOutcome {

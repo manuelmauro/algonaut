@@ -3,12 +3,11 @@
 //! builder. This is the recommended path for application calls.
 
 use algonaut::algod::v2::Algod;
-use algonaut::atomic::{AbiArgValue, AtomicGroupBuilder, MethodCall};
+use algonaut::atomic::{AtomicGroupBuilder, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
-use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
+use algonaut_abi::abi_interactions::AbiMethod;
 use dotenv::dotenv;
-use num_bigint::BigUint;
 use std::env;
 use std::error::Error;
 use std::sync::Arc;
@@ -36,11 +35,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let method = AbiMethod::from_signature("add(uint64,uint64)uint64")?;
 
     info!("building method call");
-    let call = MethodCall::new(AppId(5), method, alice.address(), signer)
-        .args(vec![
-            AbiArgValue::AbiValue(AbiValue::Int(BigUint::from(2u64))),
-            AbiArgValue::AbiValue(AbiValue::Int(BigUint::from(3u64))),
-        ])
+    let call = MethodCall::builder(AppId(5), method, alice.address(), signer)
+        .args([2u64, 3u64])
         .build(&params);
 
     info!("composing and executing");

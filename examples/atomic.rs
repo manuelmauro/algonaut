@@ -19,13 +19,12 @@
 //! return-value decoding for you.
 
 use algonaut::algod::v2::Algod;
-use algonaut::atomic::{AbiArgValue, AtomicGroupBuilder, MethodCall, TransactionWithSigner};
+use algonaut::atomic::{AtomicGroupBuilder, MethodCall, TransactionWithSigner};
 use algonaut::core::{AppId, MicroAlgos};
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Signer};
-use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiValue};
+use algonaut_abi::abi_interactions::AbiMethod;
 use dotenv::dotenv;
-use num_bigint::BigUint;
 use std::env;
 use std::error::Error;
 use std::sync::Arc;
@@ -64,11 +63,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Pay::new(bob.address(), alice.address(), MicroAlgos(1_000)).build(&params)?;
 
     info!("building the method call add(2, 3)");
-    let call = MethodCall::new(app_id, method, alice.address(), alice_signer.clone())
-        .args(vec![
-            AbiArgValue::AbiValue(AbiValue::Int(BigUint::from(2u64))),
-            AbiArgValue::AbiValue(AbiValue::Int(BigUint::from(3u64))),
-        ])
+    let call = MethodCall::builder(app_id, method, alice.address(), alice_signer.clone())
+        .args([2u64, 3u64])
         .build(&params);
 
     info!("composing the atomic group");

@@ -127,13 +127,7 @@ pub(super) async fn sign_group(
     signed
         .into_iter()
         .enumerate()
-        .map(|(i, slot)| {
-            slot.ok_or_else(|| {
-                Error::Internal(format!(
-                    "no signature produced for transaction at index {i}"
-                ))
-            })
-        })
+        .map(|(i, slot)| slot.ok_or(Error::InternalSigningIncomplete { index: i }))
         .collect()
 }
 
@@ -148,10 +142,10 @@ pub(super) fn placeholder_group(
         .collect()
 }
 
-/// Collect the base32 transaction ids of a signed group, in order.
-pub(super) fn tx_ids(signed_txs: &[SignedTransaction]) -> Vec<String> {
+/// Collect the transaction ids of a signed group, in order.
+pub(super) fn tx_ids(signed_txs: &[SignedTransaction]) -> Vec<TxId> {
     signed_txs
         .iter()
-        .map(|t| t.transaction_id().0.clone())
+        .map(|t| t.transaction_id().clone())
         .collect()
 }
