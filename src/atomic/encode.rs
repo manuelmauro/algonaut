@@ -135,7 +135,9 @@ pub(super) fn process_method_call(
         global_state_schema: global_schema,
         local_state_schema: local_schema,
         extra_pages,
-        boxes: to_option(boxes),
+        // The builder uses an empty vec for "no boxes"; the transaction
+        // model wants `None`.
+        boxes: (!boxes.is_empty()).then_some(boxes),
     });
 
     let tx = Transaction {
@@ -147,7 +149,7 @@ pub(super) fn process_method_call(
         genesis_id: Some(genesis_id),
         group: None,
         lease,
-        note: to_option(note),
+        note: (!note.is_empty()).then_some(note),
         rekey_to,
     };
 
@@ -159,16 +161,6 @@ pub(super) fn process_method_call(
     method_map.insert(txs.len() - 1, method);
 
     Ok(())
-}
-
-/// `Vec::new()` is the builder's "absent" sentinel; the transaction model
-/// uses `Option`, so map an empty vec back to `None` at the boundary.
-fn to_option<T>(values: Vec<T>) -> Option<Vec<T>> {
-    if values.is_empty() {
-        None
-    } else {
-        Some(values)
-    }
 }
 
 /// Shared per-transaction validity check: the transaction must carry no
