@@ -280,20 +280,22 @@ impl EncodedArgs {
         Ok(())
     }
 
-    /// If more than 15 ABI arguments were collected, wrap the overflow
-    /// (everything from index 14 onward) into a single trailing tuple, as
-    /// ARC-4 requires.
+    /// If more than 15 ABI arguments were collected, pack everything from
+    /// index 14 onward into a single trailing tuple, leaving 14 direct
+    /// arguments plus the tuple — the 15 application-argument slots the
+    /// 4-byte selector does not occupy. Mirrors py-algorand-sdk's
+    /// `AtomicTransactionComposer.add_method_call`.
     fn wrap_overflow(&mut self) -> Result<(), Error> {
         if self.values.len() <= MAX_ABI_ARG_TYPE_LEN {
             return Ok(());
         }
 
-        let mut wrapped_types = Vec::new();
-        let mut wrapped_values = Vec::new();
-        for i in (MAX_ABI_ARG_TYPE_LEN - 1)..self.values.len() {
-            wrapped_types.push(self.types[i].clone());
-            wrapped_values.push(self.values[i].clone());
-        }
+        // `split_off` truncates the direct arguments to the first 14 and
+        // hands back the overflow to fold into the tuple — without this
+        // truncation the encoded call would carry more than 15 app args.
+        let split_at = MAX_ABI_ARG_TYPE_LEN - 1;
+        let wrapped_types = self.types.split_off(split_at);
+        let wrapped_values = self.values.split_off(split_at);
 
         let tuple_type = make_tuple_type(&wrapped_types)?;
         self.types.push(tuple_type);
@@ -345,5 +347,61 @@ fn populate_foreign_array<T: Eq>(
     } else {
         obj_array.push(obj_to_add);
         obj_array.len() - 1 + start_from
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// More than 15 ABI arguments must collapse to 14 direct args plus one
+    /// trailing tuple holding the overflow — 15 application-argument slots,
+    /// leaving the 16th for the method selector. (The selector is prepended
+    /// later, by `EncodedArgs::encode`.) Matches py-algorand-sdk's
+    /// `AtomicTransactionComposer.add_method_call`.
+    #[test]
+    fn wrap_overflow_packs_args_past_15_into_a_trailing_tuple() {
+        let mut args = EncodedArgs::default();
+        for i in 0..16u8 {
+            args.push(AbiType::Byte, AbiValue::Byte(i));
+        }
+
+        args.wrap_overflow().unwrap();
+
+        assert_eq!(args.types.len(), 15, "must be 14 direct args + 1 tuple");
+        assert_eq!(args.values.len(), 15);
+
+        // The first 14 slots are the original args, untouched and in order.
+        for (i, value) in args.values.iter().take(14).enumerate() {
+            assert_eq!(*value, AbiValue::Byte(i as u8));
+        }
+
+        // The trailing slot is a 2-element tuple holding original args 14
+        // and 15.
+        match (&args.types[14], &args.values[14]) {
+            (AbiType::Tuple { len, child_types }, AbiValue::Array(items)) => {
+                assert_eq!(*len, 2);
+                assert_eq!(child_types.len(), 2);
+                assert_eq!(items, &vec![AbiValue::Byte(14), AbiValue::Byte(15)]);
+            }
+            other => panic!("expected a trailing 2-tuple, got {other:?}"),
+        }
+    }
+
+    /// Exactly 15 arguments fit without wrapping: no tuple is introduced.
+    #[test]
+    fn wrap_overflow_leaves_15_or_fewer_args_untouched() {
+        let mut args = EncodedArgs::default();
+        for i in 0..15u8 {
+            args.push(AbiType::Byte, AbiValue::Byte(i));
+        }
+
+        args.wrap_overflow().unwrap();
+
+        assert_eq!(args.values.len(), 15);
+        assert!(
+            args.values.iter().all(|v| matches!(v, AbiValue::Byte(_))),
+            "no tuple should be introduced at the boundary"
+        );
     }
 }
