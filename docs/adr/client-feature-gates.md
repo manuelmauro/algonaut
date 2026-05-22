@@ -2,7 +2,7 @@
 id: client-feature-gates
 title: Cargo feature gates for the client modules
 abstract: Put the algod, indexer, and kmd client modules behind additive Cargo features (algod, indexer, kmd), offline core always on, default = the three clients plus a TLS backend so the gating is non-breaking; default-features=false enables slim and wasm32 builds that drop reqwest. The raw openapi_* re-exports are not gated but removed, as the closing act of the hand-named-types migration (north-star D3 / hide-generated-types).
-status: proposed
+status: accepted
 date: 2026-05-22
 deciders: []
 tags: [build, features, wasm, modularity]
@@ -12,7 +12,7 @@ tags: [build, features, wasm, modularity]
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -38,12 +38,14 @@ rustls  = ["algonaut_kmd/rustls"]
 `native`/`rustls` forward only to `algonaut_kmd`. But `algonaut_algod` and
 `algonaut_indexer` declare their `reqwest` dependency as
 `reqwest = { workspace = true, features = ["json", "multipart", "query"] }`,
-and the workspace `reqwest` carries default features — so `native-tls` is
-*always* compiled into the algod and indexer clients regardless of which
-feature the consumer picked. Selecting `rustls` does not give you a
-rustls-only build; it gives you rustls for kmd and native-tls everywhere
-else. The one feature axis the crate already has is silently broken for two
-of its three clients.
+and the workspace `reqwest` carries default features — so reqwest's
+`default-tls` backend is *always* compiled into the algod and indexer clients
+regardless of which feature the consumer picked. (In reqwest 0.13,
+`default-tls` resolves to **rustls**, so today algod/indexer are pinned to
+rustls while kmd follows the feature — selecting `native` gives you native-tls
+for kmd but rustls for algod/indexer, i.e. both stacks linked at once.) The one
+feature axis the crate already has is silently ignored by two of its three
+clients.
 
 ### 2. Offline users still pay for three HTTP clients
 
@@ -118,7 +120,8 @@ gates are a capability for people who want *less*, not a removal of anything.
 
 ```toml
 [features]
-default = ["algod", "indexer", "kmd", "native"]
+# rustls is the default TLS backend: pure-Rust, no system OpenSSL.
+default = ["algod", "indexer", "kmd", "rustls"]
 
 # High-level network clients. Each pulls its generated crate and unlocks
 # the matching hand-written module(s).
@@ -243,13 +246,18 @@ features `algonaut_kmd` already has, declaring their `reqwest` with
 rather than always-on:
 
 ```toml
-# in algonaut_algod / algonaut_indexer
-reqwest = { workspace = true, default-features = false, features = ["json", "multipart", "query"] }
+# workspace.dependencies — drop reqwest's default TLS for every client crate.
+# (default-features must be set here, not on the inheriting member.)
+reqwest = { version = "0.13.3", default-features = false }
+
+# in algonaut_algod / algonaut_indexer — add the TLS-backend axis kmd already
+# has, and re-declare the non-TLS former defaults so only TLS is feature-gated.
+reqwest = { workspace = true, features = ["json", "multipart", "query", "charset", "http2", "system-proxy"] }
 
 [features]
-default = ["native"]
+default = ["rustls"]
 native  = ["reqwest/native-tls"]
-rustls  = ["reqwest/rustls"]
+rustls  = ["reqwest/rustls"]   # reqwest 0.13's feature is `rustls`, not `rustls-tls`
 ```
 
 After this, the root `native`/`rustls` features forward to all three clients
@@ -271,10 +279,17 @@ After this, the root `native`/`rustls` features forward to all three clients
   signing, ABI, the domain model — with no `reqwest` and no TLS stack. A
   browser/wasm signer can build and sign without dragging in a native HTTP
   client. This is the headline win.
-- **The broken TLS axis is fixed.** `rustls` finally means rustls everywhere,
-  not "rustls for kmd, native-tls for the rest." This is a behavioural change
-  for anyone who selected `rustls` and unknowingly still linked native-tls via
-  algod/indexer; on most platforms it removes a system OpenSSL dependency.
+- **The broken TLS axis is fixed, and the default is now rustls.** The
+  `native`/`rustls` feature controls all three clients uniformly — umbrella and
+  leaf-crate defaults agree, so a `--workspace` build does not compile both
+  stacks. Previously algod/indexer ignored the axis, pinned to reqwest's
+  `default-tls` (rustls in reqwest 0.13), while kmd used native-tls — so the old
+  default linked *both*. With `default-features = false` on the shared reqwest
+  and `default = ["rustls"]`, the default build is **pure-Rust rustls with no
+  system OpenSSL** (a strict improvement: `main` pulled OpenSSL via kmd), and
+  `--features rustls` is verifiably native-tls-free. `native` is available
+  opt-in. The non-TLS former defaults (`http2`, `charset`, `system-proxy`) are
+  re-declared on algod/indexer so only the TLS backend changes.
 - **The raw re-exports are removed, not gated.** This ADR introduces no
   escape-hatch feature; the `openapi_*` re-exports are deleted as the closing
   act of north-star D3 / [`hide-generated-types`](hide-generated-types.md),

@@ -33,6 +33,6 @@ rand = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
 
 [features]
-default = ["native"]
+default = ["rustls"]
 rustls = ["reqwest/rustls"]
 native = ["reqwest/native-tls"]

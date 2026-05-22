@@ -194,6 +194,7 @@ impl RequestErrorDetails {
     }
 }
 
+#[cfg(feature = "algod")]
 impl From<crate::algod::v2::error::AlgodError> for Error {
     fn from(error: crate::algod::v2::error::AlgodError) -> Self {
         use crate::algod::v2::error::AlgodError;
@@ -222,6 +223,7 @@ impl From<crate::algod::v2::error::AlgodError> for Error {
     }
 }
 
+#[cfg(feature = "indexer")]
 impl From<crate::indexer::v2::error::IndexerError> for Error {
     fn from(error: crate::indexer::v2::error::IndexerError) -> Self {
         use crate::indexer::v2::error::IndexerError;
@@ -249,6 +251,7 @@ impl From<crate::indexer::v2::error::IndexerError> for Error {
     }
 }
 
+#[cfg(feature = "kmd")]
 impl From<algonaut_kmd::error::ClientError> for Error {
     fn from(error: algonaut_kmd::error::ClientError) -> Self {
         match error {
@@ -261,12 +264,14 @@ impl From<algonaut_kmd::error::ClientError> for Error {
     }
 }
 
+#[cfg(feature = "kmd")]
 impl From<algonaut_kmd::error::RequestError> for RequestError {
     fn from(error: algonaut_kmd::error::RequestError) -> Self {
         RequestError::new(error.url.clone(), error.details.into())
     }
 }
 
+#[cfg(feature = "kmd")]
 impl From<algonaut_kmd::error::RequestErrorDetails> for RequestErrorDetails {
     fn from(details: algonaut_kmd::error::RequestErrorDetails) -> Self {
         match details {
