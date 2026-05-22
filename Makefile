@@ -89,8 +89,11 @@ fetch-openapi-specs:
 
 # Regenerate the algod/indexer clients into openapi/generated/ (requires Docker).
 # Output is for review-diffing against the customized crates; it does NOT
-# overwrite algonaut_algod/ or algonaut_indexer/. See
-# docs/adr/openapi-client-regeneration.md.
+# overwrite them. Per ADR relocate-generated-models the generated *models* now
+# live in algonaut_model::{algod,indexer} while the *apis* stay in the client
+# crates, so the generated `src/models` is diffed against algonaut_model and the
+# generated `src/apis` against the client crate (see the echo guidance below and
+# docs/adr/openapi-client-regeneration.md, docs/adr/relocate-generated-models.md).
 generate-clients:
 	python3 openapi/preprocess.py
 	docker run --rm -v "$(CURDIR)":/local $(OPENAPI_IMAGE) generate \
@@ -104,8 +107,12 @@ generate-clients:
 	@echo 'Formatting generated output so the diff reflects only semantic drift...'
 	find openapi/generated/algod openapi/generated/indexer -name '*.rs' \
 	  | xargs rustfmt --edition 2024
-	@echo 'Regenerated into openapi/generated/. Review drift with e.g.:'
-	@echo '  git diff --no-index openapi/generated/algod/src algonaut_algod/src'
+	@echo 'Regenerated into openapi/generated/. Models relocate to algonaut_model,'
+	@echo 'apis stay in the client crate (ADR relocate-generated-models). Review drift:'
+	@echo '  git diff --no-index openapi/generated/algod/src/models   algonaut_model/src/algod'
+	@echo '  git diff --no-index openapi/generated/algod/src/apis     algonaut_algod/src/apis'
+	@echo '  git diff --no-index openapi/generated/indexer/src/models algonaut_model/src/indexer'
+	@echo '  git diff --no-index openapi/generated/indexer/src/apis   algonaut_indexer/src/apis'
 
 # Run all CI checks (fmt-check, clippy, test, check-integration, build)
 ci: fmt-check clippy test check-integration build

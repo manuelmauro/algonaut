@@ -12,9 +12,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use algonaut_abi::abi_interactions::{AbiMethod, TransactionArgType};
-use algonaut_algod::models::{
-    SimulateRequest, SimulateRequestTransactionGroup, SimulateTransaction200Response,
+use algonaut_model::algod::{
+    SimulateRequest, SimulateRequestTransactionGroup, SimulateTransactionResponse,
 };
+use algonaut_model::transaction::ApiSignedTransaction;
 use algonaut_transaction::group::assign_in_place;
 use algonaut_transaction::{SignedTransaction, Signer, Transaction};
 
@@ -228,10 +229,19 @@ impl UnsignedAtomicGroup {
     ) -> Result<SimulateOutcome, Error> {
         let signed_txs = placeholder_group(&self.txs)?;
 
-        request.txn_groups = vec![SimulateRequestTransactionGroup::new(signed_txs.clone())];
+        // The simulate group carries `ApiSignedTransaction` (not
+        // `algonaut_transaction::SignedTransaction`) so the relocated model in
+        // `algonaut_model` need not depend on `algonaut_transaction` — see D3
+        // of ADR `relocate-generated-models`.
+        let api_txns = signed_txs
+            .iter()
+            .cloned()
+            .map(ApiSignedTransaction::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
+        request.txn_groups = vec![SimulateRequestTransactionGroup::new(api_txns)];
         request.allow_empty_signatures = Some(true);
 
-        let response: SimulateTransaction200Response = algod.simulate(request).await?;
+        let response: SimulateTransactionResponse = algod.simulate(request).await?;
 
         // Build per-method ABI return values from the pending-txn
         // payloads embedded in the simulate response (mirrors execute()).

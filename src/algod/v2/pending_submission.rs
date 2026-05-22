@@ -1,6 +1,6 @@
 use crate::{Error, algod::v2::Algod};
-use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::TransactionId;
+use algonaut_model::algod::PendingTransactionResponse;
 use instant::Instant;
 use std::time::Duration;
 

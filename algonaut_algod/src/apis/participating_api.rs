@@ -17,11 +17,11 @@ use crate::apis::ResponseContent;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AddParticipationKeyError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -30,10 +30,10 @@ pub enum AddParticipationKeyError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AppendKeysError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -42,10 +42,10 @@ pub enum AppendKeysError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum DeleteParticipationKeyByIdError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -54,10 +54,10 @@ pub enum DeleteParticipationKeyByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GenerateParticipationKeysError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -66,10 +66,10 @@ pub enum GenerateParticipationKeysError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetParticipationKeyByIdError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -78,10 +78,10 @@ pub enum GetParticipationKeyByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetParticipationKeysError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -90,9 +90,9 @@ pub enum GetParticipationKeysError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetPendingTransactionsError {
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -101,10 +101,10 @@ pub enum GetPendingTransactionsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetPendingTransactionsByAddressError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -113,9 +113,9 @@ pub enum GetPendingTransactionsByAddressError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PendingTransactionInformationError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -124,10 +124,10 @@ pub enum PendingTransactionInformationError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum RawTransactionError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -135,7 +135,7 @@ pub enum RawTransactionError {
 pub async fn add_participation_key(
     configuration: &configuration::Configuration,
     participationkey: &[u8],
-) -> Result<crate::models::AddParticipationKey200Response, Error<AddParticipationKeyError>> {
+) -> Result<algonaut_model::algod::ParticipationKeyId, Error<AddParticipationKeyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -183,7 +183,7 @@ pub async fn append_keys(
     configuration: &configuration::Configuration,
     participation_id: &str,
     keymap: &[u8],
-) -> Result<crate::models::ParticipationKey, Error<AppendKeysError>> {
+) -> Result<algonaut_model::algod::ParticipationKey, Error<AppendKeysError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -343,7 +343,7 @@ pub async fn generate_participation_keys(
 pub async fn get_participation_key_by_id(
     configuration: &configuration::Configuration,
     participation_id: &str,
-) -> Result<crate::models::ParticipationKey, Error<GetParticipationKeyByIdError>> {
+) -> Result<algonaut_model::algod::ParticipationKey, Error<GetParticipationKeyByIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -392,7 +392,7 @@ pub async fn get_participation_key_by_id(
 /// Return a list of participation keys
 pub async fn get_participation_keys(
     configuration: &configuration::Configuration,
-) -> Result<Vec<crate::models::ParticipationKey>, Error<GetParticipationKeysError>> {
+) -> Result<Vec<algonaut_model::algod::ParticipationKey>, Error<GetParticipationKeysError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -439,10 +439,7 @@ pub async fn get_pending_transactions(
     configuration: &configuration::Configuration,
     max: Option<u64>,
     format: Option<&str>,
-) -> Result<
-    crate::models::GetPendingTransactionsByAddress200Response,
-    Error<GetPendingTransactionsError>,
-> {
+) -> Result<algonaut_model::algod::PendingTransactions, Error<GetPendingTransactionsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -506,10 +503,8 @@ pub async fn get_pending_transactions_by_address(
     address: &str,
     max: Option<u64>,
     format: Option<&str>,
-) -> Result<
-    crate::models::GetPendingTransactionsByAddress200Response,
-    Error<GetPendingTransactionsByAddressError>,
-> {
+) -> Result<algonaut_model::algod::PendingTransactions, Error<GetPendingTransactionsByAddressError>>
+{
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -573,7 +568,10 @@ pub async fn pending_transaction_information(
     configuration: &configuration::Configuration,
     txid: &str,
     format: Option<&str>,
-) -> Result<crate::models::PendingTransactionResponse, Error<PendingTransactionInformationError>> {
+) -> Result<
+    algonaut_model::algod::PendingTransactionResponse,
+    Error<PendingTransactionInformationError>,
+> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -632,7 +630,7 @@ pub async fn pending_transaction_information(
 pub async fn raw_transaction(
     configuration: &configuration::Configuration,
     rawtxn: &[u8],
-) -> Result<crate::models::RawTransaction200Response, Error<RawTransactionError>> {
+) -> Result<algonaut_model::algod::SubmitResponse, Error<RawTransactionError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

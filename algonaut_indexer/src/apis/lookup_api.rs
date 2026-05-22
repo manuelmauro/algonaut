@@ -17,9 +17,9 @@ use crate::apis::ResponseContent;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAccountAppLocalStatesError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -27,9 +27,9 @@ pub enum LookupAccountAppLocalStatesError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAccountAssetsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -37,9 +37,9 @@ pub enum LookupAccountAssetsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAccountByIdError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -47,9 +47,9 @@ pub enum LookupAccountByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAccountCreatedApplicationsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -57,9 +57,9 @@ pub enum LookupAccountCreatedApplicationsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAccountCreatedAssetsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -67,8 +67,8 @@ pub enum LookupAccountCreatedAssetsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAccountTransactionsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -76,9 +76,9 @@ pub enum LookupAccountTransactionsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupApplicationBoxByIdAndNameError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -86,8 +86,8 @@ pub enum LookupApplicationBoxByIdAndNameError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupApplicationByIdError {
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -102,8 +102,8 @@ pub enum LookupApplicationLogsByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAssetBalancesError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -111,9 +111,9 @@ pub enum LookupAssetBalancesError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAssetByIdError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -121,8 +121,8 @@ pub enum LookupAssetByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupAssetTransactionsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -130,8 +130,8 @@ pub enum LookupAssetTransactionsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupBlockError {
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -139,9 +139,9 @@ pub enum LookupBlockError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum LookupTransactionError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -154,7 +154,7 @@ pub async fn lookup_account_app_local_states(
     limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
-    crate::models::LookupAccountAppLocalStates200Response,
+    algonaut_model::indexer::AccountApplicationLocalStatesResponse,
     Error<LookupAccountAppLocalStatesError>,
 > {
     let local_var_configuration = configuration;
@@ -218,7 +218,7 @@ pub async fn lookup_account_assets(
     include_all: Option<bool>,
     limit: Option<u64>,
     next: Option<&str>,
-) -> Result<crate::models::LookupAccountAssets200Response, Error<LookupAccountAssetsError>> {
+) -> Result<algonaut_model::indexer::AccountAssetsResponse, Error<LookupAccountAssetsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -279,7 +279,7 @@ pub async fn lookup_account_by_id(
     round: Option<u64>,
     include_all: Option<bool>,
     exclude: Option<Vec<String>>,
-) -> Result<crate::models::LookupAccountById200Response, Error<LookupAccountByIdError>> {
+) -> Result<algonaut_model::indexer::AccountResponse, Error<LookupAccountByIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -352,7 +352,7 @@ pub async fn lookup_account_created_applications(
     limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
-    crate::models::LookupAccountCreatedApplications200Response,
+    algonaut_model::indexer::AccountCreatedApplicationsResponse,
     Error<LookupAccountCreatedApplicationsError>,
 > {
     let local_var_configuration = configuration;
@@ -417,7 +417,7 @@ pub async fn lookup_account_created_assets(
     limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
-    crate::models::LookupAccountCreatedAssets200Response,
+    algonaut_model::indexer::AccountCreatedAssetsResponse,
     Error<LookupAccountCreatedAssetsError>,
 > {
     let local_var_configuration = configuration;
@@ -494,7 +494,7 @@ pub async fn lookup_account_transactions(
     currency_less_than: Option<u64>,
     rekey_to: Option<bool>,
 ) -> Result<
-    crate::models::LookupAccountTransactions200Response,
+    algonaut_model::indexer::AccountTransactionsResponse,
     Error<LookupAccountTransactionsError>,
 > {
     let local_var_configuration = configuration;
@@ -599,7 +599,7 @@ pub async fn lookup_application_box_by_id_and_name(
     configuration: &configuration::Configuration,
     application_id: u64,
     name: &str,
-) -> Result<crate::models::Box, Error<LookupApplicationBoxByIdAndNameError>> {
+) -> Result<algonaut_model::indexer::Box, Error<LookupApplicationBoxByIdAndNameError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -643,7 +643,7 @@ pub async fn lookup_application_by_id(
     configuration: &configuration::Configuration,
     application_id: u64,
     include_all: Option<bool>,
-) -> Result<crate::models::LookupApplicationById200Response, Error<LookupApplicationByIdError>> {
+) -> Result<algonaut_model::indexer::ApplicationResponse, Error<LookupApplicationByIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -696,10 +696,8 @@ pub async fn lookup_application_logs_by_id(
     min_round: Option<u64>,
     max_round: Option<u64>,
     sender_address: Option<&str>,
-) -> Result<
-    crate::models::LookupApplicationLogsById200Response,
-    Error<LookupApplicationLogsByIdError>,
-> {
+) -> Result<algonaut_model::indexer::ApplicationLogsResponse, Error<LookupApplicationLogsByIdError>>
+{
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -770,7 +768,7 @@ pub async fn lookup_asset_balances(
     next: Option<&str>,
     currency_greater_than: Option<u64>,
     currency_less_than: Option<u64>,
-) -> Result<crate::models::LookupAssetBalances200Response, Error<LookupAssetBalancesError>> {
+) -> Result<algonaut_model::indexer::AssetBalancesResponse, Error<LookupAssetBalancesError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -833,7 +831,7 @@ pub async fn lookup_asset_by_id(
     configuration: &configuration::Configuration,
     asset_id: u64,
     include_all: Option<bool>,
-) -> Result<crate::models::LookupAssetById200Response, Error<LookupAssetByIdError>> {
+) -> Result<algonaut_model::indexer::AssetResponse, Error<LookupAssetByIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -897,7 +895,7 @@ pub async fn lookup_asset_transactions(
     address_role: Option<&str>,
     exclude_close_to: Option<bool>,
     rekey_to: Option<bool>,
-) -> Result<crate::models::LookupAccountTransactions200Response, Error<LookupAssetTransactionsError>>
+) -> Result<algonaut_model::indexer::AccountTransactionsResponse, Error<LookupAssetTransactionsError>>
 {
     let local_var_configuration = configuration;
 
@@ -1009,7 +1007,7 @@ pub async fn lookup_block(
     configuration: &configuration::Configuration,
     round_number: u64,
     header_only: Option<bool>,
-) -> Result<crate::models::Block, Error<LookupBlockError>> {
+) -> Result<algonaut_model::indexer::Block, Error<LookupBlockError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1055,7 +1053,7 @@ pub async fn lookup_block(
 pub async fn lookup_transaction(
     configuration: &configuration::Configuration,
     txid: &str,
-) -> Result<crate::models::LookupTransaction200Response, Error<LookupTransactionError>> {
+) -> Result<algonaut_model::indexer::TransactionResponse, Error<LookupTransactionError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

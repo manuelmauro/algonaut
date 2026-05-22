@@ -9,8 +9,8 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::TransactionId;
+use algonaut_model::algod::PendingTransactionResponse;
 use algonaut_transaction::{
     SignedTransaction, Signer, SigningRequest, Transaction, signed_transaction,
 };

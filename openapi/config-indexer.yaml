@@ -17,3 +17,24 @@ typeMappings:
   int64: u64
   integer: u64
   long: u64
+# D5 of ADR relocate-generated-models: rename the synthesized inline response
+# envelopes to intentional names so no `<op>200Response`/`<op>400Response` name
+# leaks into the public API. Keys are the generator's auto-assigned inline
+# schema names (`<operationId>_<status>_response`); the exact keys are confirmed
+# by the `make generate-clients` regen diff.
+inlineSchemaNameMappings:
+  lookupAccountAppLocalStates_200_response: AccountApplicationLocalStatesResponse
+  lookupAccountAssets_200_response: AccountAssetsResponse
+  lookupAccountByID_200_response: AccountResponse
+  lookupAccountCreatedApplications_200_response: AccountCreatedApplicationsResponse
+  lookupAccountCreatedAssets_200_response: AccountCreatedAssetsResponse
+  lookupAccountTransactions_200_response: AccountTransactionsResponse
+  lookupApplicationByID_200_response: ApplicationResponse
+  lookupApplicationLogsByID_200_response: ApplicationLogsResponse
+  lookupAssetBalances_200_response: AssetBalancesResponse
+  lookupAssetByID_200_response: AssetResponse
+  lookupTransaction_200_response: TransactionResponse
+  searchForAccounts_200_response: AccountsResponse
+  searchForAccounts_400_response: ErrorResponse
+  searchForApplicationBoxes_200_response: ApplicationBoxesResponse
+  searchForBlockHeaders_200_response: BlockHeadersResponse

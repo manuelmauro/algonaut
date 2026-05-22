@@ -15,7 +15,7 @@ use algonaut_abi::{
 };
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos, Round};
 use algonaut_crypto::HashDigest;
-use algonaut_model::client_types::SuggestedParams;
+use algonaut_model::algod::SuggestedParams;
 use algonaut_transaction::{
     Signer,
     transaction::{ApplicationCallOnComplete, BoxReference, StateSchema},

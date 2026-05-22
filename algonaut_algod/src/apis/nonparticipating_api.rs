@@ -17,9 +17,9 @@ use crate::apis::ResponseContent;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AbortCatchupError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -28,9 +28,9 @@ pub enum AbortCatchupError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccountApplicationInformationError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -39,9 +39,9 @@ pub enum AccountApplicationInformationError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccountApplicationsInformationError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -50,9 +50,9 @@ pub enum AccountApplicationsInformationError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccountAssetInformationError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -61,9 +61,9 @@ pub enum AccountAssetInformationError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccountAssetsInformationError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -72,9 +72,9 @@ pub enum AccountAssetsInformationError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccountInformationError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -83,10 +83,10 @@ pub enum AccountInformationError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetApplicationBoxByNameError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -95,9 +95,9 @@ pub enum GetApplicationBoxByNameError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetApplicationBoxesError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -106,10 +106,10 @@ pub enum GetApplicationBoxesError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetApplicationByIdError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -118,10 +118,10 @@ pub enum GetApplicationByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetAssetByIdError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -130,10 +130,10 @@ pub enum GetAssetByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetBlockError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -142,10 +142,10 @@ pub enum GetBlockError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetBlockHashError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -154,10 +154,10 @@ pub enum GetBlockHashError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetBlockLogsError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -165,7 +165,7 @@ pub enum GetBlockLogsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetBlockTimeStampOffsetError {
-    Status400(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -174,10 +174,10 @@ pub enum GetBlockTimeStampOffsetError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetBlockTxidsError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -186,11 +186,11 @@ pub enum GetBlockTxidsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetLedgerStateDeltaForTransactionGroupError {
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status408(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status501(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status408(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status501(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -199,11 +199,11 @@ pub enum GetLedgerStateDeltaForTransactionGroupError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetLightBlockHeaderProofError {
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status408(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status408(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -212,11 +212,11 @@ pub enum GetLightBlockHeaderProofError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetStateProofError {
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status408(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status408(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -225,7 +225,7 @@ pub enum GetStateProofError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetStatusError {
-    Status401(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
     Status500(String),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
@@ -235,7 +235,7 @@ pub enum GetStatusError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetSupplyError {
-    Status401(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -244,11 +244,11 @@ pub enum GetSupplyError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetTransactionGroupLedgerStateDeltasForRoundError {
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status408(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status501(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status408(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status501(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -257,10 +257,10 @@ pub enum GetTransactionGroupLedgerStateDeltasForRoundError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetTransactionProofError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -269,9 +269,9 @@ pub enum GetTransactionProofError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SetBlockTimeStampOffsetError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -287,10 +287,10 @@ pub enum ShutdownNodeError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SimulateTransactionError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -299,9 +299,9 @@ pub enum SimulateTransactionError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum StartCatchupError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -310,10 +310,10 @@ pub enum StartCatchupError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TealCompileError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
     Status404(),
-    Status500(crate::models::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -322,10 +322,10 @@ pub enum TealCompileError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TealDisassembleError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
     Status404(),
-    Status500(crate::models::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -334,10 +334,10 @@ pub enum TealDisassembleError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TealDryrunError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
     Status404(),
-    Status500(crate::models::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -346,9 +346,9 @@ pub enum TealDryrunError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TransactionParamsError {
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -357,10 +357,10 @@ pub enum TransactionParamsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum WaitForBlockError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -369,7 +369,7 @@ pub enum WaitForBlockError {
 pub async fn abort_catchup(
     configuration: &configuration::Configuration,
     catchpoint: &str,
-) -> Result<crate::models::AbortCatchup200Response, Error<AbortCatchupError>> {
+) -> Result<algonaut_model::algod::CatchupAbortResponse, Error<AbortCatchupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -422,7 +422,7 @@ pub async fn account_application_information(
     application_id: u64,
     format: Option<&str>,
 ) -> Result<
-    crate::models::AccountApplicationInformation200Response,
+    algonaut_model::algod::AccountApplicationInformation,
     Error<AccountApplicationInformationError>,
 > {
     let local_var_configuration = configuration;
@@ -483,7 +483,7 @@ pub async fn account_applications_information(
     next: Option<&str>,
     include: Option<Vec<String>>,
 ) -> Result<
-    crate::models::AccountApplicationsInformation200Response,
+    algonaut_model::algod::AccountApplicationsInformation,
     Error<AccountApplicationsInformationError>,
 > {
     let local_var_configuration = configuration;
@@ -564,8 +564,7 @@ pub async fn account_assets_information(
     address: &str,
     limit: Option<u64>,
     next: Option<&str>,
-) -> Result<crate::models::AccountAssetsInformation200Response, Error<AccountAssetsInformationError>>
-{
+) -> Result<algonaut_model::algod::AccountAssetsInformation, Error<AccountAssetsInformationError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -625,8 +624,7 @@ pub async fn account_asset_information(
     address: &str,
     asset_id: u64,
     format: Option<&str>,
-) -> Result<crate::models::AccountAssetInformation200Response, Error<AccountAssetInformationError>>
-{
+) -> Result<algonaut_model::algod::AccountAssetInformation, Error<AccountAssetInformationError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -683,7 +681,7 @@ pub async fn account_information(
     address: &str,
     format: Option<&str>,
     exclude: Option<&str>,
-) -> Result<crate::models::Account, Error<AccountInformationError>> {
+) -> Result<algonaut_model::algod::Account, Error<AccountInformationError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -742,7 +740,7 @@ pub async fn get_application_box_by_name(
     configuration: &configuration::Configuration,
     application_id: u64,
     name: &str,
-) -> Result<crate::models::Box, Error<GetApplicationBoxByNameError>> {
+) -> Result<algonaut_model::algod::Box, Error<GetApplicationBoxByNameError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -794,7 +792,7 @@ pub async fn get_application_boxes(
     configuration: &configuration::Configuration,
     application_id: u64,
     max: Option<u64>,
-) -> Result<crate::models::GetApplicationBoxes200Response, Error<GetApplicationBoxesError>> {
+) -> Result<algonaut_model::algod::ApplicationBoxes, Error<GetApplicationBoxesError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -847,7 +845,7 @@ pub async fn get_application_boxes(
 pub async fn get_application_by_id(
     configuration: &configuration::Configuration,
     application_id: u64,
-) -> Result<crate::models::Application, Error<GetApplicationByIdError>> {
+) -> Result<algonaut_model::algod::Application, Error<GetApplicationByIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -897,7 +895,7 @@ pub async fn get_application_by_id(
 pub async fn get_asset_by_id(
     configuration: &configuration::Configuration,
     asset_id: u64,
-) -> Result<crate::models::Asset, Error<GetAssetByIdError>> {
+) -> Result<algonaut_model::algod::Asset, Error<GetAssetByIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -947,7 +945,7 @@ pub async fn get_block(
     configuration: &configuration::Configuration,
     round: u64,
     format: Option<&str>,
-) -> Result<crate::models::GetBlock200Response, Error<GetBlockError>> {
+) -> Result<algonaut_model::algod::BlockJsonResponse, Error<GetBlockError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1005,7 +1003,7 @@ pub async fn get_block(
 pub async fn get_block_hash(
     configuration: &configuration::Configuration,
     round: u64,
-) -> Result<crate::models::GetBlockHash200Response, Error<GetBlockHashError>> {
+) -> Result<algonaut_model::algod::BlockHash, Error<GetBlockHashError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1055,7 +1053,7 @@ pub async fn get_block_hash(
 pub async fn get_block_logs(
     configuration: &configuration::Configuration,
     round: u64,
-) -> Result<crate::models::GetBlockLogs200Response, Error<GetBlockLogsError>> {
+) -> Result<algonaut_model::algod::BlockLogs, Error<GetBlockLogsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1104,8 +1102,7 @@ pub async fn get_block_logs(
 /// Gets the current timestamp offset.
 pub async fn get_block_time_stamp_offset(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::GetBlockTimeStampOffset200Response, Error<GetBlockTimeStampOffsetError>>
-{
+) -> Result<algonaut_model::algod::BlockTimestampOffset, Error<GetBlockTimeStampOffsetError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1153,7 +1150,7 @@ pub async fn get_block_time_stamp_offset(
 pub async fn get_block_txids(
     configuration: &configuration::Configuration,
     round: u64,
-) -> Result<crate::models::GetBlockTxids200Response, Error<GetBlockTxidsError>> {
+) -> Result<algonaut_model::algod::BlockTxids, Error<GetBlockTxidsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1257,7 +1254,7 @@ pub async fn get_ledger_state_delta_for_transaction_group(
 pub async fn get_light_block_header_proof(
     configuration: &configuration::Configuration,
     round: u64,
-) -> Result<crate::models::LightBlockHeaderProof, Error<GetLightBlockHeaderProofError>> {
+) -> Result<algonaut_model::algod::LightBlockHeaderProof, Error<GetLightBlockHeaderProofError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1306,7 +1303,7 @@ pub async fn get_light_block_header_proof(
 pub async fn get_state_proof(
     configuration: &configuration::Configuration,
     round: u64,
-) -> Result<crate::models::StateProof, Error<GetStateProofError>> {
+) -> Result<algonaut_model::algod::StateProof, Error<GetStateProofError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1354,7 +1351,7 @@ pub async fn get_state_proof(
 
 pub async fn get_status(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::GetStatus200Response, Error<GetStatusError>> {
+) -> Result<algonaut_model::algod::NodeStatus, Error<GetStatusError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1398,7 +1395,7 @@ pub async fn get_status(
 
 pub async fn get_supply(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::GetSupply200Response, Error<GetSupplyError>> {
+) -> Result<algonaut_model::algod::Supply, Error<GetSupplyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1446,7 +1443,7 @@ pub async fn get_transaction_group_ledger_state_deltas_for_round(
     round: u64,
     format: Option<&str>,
 ) -> Result<
-    crate::models::GetTransactionGroupLedgerStateDeltasForRound200Response,
+    algonaut_model::algod::TransactionGroupStateDeltas,
     Error<GetTransactionGroupLedgerStateDeltasForRoundError>,
 > {
     let local_var_configuration = configuration;
@@ -1504,7 +1501,7 @@ pub async fn get_transaction_proof(
     txid: &str,
     hashtype: Option<&str>,
     format: Option<&str>,
-) -> Result<crate::models::GetTransactionProof200Response, Error<GetTransactionProofError>> {
+) -> Result<algonaut_model::algod::TransactionProof, Error<GetTransactionProofError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1661,9 +1658,9 @@ pub async fn shutdown_node(
 
 pub async fn simulate_transaction(
     configuration: &configuration::Configuration,
-    request: crate::models::SimulateRequest,
+    request: algonaut_model::algod::SimulateRequest,
     format: Option<&str>,
-) -> Result<crate::models::SimulateTransaction200Response, Error<SimulateTransactionError>> {
+) -> Result<algonaut_model::algod::SimulateTransactionResponse, Error<SimulateTransactionError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1717,7 +1714,7 @@ pub async fn simulate_transaction(
 pub async fn start_catchup(
     configuration: &configuration::Configuration,
     catchpoint: &str,
-) -> Result<crate::models::StartCatchup200Response, Error<StartCatchupError>> {
+) -> Result<algonaut_model::algod::CatchupStartResponse, Error<StartCatchupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1768,7 +1765,7 @@ pub async fn teal_compile(
     configuration: &configuration::Configuration,
     source: &[u8],
     sourcemap: Option<bool>,
-) -> Result<crate::models::TealCompile200Response, Error<TealCompileError>> {
+) -> Result<algonaut_model::algod::CompiledTeal, Error<TealCompileError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1819,7 +1816,7 @@ pub async fn teal_compile(
 pub async fn teal_disassemble(
     configuration: &configuration::Configuration,
     source: &[u8],
-) -> Result<crate::models::TealDisassemble200Response, Error<TealDisassembleError>> {
+) -> Result<algonaut_model::algod::DisassembledTeal, Error<TealDisassembleError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1865,8 +1862,8 @@ pub async fn teal_disassemble(
 /// Executes TEAL program(s) in context and returns debugging information about the execution. This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
 pub async fn teal_dryrun(
     configuration: &configuration::Configuration,
-    request: Option<crate::models::DryrunRequest>,
-) -> Result<crate::models::TealDryrun200Response, Error<TealDryrunError>> {
+    request: Option<algonaut_model::algod::DryrunRequest>,
+) -> Result<algonaut_model::algod::DryrunResponse, Error<TealDryrunError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1911,7 +1908,7 @@ pub async fn teal_dryrun(
 
 pub async fn transaction_params(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::TransactionParams200Response, Error<TransactionParamsError>> {
+) -> Result<algonaut_model::algod::SuggestedParams, Error<TransactionParamsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -1960,7 +1957,7 @@ pub async fn transaction_params(
 pub async fn wait_for_block(
     configuration: &configuration::Configuration,
     round: u64,
-) -> Result<crate::models::GetStatus200Response, Error<WaitForBlockError>> {
+) -> Result<algonaut_model::algod::NodeStatus, Error<WaitForBlockError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
