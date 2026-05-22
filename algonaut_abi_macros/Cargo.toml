@@ -1,5 +1,5 @@
 [package]
-authors = ["Manuel Mauro <manuel.mauro@protonmail.com>", "Ivan Schuetz <ivanhp978@gmail.com>",]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
 description = "Compile-time checked ARC-4 ABI method-call macros (abi_call!/abi_method!) for algonaut_abi."
 edition = "2024"
 keywords = ["Algorand", "sdk", "abi", "macros"]
