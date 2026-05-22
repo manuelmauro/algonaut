@@ -14,7 +14,7 @@ use crate::step_defs::unit::mock_server::ResponseMockServer;
 use crate::step_defs::unit::world::{UnitResponse, UnitWorld};
 use algonaut::algod::v2::Algod;
 use algonaut::indexer::v2::Indexer;
-use algonaut_core::{Address, AssetId, Round, TxId};
+use algonaut_core::{Address, AssetId, Round, TransactionId};
 use algonaut_encoding::decode_base64;
 use cucumber::{given, then, when};
 use std::fs;
@@ -35,8 +35,8 @@ fn placeholder_address() -> Address {
 
 /// Placeholder transaction ID: see `placeholder_address` — value is
 /// irrelevant to the response-mock test, only the shape matters.
-fn placeholder_txid() -> TxId {
-    TxId("placeholder-txid".to_string())
+fn placeholder_transaction_id() -> TransactionId {
+    TransactionId("placeholder-txid".to_string())
 }
 
 /// Load a fixture's bytes as the raw HTTP response body.
@@ -128,26 +128,28 @@ async fn mock_http_responses(w: &mut UnitWorld, jsonfiles: String, directory: St
 
 #[when(regex = r"^we make any Pending Transaction Information call$")]
 async fn algod_pending_txn(w: &mut UnitWorld) {
-    let r = algod(w).pending_txn(&placeholder_txid()).await;
+    let r = algod(w)
+        .pending_transaction(&placeholder_transaction_id())
+        .await;
     record(w, r, UnitResponse::PendingTransaction);
 }
 
 #[when(regex = r"^we make any Pending Transactions Information call$")]
 async fn algod_pending_txns(w: &mut UnitWorld) {
-    let r = algod(w).pending_txns(None, None).await;
+    let r = algod(w).pending_transactions(None, None).await;
     record(w, r, UnitResponse::PendingTransactions);
 }
 
 #[when(regex = r"^we make any Send Raw Transaction call$")]
 async fn algod_send_raw_txn(w: &mut UnitWorld) {
-    let r = algod(w).send_raw_txn(&[0u8]).await;
+    let r = algod(w).send_raw(&[0u8]).await;
     record(w, r, UnitResponse::RawTransaction);
 }
 
 #[when(regex = r"^we make any Pending Transactions By Address call$")]
 async fn algod_pending_txns_by_address(w: &mut UnitWorld) {
     let r = algod(w)
-        .address_pending_txns(&placeholder_address(), None, None)
+        .address_pending_transactions(&placeholder_address(), None, None)
         .await;
     record(w, r, UnitResponse::PendingTransactions);
 }
@@ -184,7 +186,7 @@ async fn algod_get_block(w: &mut UnitWorld) {
 
 #[when(regex = r"^we make any Suggested Transaction Parameters call$")]
 async fn algod_suggested_params(w: &mut UnitWorld) {
-    let r = algod(w).txn_params().await;
+    let r = algod(w).suggested_params().await;
     record(w, r, UnitResponse::TransactionParams);
 }
 
@@ -385,11 +387,11 @@ async fn algod_assert_pending_txns_by_address(
 }
 
 #[then(regex = r#"^the parsed Send Raw Transaction response should have txid "([^"]*)"$"#)]
-async fn algod_assert_send_raw_txn(w: &mut UnitWorld, txid: String) {
+async fn algod_assert_send_raw_txn(w: &mut UnitWorld, transaction_id: String) {
     let UnitResponse::RawTransaction(resp) = w.last_response.as_ref().expect("no response") else {
         panic!("last response is not a RawTransaction200Response");
     };
-    assert_eq!(resp.tx_id, txid, "raw transaction txid mismatch");
+    assert_eq!(resp.tx_id, transaction_id, "raw transaction txid mismatch");
 }
 
 #[then(regex = r"^the parsed Node Status response should have a last round of (\d+)$")]

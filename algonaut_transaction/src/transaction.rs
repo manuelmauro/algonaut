@@ -5,7 +5,7 @@ use algonaut_core::SuggestedTransactionParams;
 use algonaut_core::ToMsgPack;
 use algonaut_core::TransactionTypeEnum;
 use algonaut_core::{Address, MultisigSignature};
-use algonaut_core::{AppId, AssetId, TxId};
+use algonaut_core::{AppId, AssetId, TransactionId};
 use algonaut_core::{MicroAlgos, Round, StateProofPk, VotePk, VrfPk};
 use algonaut_crypto::HashDigest;
 use algonaut_crypto::Signature;
@@ -100,8 +100,8 @@ impl Transaction {
         Ok(HashDigest(hashed.into()))
     }
 
-    pub fn id(&self) -> Result<TxId, TransactionError> {
-        Ok(TxId(BASE32_NOPAD.encode(&self.raw_id()?.0)))
+    pub fn id(&self) -> Result<TransactionId, TransactionError> {
+        Ok(TransactionId(BASE32_NOPAD.encode(&self.raw_id()?.0)))
     }
 
     pub fn assign_group_id(&mut self, group_id: HashDigest) {
@@ -469,7 +469,7 @@ impl StateSchema {
 #[derive(Clone, Debug, PartialEq)]
 pub struct SignedTransaction {
     pub(crate) transaction: Transaction,
-    pub(crate) transaction_id: TxId,
+    pub(crate) transaction_id: TransactionId,
     pub(crate) sig: TransactionSignature,
     pub(crate) auth_address: Option<Address>,
 }
@@ -482,7 +482,7 @@ impl SignedTransaction {
 
     /// The transaction id, computed from the unsigned transaction at
     /// signing time.
-    pub fn transaction_id(&self) -> &TxId {
+    pub fn transaction_id(&self) -> &TransactionId {
         &self.transaction_id
     }
 

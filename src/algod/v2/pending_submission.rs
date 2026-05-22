@@ -1,29 +1,32 @@
 use crate::{Error, algod::v2::Algod};
 use algonaut_algod::models::PendingTransactionResponse;
-use algonaut_core::TxId;
+use algonaut_core::TransactionId;
 use instant::Instant;
 use std::time::Duration;
 
 /// Default timeout for [`PendingSubmission::confirm`].
 const DEFAULT_CONFIRM_TIMEOUT: Duration = Duration::from_secs(60);
 
-/// Handle returned by [`Algod::submit`], [`Algod::submit_txns`] and
+/// Handle returned by [`Algod::submit`], [`Algod::submit_transactions`] and
 /// [`Algod::submit_raw`]. Carries the transaction id of the broadcast
 /// transaction and knows how to poll algod for finality.
 #[derive(Debug, Clone)]
 pub struct PendingSubmission {
     algod: Algod,
-    tx_id: TxId,
+    transaction_id: TransactionId,
 }
 
 impl PendingSubmission {
-    pub(crate) fn new(algod: Algod, tx_id: TxId) -> Self {
-        Self { algod, tx_id }
+    pub(crate) fn new(algod: Algod, transaction_id: TransactionId) -> Self {
+        Self {
+            algod,
+            transaction_id,
+        }
     }
 
     /// Transaction id of the broadcast transaction.
-    pub fn tx_id(&self) -> &TxId {
-        &self.tx_id
+    pub fn transaction_id(&self) -> &TransactionId {
+        &self.transaction_id
     }
 
     /// Poll algod until the transaction is confirmed. Uses a 60s default
@@ -53,7 +56,7 @@ impl PendingSubmission {
         let start = Instant::now();
         let mut last_round = self.algod.status().await?.last_round;
         loop {
-            let pending = self.algod.pending_txn(&self.tx_id).await?;
+            let pending = self.algod.pending_transaction(&self.transaction_id).await?;
             if pending.confirmed_round.is_some() {
                 return Ok(pending);
             }

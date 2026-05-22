@@ -42,7 +42,7 @@ int 1
     let compiled_clear_program = algod.teal_compile(clear_program, SourceMap::Skip).await?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building UpdateApplication transaction");
     let t = UpdateApplication::new(
@@ -54,10 +54,10 @@ int 1
     .build(&params)?;
 
     info!("signing transaction");
-    let signed_t = alice.sign_transaction(t)?;
+    let signed_t = alice.sign(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.send_txn(&signed_t).await?;
+    let send_response = algod.send(&signed_t).await?;
     info!("response: {:?}", send_response);
 
     Ok(())

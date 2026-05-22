@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building Pay transaction");
     let t = Pay::new(
@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build(&params)?;
 
     info!("signing transaction");
-    let signed_transaction = alice.sign_transaction(t)?;
+    let signed_transaction = alice.sign(t)?;
     let bytes = signed_transaction.to_msg_pack()?;
 
     info!("saving transaction to file");

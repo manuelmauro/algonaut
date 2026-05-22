@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building CloseApplication transaction");
     // to test this, create an application that sets local state and opt-in, for/with the account sending this transaction.
@@ -29,10 +29,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let t = CloseApplication::new(alice.address(), AppId(0)).build(&params)?;
 
     info!("signing transaction");
-    let signed_t = alice.sign_transaction(t)?;
+    let signed_t = alice.sign(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.send_txn(&signed_t).await?;
+    let send_response = algod.send(&signed_t).await?;
     info!("response: {:?}", send_response);
 
     Ok(())

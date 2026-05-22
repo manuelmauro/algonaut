@@ -15,7 +15,8 @@ use algonaut_abi::abi_interactions::{AbiMethod, TransactionArgType};
 use algonaut_algod::models::{
     SimulateRequest, SimulateRequestTransactionGroup, SimulateTransaction200Response,
 };
-use algonaut_transaction::{SignedTransaction, Signer, Transaction, tx_group};
+use algonaut_transaction::group::assign_in_place;
+use algonaut_transaction::{SignedTransaction, Signer, Transaction};
 
 use crate::{
     Error,
@@ -24,13 +25,13 @@ use crate::{
 };
 
 use super::MAX_ATOMIC_GROUP_SIZE;
-use super::encode::{process_method_call, validate_tx};
+use super::encode::{process_method_call, validate_transaction};
 use super::method_call::MethodCall;
 use super::outcome::{
     AbiMethodResult, AbiReturnDecodeError, ExecuteOutcome, SimulateOutcome,
     get_return_value_with_return_type,
 };
-use super::signing::{placeholder_group, poll_until_confirmed, sign_group, tx_ids};
+use super::signing::{placeholder_group, poll_until_confirmed, sign_group, transaction_ids};
 
 /// Represents an unsigned transaction and a signer that can authorize that transaction.
 ///
@@ -44,7 +45,7 @@ use super::signing::{placeholder_group, poll_until_confirmed, sign_group, tx_ids
 #[derive(Debug, Clone)]
 pub struct TransactionWithSigner {
     /// An unsigned transaction
-    pub tx: Transaction,
+    pub transaction: Transaction,
     /// A transaction signer that can authorize the transaction, or
     /// `None` for a simulate-only slot.
     pub signer: Option<Arc<dyn Signer>>,
@@ -53,9 +54,9 @@ pub struct TransactionWithSigner {
 impl TransactionWithSigner {
     /// Build a `TransactionWithSigner` from a transaction and a signer
     /// that will authorize it.
-    pub fn new(tx: Transaction, signer: Arc<dyn Signer>) -> Self {
+    pub fn new(transaction: Transaction, signer: Arc<dyn Signer>) -> Self {
         Self {
-            tx,
+            transaction,
             signer: Some(signer),
         }
     }
@@ -64,8 +65,11 @@ impl TransactionWithSigner {
     /// **simulate only**. [`UnsignedAtomicGroup::sign`] rejects a group
     /// containing such a slot ([`Error::MissingSigner`]); only
     /// [`simulate`](UnsignedAtomicGroup::simulate) accepts it.
-    pub fn unsigned(tx: Transaction) -> Self {
-        Self { tx, signer: None }
+    pub fn unsigned(transaction: Transaction) -> Self {
+        Self {
+            transaction,
+            signer: None,
+        }
     }
 }
 
@@ -101,9 +105,9 @@ impl AtomicGroupBuilder {
     }
 
     /// Add a pre-built transaction with its signer to the group.
-    pub fn add_transaction(mut self, txn_with_signer: TransactionWithSigner) -> Self {
+    pub fn add_transaction(mut self, transaction_with_signer: TransactionWithSigner) -> Self {
         self.entries
-            .push(AtomicGroupEntry::Transaction(txn_with_signer));
+            .push(AtomicGroupEntry::Transaction(transaction_with_signer));
         self
     }
 
@@ -127,14 +131,17 @@ impl AtomicGroupBuilder {
 
         for entry in self.entries {
             match entry {
-                AtomicGroupEntry::Transaction(txn_with_signer) => {
+                AtomicGroupEntry::Transaction(transaction_with_signer) => {
                     if txs.len() == MAX_ATOMIC_GROUP_SIZE {
                         return Err(Error::ComposerGroupFull {
                             max: MAX_ATOMIC_GROUP_SIZE,
                         });
                     }
-                    validate_tx(&txn_with_signer.tx, TransactionArgType::Any)?;
-                    txs.push(txn_with_signer);
+                    validate_transaction(
+                        &transaction_with_signer.transaction,
+                        TransactionArgType::Any,
+                    )?;
+                    txs.push(transaction_with_signer);
                 }
                 AtomicGroupEntry::MethodCall(call) => {
                     process_method_call(call, &mut txs, &mut method_map)?;
@@ -146,8 +153,9 @@ impl AtomicGroupBuilder {
             return Err(Error::EmptyTransactionGroup);
         }
         if txs.len() > 1 {
-            let mut group_txs: Vec<&mut Transaction> = txs.iter_mut().map(|t| &mut t.tx).collect();
-            tx_group::assign_in_place(&mut group_txs)?;
+            let mut group_txs: Vec<&mut Transaction> =
+                txs.iter_mut().map(|t| &mut t.transaction).collect();
+            assign_in_place(&mut group_txs)?;
         }
 
         Ok(UnsignedAtomicGroup { txs, method_map })
@@ -223,7 +231,7 @@ impl UnsignedAtomicGroup {
         request.txn_groups = vec![SimulateRequestTransactionGroup::new(signed_txs.clone())];
         request.allow_empty_signatures = Some(true);
 
-        let response: SimulateTransaction200Response = algod.simulate_txns(request).await?;
+        let response: SimulateTransaction200Response = algod.simulate(request).await?;
 
         // Build per-method ABI return values from the pending-txn
         // payloads embedded in the simulate response (mirrors execute()).
@@ -233,18 +241,18 @@ impl UnsignedAtomicGroup {
                 if !self.method_map.contains_key(&i) {
                     continue;
                 }
-                let tx_id = signed_txs[i].transaction_id().clone();
+                let transaction_id = signed_txs[i].transaction_id().clone();
                 let return_type = self.method_map[&i].returns.clone().type_()?;
                 method_results.push(get_return_value_with_return_type(
                     &txn_result.txn_result,
-                    &tx_id,
+                    &transaction_id,
                     return_type,
                 )?);
             }
         }
 
         Ok(SimulateOutcome {
-            tx_ids: tx_ids(&signed_txs),
+            transaction_ids: transaction_ids(&signed_txs),
             method_results,
             simulate_response: SimulateResponse::new(response),
         })
@@ -269,20 +277,20 @@ impl SignedAtomicGroup {
     /// Call [`PendingSubmission::confirm`] to await finality, or hold the
     /// handle and confirm later.
     pub async fn submit(self, algod: &Algod) -> Result<PendingSubmission, Error> {
-        algod.submit_txns(&self.signed_txs).await
+        algod.submit_transactions(&self.signed_txs).await
     }
 
     /// Submit the group, wait for it to be confirmed, and decode each ABI
     /// method call's return value.
     pub async fn execute(self, algod: &Algod) -> Result<ExecuteOutcome, Error> {
-        algod.send_txns(&self.signed_txs).await?;
+        algod.send_transactions(&self.signed_txs).await?;
 
         let index_to_wait = (0..self.signed_txs.len())
             .find(|i| self.method_map.contains_key(i))
             .unwrap_or(0);
 
-        let tx_id = self.signed_txs[index_to_wait].transaction_id().clone();
-        let pending_tx = poll_until_confirmed(algod, &tx_id).await?;
+        let transaction_id = self.signed_txs[index_to_wait].transaction_id().clone();
+        let pending_tx = poll_until_confirmed(algod, &transaction_id).await?;
 
         let mut method_results: Vec<AbiMethodResult> = vec![];
 
@@ -298,7 +306,7 @@ impl SignedAtomicGroup {
             if i == index_to_wait {
                 method_results.push(get_return_value_with_return_type(
                     &pending_tx,
-                    &tx_id,
+                    &transaction_id,
                     return_type,
                 )?);
                 continue;
@@ -307,16 +315,16 @@ impl SignedAtomicGroup {
             // Other method calls in the group: fetch each one's own pending
             // transaction. A fetch failure is surfaced per-result rather
             // than failing the whole group.
-            let other_tx_id = self.signed_txs[i].transaction_id().clone();
-            match algod.pending_txn(&other_tx_id).await {
+            let other_transaction_id = self.signed_txs[i].transaction_id().clone();
+            match algod.pending_transaction(&other_transaction_id).await {
                 Ok(other_pending_tx) => method_results.push(get_return_value_with_return_type(
                     &other_pending_tx,
-                    &other_tx_id,
+                    &other_transaction_id,
                     return_type,
                 )?),
                 Err(e) => method_results.push(AbiMethodResult {
-                    tx_id: other_tx_id,
-                    tx_info: pending_tx.clone(),
+                    transaction_id: other_transaction_id,
+                    transaction_info: pending_tx.clone(),
                     return_value: Err(AbiReturnDecodeError(format!("{e:?}"))),
                 }),
             }
@@ -324,7 +332,7 @@ impl SignedAtomicGroup {
 
         Ok(ExecuteOutcome {
             confirmed_round: pending_tx.confirmed_round,
-            tx_ids: tx_ids(&self.signed_txs),
+            transaction_ids: transaction_ids(&self.signed_txs),
             method_results,
         })
     }
@@ -384,7 +392,7 @@ mod tests {
                 request
                     .indexes
                     .iter()
-                    .map(|&i| self.inner.sign_transaction(request.transactions[i].clone()))
+                    .map(|&i| self.inner.sign(request.transactions[i].clone()))
                     .collect()
             })
         }
@@ -445,7 +453,7 @@ mod tests {
         let alice = Account::generate();
         let bob = Account::generate();
         // A signed transaction over an unrelated transaction.
-        let decoy = bob.sign_transaction(pay(&bob, alice.address())).unwrap();
+        let decoy = bob.sign(pay(&bob, alice.address())).unwrap();
         let signer = Arc::new(CannedSigner {
             output: vec![decoy],
         });

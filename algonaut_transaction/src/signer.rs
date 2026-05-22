@@ -67,7 +67,7 @@ impl Signer for Account {
             request
                 .indexes
                 .iter()
-                .map(|&i| self.sign_transaction(request.transactions[i].clone()))
+                .map(|&i| self.sign(request.transactions[i].clone()))
                 .collect()
         })
     }
@@ -115,7 +115,7 @@ impl Signer for MultisigSigner {
                 .indexes
                 .iter()
                 .map(|&i| {
-                    sign_msig_tx(
+                    sign_msig_transaction(
                         &self.address,
                         &self.accounts,
                         request.transactions[i].clone(),
@@ -126,16 +126,17 @@ impl Signer for MultisigSigner {
     }
 }
 
-fn sign_msig_tx(
+fn sign_msig_transaction(
     address: &MultisigAddress,
     accounts: &[Account],
-    tx: Transaction,
+    transaction: Transaction,
 ) -> Result<SignedTransaction, TransactionError> {
     let mut session_accounts = accounts.iter();
     let first_account = session_accounts
         .next()
         .ok_or(TransactionError::NoAccountsToSign)?;
-    let mut session = MultisigSigningSession::new(address.clone()).sign(tx, first_account)?;
+    let mut session =
+        MultisigSigningSession::new(address.clone()).sign(transaction, first_account)?;
     for account in session_accounts {
         session = session.sign_more(account)?;
     }
@@ -156,7 +157,7 @@ fn sign_msig_tx(
 ///
 /// let multisig_address = MultisigAddress::new(1, 2, &[alice.address(), bob.address()])?;
 /// let signed = MultisigSigningSession::new(multisig_address)
-///     .sign(txn, &alice)?
+///     .sign(transaction, &alice)?
 ///     .sign_more(&bob)?
 ///     .finish()?;
 /// ```

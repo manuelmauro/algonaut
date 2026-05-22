@@ -2,7 +2,7 @@
 id: transaction-naming-convention
 title: 'Transaction naming: omit redundant nouns, spell out the rest'
 abstract: Two rules for the transaction noun across handwritten code — omit it where the receiver or argument type already carries it (submit, send, sign, suggested_params), and where it stays (type names, id-based getters, batch methods) spell it out in full, never tx/txn/txid. Rename the shipped TxId/TxGroup newtypes to TransactionId/TransactionGroup. Generated OpenAPI code is out of scope and normalized at the handwritten client edge.
-status: proposed
+status: accepted
 date: 2026-05-22
 deciders: []
 tags: [api, naming, conventions]
@@ -12,7 +12,7 @@ tags: [api, naming, conventions]
 
 ## Status
 
-Proposed. Sets a cross-cutting naming convention. It **amends the naming**
+Accepted. Sets a cross-cutting naming convention. It **amends the naming**
 of `TxId` and `TxGroup` introduced by
 [`identifier-newtypes-at-client-boundary`](identifier-newtypes-at-client-boundary.md)
 and builds on the verb naming the north-star
@@ -162,7 +162,7 @@ Three corollaries:
 | Today       | After                | Notes                                                          |
 |-------------|----------------------|----------------------------------------------------------------|
 | `TxId`      | `TransactionId`      | `algonaut_core`; `#[serde(transparent)]` over `String` is unchanged |
-| `TxGroup`   | `TransactionGroup`   | `algonaut_transaction`; the module file `tx_group.rs` → `transaction_group.rs` |
+| `TxGroup`   | `TransactionGroup`   | `algonaut_transaction`; the module `tx_group` → `group` (the crate already carries the noun, so `transaction::group::TransactionGroup` reads without repetition) |
 | `TxnHeader` | `TransactionHeader`  | `algonaut_transaction`; applies to whatever shape [`one-build-per-transaction`](one-build-per-transaction.md) leaves of the header family |
 
 The per-kind transaction structs and every other `Transaction*` type already

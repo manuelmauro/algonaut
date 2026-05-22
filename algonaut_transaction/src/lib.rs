@@ -4,9 +4,9 @@ pub mod auction;
 pub mod builder;
 pub mod contract_account;
 pub mod error;
+pub mod group;
 pub mod signer;
 pub mod transaction;
-pub mod tx_group;
 pub mod url;
 
 pub use builder::{

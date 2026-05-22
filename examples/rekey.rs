@@ -34,13 +34,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     assert!(account_infos.auth_addr.is_none());
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("creating rekey-ing transaction");
     let rekey_tx = Pay::rekey(rekeyed_acc_address, rekey_to_acc_address).build(&params)?;
 
     info!("signing transaction");
-    let rekey_signed = rekeyed_acc.sign_transaction(rekey_tx)?;
+    let rekey_signed = rekeyed_acc.sign(rekey_tx)?;
 
     info!("broadcasting transaction");
     algod.submit(&rekey_signed).await?.confirm().await?;
@@ -60,10 +60,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let payment_tx = Pay::new(rekeyed_acc_address, receiver, MicroAlgos(10_000)).build(&params)?;
 
     info!("signing transaction");
-    let payment_signed = rekey_to_acc.sign_transaction(payment_tx)?;
+    let payment_signed = rekey_to_acc.sign(payment_tx)?;
 
     info!("broadcasting transaction");
-    let payment_response = algod.send_txn(&payment_signed).await;
+    let payment_response = algod.send(&payment_signed).await;
     info!("payment response: {:?}", payment_response);
     assert!(payment_response.is_ok());
 

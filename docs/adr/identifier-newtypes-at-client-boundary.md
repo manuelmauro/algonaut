@@ -1,7 +1,7 @@
 ---
 id: identifier-newtypes-at-client-boundary
 title: Identifier newtypes and domain types at the client boundary
-abstract: Push the AppId / AssetId / Address / TxId newtypes through the algod / indexer / kmd public method signatures, turn the to_app_address free function into AppId::address, replace the TxGroup::assign_group_id slice-of-mut-refs API with a TxGroup::new constructor, add StateSchema::empty / new, and replace teal_compile's Option<bool> with a SourceMap two-variant enum. First sub-ADR addressing items D4 and D9 of the ideal-type-safe-ergonomic-api index.
+abstract: Push the AppId / AssetId / Address / TransactionId newtypes through the algod / indexer / kmd public method signatures, turn the to_app_address free function into AppId::address, replace the TransactionGroup::assign_group_id slice-of-mut-refs API with a TransactionGroup::new constructor, add StateSchema::empty / new, and replace teal_compile's Option<bool> with a SourceMap two-variant enum. First sub-ADR addressing items D4 and D9 of the ideal-type-safe-ergonomic-api index.
 status: accepted
 date: 2026-05-20
 deciders: []
@@ -17,7 +17,7 @@ Accepted. Implements decision items **D4** and **D9** of
 
 ## Context
 
-`algonaut_core::{AppId, AssetId, TxId}` already exist as transparent
+`algonaut_core::{AppId, AssetId, TransactionId}` already exist as transparent
 newtypes (PR #281). The transaction builders adopted them — `Pay`,
 `CreateApplication::foreign_apps(Vec<AppId>)`, `Transaction::id` — but
 the *client* methods that consume those same values still take bare
@@ -27,10 +27,10 @@ primitives:
 algod.app(application_id: u64)         // accepts an AssetId silently
 algod.asset(asset_id: u64)
 algod.account(address: &str)           // takes a string, parses it back
-algod.pending_txn(txid: &str)
-algod.txn_proof(round: u64, txid: &str)
+algod.pending_transaction(transaction_id: &str)
+algod.transaction_proof(round: u64, transaction_id: &str)
 indexer.lookup_application_by_id(application_id: u64)
-indexer.lookup_transaction(txid: &str)
+indexer.lookup_transaction(transaction_id: &str)
 kmd.delete_key(_, _, address: &str)
 …
 ```
@@ -48,7 +48,7 @@ The companion D9 cuts are the same problem in miniature:
 - `to_app_address(app_id: u64)` is a free function precisely because
   `AppId` did not exist when it was written. Both current callers
   unwrap the newtype with `app_id.0`.
-- `TxGroup::assign_group_id(&mut [&mut t1, &mut t2])` mutates through a
+- `TransactionGroup::assign_group_id(&mut [&mut t1, &mut t2])` mutates through a
   slice of mutable references — the only API in the crate that does.
 - `StateSchema { number_ints: 0, number_byteslices: 0 }` is the empty
   literal in `examples/app_create.rs` twice; no constructor exists.
@@ -68,7 +68,7 @@ accepts an identifier as `&str` / `u64`:
 | `address: &str`, `account_id: &str`                | `address: &Address`                                |
 | `application_id: u64` (and `Option<u64>`)          | `app_id: AppId` / `Option<AppId>`                  |
 | `asset_id: u64` (and `Option<u64>`)                | `asset_id: AssetId` / `Option<AssetId>`            |
-| `txid: &str` (and `Option<&str>`)                  | `txid: &TxId` / `Option<&TxId>`                    |
+| `txid: &str` (and `Option<&str>`)                  | `transaction_id: &TransactionId` / `Option<&TransactionId>`         |
 
 Stringification stays at the HTTP boundary inside the client: the
 generated `algonaut_algod` / `algonaut_indexer` / `algonaut_kmd`
@@ -82,38 +82,38 @@ conversion from callers.
 Address` replaces it. Both existing callers (`tests/step_defs/integration/abi.rs`,
 `src/util/dryrun_printer.rs`) drop the `.0` unwrap.
 
-### `TxGroup` *is* the grouped batch
+### `TransactionGroup` *is* the grouped batch
 
-The old `TxGroup` was a passive msgpack-hashing helper holding
+The old `TransactionGroup` was a passive msgpack-hashing helper holding
 `Vec<HashDigest>` — exposed publicly only so the in-place
 `assign_group_id(&mut [&mut Transaction])` API had somewhere to live as
 a static method. Two iterations during this ADR — first a public
-`TxGroup::new(Vec<Transaction>) -> Result<Vec<Transaction>>`, then a
-rename to `TxGroup::assign` — both kept that shape and both were
+`TransactionGroup::new(Vec<Transaction>) -> Result<Vec<Transaction>>`, then a
+rename to `TransactionGroup::assign` — both kept that shape and both were
 unsatisfying: the type had no domain meaning, and `new` returning
 something other than `Self` is precisely the pattern
 `clippy::new_ret_no_self` exists to flag.
 
-The end state is `TxGroup` representing what callers think it does — a
+The end state is `TransactionGroup` representing what callers think it does — a
 batch of transactions sharing a group ID — and a `TryFrom<Vec<Transaction>>`
 impl as the single construction path:
 
 ```rust
-let group: TxGroup = vec![t1, t2].try_into()?;
+let group: TransactionGroup = vec![t1, t2].try_into()?;
 // or
-let group = TxGroup::try_from(vec![t1, t2])?;
+let group = TransactionGroup::try_from(vec![t1, t2])?;
 
 for tx in group {
     // IntoIterator over the grouped transactions
 }
 ```
 
-`TxGroup::transactions(&self) -> &[Transaction]` borrows, and
-`TxGroup::into_transactions(self) -> Vec<Transaction>` consumes.
+`TransactionGroup::transactions(&self) -> &[Transaction]` borrows, and
+`TransactionGroup::into_transactions(self) -> Vec<Transaction>` consumes.
 
 The msgpack hashing form (the previous public struct) moves to a
-private `TxGroupDigests` inside `tx_group.rs`; the in-place mutating
-form survives as `tx_group::assign_in_place(&mut [&mut Transaction])` —
+private `TransactionGroupDigests` inside `group.rs`; the in-place mutating
+form survives as `group::assign_in_place(&mut [&mut Transaction])` —
 a free function in the module, `#[doc(hidden)] pub` so the atomic
 transaction composer can reach it across the workspace boundary without
 leaking it into the public surface.
@@ -121,7 +121,7 @@ leaking it into the public surface.
 The same-named `assign_group_id` method on `Transaction` (the
 per-transaction setter) is unaffected and keeps its name; the clash
 that the rename was working around no longer exists once the batch
-operation is a `TryFrom` impl on `TxGroup`.
+operation is a `TryFrom` impl on `TransactionGroup`.
 
 ### `StateSchema` gains constructors
 
@@ -156,11 +156,11 @@ sites that pass `None` get to say what they mean.
   thirty-one renamed methods. Pre-1.0; the crate's `README` calls out
   that the API still moves. Migration is mechanical: wrap a literal
   with `AppId(..)` / `AssetId(..)`, replace `&account.address().to_string()`
-  with `&account.address()`, replace `tx_id.as_str()` with `&tx_id`.
+  with `&account.address()`, replace `transaction_id.as_str()` with `&transaction_id`.
 - **Mixed-ID mistakes become compile errors.** `algod.app(asset.id())`
   no longer compiles; the newtypes share no `From` between each other.
 - **No serialization change.** `AppId` / `AssetId` are
-  `#[serde(transparent)]` over `u64`; `TxId` over `String`; `Address`
+  `#[serde(transparent)]` over `u64`; `TransactionId` over `String`; `Address`
   already round-trips correctly per
   [`domain-types-serialize-for-both-json-and-msgpack`](domain-types-serialize-for-both-json-and-msgpack.md).
   Wire bytes are identical before and after.

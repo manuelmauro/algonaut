@@ -23,16 +23,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building Pay transaction");
     let t = Pay::new(alice.address(), bob.address(), MicroAlgos(123_456)).build(&params)?;
 
     info!("signing transaction");
-    let sign_response = alice.sign_transaction(t)?;
+    let sign_response = alice.sign(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.send_txn(&sign_response).await;
+    let send_response = algod.send(&sign_response).await;
     info!("response: {:?}", send_response);
 
     Ok(())

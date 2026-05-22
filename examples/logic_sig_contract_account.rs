@@ -41,7 +41,7 @@ byte 0xFF
     let receiver = env::var("ALICE_ADDRESS")?.parse()?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building Pay transaction");
     let t = Pay::new(*contract_account.address(), receiver, MicroAlgos(123_456)).build(&params)?;
@@ -51,7 +51,7 @@ byte 0xFF
 
     info!("broadcasting transaction");
     // the transaction will fail because contract_account has no funds
-    let send_response = algod.send_txn(&signed_t).await;
+    let send_response = algod.send(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

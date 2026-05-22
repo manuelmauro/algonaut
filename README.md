@@ -49,7 +49,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let alice_signer: Arc<dyn Signer> = Arc::new(alice.clone());
     let bob_signer: Arc<dyn Signer> = Arc::new(bob.clone());
 
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let app = AppId(123); // an ARC-4 `add(uint64,uint64)uint64` contract
 
     let alice_to_bob = Pay::new(alice.address(), bob.address(), MicroAlgos(1_000)).build(&params)?;
@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // `simulate` borrows the group, so we dry-run it before touching a key.
     let sim = group.simulate(&algod).await?;
-    println!("simulate ok: {} transaction(s)", sim.tx_ids.len());
+    println!("simulate ok: {} transaction(s)", sim.transaction_ids.len());
 
     // `sign` is async (a wallet may await user approval); `execute` submits,
     // waits for confirmation, and decodes each method call's ABI return.
@@ -103,7 +103,7 @@ Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG
 | `algonaut_algod`       | Generated client for the algod v2 REST API                                               |
 | `algonaut_kmd`         | Client for the key-management daemon                                                     |
 | `algonaut_indexer`     | Client for the indexer v2 REST API                                                       |
-| `algonaut_core`        | Core types: `Address`, `MicroAlgos`, `Round`, `AppId`/`AssetId`/`TxId`, keys, multisig   |
+| `algonaut_core`        | Core types: `Address`, `MicroAlgos`, `Round`, `AppId`/`AssetId`/`TransactionId`, keys, multisig |
 | `algonaut_crypto`      | Ed25519 sign/verify (via `ed25519-dalek`) and BIP-39 mnemonics                           |
 | `algonaut_transaction` | Transaction builders and the open `Signer` trait                                         |
 | `algonaut_abi`         | ARC-4 ABI types, method encoding, TEAL source-map decoder                                |

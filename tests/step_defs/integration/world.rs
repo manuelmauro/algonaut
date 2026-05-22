@@ -12,7 +12,7 @@ use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::So
 use algonaut_algod::models::{
     AssetParams, SimulateRequest, SimulateTransaction200Response, TealDryrun200Response,
 };
-use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TxId};
+use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TransactionId};
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_model::client_types::SuggestedParams;
 use algonaut_transaction::{
@@ -36,12 +36,12 @@ pub struct World {
     pub transient_account: Option<Account>,
 
     pub tx: Option<Transaction>,
-    pub tx_id: Option<TxId>,
+    pub transaction_id: Option<TransactionId>,
 
     pub app_id: Option<AppId>,
     pub app_ids: Vec<AppId>,
 
-    pub tx_params: Option<SuggestedParams>,
+    pub suggested_params: Option<SuggestedParams>,
 
     pub note: Option<Vec<u8>>,
 
@@ -94,7 +94,7 @@ pub struct World {
     pub dryrun_response: Option<TealDryrun200Response>,
 
     pub simulate_request: Option<SimulateRequest>,
-    /// Raw response from a direct `algod.simulate_txns` call; the deep
+    /// Raw response from a direct `algod.simulate` call; the deep
     /// wire-level assertions (exec traces, state changes) read this.
     pub simulate_response: Option<SimulateTransaction200Response>,
     /// Typed composer simulate result, from the `UnsignedAtomicGroup`
