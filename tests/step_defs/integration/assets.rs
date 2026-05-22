@@ -1,7 +1,7 @@
 use crate::step_defs::integration::world::World;
 use algonaut::error::Error;
 use algonaut_algod::models::AssetParams;
-use algonaut_core::{Address, AssetId, TxId};
+use algonaut_core::{Address, AssetId, TransactionId};
 use algonaut_transaction::{
     AcceptAsset, ClawbackAsset, CreateAsset, FreezeAsset, TransferAsset,
     builder::{DestroyAsset, UpdateAsset},
@@ -53,7 +53,7 @@ async fn build_creation(w: &mut World, total: u64, default_frozen: bool) -> Resu
     w.asset_creator = Some(creator);
     w.asset_second = Some(second);
 
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let tx = CreateAsset::new(creator, total, 0, default_frozen)
         .unit_name(UNIT_NAME.to_string())
         .asset_name(ASSET_NAME.to_string())
@@ -105,9 +105,9 @@ async fn i_send_the_kmd_signed_transaction(w: &mut World) -> Result<(), Error> {
         .kmd_signed_tx_bytes
         .as_ref()
         .expect("kmd-signed transaction not set");
-    match algod.send_raw_txn(bytes).await {
+    match algod.send_raw(bytes).await {
         Ok(resp) => {
-            w.tx_id = Some(TxId(resp.tx_id));
+            w.transaction_id = Some(TransactionId(resp.tx_id));
             w.last_send_succeeded = Some(true);
         }
         Err(e) => {
@@ -115,9 +115,7 @@ async fn i_send_the_kmd_signed_transaction(w: &mut World) -> Result<(), Error> {
             // transaction to be confirmed.` will fail downstream
             // anyway, but the original error is what diagnoses the
             // root cause.
-            return Err(Error::Msg(format!(
-                "send_raw_txn (kmd-signed) failed: {e:?}"
-            )));
+            return Err(Error::Msg(format!("send_raw (kmd-signed) failed: {e:?}")));
         }
     }
     Ok(())
@@ -130,15 +128,15 @@ async fn i_send_the_bogus_kmd_signed_transaction(w: &mut World) -> Result<(), Er
         .kmd_signed_tx_bytes
         .as_ref()
         .expect("kmd-signed transaction not set");
-    w.last_send_succeeded = Some(algod.send_raw_txn(bytes).await.is_ok());
+    w.last_send_succeeded = Some(algod.send_raw(bytes).await.is_ok());
     Ok(())
 }
 
 #[when(expr = "I update the asset index")]
 async fn i_update_the_asset_index(w: &mut World) -> Result<(), Error> {
     let algod = w.algod.as_ref().expect("algod not set");
-    let tx_id = w.tx_id.as_ref().expect("no last tx id");
-    let pending = algod.pending_txn(tx_id).await?;
+    let transaction_id = w.transaction_id.as_ref().expect("no last tx id");
+    let pending = algod.pending_transaction(transaction_id).await?;
     if let Some(asset_index) = pending.asset_index {
         w.asset_id = Some(AssetId(asset_index));
     }
@@ -183,7 +181,7 @@ async fn i_create_a_no_managers_asset_reconfigure_transaction(w: &mut World) -> 
     let algod = w.algod.as_ref().expect("algod not set");
     let creator = w.asset_creator.expect("asset creator not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(UpdateAsset::new(creator, asset_id).build(&params)?);
     if let Some(exp) = w.expected_asset_params.as_mut() {
         exp.manager = None;
@@ -199,7 +197,7 @@ async fn i_create_an_asset_destroy_transaction(w: &mut World) -> Result<(), Erro
     let algod = w.algod.as_ref().expect("algod not set");
     let creator = w.asset_creator.expect("asset creator not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(DestroyAsset::new(creator, asset_id).build(&params)?);
     Ok(())
 }
@@ -221,7 +219,7 @@ async fn i_create_a_transaction_for_a_second_account_signalling_asset_acceptance
     let algod = w.algod.as_ref().expect("algod not set");
     let second = w.asset_second.expect("asset second account not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(AcceptAsset::new(second, asset_id).build(&params)?);
     Ok(())
 }
@@ -234,7 +232,7 @@ async fn i_create_transfer_creator_to_second(w: &mut World, amount: u64) -> Resu
     let creator = w.asset_creator.expect("asset creator not set");
     let second = w.asset_second.expect("asset second account not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(TransferAsset::new(creator, asset_id, amount, second).build(&params)?);
     Ok(())
 }
@@ -247,7 +245,7 @@ async fn i_create_transfer_second_to_creator(w: &mut World, amount: u64) -> Resu
     let creator = w.asset_creator.expect("asset creator not set");
     let second = w.asset_second.expect("asset second account not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(TransferAsset::new(second, asset_id, amount, creator).build(&params)?);
     Ok(())
 }
@@ -258,7 +256,7 @@ async fn i_create_revocation(w: &mut World, amount: u64) -> Result<(), Error> {
     let creator = w.asset_creator.expect("asset creator not set");
     let second = w.asset_second.expect("asset second account not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(ClawbackAsset::new(creator, asset_id, amount, second, creator).build(&params)?);
     Ok(())
 }
@@ -269,7 +267,7 @@ async fn i_create_a_freeze_transaction(w: &mut World) -> Result<(), Error> {
     let creator = w.asset_creator.expect("asset creator not set");
     let second = w.asset_second.expect("asset second account not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(FreezeAsset::new(creator, second, asset_id, true).build(&params)?);
     Ok(())
 }
@@ -280,7 +278,7 @@ async fn i_create_an_unfreeze_transaction(w: &mut World) -> Result<(), Error> {
     let creator = w.asset_creator.expect("asset creator not set");
     let second = w.asset_second.expect("asset second account not set");
     let asset_id = w.asset_id.expect("asset id not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     w.tx = Some(FreezeAsset::new(creator, second, asset_id, false).build(&params)?);
     Ok(())
 }

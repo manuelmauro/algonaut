@@ -42,7 +42,7 @@ int 1
     let multisig_address = MultisigAddress::new(1, 2, &[alice.address(), bob.address()])?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building Pay transaction");
     let t = Pay::new(multisig_address.address(), casey, MicroAlgos(123_456)).build(&params)?;
@@ -63,7 +63,7 @@ int 1
     .sign(t)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.send_txn(&signed_t).await;
+    let send_response = algod.send(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

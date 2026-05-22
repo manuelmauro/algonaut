@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "WaA5UWiVDzD6QY/ZxNi0Pc4xL4FxQa3kjlrZmkSMcEUjGFQqRGo3CSNZ9D8GAr+5e7TgQHM2RfsdJ4yLpcfkRA==";
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building RegisterKey transaction");
     let t = RegisterKey::online(
@@ -41,12 +41,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .build(&params)?;
 
     info!("signing transaction");
-    let sign_response = alice.sign_transaction(t)?;
+    let sign_response = alice.sign(t)?;
 
     info!("broadcasting transaction");
     // Broadcast the transaction to the network
     // Note this transaction will get rejected because the accounts do not have any tokens
-    let send_response = algod.send_txn(&sign_response).await;
+    let send_response = algod.send(&sign_response).await;
     info!("{:?}", send_response);
 
     Ok(())

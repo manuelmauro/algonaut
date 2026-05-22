@@ -260,7 +260,7 @@ async fn i_sign_the_transaction_with_kmd(w: &mut World) -> Result<(), Error> {
     let handle = w.handle.as_ref().expect("wallet handle not set");
     let password = w.password.as_ref().expect("wallet password not set");
     let tx = w.tx.as_ref().expect("tx not set");
-    let resp = kmd.sign_transaction(handle, password, tx).await?;
+    let resp = kmd.sign(handle, password, tx).await?;
     w.kmd_signed_tx_bytes = Some(resp.signed_transaction);
     Ok(())
 }

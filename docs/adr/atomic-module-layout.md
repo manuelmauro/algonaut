@@ -84,9 +84,9 @@ into siblings:
 | `mod.rs`         | module docs, `pub use` re-exports, shared constants                                            |
 | `group.rs`       | the public typestate chain: `TransactionWithSigner`, `AtomicGroupBuilder`, `UnsignedAtomicGroup`, `SignedAtomicGroup` |
 | `method_call.rs` | `MethodCall`, `MethodCallBuilder`, `AbiArgValue`                                                |
-| `encode.rs`      | ABI method-call → transaction encoding, foreign-array packing, `validate_tx`                   |
+| `encode.rs`      | ABI method-call → transaction encoding, foreign-array packing, `validate_transaction`          |
 | `outcome.rs`     | `ExecuteOutcome`, `SimulateOutcome`, `AbiMethodResult`, `AbiMethodReturnValue`, `AbiReturnDecodeError`, return-value decoding |
-| `signing.rs`     | `sign_group`, `placeholder_group`, `tx_ids`, `poll_until_confirmed`                            |
+| `signing.rs`     | `sign_group`, `placeholder_group`, `transaction_ids`, `poll_until_confirmed`                   |
 
 The public API is unchanged except for the module path: the same types are
 re-exported from `atomic`, so `algonaut::atomic::AtomicGroupBuilder` and the

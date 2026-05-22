@@ -50,20 +50,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building Pay transaction");
     let t = Pay::new(sender, bob, MicroAlgos(123_456)).build(&params)?;
 
     info!("signing transaction");
     // we need to sign the transaction to prove that we own the sender address
-    let sign_response = kmd.sign_transaction(&wallet_handle_token, "", &t).await?;
+    let sign_response = kmd.sign(&wallet_handle_token, "", &t).await?;
 
     info!("broadcasting transaction");
     // broadcast the transaction to the network
-    let send_response = algod
-        .send_raw_txn(&sign_response.signed_transaction)
-        .await?;
+    let send_response = algod.send_raw(&sign_response.signed_transaction).await?;
 
     info!("transaction ID: {}", send_response.tx_id);
 

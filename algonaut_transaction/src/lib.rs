@@ -6,7 +6,7 @@ pub mod contract_account;
 pub mod error;
 pub mod signer;
 pub mod transaction;
-pub mod tx_group;
+pub mod transaction_group;
 pub mod url;
 
 pub use builder::{

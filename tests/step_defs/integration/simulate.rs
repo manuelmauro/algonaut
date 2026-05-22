@@ -22,7 +22,7 @@ async fn i_simulate_the_transaction(w: &mut World) {
     };
 
     let req = SimulateRequest::new(vec![SimulateRequestTransactionGroup::new(vec![st])]);
-    let resp = algod.simulate_txns(req).await.expect("simulate failed");
+    let resp = algod.simulate(req).await.expect("simulate failed");
     w.simulate_response = Some(resp);
     w.simulate_unsigned = false;
 }

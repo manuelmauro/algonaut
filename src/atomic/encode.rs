@@ -5,7 +5,7 @@
 //! method call into an application-call transaction, packs reference
 //! arguments into the call's foreign arrays, wraps any overflow past the
 //! 15-argument limit into a tuple, and appends the result (plus any
-//! transaction-typed arguments) to the group. [`validate_tx`] is the shared
+//! transaction-typed arguments) to the group. [`validate_transaction`] is the shared
 //! per-transaction check applied to every slot, method call or not.
 //!
 //! Two helper structs carry the state that used to be threaded through
@@ -91,7 +91,7 @@ pub(super) fn process_method_call(
                     AbiArgValue::TxWithSigner(tx_with_signer) => *tx_with_signer,
                     AbiArgValue::AbiValue(_) => return Err(Error::ExpectedTransactionArgument),
                 };
-                validate_tx(&tx_with_signer.tx, expected_type)?;
+                validate_transaction(&tx_with_signer.transaction, expected_type)?;
                 tx_args.push(tx_with_signer);
             }
             AbiArgType::Ref(ref_type) => {
@@ -137,7 +137,7 @@ pub(super) fn process_method_call(
         boxes: (!boxes.is_empty()).then_some(boxes),
     });
 
-    let tx = Transaction {
+    let transaction = Transaction {
         fee,
         first_valid,
         genesis_hash,
@@ -152,7 +152,7 @@ pub(super) fn process_method_call(
 
     txs.append(&mut tx_args);
     txs.push(TransactionWithSigner {
-        tx,
+        transaction,
         signer: Some(signer),
     });
     method_map.insert(txs.len() - 1, method);
@@ -163,15 +163,15 @@ pub(super) fn process_method_call(
 /// Shared per-transaction validity check: the transaction must carry no
 /// group id yet, and (when `expected_type` is not
 /// [`TransactionArgType::Any`]) must match the expected transaction type.
-pub(super) fn validate_tx(
-    tx: &Transaction,
+pub(super) fn validate_transaction(
+    transaction: &Transaction,
     expected_type: TransactionArgType,
 ) -> Result<(), Error> {
-    if tx.group.is_some() {
+    if transaction.group.is_some() {
         return Err(Error::TransactionAlreadyGrouped);
     }
 
-    let actual_type = to_tx_type_enum(&tx.txn_type);
+    let actual_type = to_tx_type_enum(&transaction.txn_type);
     if expected_type != TransactionArgType::Any
         && expected_type != TransactionArgType::One(actual_type.clone())
     {

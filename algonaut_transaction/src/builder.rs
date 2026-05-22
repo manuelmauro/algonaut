@@ -23,7 +23,7 @@ pub use algonaut_model::client_types::TransactionParams;
 /// every builder has a single terminal `build(&params)` that finalises both
 /// the header and the type-specific fields.
 #[derive(Debug, Default, Clone)]
-pub struct TxnHeader {
+pub struct TransactionHeader {
     pub(crate) fee: Option<MicroAlgos>,
     pub(crate) note: Option<Vec<u8>>,
     pub(crate) lease: Option<HashDigest>,
@@ -32,7 +32,7 @@ pub struct TxnHeader {
     pub(crate) genesis_id: Option<String>,
 }
 
-impl TxnHeader {
+impl TransactionHeader {
     /// Combine this header with the suggested params and a type-specific
     /// `txn_type` to produce a finished [`Transaction`]. Used by every
     /// per-type builder's terminal `build(&params)`.
@@ -69,8 +69,8 @@ impl TxnHeader {
 
 /// Mint the six fluent header setters (`fee`, `note`, `lease`, `rekey_to`,
 /// `group`, `genesis_id`) on a per-type builder that has a `header:
-/// TxnHeader` field. Used at the bottom of every builder's `impl` block.
-macro_rules! impl_txn_header_setters {
+/// TransactionHeader` field. Used at the bottom of every builder's `impl` block.
+macro_rules! impl_transaction_header_setters {
     ($t:ty) => {
         impl $t {
             /// Override the per-byte-estimated fee from
@@ -103,7 +103,7 @@ macro_rules! impl_txn_header_setters {
             }
 
             /// Stamp a precomputed group ID on this transaction. Normally
-            /// you don't call this directly; [`crate::tx_group::TxGroup`]
+            /// you don't call this directly; [`crate::transaction_group::TransactionGroup`]
             /// does it via its `TryFrom<Vec<Transaction>>` impl.
             pub fn group(mut self, group: HashDigest) -> Self {
                 self.header.group = Some(group);
@@ -125,7 +125,7 @@ pub struct Pay {
     receiver: Address,
     amount: MicroAlgos,
     close_remainder_to: Option<Address>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl Pay {
@@ -135,7 +135,7 @@ impl Pay {
             receiver,
             amount,
             close_remainder_to: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -167,7 +167,7 @@ impl Pay {
     }
 }
 
-impl_txn_header_setters!(Pay);
+impl_transaction_header_setters!(Pay);
 
 /// A builder for [KeyRegistration].
 pub struct RegisterKey {
@@ -179,7 +179,7 @@ pub struct RegisterKey {
     vote_key_dilution: Option<u64>,
     state_proof_key: Option<StateProofPk>,
     nonparticipating: Option<bool>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl RegisterKey {
@@ -205,7 +205,7 @@ impl RegisterKey {
             vote_key_dilution: Some(vote_key_dilution),
             state_proof_key: Some(state_proof_key),
             nonparticipating: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -219,7 +219,7 @@ impl RegisterKey {
             vote_key_dilution: None,
             state_proof_key: None,
             nonparticipating: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -233,7 +233,7 @@ impl RegisterKey {
             vote_key_dilution: None,
             state_proof_key: None,
             nonparticipating: Some(nonparticipating),
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -252,7 +252,7 @@ impl RegisterKey {
     }
 }
 
-impl_txn_header_setters!(RegisterKey);
+impl_transaction_header_setters!(RegisterKey);
 
 /// A builder for [AssetConfigurationTransaction].
 pub struct CreateAsset {
@@ -268,7 +268,7 @@ pub struct CreateAsset {
     reserve: Option<Address>,
     freeze: Option<Address>,
     clawback: Option<Address>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl CreateAsset {
@@ -286,7 +286,7 @@ impl CreateAsset {
             reserve: None,
             freeze: None,
             clawback: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -353,7 +353,7 @@ impl CreateAsset {
     }
 }
 
-impl_txn_header_setters!(CreateAsset);
+impl_transaction_header_setters!(CreateAsset);
 
 /// A builder for [AssetConfigurationTransaction].
 pub struct UpdateAsset {
@@ -370,7 +370,7 @@ pub struct UpdateAsset {
     reserve: Option<Address>,
     freeze: Option<Address>,
     clawback: Option<Address>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl UpdateAsset {
@@ -389,7 +389,7 @@ impl UpdateAsset {
             reserve: None,
             freeze: None,
             clawback: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -471,13 +471,13 @@ impl UpdateAsset {
     }
 }
 
-impl_txn_header_setters!(UpdateAsset);
+impl_transaction_header_setters!(UpdateAsset);
 
 /// A builder for [AssetConfigurationTransaction].
 pub struct DestroyAsset {
     sender: Address,
     asset_id: AssetId,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl DestroyAsset {
@@ -485,7 +485,7 @@ impl DestroyAsset {
         DestroyAsset {
             sender,
             asset_id,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -500,7 +500,7 @@ impl DestroyAsset {
     }
 }
 
-impl_txn_header_setters!(DestroyAsset);
+impl_transaction_header_setters!(DestroyAsset);
 
 /// A builder for [AssetTransferTransaction].
 pub struct TransferAsset {
@@ -509,7 +509,7 @@ pub struct TransferAsset {
     amount: u64,
     receiver: Address,
     close_to: Option<Address>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl TransferAsset {
@@ -520,7 +520,7 @@ impl TransferAsset {
             amount,
             receiver,
             close_to: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -541,13 +541,13 @@ impl TransferAsset {
     }
 }
 
-impl_txn_header_setters!(TransferAsset);
+impl_transaction_header_setters!(TransferAsset);
 
 /// A builder for [AssetAcceptTransaction].
 pub struct AcceptAsset {
     sender: Address,
     asset_id: AssetId,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl AcceptAsset {
@@ -555,7 +555,7 @@ impl AcceptAsset {
         AcceptAsset {
             sender,
             asset_id,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -568,7 +568,7 @@ impl AcceptAsset {
     }
 }
 
-impl_txn_header_setters!(AcceptAsset);
+impl_transaction_header_setters!(AcceptAsset);
 
 /// A builder for [AssetClawbackTransaction].
 pub struct ClawbackAsset {
@@ -578,7 +578,7 @@ pub struct ClawbackAsset {
     asset_sender: Address,
     asset_receiver: Address,
     asset_close_to: Option<Address>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl ClawbackAsset {
@@ -596,7 +596,7 @@ impl ClawbackAsset {
             asset_sender,
             asset_receiver,
             asset_close_to: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -618,7 +618,7 @@ impl ClawbackAsset {
     }
 }
 
-impl_txn_header_setters!(ClawbackAsset);
+impl_transaction_header_setters!(ClawbackAsset);
 
 /// A builder for [AssetFreezeTransaction].
 pub struct FreezeAsset {
@@ -626,7 +626,7 @@ pub struct FreezeAsset {
     freeze_account: Address,
     asset_id: AssetId,
     frozen: bool,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl FreezeAsset {
@@ -636,7 +636,7 @@ impl FreezeAsset {
             freeze_account,
             asset_id,
             frozen,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -651,7 +651,7 @@ impl FreezeAsset {
     }
 }
 
-impl_txn_header_setters!(FreezeAsset);
+impl_transaction_header_setters!(FreezeAsset);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct CreateApplication {
@@ -666,7 +666,7 @@ pub struct CreateApplication {
     local_state_schema: Option<StateSchema>,
     extra_pages: u32,
     boxes: Option<Vec<BoxReference>>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl CreateApplication {
@@ -689,7 +689,7 @@ impl CreateApplication {
             local_state_schema: Some(local_state_schema),
             extra_pages: 0,
             boxes: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -753,7 +753,7 @@ impl CreateApplication {
     }
 }
 
-impl_txn_header_setters!(CreateApplication);
+impl_transaction_header_setters!(CreateApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct UpdateApplication {
@@ -766,7 +766,7 @@ pub struct UpdateApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl UpdateApplication {
@@ -786,7 +786,7 @@ impl UpdateApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -845,7 +845,7 @@ impl UpdateApplication {
     }
 }
 
-impl_txn_header_setters!(UpdateApplication);
+impl_transaction_header_setters!(UpdateApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct CallApplication {
@@ -856,7 +856,7 @@ pub struct CallApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl CallApplication {
@@ -869,7 +869,7 @@ impl CallApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -928,7 +928,7 @@ impl CallApplication {
     }
 }
 
-impl_txn_header_setters!(CallApplication);
+impl_transaction_header_setters!(CallApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct ClearApplication {
@@ -939,7 +939,7 @@ pub struct ClearApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl ClearApplication {
@@ -952,7 +952,7 @@ impl ClearApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -1011,7 +1011,7 @@ impl ClearApplication {
     }
 }
 
-impl_txn_header_setters!(ClearApplication);
+impl_transaction_header_setters!(ClearApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct CloseApplication {
@@ -1022,7 +1022,7 @@ pub struct CloseApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl CloseApplication {
@@ -1035,7 +1035,7 @@ impl CloseApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -1094,7 +1094,7 @@ impl CloseApplication {
     }
 }
 
-impl_txn_header_setters!(CloseApplication);
+impl_transaction_header_setters!(CloseApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct DeleteApplication {
@@ -1105,7 +1105,7 @@ pub struct DeleteApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl DeleteApplication {
@@ -1118,7 +1118,7 @@ impl DeleteApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -1177,7 +1177,7 @@ impl DeleteApplication {
     }
 }
 
-impl_txn_header_setters!(DeleteApplication);
+impl_transaction_header_setters!(DeleteApplication);
 
 /// A builder for [ApplicationCallTransaction].
 pub struct OptInApplication {
@@ -1188,7 +1188,7 @@ pub struct OptInApplication {
     foreign_apps: Option<Vec<AppId>>,
     foreign_assets: Option<Vec<AssetId>>,
     boxes: Option<Vec<BoxReference>>,
-    header: TxnHeader,
+    header: TransactionHeader,
 }
 
 impl OptInApplication {
@@ -1201,7 +1201,7 @@ impl OptInApplication {
             foreign_apps: None,
             foreign_assets: None,
             boxes: None,
-            header: TxnHeader::default(),
+            header: TransactionHeader::default(),
         }
     }
 
@@ -1260,4 +1260,4 @@ impl OptInApplication {
     }
 }
 
-impl_txn_header_setters!(OptInApplication);
+impl_transaction_header_setters!(OptInApplication);

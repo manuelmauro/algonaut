@@ -185,34 +185,34 @@ impl From<AssetId> for u64 {
 #[derive(
     Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize, Display,
 )]
-pub struct TxId(pub String);
+pub struct TransactionId(pub String);
 
-impl TxId {
+impl TransactionId {
     /// Borrows the identifier as a string slice.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 }
 
-impl From<String> for TxId {
+impl From<String> for TransactionId {
     fn from(id: String) -> Self {
-        TxId(id)
+        TransactionId(id)
     }
 }
 
-impl From<&str> for TxId {
+impl From<&str> for TransactionId {
     fn from(id: &str) -> Self {
-        TxId(id.to_owned())
+        TransactionId(id.to_owned())
     }
 }
 
-impl From<TxId> for String {
-    fn from(id: TxId) -> Self {
+impl From<TransactionId> for String {
+    fn from(id: TransactionId) -> Self {
         id.0
     }
 }
 
-impl AsRef<str> for TxId {
+impl AsRef<str> for TransactionId {
     fn as_ref(&self) -> &str {
         &self.0
     }
@@ -573,7 +573,7 @@ mod tests {
             rmp_serde::to_vec(&7u64).unwrap()
         );
         assert_eq!(
-            serde_json::to_string(&TxId("ABC".to_owned())).unwrap(),
+            serde_json::to_string(&TransactionId("ABC".to_owned())).unwrap(),
             "\"ABC\""
         );
     }
@@ -584,7 +584,7 @@ mod tests {
         assert_eq!(u64::from(app), 99);
         let asset: AssetId = 99u64.into();
         assert_eq!(u64::from(asset), 99);
-        let tx: TxId = "XYZ".into();
+        let tx: TransactionId = "XYZ".into();
         assert_eq!(tx.as_str(), "XYZ");
         assert_eq!(String::from(tx.clone()), "XYZ");
         assert_eq!(serde_json::from_str::<AppId>("5").unwrap(), AppId(5));

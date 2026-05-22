@@ -41,15 +41,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )?;
     let bob = "2FMLYJHYQWRHMFKRHKTKX5UNB5DGO65U57O3YVLWUJWKRE4YYJYC2CWWBY".parse()?;
 
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let tx = TxnBuilder::with(
         &params,
         Pay::new(alice.address(), bob, MicroAlgos(123_456)).build(),
     )
     .build()?;
 
-    let signed = alice.sign_transaction(tx)?;
-    let resp = algod.send_txn(&signed).await?;
+    let signed = alice.sign(tx)?;
+    let resp = algod.send(&signed).await?;
     println!("submitted: {}", resp.tx_id);
     Ok(())
 }

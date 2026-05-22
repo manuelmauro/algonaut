@@ -1,5 +1,7 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
-use algonaut_core::{MicroAlgos, MultisigAddress, Round, StateProofPk, TxId, VotePk, VrfPk};
+use algonaut_core::{
+    MicroAlgos, MultisigAddress, Round, StateProofPk, TransactionId, VotePk, VrfPk,
+};
 use algonaut_transaction::{Pay, RegisterKey, signer::MultisigSigningSession};
 use cucumber::{given, then, when};
 use data_encoding::BASE64;
@@ -19,7 +21,7 @@ async fn build_default_payment(
 ) -> Result<(), Box<dyn Error>> {
     let algod = w.algod.as_ref().expect("algod not set");
     let accounts = w.accounts.as_ref().expect("accounts not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let note = if note_b64.is_empty() {
         Vec::new()
     } else {
@@ -59,7 +61,7 @@ async fn default_multisig_transaction_with_parameters(
 
     let msig =
         MultisigAddress::new(1, 1, &accounts).map_err(|e| format!("invalid multisig: {e}"))?;
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let note = if note_b64.is_empty() {
         Vec::new()
     } else {
@@ -99,7 +101,7 @@ async fn i_get_the_private_key(w: &mut World) -> Result<(), Box<dyn Error>> {
 async fn i_sign_the_transaction_with_the_private_key(w: &mut World) -> Result<(), Box<dyn Error>> {
     let account = w.sender_account.as_ref().expect("sender account not set");
     let tx = w.tx.as_ref().expect("tx not set");
-    w.signed_tx = Some(account.sign_transaction(tx.clone())?);
+    w.signed_tx = Some(account.sign(tx.clone())?);
     Ok(())
 }
 
@@ -124,9 +126,9 @@ async fn i_send_the_transaction(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
     let signed = w.signed_tx.as_ref().expect("signed tx not set");
 
-    match algod.send_txn(signed).await {
+    match algod.send(signed).await {
         Ok(resp) => {
-            w.tx_id = Some(TxId(resp.tx_id));
+            w.transaction_id = Some(TransactionId(resp.tx_id));
             w.last_send_succeeded = Some(true);
         }
         Err(_) => {
@@ -142,7 +144,7 @@ async fn default_v2_key_registration_transaction(
 ) -> Result<(), Box<dyn Error>> {
     let algod = w.algod.as_ref().expect("algod not set");
     let accounts = w.accounts.as_ref().expect("accounts not set");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let sender = accounts[0];
 
     let keyreg = match variant.as_str() {

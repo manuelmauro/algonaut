@@ -184,7 +184,7 @@ impl Kmd {
     }
 
     /// Sign a transaction
-    pub async fn sign_transaction(
+    pub async fn sign(
         &self,
         wallet_handle: &str,
         wallet_password: &str,

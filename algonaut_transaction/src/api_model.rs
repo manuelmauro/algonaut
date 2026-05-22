@@ -786,7 +786,7 @@ mod tests {
         let tx = Pay::new(alice.address(), alice.address(), MicroAlgos(1_000))
             .build(&params)
             .unwrap();
-        let signed = bob.sign_transaction(tx).unwrap();
+        let signed = bob.sign(tx).unwrap();
         assert_eq!(signed.auth_address(), Some(&bob.address()));
         assert!(!signed.transaction_id().0.is_empty());
 

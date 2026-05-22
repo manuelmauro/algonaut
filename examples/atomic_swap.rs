@@ -2,7 +2,7 @@ use algonaut::algod::v2::Algod;
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::Pay;
 use algonaut::transaction::account::Account;
-use algonaut::transaction::tx_group::TxGroup;
+use algonaut::transaction::transaction_group::TransactionGroup;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     // To keep the example short and as self-contained as possible, both transactions send Algos.
     // Normally you'll want to submit e.g. a payment and asset transfer or asset transfers for different assets.
@@ -34,17 +34,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let t2 = Pay::new(bob.address(), alice.address(), MicroAlgos(3_000)).build(&params)?;
 
     info!("grouping transactions");
-    let group = TxGroup::try_from(vec![t1, t2])?;
+    let group = TransactionGroup::try_from(vec![t1, t2])?;
     let mut iter = group.into_iter();
     let t1 = iter.next().expect("group has two transactions");
     let t2 = iter.next().expect("group has two transactions");
 
     info!("signing transactions");
-    let signed_t1 = alice.sign_transaction(t1)?;
-    let signed_t2 = bob.sign_transaction(t2)?;
+    let signed_t1 = alice.sign(t1)?;
+    let signed_t2 = bob.sign(t2)?;
 
     info!("broadcasting transaction");
-    let send_response = algod.send_txns(&[signed_t1, signed_t2]).await;
+    let send_response = algod.send_transactions(&[signed_t1, signed_t2]).await;
     info!("response: {:?}", send_response);
 
     Ok(())

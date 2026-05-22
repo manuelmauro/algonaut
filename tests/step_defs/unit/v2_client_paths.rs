@@ -11,7 +11,7 @@ use crate::step_defs::unit::mock_server::MockServer;
 use crate::step_defs::unit::world::UnitWorld;
 use algonaut::algod::v2::Algod;
 use algonaut::indexer::v2::Indexer;
-use algonaut_core::{Address, AppId, AssetId, Round, TxId};
+use algonaut_core::{Address, AppId, AssetId, Round, TransactionId};
 use cucumber::{given, then, when};
 
 /// A token (the `Configuration` requires one; its value is irrelevant to the
@@ -68,12 +68,12 @@ fn opt_asset_id(n: u64) -> Option<AssetId> {
 }
 
 /// Treat empty cells as "argument omitted"; otherwise wrap the cell as a
-/// [`TxId`].
-fn opt_tx_id(s: &str) -> Option<TxId> {
+/// [`TransactionId`].
+fn opt_transaction_id(s: &str) -> Option<TransactionId> {
     if s.is_empty() {
         None
     } else {
-        Some(TxId(s.to_string()))
+        Some(TransactionId(s.to_string()))
     }
 }
 
@@ -192,13 +192,13 @@ async fn expect_request(w: &mut UnitWorld, method: String, expected: String) {
 #[when(
     regex = r#"^we make a Pending Transaction Information against txid "([^"]*)" with format "([^"]*)"$"#
 )]
-async fn algod_pending_txn_information(w: &mut UnitWorld, txid: String, format: String) {
-    // `Algod::pending_txn` hard-codes `format=None`; call the generated
+async fn algod_pending_txn_information(w: &mut UnitWorld, transaction_id: String, format: String) {
+    // `Algod::pending_transaction` hard-codes `format=None`; call the generated
     // endpoint directly so the `?format=` query parameter is emitted.
     let conf = algod_config(w);
     let _ = algonaut::openapi_algod::apis::public_api::pending_transaction_information(
         &conf,
-        &txid,
+        &transaction_id,
         opt_str(&format),
     )
     .await;
@@ -208,7 +208,9 @@ async fn algod_pending_txn_information(w: &mut UnitWorld, txid: String, format: 
     regex = r#"^we make a Pending Transaction Information with max (\d+) and format "([^"]*)"$"#
 )]
 async fn algod_pending_txn_information2(w: &mut UnitWorld, max: u64, format: String) {
-    let _ = algod(w).pending_txns(opt_u64(max), opt_str(&format)).await;
+    let _ = algod(w)
+        .pending_transactions(opt_u64(max), opt_str(&format))
+        .await;
 }
 
 #[when(
@@ -221,7 +223,7 @@ async fn algod_pending_txns_by_address(
     format: String,
 ) {
     let _ = algod(w)
-        .address_pending_txns(&parse_address(&account), opt_u64(max), opt_str(&format))
+        .address_pending_transactions(&parse_address(&account), opt_u64(max), opt_str(&format))
         .await;
 }
 
@@ -314,14 +316,14 @@ async fn algod_account_application_information(
 async fn algod_get_transaction_proof(
     w: &mut UnitWorld,
     round: u64,
-    txid: String,
+    transaction_id: String,
     hashtype: String,
 ) {
     let conf = algod_config(w);
     let _ = algonaut::openapi_algod::apis::public_api::get_transaction_proof(
         &conf,
         round,
-        &txid,
+        &transaction_id,
         opt_str(&hashtype),
         Some("msgpack"),
     )
@@ -447,7 +449,7 @@ async fn algod_account_applications_information(
 
 #[when(regex = r"^we make a GetBlockTxids call against block number (\d+)$")]
 async fn algod_get_block_txids(w: &mut UnitWorld, round: u64) {
-    let _ = algod(w).block_txids(round).await;
+    let _ = algod(w).block_transaction_ids(round).await;
 }
 
 // === Indexer v2 paths ======================================================
@@ -485,7 +487,7 @@ async fn indexer_lookup_asset_transactions(
     note_prefix: String,
     tx_type: String,
     sig_type: String,
-    txid: String,
+    transaction_id: String,
     round: u64,
     min_round: u64,
     max_round: u64,
@@ -506,7 +508,7 @@ async fn indexer_lookup_asset_transactions(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_tx_id(&txid).as_ref(),
+            opt_transaction_id(&transaction_id).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -532,7 +534,7 @@ async fn indexer_lookup_asset_transactions_rekey(
     note_prefix: String,
     tx_type: String,
     sig_type: String,
-    txid: String,
+    transaction_id: String,
     round: u64,
     min_round: u64,
     max_round: u64,
@@ -554,7 +556,7 @@ async fn indexer_lookup_asset_transactions_rekey(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_tx_id(&txid).as_ref(),
+            opt_transaction_id(&transaction_id).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -580,7 +582,7 @@ async fn indexer_lookup_account_transactions(
     note_prefix: String,
     tx_type: String,
     sig_type: String,
-    txid: String,
+    transaction_id: String,
     round: u64,
     min_round: u64,
     max_round: u64,
@@ -599,7 +601,7 @@ async fn indexer_lookup_account_transactions(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_tx_id(&txid).as_ref(),
+            opt_transaction_id(&transaction_id).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -623,7 +625,7 @@ async fn indexer_lookup_account_transactions_rekey(
     note_prefix: String,
     tx_type: String,
     sig_type: String,
-    txid: String,
+    transaction_id: String,
     round: u64,
     min_round: u64,
     max_round: u64,
@@ -643,7 +645,7 @@ async fn indexer_lookup_account_transactions_rekey(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_tx_id(&txid).as_ref(),
+            opt_transaction_id(&transaction_id).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -736,7 +738,7 @@ async fn indexer_search_for_transactions(
     note_prefix: String,
     tx_type: String,
     sig_type: String,
-    txid: String,
+    transaction_id: String,
     round: u64,
     min_round: u64,
     max_round: u64,
@@ -757,7 +759,7 @@ async fn indexer_search_for_transactions(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_tx_id(&txid).as_ref(),
+            opt_transaction_id(&transaction_id).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -785,7 +787,7 @@ async fn indexer_search_for_transactions_rekey(
     note_prefix: String,
     tx_type: String,
     sig_type: String,
-    txid: String,
+    transaction_id: String,
     round: u64,
     min_round: u64,
     max_round: u64,
@@ -807,7 +809,7 @@ async fn indexer_search_for_transactions_rekey(
             opt_str(&note_prefix),
             opt_str(&tx_type),
             opt_str(&sig_type),
-            opt_tx_id(&txid).as_ref(),
+            opt_transaction_id(&transaction_id).as_ref(),
             opt_u64(round),
             opt_u64(min_round),
             opt_u64(max_round),
@@ -982,14 +984,14 @@ async fn indexer_lookup_application_logs(
     max_round: u64,
     next: String,
     sender: String,
-    txid: String,
+    transaction_id: String,
 ) {
     let _ = indexer(w)
         .lookup_application_logs_by_id(
             AppId(application_id),
             opt_u64(limit),
             opt_str(&next),
-            opt_tx_id(&txid).as_ref(),
+            opt_transaction_id(&transaction_id).as_ref(),
             opt_u64(min_round),
             opt_u64(max_round),
             opt_str(&sender),

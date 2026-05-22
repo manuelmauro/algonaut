@@ -45,7 +45,7 @@ int 1
     let compiled_clear_program = algod.teal_compile(clear_program, SourceMap::Skip).await?;
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building CreateApplication transaction");
     let t = CreateApplication::new(
@@ -58,7 +58,7 @@ int 1
     .build(&params)?;
 
     info!("signing transaction");
-    let signed_t = alice.sign_transaction(t)?;
+    let signed_t = alice.sign(t)?;
 
     info!("broadcasting transaction and waiting for finality");
     let pending_t = algod.submit(&signed_t).await?.confirm().await?;

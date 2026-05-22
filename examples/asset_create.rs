@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("creator: {:?}", alice.address());
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building CreateAsset transaction");
     let t = CreateAsset::new(alice.address(), 100, 2, false)
@@ -37,12 +37,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("signing transaction");
     // we need to sign the transaction to prove that we own the sender address
-    let signed_t = alice.sign_transaction(t)?;
+    let signed_t = alice.sign(t)?;
 
     info!("broadcasting transaction");
     // broadcast the transaction to the network and wait for confirmation
     let pending = algod.submit(&signed_t).await?;
-    info!("transaction ID: {}", pending.tx_id());
+    info!("transaction ID: {}", pending.transaction_id());
 
     info!("waiting for transaction finality");
     let pending_t = pending.confirm().await?;

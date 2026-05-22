@@ -1,6 +1,6 @@
 use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
-use algonaut_core::{Address, MicroAlgos, Round, TxId};
+use algonaut_core::{Address, MicroAlgos, Round, TransactionId};
 use algonaut_transaction::Pay;
 use cucumber::{given, then, when};
 use rand::Rng;
@@ -100,7 +100,7 @@ async fn wallet_information(w: &mut World) -> Result<(), Box<dyn Error>> {
 async fn suggested_params(w: &mut World) -> Result<(), Box<dyn Error>> {
     let algod = w.algod.as_ref().unwrap();
 
-    w.tx_params = Some(algod.txn_params().await?);
+    w.suggested_params = Some(algod.suggested_params().await?);
 
     Ok(())
 }
@@ -128,7 +128,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
 
     let sender_account = account_from_kmd_response(&sender_key)?;
 
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let tx = Pay::new(
         sender_address,
         sender_account.address(),
@@ -136,7 +136,7 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     )
     .build(&params)?;
 
-    let s_tx = sender_account.sign_transaction(tx)?;
+    let s_tx = sender_account.sign(tx)?;
 
     algod.submit(&s_tx).await?.confirm().await?;
 
@@ -162,11 +162,11 @@ async fn i_sign_and_submit_the_transaction_saving_the_tx_id_if_there_is_an_error
     let transient_account = w.transient_account.as_ref().unwrap();
     let tx = w.tx.as_ref().unwrap();
 
-    let s_tx = transient_account.sign_transaction(tx.clone()).unwrap();
+    let s_tx = transient_account.sign(tx.clone()).unwrap();
 
-    match algod.send_txn(&s_tx).await {
+    match algod.send(&s_tx).await {
         Ok(response) => {
-            w.tx_id = Some(TxId(response.tx_id));
+            w.transaction_id = Some(TransactionId(response.tx_id));
         }
         Err(e) => {
             assert!(e.to_string().contains(&err));
@@ -179,10 +179,10 @@ async fn i_sign_and_submit_the_transaction_saving_the_tx_id_if_there_is_an_error
 #[when(expr = "I wait for the transaction to be confirmed.")]
 async fn i_wait_for_the_transaction_to_be_confirmed(w: &mut World) {
     let algod = w.algod.as_ref().expect("algod not set");
-    let tx_id = w.tx_id.as_ref().expect("tx id not set");
+    let transaction_id = w.transaction_id.as_ref().expect("tx id not set");
 
     algod
-        .pending_submission(tx_id)
+        .pending_submission(transaction_id)
         .confirm()
         .await
         .expect("couldn't get pending tx");

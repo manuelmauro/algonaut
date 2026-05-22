@@ -52,7 +52,7 @@ async fn i_build_an_application_transaction(
         .map(AssetId)
         .collect();
 
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     let tx = match operation.as_str() {
         "create" => {
@@ -154,10 +154,10 @@ async fn i_build_an_application_transaction(
 #[when(expr = "I remember the new application ID.")]
 async fn i_remember_the_new_application_id(w: &mut World) {
     let algod = w.algod.as_ref().unwrap();
-    let tx_id = w.tx_id.as_ref().unwrap();
+    let transaction_id = w.transaction_id.as_ref().unwrap();
     let app_ids: &mut Vec<AppId> = w.app_ids.as_mut();
 
-    let p_tx = algod.pending_txn(tx_id).await.unwrap();
+    let p_tx = algod.pending_transaction(transaction_id).await.unwrap();
     assert!(p_tx.application_index.is_some());
     let app_id = AppId(p_tx.application_index.unwrap());
 

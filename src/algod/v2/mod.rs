@@ -15,7 +15,9 @@ use algonaut_algod::{
         TealDisassemble200Response, TealDryrun200Response, Version,
     },
 };
-use algonaut_core::{Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, ToMsgPack, TxId};
+use algonaut_core::{
+    Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, ToMsgPack, TransactionId,
+};
 use algonaut_encoding::decode_base64;
 use algonaut_model::client_types::{NodeStatus, SuggestedParams, Supply};
 use algonaut_transaction::SignedTransaction;
@@ -230,7 +232,10 @@ impl Algod {
     }
 
     /// Get the top level transaction IDs for the block on the given round.
-    pub async fn block_txids(&self, round: u64) -> Result<GetBlockTxids200Response, Error> {
+    pub async fn block_transaction_ids(
+        &self,
+        round: u64,
+    ) -> Result<GetBlockTxids200Response, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block_txids(&self.configuration, round)
                 .await
@@ -285,11 +290,14 @@ impl Algod {
 
     /// Get a ledger delta for a given transaction group, identified by the ID
     /// of the first transaction in the group.
-    pub async fn txn_group_state_delta(&self, id: &TxId) -> Result<serde_json::Value, Error> {
+    pub async fn transaction_group_state_delta(
+        &self,
+        transaction_id: &TransactionId,
+    ) -> Result<serde_json::Value, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_ledger_state_delta_for_transaction_group(
                 &self.configuration,
-                id.as_str(),
+                transaction_id.as_str(),
                 None,
             )
             .await
@@ -298,7 +306,7 @@ impl Algod {
     }
 
     /// Get ledger deltas for every transaction group in a given round.
-    pub async fn txn_group_state_deltas_for_round(
+    pub async fn transaction_group_state_deltas_for_round(
         &self,
         round: u64,
     ) -> Result<GetTransactionGroupLedgerStateDeltasForRound200Response, Error> {
@@ -331,7 +339,7 @@ impl Algod {
     /// Get the list of pending transactions, sorted by priority, in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
     ///
     /// `format` selects the response encoding (`"json"` or `"msgpack"`).
-    pub async fn pending_txns(
+    pub async fn pending_transactions(
         &self,
         max: Option<u64>,
         format: Option<&str>,
@@ -348,7 +356,7 @@ impl Algod {
     /// Get the list of pending transactions by address, sorted by priority, in decreasing order, truncated at the end at MAX. If MAX = 0, returns all pending transactions.
     ///
     /// `format` selects the response encoding (`"json"` or `"msgpack"`).
-    pub async fn address_pending_txns(
+    pub async fn address_pending_transactions(
         &self,
         address: &Address,
         max: Option<u64>,
@@ -423,15 +431,15 @@ impl Algod {
     }
 
     /// Get a proof for a transaction in a block.
-    pub async fn txn_proof(
+    pub async fn transaction_proof(
         &self,
         round: u64,
-        txid: &TxId,
+        transaction_id: &TransactionId,
     ) -> Result<GetTransactionProof200Response, Error> {
         Ok(algonaut_algod::apis::public_api::get_transaction_proof(
             &self.configuration,
             round,
-            txid.as_str(),
+            transaction_id.as_str(),
             None,
             None,
         )
@@ -467,11 +475,14 @@ impl Algod {
     }
 
     /// Given a transaction ID of a recently submitted transaction, it returns information about it.  There are several cases when this might succeed: - transaction committed (committed round > 0) - transaction still in the pool (committed round = 0, pool error = \"\") - transaction removed from pool due to error (committed round = 0, pool error != \"\") Or the transaction may have happened sufficiently long ago that the node no longer remembers it, and this will return an error.
-    pub async fn pending_txn(&self, txid: &TxId) -> Result<PendingTransactionResponse, Error> {
+    pub async fn pending_transaction(
+        &self,
+        transaction_id: &TransactionId,
+    ) -> Result<PendingTransactionResponse, Error> {
         Ok(
             algonaut_algod::apis::public_api::pending_transaction_information(
                 &self.configuration,
-                txid.as_str(),
+                transaction_id.as_str(),
                 None,
             )
             .await
@@ -480,49 +491,55 @@ impl Algod {
     }
 
     /// Broadcasts a raw transaction or transaction group to the network.
-    pub async fn send_raw_txn(&self, rawtxn: &[u8]) -> Result<RawTransaction200Response, Error> {
+    pub async fn send_raw(&self, raw: &[u8]) -> Result<RawTransaction200Response, Error> {
         Ok(
-            algonaut_algod::apis::public_api::raw_transaction(&self.configuration, rawtxn)
+            algonaut_algod::apis::public_api::raw_transaction(&self.configuration, raw)
                 .await
                 .map_err(Into::<AlgodError>::into)?,
         )
     }
 
     /// Broadcasts a transaction to the network.
-    pub async fn send_txn(
+    pub async fn send(
         &self,
-        txn: &SignedTransaction,
+        transaction: &SignedTransaction,
     ) -> Result<RawTransaction200Response, Error> {
-        self.send_raw_txn(&txn.to_msg_pack()?).await
+        self.send_raw(&transaction.to_msg_pack()?).await
     }
 
     /// Broadcasts a transaction group to the network.
     ///
     /// Atomic if the transactions share a [group](algonaut_transaction::transaction::Transaction::group)
-    pub async fn send_txns(
+    pub async fn send_transactions(
         &self,
-        txns: &[SignedTransaction],
+        transactions: &[SignedTransaction],
     ) -> Result<RawTransaction200Response, Error> {
         let mut bytes = vec![];
-        for t in txns {
+        for t in transactions {
             bytes.push(t.to_msg_pack()?);
         }
-        self.send_raw_txn(&bytes.concat()).await
+        self.send_raw(&bytes.concat()).await
     }
 
     /// Wrap an existing transaction id in a [`PendingSubmission`] so callers
     /// that already have the id (e.g. they submitted earlier and stashed it)
     /// can still poll for finality with the shared
     /// [`PendingSubmission::confirm`] implementation.
-    pub fn pending_submission(&self, tx_id: &TxId) -> PendingSubmission {
-        PendingSubmission::new(self.clone(), tx_id.clone())
+    pub fn pending_submission(&self, transaction_id: &TransactionId) -> PendingSubmission {
+        PendingSubmission::new(self.clone(), transaction_id.clone())
     }
 
     /// Broadcasts a single signed transaction and returns a
     /// [`PendingSubmission`] handle that polls algod for finality.
-    pub async fn submit(&self, txn: &SignedTransaction) -> Result<PendingSubmission, Error> {
-        let resp = self.send_txn(txn).await?;
-        Ok(PendingSubmission::new(self.clone(), TxId::from(resp.tx_id)))
+    pub async fn submit(
+        &self,
+        transaction: &SignedTransaction,
+    ) -> Result<PendingSubmission, Error> {
+        let resp = self.send(transaction).await?;
+        Ok(PendingSubmission::new(
+            self.clone(),
+            TransactionId::from(resp.tx_id),
+        ))
     }
 
     /// Broadcasts a transaction group and returns a [`PendingSubmission`]
@@ -530,46 +547,55 @@ impl Algod {
     ///
     /// Atomic if the transactions share a
     /// [group](algonaut_transaction::transaction::Transaction::group).
-    pub async fn submit_txns(
+    pub async fn submit_transactions(
         &self,
-        txns: &[SignedTransaction],
+        transactions: &[SignedTransaction],
     ) -> Result<PendingSubmission, Error> {
-        let resp = self.send_txns(txns).await?;
-        Ok(PendingSubmission::new(self.clone(), TxId::from(resp.tx_id)))
+        let resp = self.send_transactions(transactions).await?;
+        Ok(PendingSubmission::new(
+            self.clone(),
+            TransactionId::from(resp.tx_id),
+        ))
     }
 
     /// Broadcasts already-encoded msgpack transaction bytes and returns a
     /// [`PendingSubmission`] handle for the returned transaction id.
-    pub async fn submit_raw(&self, rawtxn: &[u8]) -> Result<PendingSubmission, Error> {
-        let resp = self.send_raw_txn(rawtxn).await?;
-        Ok(PendingSubmission::new(self.clone(), TxId::from(resp.tx_id)))
+    pub async fn submit_raw(&self, raw: &[u8]) -> Result<PendingSubmission, Error> {
+        let resp = self.send_raw(raw).await?;
+        Ok(PendingSubmission::new(
+            self.clone(),
+            TransactionId::from(resp.tx_id),
+        ))
     }
 
     /// Broadcasts a raw transaction or transaction group to the network without
     /// performing ahead-of-time checks. Returns as soon as the request is
     /// accepted, without a transaction ID.
-    pub async fn send_raw_txn_async(&self, rawtxn: &[u8]) -> Result<(), Error> {
+    pub async fn send_raw_async(&self, raw: &[u8]) -> Result<(), Error> {
         Ok(
-            algonaut_algod::apis::public_api::raw_transaction_async(&self.configuration, rawtxn)
+            algonaut_algod::apis::public_api::raw_transaction_async(&self.configuration, raw)
                 .await
                 .map_err(Into::<AlgodError>::into)?,
         )
     }
 
     /// Broadcasts a transaction to the network without ahead-of-time checks.
-    pub async fn send_txn_async(&self, txn: &SignedTransaction) -> Result<(), Error> {
-        self.send_raw_txn_async(&txn.to_msg_pack()?).await
+    pub async fn send_async(&self, transaction: &SignedTransaction) -> Result<(), Error> {
+        self.send_raw_async(&transaction.to_msg_pack()?).await
     }
 
     /// Broadcasts a transaction group to the network without ahead-of-time checks.
     ///
     /// Atomic if the transactions share a [group](algonaut_transaction::transaction::Transaction::group)
-    pub async fn send_txns_async(&self, txns: &[SignedTransaction]) -> Result<(), Error> {
+    pub async fn send_transactions_async(
+        &self,
+        transactions: &[SignedTransaction],
+    ) -> Result<(), Error> {
         let mut bytes = vec![];
-        for t in txns {
+        for t in transactions {
             bytes.push(t.to_msg_pack()?);
         }
-        self.send_raw_txn_async(&bytes.concat()).await
+        self.send_raw_async(&bytes.concat()).await
     }
 
     /// Sets the minimum sync round on the ledger.
@@ -582,7 +608,7 @@ impl Algod {
     }
 
     /// Simulates a raw transaction or transaction group as it would be evaluated on the network. WARNING: This endpoint is experimental and under active development. There are no guarantees in terms of functionality or future support.
-    pub async fn simulate_txns(
+    pub async fn simulate(
         &self,
         request: SimulateRequest,
     ) -> Result<SimulateTransaction200Response, Error> {
@@ -669,7 +695,7 @@ impl Algod {
     }
 
     /// Get parameters for constructing a new transaction.
-    pub async fn txn_params(&self) -> Result<SuggestedParams, Error> {
+    pub async fn suggested_params(&self) -> Result<SuggestedParams, Error> {
         let raw = algonaut_algod::apis::public_api::transaction_params(&self.configuration)
             .await
             .map_err(Into::<AlgodError>::into)?;

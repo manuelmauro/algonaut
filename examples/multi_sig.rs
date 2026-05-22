@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("multisig address: {}", multisig_address.address());
 
     info!("retrieving suggested params");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
 
     info!("building Pay transaction");
     let t = Pay::new(
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("broadcasting transaction");
     // the transaction will fail because the multisig address has no funds
-    let send_response = algod.send_txn(&signed_t).await;
+    let send_response = algod.send(&signed_t).await;
     info!("response: {:?}", send_response);
 
     Ok(())

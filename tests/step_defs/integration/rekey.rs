@@ -22,9 +22,9 @@ async fn i_generate_a_key_using_kmd_for_rekeying_and_fund_it(
     let funder = accounts[0];
     let funder_key = kmd.export_key(handle, password, &funder).await?;
     let funder_account = Account::from_seed(funder_key.private_key[0..32].try_into()?);
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let tx = Pay::new(funder, new_addr, MicroAlgos(10_000_000)).build(&params)?;
-    let signed = funder_account.sign_transaction(tx)?;
+    let signed = funder_account.sign(tx)?;
     algod.submit(&signed).await?.confirm().await?;
 
     w.rekey_target = Some(new_addr);
@@ -40,7 +40,7 @@ async fn default_transaction_with_parameters_and_rekeying_key(
     let algod = w.algod.as_ref().expect("algod not set");
     let accounts = w.accounts.as_ref().expect("accounts not set");
     let rekey_target = w.rekey_target.expect("rekey target not generated");
-    let params = algod.txn_params().await?;
+    let params = algod.suggested_params().await?;
     let note = if note_b64.is_empty() {
         Vec::new()
     } else {
