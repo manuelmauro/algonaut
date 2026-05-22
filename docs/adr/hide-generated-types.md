@@ -2,7 +2,8 @@
 id: hide-generated-types
 title: Hand-named response types at the client edge (first cut)
 abstract: New `algonaut_model::client_types` module with hand-named wrappers — `SuggestedParams`, `NodeStatus`, `Supply` — replacing the OpenAPI-generator names (`TransactionParams200Response`, `GetStatus200Response`, `GetSupply200Response`) on the most-touched algod methods. `TransactionParams` trait moves from `algonaut_transaction::builder` to `algonaut_model::client_types` so `SuggestedParams` plugs into every `Builder::build(&params)` site. First slice of decision item D3 — the full coverage is staged across follow-up PRs.
-status: proposed
+status: superseded
+superseded_by: relocate-generated-models
 date: 2026-05-20
 deciders: []
 tags: [api, ergonomics, type-safety]
@@ -12,9 +13,16 @@ tags: [api, ergonomics, type-safety]
 
 ## Status
 
-Proposed. Implements **the first slice of decision item D3** from
-[`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md).
-Subsequent slices ship per-endpoint as separate PRs.
+Superseded by [`relocate-generated-models`](relocate-generated-models.md).
+This was the first slice of decision item D3 from
+[`ideal-type-safe-ergonomic-api`](ideal-type-safe-ergonomic-api.md) — three
+hand-named wrappers (`SuggestedParams`, `NodeStatus`, `Supply`). Carrying the
+wrap-every-response strategy to completion did not scale (it would require
+hand-re-typing the ~142-type generated graph), so it is replaced by relocating
+the generated models into `algonaut_model` and renaming the response envelopes
+at generation. The three wrappers fold back into generation (their domain types
+move to `type-overrides.json`); the merged first cut stays in place until that
+work lands.
 
 ## Context
 
