@@ -11,12 +11,10 @@
 //! use algonaut::transaction::SignedTransaction;
 //!
 //! let req = DryrunRequestBuilder::from_signed_txns(&signed)?
-//!     .add_compiled_source(compiled, "approv", 0, 0)
+//!     .add_text_source("#pragma version 8\nint 1", "approv", 0, 0)
 //!     .build()?;
 //! ```
 
-use algonaut_core::CompiledTeal;
-use algonaut_encoding::Bytes;
 use algonaut_model::algod::{Account, Application, DryrunRequest, DryrunSource};
 use algonaut_model::transaction::ApiSignedTransaction;
 use algonaut_transaction::SignedTransaction;
@@ -81,31 +79,16 @@ impl DryrunRequestBuilder {
         self
     }
 
-    /// Append a compiled TEAL source for use at `txn_index` /
-    /// `app_index`. `field_name` is one of `"lsig"`, `"approv"`, or
-    /// `"clearp"`.
-    pub fn add_compiled_source(
-        mut self,
-        program: CompiledTeal,
-        field_name: impl Into<String>,
-        txn_index: u64,
-        app_index: u64,
-    ) -> Self {
-        self.sources.push(DryrunSource {
-            app_index,
-            field_name: field_name.into(),
-            source: Bytes(program.0),
-            txn_index,
-        });
-        self
-    }
-
     /// Append a TEAL source (raw text) for use at `txn_index` /
-    /// `app_index`. Algod will compile the source as part of the
-    /// dryrun.
+    /// `app_index`. Algod compiles the source as part of the dryrun.
+    /// `field_name` is one of `"lsig"`, `"approv"`, or `"clearp"`.
+    ///
+    /// `DryrunSource.source` is TEAL source *text*, not a compiled program —
+    /// to dryrun an already-compiled program put it in the transaction's
+    /// LogicSig or the application's approval/clear programs instead.
     pub fn add_text_source(
         mut self,
-        source: impl Into<Vec<u8>>,
+        source: impl Into<String>,
         field_name: impl Into<String>,
         txn_index: u64,
         app_index: u64,
@@ -113,7 +96,7 @@ impl DryrunRequestBuilder {
         self.sources.push(DryrunSource {
             app_index,
             field_name: field_name.into(),
-            source: Bytes(source.into()),
+            source: source.into(),
             txn_index,
         });
         self
@@ -206,16 +189,16 @@ mod tests {
 
     #[test]
     fn add_source_round_trip() {
-        let program = CompiledTeal(vec![0x02, 0x20, 0x01, 0x01, 0x22]);
+        let source = "#pragma version 8\nint 1";
         let req = DryrunRequestBuilder::new()
-            .add_compiled_source(program.clone(), field_name::APPROV, 0, 0)
+            .add_text_source(source, field_name::APPROV, 0, 0)
             .round(123)
             .protocol_version("future")
             .build();
 
         assert_eq!(req.sources.len(), 1);
         assert_eq!(req.sources[0].field_name, "approv");
-        assert_eq!(req.sources[0].source.0, program.0);
+        assert_eq!(req.sources[0].source, source);
         assert_eq!(req.round, 123);
         assert_eq!(req.protocol_version, "future");
     }

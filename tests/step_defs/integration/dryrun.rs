@@ -2,7 +2,7 @@ use crate::step_defs::integration::world::World;
 use algonaut::dryrun::{DryrunRequestBuilder, field_name, result};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_encoding::Bytes;
-use algonaut_model::algod::{Application, ApplicationParams, DryrunSource};
+use algonaut_model::algod::{Application, ApplicationParams, ApplicationStateSchema, DryrunSource};
 use algonaut_transaction::{Pay, builder::TransactionParams, contract_account::ContractAccount};
 use cucumber::{given, then, when};
 use std::fs;
@@ -68,7 +68,7 @@ async fn i_dryrun_a_program(w: &mut World, kind: String, program: String) {
             let src = DryrunSource {
                 app_index: 0,
                 field_name: field_name::LSIG.to_string(),
-                source: Bytes(bytes),
+                source: String::from_utf8(bytes).expect("teal source must be utf8"),
                 txn_index: 0,
             };
             (signed, vec![src])
@@ -119,7 +119,7 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::alg
                     vec![DryrunSource {
                         app_index: 0,
                         field_name: field_name::LSIG.to_string(),
-                        source: Bytes(raw.clone()),
+                        source: String::from_utf8(raw.clone()).expect("teal source must be utf8"),
                         txn_index: 0,
                     }],
                 )
@@ -148,7 +148,7 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::alg
                 let src = DryrunSource {
                     app_index: DRYRUN_APP_ID,
                     field_name: kind.to_string(),
-                    source: Bytes(raw),
+                    source: String::from_utf8(raw).expect("teal source must be utf8"),
                     txn_index: 0,
                 };
                 (
@@ -158,6 +158,16 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::alg
                 )
             };
 
+            // The dryrun program writes global/local state, so the app must
+            // declare a schema with room for those writes — otherwise algod
+            // rejects with "store … count exceeds schema … count 0" and the
+            // expected deltas never appear.
+            let schema = || {
+                Box::new(ApplicationStateSchema {
+                    num_byte_slice: 64,
+                    num_uint: 64,
+                })
+            };
             let app = Application {
                 id: DRYRUN_APP_ID,
                 params: Box::new(ApplicationParams {
@@ -166,8 +176,8 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::alg
                     clear_state_program: Bytes(clear),
                     extra_program_pages: None,
                     global_state: None,
-                    global_state_schema: None,
-                    local_state_schema: None,
+                    global_state_schema: Some(schema()),
+                    local_state_schema: Some(schema()),
                 }),
             };
 

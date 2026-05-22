@@ -381,3 +381,18 @@ where
     let s: Option<Vec<String>> = Deserialize::deserialize(deserializer)?;
     Ok(s.unwrap_or_default())
 }
+
+/// Deserialize a possibly-`null` value as `T::default()`.
+///
+/// algod returns `null` (rather than `[]`) for some array fields — e.g.
+/// `TealDryrun200Response.txns` when the dryrun reports a top-level error —
+/// which a plain `Vec<T>` field cannot decode. Pairing this with
+/// `#[serde(default, deserialize_with = "deserialize_null_default")]` maps both
+/// an explicit `null` and a missing field onto the empty/default value.
+pub fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Default + Deserialize<'de>,
+{
+    Ok(Option::<T>::deserialize(deserializer)?.unwrap_or_default())
+}

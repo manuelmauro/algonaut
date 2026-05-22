@@ -10,8 +10,6 @@
 
 use serde::{Deserialize, Serialize};
 
-use algonaut_encoding::Bytes;
-
 /// DryrunSource : DryrunSource is TEAL source text that gets uploaded, compiled, and inserted into transactions or application state.
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
@@ -21,16 +19,17 @@ pub struct DryrunSource {
     /// FieldName is what kind of sources this is. If lsig then it goes into the transactions[this.TxnIndex].LogicSig. If approv or clearp it goes into the Approval Program or Clear State Program of application[this.AppIndex].
     #[serde(rename = "field-name")]
     pub field_name: String,
-    /// TEAL program binary
+    /// TEAL source text. algod uploads and compiles it as part of the dryrun;
+    /// the spec types this as a plain `string`, not base64 bytes.
     #[serde(rename = "source")]
-    pub source: Bytes,
+    pub source: String,
     #[serde(rename = "txn-index")]
     pub txn_index: u64,
 }
 
 impl DryrunSource {
     /// DryrunSource is TEAL source text that gets uploaded, compiled, and inserted into transactions or application state.
-    pub fn new(app_index: u64, field_name: String, source: Bytes, txn_index: u64) -> DryrunSource {
+    pub fn new(app_index: u64, field_name: String, source: String, txn_index: u64) -> DryrunSource {
         DryrunSource {
             app_index,
             field_name,
