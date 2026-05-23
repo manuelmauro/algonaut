@@ -2,13 +2,19 @@ use crate::step_defs::integration::world::World;
 use algonaut::dryrun::{DryrunRequestBuilder, field_name, result};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_encoding::Bytes;
-use algonaut_model::algod::{Application, ApplicationParams, ApplicationStateSchema, DryrunSource};
+use algonaut_model::algod::{
+    Account, Application, ApplicationLocalState, ApplicationParams, ApplicationStateSchema,
+    DryrunSource,
+};
 use algonaut_transaction::{Pay, builder::TransactionParams, contract_account::ContractAccount};
 use cucumber::{given, then, when};
 use std::fs;
 
 const DRYRUN_APP_ID: u64 = 1;
 const NONEXISTENT_SENDER: &str = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ";
+// Secondary account address used in localwrite.teal tests for accounts[1].
+// This address is hardcoded in the shared algorand-sdk-testing feature files.
+const SECONDARY_ACCOUNT: &str = "6Z3C3LDVWGMX23BMSYMANACQOSINPFIRF77H7N3AWJZYV6OH6GWTJKVMXY";
 
 fn read_program(name: &str) -> Vec<u8> {
     fs::read(format!("tests/features/resources/{name}"))
@@ -182,11 +188,23 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::alg
             };
 
             // Build an app-call txn referencing app id 1.
+            // Include the secondary account so that localwrite.teal can write
+            // to accounts[1].
+            // For clearp, use ClearApplication (on_complete=ClearState);
+            // for approv, use CallApplication (on_complete=NoOp).
             let params = DryrunParams;
-            let txn =
-                algonaut_transaction::builder::CallApplication::new(creator, AppId(DRYRUN_APP_ID))
+            let secondary: Address = SECONDARY_ACCOUNT.parse().expect("secondary address");
+            let txn = if kind == "clearp" {
+                algonaut_transaction::builder::ClearApplication::new(creator, AppId(DRYRUN_APP_ID))
+                    .accounts(vec![secondary])
                     .build(&params)
-                    .expect("app call txn");
+                    .expect("app call txn")
+            } else {
+                algonaut_transaction::builder::CallApplication::new(creator, AppId(DRYRUN_APP_ID))
+                    .accounts(vec![secondary])
+                    .build(&params)
+                    .expect("app call txn")
+            };
 
             // Sign as a no-op contract account (the dryrun endpoint does
             // not validate signatures).
@@ -194,8 +212,46 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::alg
                 ContractAccount::new(CompiledTeal(vec![0x02, 0x20, 0x01, 0x01, 0x22]));
             let signed = placeholder.sign(txn, vec![]).unwrap();
 
+            // For local-state writes to work, accounts must be "opted in" to
+            // the app. The cucumber scenarios assert local deltas at specific
+            // account indices:
+            //   - approv tests check index 0 (the sender/creator)
+            //   - clearp tests check index 1 (a secondary account)
+            // Following the Python SDK pattern, we supply two accounts both
+            // with apps_local_state for our synthetic app id.
+            let local_state_schema = ApplicationStateSchema {
+                num_byte_slice: 64,
+                num_uint: 64,
+            };
+            let make_opted_in_account = |addr: &str| Account {
+                address: addr.to_string(),
+                amount: 1_000_000,
+                amount_without_pending_rewards: 1_000_000,
+                min_balance: 100_000,
+                pending_rewards: 0,
+                rewards: 0,
+                round: 0,
+                status: "Offline".to_string(),
+                total_apps_opted_in: 1,
+                total_assets_opted_in: 0,
+                total_created_apps: 0,
+                total_created_assets: 0,
+                apps_local_state: Some(vec![ApplicationLocalState::new(
+                    DRYRUN_APP_ID,
+                    local_state_schema.clone(),
+                )]),
+                ..Default::default()
+            };
+
+            // Account 0: the creator/sender (NONEXISTENT_SENDER / zero address)
+            // Account 1: the secondary account (from the shared SDK test fixtures)
+            let accounts = vec![
+                make_opted_in_account(&creator.to_string()),
+                make_opted_in_account(SECONDARY_ACCOUNT),
+            ];
+
             let mut builder = DryrunRequestBuilder::from_signed_txns(&[signed]).unwrap();
-            builder = builder.apps(vec![app]);
+            builder = builder.apps(vec![app]).accounts(accounts);
             for src in sources {
                 builder = builder.add_source(src);
             }
@@ -211,12 +267,21 @@ async fn dryrun_test_case(w: &mut World, program: String, kind: String) {
     let request = build_dryrun_test_case(&program, &kind);
     let resp = algod.teal_dryrun(Some(request)).await.expect("teal_dryrun");
     w.dryrun_response = Some(resp);
+    w.dryrun_kind = Some(kind);
 }
 
 #[then(regex = r#"^status assert of "([^"]+)" is succeed$"#)]
 async fn status_assert(w: &mut World, expected: String) {
     let resp = w.dryrun_response.as_ref().expect("dryrun response not set");
-    let status = result::first_status(resp).unwrap_or("");
+    let kind = w.dryrun_kind.as_deref().unwrap_or("");
+    let txn = resp.txns.first().expect("no dryrun txn results");
+
+    // For app call tests (approv/clearp), check app_call_status;
+    // for logic sig tests (lsig), check logic_sig_status.
+    let status = match kind {
+        "approv" | "clearp" => result::app_call_status(txn).unwrap_or(""),
+        _ => result::logic_sig_status(txn).unwrap_or(""),
+    };
     assert_eq!(status, expected, "dryrun status mismatch");
 }
 

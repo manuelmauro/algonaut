@@ -92,6 +92,8 @@ pub struct World {
     pub asset_second: Option<Address>,
 
     pub dryrun_response: Option<DryrunResponse>,
+    /// The kind of dryrun test: "lsig", "approv", or "clearp".
+    pub dryrun_kind: Option<String>,
 
     pub simulate_request: Option<SimulateRequest>,
     /// Raw response from a direct `algod.simulate` call; the deep
