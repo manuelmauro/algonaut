@@ -11,7 +11,8 @@ fn read_resource(name: &str) -> Vec<u8> {
 }
 
 fn parse_status_from_error(err: &str) -> u16 {
-    regex::Regex::new(r"status:\s*(\d+)")
+    // Match "Http error: {status}" format from RequestErrorDetails.
+    regex::Regex::new(r"Http error: (\d+)")
         .unwrap()
         .captures(err)
         .and_then(|c| c.get(1))
