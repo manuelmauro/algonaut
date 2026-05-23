@@ -48,6 +48,9 @@ pub struct World {
     pub tx_signer: Option<Arc<dyn Signer>>,
     pub tx_with_signer: Option<TransactionWithSigner>,
     pub group_builder: Option<AtomicGroupBuilder>,
+    /// A backup of group_builder preserved when building/signing, so that
+    /// "I clone the composer" can restore to the pre-build state.
+    pub group_builder_backup: Option<AtomicGroupBuilder>,
     pub unsigned_group: Option<UnsignedAtomicGroup>,
     pub signed_group: Option<SignedAtomicGroup>,
     pub tx_composer_methods: Option<Vec<AbiMethod>>,
@@ -108,15 +111,17 @@ pub struct World {
 impl World {
     /// Take the staged group as an [`UnsignedAtomicGroup`], building it from the
     /// [`AtomicGroupBuilder`] if `build` hasn't been called yet.
+    ///
+    /// Before consuming `group_builder`, a clone is saved to `group_builder_backup`
+    /// so that "I clone the composer" can restore to the pre-build state.
     pub fn take_unsigned_group(&mut self) -> UnsignedAtomicGroup {
         if let Some(unsigned) = self.unsigned_group.take() {
             unsigned
         } else {
-            self.group_builder
-                .take()
-                .expect("no composer in progress")
-                .build()
-                .expect("group build failed")
+            let builder = self.group_builder.take().expect("no composer in progress");
+            // Backup the builder so clone can restore to the pre-build state.
+            self.group_builder_backup = Some(builder.clone());
+            builder.build().expect("group build failed")
         }
     }
 
