@@ -367,7 +367,7 @@ async fn algod_assert_pending_txn_sender(w: &mut UnitWorld, sender: String) {
 async fn algod_assert_pending_txns(w: &mut UnitWorld, len: usize, idx: usize, sender: String) {
     let UnitResponse::PendingTransactions(resp) = w.last_response.as_ref().expect("no response")
     else {
-        panic!("last response is not a GetPendingTransactionsByAddress200Response");
+        panic!("last response is not a PendingTransactions");
     };
     assert_eq!(resp.top_transactions.len(), len, "pending tx array length");
     let actual = txn_sender(&resp.top_transactions[idx]);
@@ -389,7 +389,7 @@ async fn algod_assert_pending_txns_by_address(
 #[then(regex = r#"^the parsed Send Raw Transaction response should have txid "([^"]*)"$"#)]
 async fn algod_assert_send_raw_txn(w: &mut UnitWorld, transaction_id: String) {
     let UnitResponse::RawTransaction(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a RawTransaction200Response");
+        panic!("last response is not a SubmitResponse");
     };
     assert_eq!(resp.tx_id, transaction_id, "raw transaction txid mismatch");
 }
@@ -397,7 +397,7 @@ async fn algod_assert_send_raw_txn(w: &mut UnitWorld, transaction_id: String) {
 #[then(regex = r"^the parsed Node Status response should have a last round of (\d+)$")]
 async fn algod_assert_node_status(w: &mut UnitWorld, round: u64) {
     let UnitResponse::Status(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a GetStatus200Response");
+        panic!("last response is not a NodeStatus");
     };
     assert_eq!(resp.last_round.0, round, "node status last round mismatch");
 }
@@ -412,7 +412,7 @@ async fn algod_assert_status_after_block(w: &mut UnitWorld, round: u64) {
 )]
 async fn algod_assert_ledger_supply(w: &mut UnitWorld, total: u64, online: u64, round: u64) {
     let UnitResponse::Supply(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a GetSupply200Response");
+        panic!("last response is not a Supply");
     };
     assert_eq!(
         resp.total_money.0, total,
@@ -487,7 +487,7 @@ async fn algod_assert_get_block_heartbeat(w: &mut UnitWorld, hbaddress: String) 
 async fn algod_assert_suggested_params(w: &mut UnitWorld, round: u64) {
     let UnitResponse::TransactionParams(resp) = w.last_response.as_ref().expect("no response")
     else {
-        panic!("last response is not a TransactionParams200Response");
+        panic!("last response is not a SuggestedParams");
     };
     assert_eq!(
         resp.last_round.0, round,
@@ -498,7 +498,7 @@ async fn algod_assert_suggested_params(w: &mut UnitWorld, round: u64) {
 #[then(regex = r#"^the parsed Dryrun Response should have global delta "([^"]*)" with (\d+)$"#)]
 async fn algod_assert_dryrun(w: &mut UnitWorld, key: String, action: u64) {
     let UnitResponse::Dryrun(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a TealDryrun200Response");
+        panic!("last response is not a DryrunResponse");
     };
     let deltas = resp.txns[0]
         .global_delta
@@ -516,7 +516,7 @@ async fn algod_assert_dryrun(w: &mut UnitWorld, key: String, action: u64) {
 /// The pending-transaction fixtures arrive msgpack-encoded; the SDK decodes
 /// the inner `txn.snd` into an `Address`, which renders as the canonical
 /// base32-checksum string.
-fn txn_sender(header: &algonaut_algod::ext::transaction::TransactionHeader) -> String {
+fn txn_sender(header: &algonaut_model::algod::ext::transaction::TransactionHeader) -> String {
     header
         .txn
         .as_ref()
@@ -540,7 +540,7 @@ async fn indexer_assert_asset_balances(
     frozen: String,
 ) {
     let UnitResponse::AssetBalances(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a LookupAssetBalances200Response");
+        panic!("last response is not a AssetBalancesResponse");
     };
     assert_eq!(resp.current_round, round, "asset balances round mismatch");
     assert_eq!(resp.balances.len(), len, "asset balances array length");
@@ -618,7 +618,7 @@ async fn indexer_assert_lookup_block(w: &mut UnitWorld, prev_hash: String) {
 #[then(regex = r#"^the parsed LookupAccountByID response should have address "([^"]*)"$"#)]
 async fn indexer_assert_lookup_account(w: &mut UnitWorld, address: String) {
     let UnitResponse::IndexerAccount(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a LookupAccountById200Response");
+        panic!("last response is not a AccountResponse");
     };
     assert_eq!(resp.account.address, address, "account address mismatch");
 }
@@ -626,7 +626,7 @@ async fn indexer_assert_lookup_account(w: &mut UnitWorld, address: String) {
 #[then(regex = r"^the parsed LookupAssetByID response should have index (\d+)$")]
 async fn indexer_assert_lookup_asset(w: &mut UnitWorld, index: u64) {
     let UnitResponse::IndexerAsset(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a LookupAssetById200Response");
+        panic!("last response is not a AssetResponse");
     };
     assert_eq!(resp.asset.index, index, "asset index mismatch");
 }
@@ -642,7 +642,7 @@ async fn indexer_assert_search_accounts(
     address: String,
 ) {
     let UnitResponse::Accounts(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a SearchForAccounts200Response");
+        panic!("last response is not a AccountsResponse");
     };
     assert_eq!(resp.current_round, round, "search accounts round mismatch");
     assert_eq!(resp.accounts.len(), len, "search accounts array length");
@@ -670,7 +670,7 @@ async fn indexer_assert_search_accounts_auth(
     auth_addr: String,
 ) {
     let UnitResponse::Accounts(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a SearchForAccounts200Response");
+        panic!("last response is not a AccountsResponse");
     };
     assert_eq!(resp.current_round, round, "search accounts round mismatch");
     assert_eq!(resp.accounts.len(), len, "search accounts array length");
@@ -753,7 +753,7 @@ async fn indexer_assert_search_block_headers(
     round: u64,
 ) {
     let UnitResponse::BlockHeaders(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a SearchForBlockHeaders200Response");
+        panic!("last response is not a BlockHeadersResponse");
     };
     assert_eq!(resp.blocks.len(), len, "block headers array length");
     assert_eq!(resp.blocks[idx].round, round, "block header round mismatch");

@@ -17,11 +17,11 @@ use crate::apis::ResponseContent;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetLedgerStateDeltaError {
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status408(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status408(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -30,10 +30,10 @@ pub enum GetLedgerStateDeltaError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetSyncRoundError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -42,10 +42,10 @@ pub enum GetSyncRoundError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SetSyncRoundError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -54,10 +54,10 @@ pub enum SetSyncRoundError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum UnsetSyncRoundError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -120,7 +120,7 @@ pub async fn get_ledger_state_delta(
 /// Gets the minimum sync round for the ledger.
 pub async fn get_sync_round(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::GetSyncRound200Response, Error<GetSyncRoundError>> {
+) -> Result<algonaut_model::algod::SyncRound, Error<GetSyncRoundError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

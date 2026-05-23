@@ -26,11 +26,11 @@ pub enum ExperimentalCheckError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetLedgerStateDeltaError {
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status408(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status408(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -39,11 +39,11 @@ pub enum GetLedgerStateDeltaError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum RawTransactionAsyncError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
     Status404(),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }

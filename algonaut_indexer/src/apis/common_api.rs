@@ -23,7 +23,7 @@ pub enum MakeHealthCheckError {
 
 pub async fn make_health_check(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::HealthCheck, Error<MakeHealthCheckError>> {
+) -> Result<algonaut_model::indexer::HealthCheck, Error<MakeHealthCheckError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

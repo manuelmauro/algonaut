@@ -1,6 +1,6 @@
 use crate::step_defs::integration::world::World;
 use algonaut::simulate::SimulateRequestBuilder;
-use algonaut_algod::models::{
+use algonaut_model::algod::{
     SimulateRequest, SimulateRequestTransactionGroup, SimulateTransactionGroupResult,
 };
 use cucumber::{given, then, when};
@@ -21,7 +21,9 @@ async fn i_simulate_the_transaction(w: &mut World) {
         w.signed_tx.clone().expect("signed tx not set")
     };
 
-    let req = SimulateRequest::new(vec![SimulateRequestTransactionGroup::new(vec![st])]);
+    let api_st = algonaut_model::transaction::ApiSignedTransaction::try_from(st)
+        .expect("api signed-transaction conversion failed");
+    let req = SimulateRequest::new(vec![SimulateRequestTransactionGroup::new(vec![api_st])]);
     let resp = algod.simulate(req).await.expect("simulate failed");
     w.simulate_response = Some(resp);
     w.simulate_unsigned = false;
@@ -430,7 +432,7 @@ fn trace_unit_at<'a>(
     n: usize,
     trace_kind: &str,
     path_str: &str,
-) -> &'a algonaut_algod::models::SimulationOpcodeTraceUnit {
+) -> &'a algonaut_model::algod::SimulationOpcodeTraceUnit {
     let resp = w.simulate_response.as_ref().expect("no simulate response");
     let group = resp.txn_groups.first().expect("no group");
     let path: Vec<u64> = path_str
@@ -445,7 +447,7 @@ fn trace_unit_at<'a>(
         .exec_trace
         .as_deref()
         .expect("no exec-trace on txn-result");
-    let units: &[algonaut_algod::models::SimulationOpcodeTraceUnit] = match trace_kind {
+    let units: &[algonaut_model::algod::SimulationOpcodeTraceUnit] = match trace_kind {
         "approval" => trace.approval_program_trace.as_deref().unwrap_or(&[]),
         "clear-state" => trace.clear_state_program_trace.as_deref().unwrap_or(&[]),
         "logic-sig" => trace.logic_sig_trace.as_deref().unwrap_or(&[]),

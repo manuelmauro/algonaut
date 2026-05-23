@@ -98,21 +98,21 @@ fn indexer(w: &UnitWorld) -> &Indexer {
 /// Build an algod-openapi [`Configuration`] pointed at the mock server, used
 /// for the handful of endpoints whose extra query parameters the high-level
 /// [`Algod`] wrapper does not expose.
-fn algod_config(w: &UnitWorld) -> algonaut::openapi_algod::apis::configuration::Configuration {
+fn algod_config(w: &UnitWorld) -> algonaut_algod::apis::configuration::Configuration {
     let base = w
         .mock_server
         .as_ref()
         .expect("mock server not started")
         .base_url
         .clone();
-    algonaut::openapi_algod::apis::configuration::Configuration {
+    algonaut_algod::apis::configuration::Configuration {
         base_path: base,
         user_agent: Some("algonaut".to_owned()),
         client: reqwest::Client::new(),
         basic_auth: None,
         oauth_access_token: None,
         bearer_access_token: None,
-        api_key: Some(algonaut::openapi_algod::apis::configuration::ApiKey {
+        api_key: Some(algonaut_algod::apis::configuration::ApiKey {
             prefix: None,
             key: TOKEN.to_owned(),
         }),
@@ -196,7 +196,7 @@ async fn algod_pending_txn_information(w: &mut UnitWorld, transaction_id: String
     // `Algod::pending_transaction` hard-codes `format=None`; call the generated
     // endpoint directly so the `?format=` query parameter is emitted.
     let conf = algod_config(w);
-    let _ = algonaut::openapi_algod::apis::public_api::pending_transaction_information(
+    let _ = algonaut_algod::apis::public_api::pending_transaction_information(
         &conf,
         &transaction_id,
         opt_str(&format),
@@ -242,8 +242,7 @@ async fn algod_get_block(w: &mut UnitWorld, round: u64, format: String) {
     // `Algod::block` hard-codes `format=None`; call the generated endpoint
     // directly so the `?format=` query parameter under test is emitted.
     let conf = algod_config(w);
-    let _ =
-        algonaut::openapi_algod::apis::public_api::get_block(&conf, round, opt_str(&format)).await;
+    let _ = algonaut_algod::apis::public_api::get_block(&conf, round, opt_str(&format)).await;
 }
 
 #[when(regex = r#"^we make a GetAssetByID call for assetID (\d+)$"#)]
@@ -277,7 +276,7 @@ async fn algod_account_information_exclude(w: &mut UnitWorld, account: String, e
     // `Algod::account` hard-codes `exclude=None`; call the generated endpoint
     // directly to exercise the `?exclude=` query parameter.
     let conf = algod_config(w);
-    let _ = algonaut::openapi_algod::apis::public_api::account_information(
+    let _ = algonaut_algod::apis::public_api::account_information(
         &conf,
         &account,
         None,
@@ -291,7 +290,7 @@ async fn algod_account_information_exclude(w: &mut UnitWorld, account: String, e
 )]
 async fn algod_account_asset_information(w: &mut UnitWorld, account: String, asset_id: u64) {
     let conf = algod_config(w);
-    let _ = algonaut::openapi_algod::apis::public_api::account_asset_information(
+    let _ = algonaut_algod::apis::public_api::account_asset_information(
         &conf, &account, asset_id, None,
     )
     .await;
@@ -320,7 +319,7 @@ async fn algod_get_transaction_proof(
     hashtype: String,
 ) {
     let conf = algod_config(w);
-    let _ = algonaut::openapi_algod::apis::public_api::get_transaction_proof(
+    let _ = algonaut_algod::apis::public_api::get_transaction_proof(
         &conf,
         round,
         &transaction_id,
@@ -350,12 +349,8 @@ async fn algod_get_ledger_state_delta(w: &mut UnitWorld, round: u64) {
     // `Algod::state_delta` hard-codes `format=None`; call the generated
     // endpoint directly so the `?format=msgpack` query parameter is emitted.
     let conf = algod_config(w);
-    let _ = algonaut::openapi_algod::apis::public_api::get_ledger_state_delta(
-        &conf,
-        round,
-        Some("msgpack"),
-    )
-    .await;
+    let _ = algonaut_algod::apis::public_api::get_ledger_state_delta(&conf, round, Some("msgpack"))
+        .await;
 }
 
 #[when(regex = r"^we make a SetSyncRound call against round (\d+)$")]
@@ -388,13 +383,12 @@ async fn algod_txn_group_state_delta(w: &mut UnitWorld, id: String) {
     // `Algod::txn_group_state_delta` hard-codes `format=None`; call the
     // generated endpoint directly so `?format=msgpack` is emitted.
     let conf = algod_config(w);
-    let _ =
-        algonaut::openapi_algod::apis::public_api::get_ledger_state_delta_for_transaction_group(
-            &conf,
-            &id,
-            Some("msgpack"),
-        )
-        .await;
+    let _ = algonaut_algod::apis::public_api::get_ledger_state_delta_for_transaction_group(
+        &conf,
+        &id,
+        Some("msgpack"),
+    )
+    .await;
 }
 
 #[when(
@@ -404,13 +398,12 @@ async fn algod_txn_group_state_deltas_for_round(w: &mut UnitWorld, round: u64) {
     // `Algod::txn_group_state_deltas_for_round` hard-codes `format=None`;
     // call the generated endpoint directly so `?format=msgpack` is emitted.
     let conf = algod_config(w);
-    let _ =
-        algonaut::openapi_algod::apis::public_api::get_transaction_group_ledger_state_deltas_for_round(
-            &conf,
-            round,
-            Some("msgpack"),
-        )
-        .await;
+    let _ = algonaut_algod::apis::public_api::get_transaction_group_ledger_state_deltas_for_round(
+        &conf,
+        round,
+        Some("msgpack"),
+    )
+    .await;
 }
 
 #[when(

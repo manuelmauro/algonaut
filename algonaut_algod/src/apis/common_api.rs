@@ -153,7 +153,7 @@ pub async fn get_ready(
 /// Retrieves the supported API versions, binary build versions, and genesis information.
 pub async fn get_version(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::Version, Error<GetVersionError>> {
+) -> Result<algonaut_model::algod::Version, Error<GetVersionError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

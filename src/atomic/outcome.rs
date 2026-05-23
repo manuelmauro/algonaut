@@ -11,8 +11,8 @@ use algonaut_abi::{
     abi_interactions::AbiReturnType,
     abi_type::{AbiType, AbiValue},
 };
-use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::TransactionId;
+use algonaut_model::algod::PendingTransactionResponse;
 use data_encoding::BASE64;
 
 use crate::{Error, simulate::SimulateResponse};

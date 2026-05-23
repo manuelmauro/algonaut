@@ -17,9 +17,9 @@ use crate::apis::ResponseContent;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AbortCatchupError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -28,11 +28,11 @@ pub enum AbortCatchupError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AddParticipationKeyError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -41,10 +41,10 @@ pub enum AddParticipationKeyError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AppendKeysError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -53,10 +53,10 @@ pub enum AppendKeysError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum DeleteParticipationKeyByIdError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -65,10 +65,10 @@ pub enum DeleteParticipationKeyByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GenerateParticipationKeysError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
-    Status503(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
+    Status503(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -92,10 +92,10 @@ pub enum GetDebugSettingsProfError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetParticipationKeyByIdError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -104,10 +104,10 @@ pub enum GetParticipationKeyByIdError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetParticipationKeysError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status404(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status404(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -130,9 +130,9 @@ pub enum ShutdownNodeError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum StartCatchupError {
-    Status400(crate::models::ErrorResponse),
-    Status401(crate::models::ErrorResponse),
-    Status500(crate::models::ErrorResponse),
+    Status400(algonaut_model::algod::ErrorResponse),
+    Status401(algonaut_model::algod::ErrorResponse),
+    Status500(algonaut_model::algod::ErrorResponse),
     DefaultResponse(),
     UnknownValue(serde_json::Value),
 }
@@ -141,7 +141,7 @@ pub enum StartCatchupError {
 pub async fn abort_catchup(
     configuration: &configuration::Configuration,
     catchpoint: &str,
-) -> Result<crate::models::AbortCatchup200Response, Error<AbortCatchupError>> {
+) -> Result<algonaut_model::algod::CatchupAbortResponse, Error<AbortCatchupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -190,7 +190,7 @@ pub async fn abort_catchup(
 pub async fn add_participation_key(
     configuration: &configuration::Configuration,
     participationkey: &[u8],
-) -> Result<crate::models::AddParticipationKey200Response, Error<AddParticipationKeyError>> {
+) -> Result<algonaut_model::algod::ParticipationKeyId, Error<AddParticipationKeyError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -238,7 +238,7 @@ pub async fn append_keys(
     configuration: &configuration::Configuration,
     participation_id: &str,
     keymap: &[u8],
-) -> Result<crate::models::ParticipationKey, Error<AppendKeysError>> {
+) -> Result<algonaut_model::algod::ParticipationKey, Error<AppendKeysError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -445,7 +445,7 @@ pub async fn get_config(
 /// Retrieves the current settings for blocking and mutex profiles
 pub async fn get_debug_settings_prof(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::DebugSettingsProf, Error<GetDebugSettingsProfError>> {
+) -> Result<algonaut_model::algod::DebugSettingsProf, Error<GetDebugSettingsProfError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -491,7 +491,7 @@ pub async fn get_debug_settings_prof(
 pub async fn get_participation_key_by_id(
     configuration: &configuration::Configuration,
     participation_id: &str,
-) -> Result<crate::models::ParticipationKey, Error<GetParticipationKeyByIdError>> {
+) -> Result<algonaut_model::algod::ParticipationKey, Error<GetParticipationKeyByIdError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -540,7 +540,7 @@ pub async fn get_participation_key_by_id(
 /// Return a list of participation keys
 pub async fn get_participation_keys(
     configuration: &configuration::Configuration,
-) -> Result<Vec<crate::models::ParticipationKey>, Error<GetParticipationKeysError>> {
+) -> Result<Vec<algonaut_model::algod::ParticipationKey>, Error<GetParticipationKeysError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -585,7 +585,7 @@ pub async fn get_participation_keys(
 /// Enables blocking and mutex profiles, and returns the old settings
 pub async fn put_debug_settings_prof(
     configuration: &configuration::Configuration,
-) -> Result<crate::models::DebugSettingsProf, Error<PutDebugSettingsProfError>> {
+) -> Result<algonaut_model::algod::DebugSettingsProf, Error<PutDebugSettingsProfError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -681,7 +681,7 @@ pub async fn shutdown_node(
 pub async fn start_catchup(
     configuration: &configuration::Configuration,
     catchpoint: &str,
-) -> Result<crate::models::StartCatchup200Response, Error<StartCatchupError>> {
+) -> Result<algonaut_model::algod::CatchupStartResponse, Error<StartCatchupError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;

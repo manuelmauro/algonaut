@@ -10,6 +10,7 @@ edition = "2024"
 [dependencies]
 algonaut_crypto = { workspace = true }
 algonaut_encoding = { workspace = true }
+algonaut_model = { workspace = true }
 # default-features = false (workspace) drops reqwest's default TLS so the
 # backend is feature-selected; the other former defaults are re-added here.
 reqwest = { workspace = true, features = ["json", "multipart", "query", "charset", "http2", "system-proxy"] }

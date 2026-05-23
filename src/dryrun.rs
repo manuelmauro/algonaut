@@ -1,4 +1,4 @@
-//! Builder for [`algonaut_algod::models::DryrunRequest`].
+//! Builder for [`algonaut_model::algod::DryrunRequest`].
 //!
 //! Constructing a `DryrunRequest` by hand is noisy — accounts, apps,
 //! sources, and txns each have to be laid out separately, and the
@@ -15,9 +15,9 @@
 //!     .build()?;
 //! ```
 
-use algonaut_algod::models::{Account, Application, DryrunRequest, DryrunSource};
 use algonaut_core::CompiledTeal;
 use algonaut_encoding::Bytes;
+use algonaut_model::algod::{Account, Application, DryrunRequest, DryrunSource};
 use algonaut_model::transaction::ApiSignedTransaction;
 use algonaut_transaction::SignedTransaction;
 use algonaut_transaction::error::TransactionError;
@@ -161,7 +161,7 @@ pub mod field_name {
 /// app-call-messages / logic-sig-messages whose last entry is `"PASS"`
 /// or `"REJECT"`; collapse that into a typed result.
 pub mod result {
-    use algonaut_algod::models::{DryrunTxnResult, TealDryrun200Response};
+    use algonaut_model::algod::{DryrunResponse, DryrunTxnResult};
 
     /// Last message in the app-call trace, if any.
     pub fn app_call_status(txn: &DryrunTxnResult) -> Option<&str> {
@@ -184,7 +184,7 @@ pub mod result {
     }
 
     /// Convenience for the first txn in a response.
-    pub fn first_status(resp: &TealDryrun200Response) -> Option<&str> {
+    pub fn first_status(resp: &DryrunResponse) -> Option<&str> {
         resp.txns.first().and_then(overall_status)
     }
 }

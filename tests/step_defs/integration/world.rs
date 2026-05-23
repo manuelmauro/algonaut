@@ -9,12 +9,12 @@ use algonaut::{
     simulate::SimulateResponse,
 };
 use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::SourceMap};
-use algonaut_algod::models::{
-    AssetParams, SimulateRequest, SimulateTransaction200Response, TealDryrun200Response,
-};
 use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TransactionId};
 use algonaut_crypto::Ed25519PublicKey;
-use algonaut_model::client_types::SuggestedParams;
+use algonaut_model::algod::SuggestedParams;
+use algonaut_model::algod::{
+    AssetParams, DryrunResponse, SimulateRequest, SimulateTransactionResponse,
+};
 use algonaut_transaction::{
     SignedTransaction, Signer, Transaction,
     account::Account,
@@ -91,12 +91,12 @@ pub struct World {
     pub asset_creator: Option<Address>,
     pub asset_second: Option<Address>,
 
-    pub dryrun_response: Option<TealDryrun200Response>,
+    pub dryrun_response: Option<DryrunResponse>,
 
     pub simulate_request: Option<SimulateRequest>,
     /// Raw response from a direct `algod.simulate` call; the deep
     /// wire-level assertions (exec traces, state changes) read this.
-    pub simulate_response: Option<SimulateTransaction200Response>,
+    pub simulate_response: Option<SimulateTransactionResponse>,
     /// Typed composer simulate result, from the `UnsignedAtomicGroup`
     /// simulate path.
     pub simulate_outcome: Option<SimulateResponse>,

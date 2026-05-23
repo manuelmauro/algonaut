@@ -17,3 +17,36 @@ typeMappings:
   int64: u64
   integer: u64
   long: u64
+# D5 of ADR relocate-generated-models: rename the synthesized inline
+# 200-response envelopes to intentional names so no `<op>200Response` name
+# leaks into the public API. Keys are the generator's auto-assigned inline
+# schema names (`<operationId>_200_response`); the exact keys are confirmed by
+# the `make generate-clients` regen diff — a miss shows up as an un-renamed
+# `*200Response` in the diff. If a case escapes this option, preprocess.py
+# hoists the inline schema into a named component instead.
+inlineSchemaNameMappings:
+  AbortCatchup_200_response: CatchupAbortResponse
+  AccountApplicationInformation_200_response: AccountApplicationInformation
+  AccountApplicationsInformation_200_response: AccountApplicationsInformation
+  AccountAssetInformation_200_response: AccountAssetInformation
+  AccountAssetsInformation_200_response: AccountAssetsInformation
+  AddParticipationKey_200_response: ParticipationKeyId
+  GetApplicationBoxes_200_response: ApplicationBoxes
+  GetBlock_200_response: BlockJsonResponse
+  GetBlockHash_200_response: BlockHash
+  GetBlockLogs_200_response: BlockLogs
+  GetBlockTimeStampOffset_200_response: BlockTimestampOffset
+  GetBlockTxids_200_response: BlockTxids
+  GetPendingTransactionsByAddress_200_response: PendingTransactions
+  GetStatus_200_response: NodeStatus
+  GetSupply_200_response: Supply
+  GetSyncRound_200_response: SyncRound
+  GetTransactionGroupLedgerStateDeltasForRound_200_response: TransactionGroupStateDeltas
+  GetTransactionProof_200_response: TransactionProof
+  RawTransaction_200_response: SubmitResponse
+  SimulateTransaction_200_response: SimulateTransactionResponse
+  StartCatchup_200_response: CatchupStartResponse
+  TealCompile_200_response: CompiledTeal
+  TealDisassemble_200_response: DisassembledTeal
+  TealDryrun_200_response: DryrunResponse
+  TransactionParams_200_response: SuggestedParams
