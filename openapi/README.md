@@ -54,7 +54,13 @@ git diff --no-index openapi/generated/indexer/src/apis   algonaut_indexer/src/ap
 
 `make generate-clients` never overwrites the crates — it only produces
 `openapi/generated/` for review. Adopting upstream changes is a deliberate,
-reviewed step. The relocation split (models → `algonaut_model`, apis → client
-crate) and the envelope renames are validated by this regen diff: a stray
-`*200Response` in the model diff means an `inlineSchemaNameMappings` key needs
-fixing.
+reviewed step.
+
+**Note:** The generator output is *not yet authoritative* — the mustache
+templates still emit `crate::models::…` paths instead of `algonaut_model::…`,
+and `preprocess.py` does not yet annotate inline response schemas with the
+domain-type overrides. Regenerated code therefore requires manual adjustment
+before it compiles. The committed source in `algonaut_model` / the client
+crates is the maintained artifact; the diff commands above help discover
+upstream drift but are not a drop-in copy. Updating the templates to produce
+the relocated layout directly is tracked as future work.
