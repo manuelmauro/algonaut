@@ -2,7 +2,10 @@ use crate::step_defs::integration::world::World;
 use algonaut::dryrun::{DryrunRequestBuilder, field_name, result};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_encoding::Bytes;
-use algonaut_model::algod::{Application, ApplicationParams, ApplicationStateSchema, DryrunSource};
+use algonaut_model::algod::{
+    Account, Application, ApplicationLocalState, ApplicationParams, ApplicationStateSchema,
+    DryrunSource,
+};
 use algonaut_transaction::{Pay, builder::TransactionParams, contract_account::ContractAccount};
 use cucumber::{given, then, when};
 use std::fs;
@@ -194,8 +197,34 @@ fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::alg
                 ContractAccount::new(CompiledTeal(vec![0x02, 0x20, 0x01, 0x01, 0x22]));
             let signed = placeholder.sign(txn, vec![]).unwrap();
 
+            // For local-state writes to work, the sender must be "opted in"
+            // to the app. Supply an account with `apps_local_state` containing
+            // an entry for our synthetic app id.
+            let sender_account = Account {
+                address: creator.to_string(),
+                amount: 1_000_000,
+                amount_without_pending_rewards: 1_000_000,
+                min_balance: 100_000,
+                pending_rewards: 0,
+                rewards: 0,
+                round: 0,
+                status: "Offline".to_string(),
+                total_apps_opted_in: 1,
+                total_assets_opted_in: 0,
+                total_created_apps: 0,
+                total_created_assets: 0,
+                apps_local_state: Some(vec![ApplicationLocalState::new(
+                    DRYRUN_APP_ID,
+                    ApplicationStateSchema {
+                        num_byte_slice: 64,
+                        num_uint: 64,
+                    },
+                )]),
+                ..Default::default()
+            };
+
             let mut builder = DryrunRequestBuilder::from_signed_txns(&[signed]).unwrap();
-            builder = builder.apps(vec![app]);
+            builder = builder.apps(vec![app]).accounts(vec![sender_account]);
             for src in sources {
                 builder = builder.add_source(src);
             }
