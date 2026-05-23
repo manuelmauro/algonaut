@@ -17,8 +17,8 @@ use crate::apis::ResponseContent;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SearchForAccountsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -26,9 +26,9 @@ pub enum SearchForAccountsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SearchForApplicationBoxesError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -36,7 +36,7 @@ pub enum SearchForApplicationBoxesError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SearchForApplicationsError {
-    Status500(crate::models::SearchForAccounts400Response),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -44,8 +44,8 @@ pub enum SearchForApplicationsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SearchForAssetsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -53,8 +53,8 @@ pub enum SearchForAssetsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SearchForBlockHeadersError {
-    Status404(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status404(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -62,8 +62,8 @@ pub enum SearchForBlockHeadersError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SearchForTransactionsError {
-    Status400(crate::models::SearchForAccounts400Response),
-    Status500(crate::models::SearchForAccounts400Response),
+    Status400(algonaut_model::indexer::ErrorResponse),
+    Status500(algonaut_model::indexer::ErrorResponse),
     UnknownValue(serde_json::Value),
 }
 
@@ -81,7 +81,7 @@ pub async fn search_for_accounts(
     auth_addr: Option<&str>,
     round: Option<u64>,
     application_id: Option<u64>,
-) -> Result<crate::models::SearchForAccounts200Response, Error<SearchForAccountsError>> {
+) -> Result<algonaut_model::indexer::AccountsResponse, Error<SearchForAccountsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -175,10 +175,8 @@ pub async fn search_for_application_boxes(
     application_id: u64,
     limit: Option<u64>,
     next: Option<&str>,
-) -> Result<
-    crate::models::SearchForApplicationBoxes200Response,
-    Error<SearchForApplicationBoxesError>,
-> {
+) -> Result<algonaut_model::indexer::ApplicationBoxesResponse, Error<SearchForApplicationBoxesError>>
+{
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -233,7 +231,7 @@ pub async fn search_for_applications(
     limit: Option<u64>,
     next: Option<&str>,
 ) -> Result<
-    crate::models::LookupAccountCreatedApplications200Response,
+    algonaut_model::indexer::AccountCreatedApplicationsResponse,
     Error<SearchForApplicationsError>,
 > {
     let local_var_configuration = configuration;
@@ -300,7 +298,7 @@ pub async fn search_for_assets(
     name: Option<&str>,
     unit: Option<&str>,
     asset_id: Option<u64>,
-) -> Result<crate::models::LookupAccountCreatedAssets200Response, Error<SearchForAssetsError>> {
+) -> Result<algonaut_model::indexer::AccountCreatedAssetsResponse, Error<SearchForAssetsError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -375,7 +373,7 @@ pub async fn search_for_block_headers(
     proposers: Option<Vec<String>>,
     expired: Option<Vec<String>>,
     absent: Option<Vec<String>>,
-) -> Result<crate::models::SearchForBlockHeaders200Response, Error<SearchForBlockHeadersError>> {
+) -> Result<algonaut_model::indexer::BlockHeadersResponse, Error<SearchForBlockHeadersError>> {
     let local_var_configuration = configuration;
 
     let local_var_client = &local_var_configuration.client;
@@ -513,7 +511,7 @@ pub async fn search_for_transactions(
     exclude_close_to: Option<bool>,
     rekey_to: Option<bool>,
     application_id: Option<u64>,
-) -> Result<crate::models::LookupAccountTransactions200Response, Error<SearchForTransactionsError>>
+) -> Result<algonaut_model::indexer::AccountTransactionsResponse, Error<SearchForTransactionsError>>
 {
     let local_var_configuration = configuration;
 

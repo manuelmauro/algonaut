@@ -117,59 +117,11 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
- - [AbortCatchup200Response](docs/AbortCatchup200Response.md)
- - [Account](docs/Account.md)
- - [AccountApplicationInformation200Response](docs/AccountApplicationInformation200Response.md)
- - [AccountAssetInformation200Response](docs/AccountAssetInformation200Response.md)
- - [AccountParticipation](docs/AccountParticipation.md)
- - [AccountStateDelta](docs/AccountStateDelta.md)
- - [AddParticipationKey200Response](docs/AddParticipationKey200Response.md)
- - [Application](docs/Application.md)
- - [ApplicationLocalState](docs/ApplicationLocalState.md)
- - [ApplicationParams](docs/ApplicationParams.md)
- - [ApplicationStateSchema](docs/ApplicationStateSchema.md)
- - [Asset](docs/Asset.md)
- - [AssetHolding](docs/AssetHolding.md)
- - [AssetParams](docs/AssetParams.md)
- - [Box](docs/Box.md)
- - [BoxDescriptor](docs/BoxDescriptor.md)
- - [BuildVersion](docs/BuildVersion.md)
- - [DryrunRequest](docs/DryrunRequest.md)
- - [DryrunSource](docs/DryrunSource.md)
- - [DryrunState](docs/DryrunState.md)
- - [DryrunTxnResult](docs/DryrunTxnResult.md)
- - [ErrorResponse](docs/ErrorResponse.md)
- - [EvalDelta](docs/EvalDelta.md)
- - [EvalDeltaKeyValue](docs/EvalDeltaKeyValue.md)
- - [GetApplicationBoxes200Response](docs/GetApplicationBoxes200Response.md)
- - [GetBlock200Response](docs/GetBlock200Response.md)
- - [GetBlockHash200Response](docs/GetBlockHash200Response.md)
- - [GetPendingTransactionsByAddress200Response](docs/GetPendingTransactionsByAddress200Response.md)
- - [GetStatus200Response](docs/GetStatus200Response.md)
- - [GetSupply200Response](docs/GetSupply200Response.md)
- - [GetSyncRound200Response](docs/GetSyncRound200Response.md)
- - [GetTransactionProof200Response](docs/GetTransactionProof200Response.md)
- - [KvDelta](docs/KvDelta.md)
- - [LightBlockHeaderProof](docs/LightBlockHeaderProof.md)
- - [ParticipationKey](docs/ParticipationKey.md)
- - [PendingTransactionResponse](docs/PendingTransactionResponse.md)
- - [RawTransaction200Response](docs/RawTransaction200Response.md)
- - [SimulateRequest](docs/SimulateRequest.md)
- - [SimulateRequestTransactionGroup](docs/SimulateRequestTransactionGroup.md)
- - [SimulateTransaction200Response](docs/SimulateTransaction200Response.md)
- - [SimulateTransactionGroupResult](docs/SimulateTransactionGroupResult.md)
- - [SimulateTransactionResult](docs/SimulateTransactionResult.md)
- - [StartCatchup200Response](docs/StartCatchup200Response.md)
- - [StateProof](docs/StateProof.md)
- - [StateProofMessage](docs/StateProofMessage.md)
- - [TealCompile200Response](docs/TealCompile200Response.md)
- - [TealDisassemble200Response](docs/TealDisassemble200Response.md)
- - [TealDryrun200Response](docs/TealDryrun200Response.md)
- - [TealKeyValue](docs/TealKeyValue.md)
- - [TealValue](docs/TealValue.md)
- - [TransactionParams200Response](docs/TransactionParams200Response.md)
- - [Version](docs/Version.md)
-
+The model structs live in the **`algonaut_model::algod`** module, not in this
+crate (ADR `relocate-generated-models`): `algonaut_algod` keeps only the api /
+transport code and depends on `algonaut_model` for the wire models. The
+synthesized `<op>200Response` envelopes are renamed to intentional names there
+(e.g. `SubmitResponse`, `BlockHash`, `CompiledTeal`, `SuggestedParams`).
 
 To get access to the crate's generated documentation, use:
 

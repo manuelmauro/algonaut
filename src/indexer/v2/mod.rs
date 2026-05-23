@@ -1,17 +1,13 @@
 use self::error::IndexerError;
 use crate::Error;
 use algonaut_core::{Address, AppId, AssetId, TransactionId};
-use algonaut_indexer::{
-    apis::configuration::{ApiKey, Configuration},
-    models::{
-        Block, HealthCheck, LookupAccountAppLocalStates200Response, LookupAccountAssets200Response,
-        LookupAccountById200Response, LookupAccountCreatedApplications200Response,
-        LookupAccountCreatedAssets200Response, LookupAccountTransactions200Response,
-        LookupApplicationById200Response, LookupApplicationLogsById200Response,
-        LookupAssetBalances200Response, LookupAssetById200Response, LookupTransaction200Response,
-        SearchForAccounts200Response, SearchForApplicationBoxes200Response,
-        SearchForBlockHeaders200Response,
-    },
+use algonaut_indexer::apis::configuration::{ApiKey, Configuration};
+use algonaut_model::indexer::{
+    AccountApplicationLocalStatesResponse, AccountAssetsResponse,
+    AccountCreatedApplicationsResponse, AccountCreatedAssetsResponse, AccountResponse,
+    AccountTransactionsResponse, AccountsResponse, ApplicationBoxesResponse,
+    ApplicationLogsResponse, ApplicationResponse, AssetBalancesResponse, AssetResponse, Block,
+    BlockHeadersResponse, HealthCheck, TransactionResponse,
 };
 
 /// Error class wrapping errors from algonaut_indexer
@@ -60,7 +56,7 @@ impl Indexer {
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
-    ) -> Result<LookupAccountAppLocalStates200Response, Error> {
+    ) -> Result<AccountApplicationLocalStatesResponse, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_app_local_states(
                 &self.configuration,
@@ -83,7 +79,7 @@ impl Indexer {
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
-    ) -> Result<LookupAccountAssets200Response, Error> {
+    ) -> Result<AccountAssetsResponse, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_account_assets(
             &self.configuration,
             &address.to_string(),
@@ -103,7 +99,7 @@ impl Indexer {
         round: Option<u64>,
         include_all: Option<bool>,
         exclude: Option<Vec<String>>,
-    ) -> Result<LookupAccountById200Response, Error> {
+    ) -> Result<AccountResponse, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_account_by_id(
             &self.configuration,
             &address.to_string(),
@@ -123,7 +119,7 @@ impl Indexer {
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
-    ) -> Result<LookupAccountCreatedApplications200Response, Error> {
+    ) -> Result<AccountCreatedApplicationsResponse, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_created_applications(
                 &self.configuration,
@@ -146,7 +142,7 @@ impl Indexer {
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
-    ) -> Result<LookupAccountCreatedAssets200Response, Error> {
+    ) -> Result<AccountCreatedAssetsResponse, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_created_assets(
                 &self.configuration,
@@ -181,7 +177,7 @@ impl Indexer {
         currency_greater_than: Option<u64>,
         currency_less_than: Option<u64>,
         rekey_to: Option<bool>,
-    ) -> Result<LookupAccountTransactions200Response, Error> {
+    ) -> Result<AccountTransactionsResponse, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_account_transactions(
                 &self.configuration,
@@ -212,7 +208,7 @@ impl Indexer {
         &self,
         app_id: AppId,
         name: &str,
-    ) -> Result<algonaut_indexer::models::Box, Error> {
+    ) -> Result<algonaut_model::indexer::Box, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_application_box_by_id_and_name(
                 &self.configuration,
@@ -229,7 +225,7 @@ impl Indexer {
         &self,
         app_id: AppId,
         include_all: Option<bool>,
-    ) -> Result<LookupApplicationById200Response, Error> {
+    ) -> Result<ApplicationResponse, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_application_by_id(
                 &self.configuration,
@@ -252,7 +248,7 @@ impl Indexer {
         min_round: Option<u64>,
         max_round: Option<u64>,
         sender_address: Option<&str>,
-    ) -> Result<LookupApplicationLogsById200Response, Error> {
+    ) -> Result<ApplicationLogsResponse, Error> {
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_application_logs_by_id(
                 &self.configuration,
@@ -278,7 +274,7 @@ impl Indexer {
         next: Option<&str>,
         currency_greater_than: Option<u64>,
         currency_less_than: Option<u64>,
-    ) -> Result<LookupAssetBalances200Response, Error> {
+    ) -> Result<AssetBalancesResponse, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_asset_balances(
             &self.configuration,
             asset_id.0,
@@ -297,7 +293,7 @@ impl Indexer {
         &self,
         asset_id: AssetId,
         include_all: Option<bool>,
-    ) -> Result<LookupAssetById200Response, Error> {
+    ) -> Result<AssetResponse, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_asset_by_id(
             &self.configuration,
             asset_id.0,
@@ -329,7 +325,7 @@ impl Indexer {
         address_role: Option<&str>,
         exclude_close_to: Option<bool>,
         rekey_to: Option<bool>,
-    ) -> Result<LookupAccountTransactions200Response, Error> {
+    ) -> Result<AccountTransactionsResponse, Error> {
         let address = address.map(Address::to_string);
         Ok(
             algonaut_indexer::apis::lookup_api::lookup_asset_transactions(
@@ -377,7 +373,7 @@ impl Indexer {
     pub async fn lookup_transaction(
         &self,
         transaction_id: &TransactionId,
-    ) -> Result<LookupTransaction200Response, Error> {
+    ) -> Result<TransactionResponse, Error> {
         Ok(algonaut_indexer::apis::lookup_api::lookup_transaction(
             &self.configuration,
             transaction_id.as_str(),
@@ -400,7 +396,7 @@ impl Indexer {
         auth_addr: Option<&Address>,
         round: Option<u64>,
         app_id: Option<AppId>,
-    ) -> Result<SearchForAccounts200Response, Error> {
+    ) -> Result<AccountsResponse, Error> {
         let auth_addr = auth_addr.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_accounts(
             &self.configuration,
@@ -425,7 +421,7 @@ impl Indexer {
         app_id: AppId,
         limit: Option<u64>,
         next: Option<&str>,
-    ) -> Result<SearchForApplicationBoxes200Response, Error> {
+    ) -> Result<ApplicationBoxesResponse, Error> {
         Ok(
             algonaut_indexer::apis::search_api::search_for_application_boxes(
                 &self.configuration,
@@ -446,7 +442,7 @@ impl Indexer {
         include_all: Option<bool>,
         limit: Option<u64>,
         next: Option<&str>,
-    ) -> Result<LookupAccountCreatedApplications200Response, Error> {
+    ) -> Result<AccountCreatedApplicationsResponse, Error> {
         let creator = creator.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_applications(
             &self.configuration,
@@ -471,7 +467,7 @@ impl Indexer {
         name: Option<&str>,
         unit: Option<&str>,
         asset_id: Option<AssetId>,
-    ) -> Result<LookupAccountCreatedAssets200Response, Error> {
+    ) -> Result<AccountCreatedAssetsResponse, Error> {
         let creator = creator.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_assets(
             &self.configuration,
@@ -500,7 +496,7 @@ impl Indexer {
         proposers: Option<Vec<String>>,
         expired: Option<Vec<String>>,
         absent: Option<Vec<String>>,
-    ) -> Result<SearchForBlockHeaders200Response, Error> {
+    ) -> Result<BlockHeadersResponse, Error> {
         Ok(
             algonaut_indexer::apis::search_api::search_for_block_headers(
                 &self.configuration,
@@ -542,7 +538,7 @@ impl Indexer {
         exclude_close_to: Option<bool>,
         rekey_to: Option<bool>,
         app_id: Option<AppId>,
-    ) -> Result<LookupAccountTransactions200Response, Error> {
+    ) -> Result<AccountTransactionsResponse, Error> {
         let address = address.map(Address::to_string);
         Ok(algonaut_indexer::apis::search_api::search_for_transactions(
             &self.configuration,

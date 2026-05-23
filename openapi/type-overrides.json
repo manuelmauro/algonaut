@@ -1,5 +1,5 @@
 {
-  "_README": "Per-field type overrides applied by openapi/preprocess.py before openapi-generator runs. Each entry retypes one generated model field to the algonaut domain type the hand-maintained crate uses, since the spec does not carry enough information to derive it. 'schema' is the OpenAPI component schema name; 'field' is the spec property name. See docs/adr/openapi-client-regeneration.md.",
+  "_README": "Per-field type overrides applied by openapi/preprocess.py before openapi-generator runs. Each entry retypes one generated model field to the algonaut domain type the hand-maintained crate uses, since the spec does not carry enough information to derive it. 'schema' is the OpenAPI component schema name; 'field' is the spec property name. Models now generate into algonaut_model::{algod,indexer} (ADR relocate-generated-models), so 'import' lines are crate-relative to algonaut_model (e.g. `crate::transaction::ApiSignedTransaction`). See docs/adr/openapi-client-regeneration.md and docs/adr/relocate-generated-models.md.",
   "overrides": [
     {
       "crate": "algod",
@@ -21,8 +21,8 @@
       "crate": "algod",
       "schema": "SimulateRequestTransactionGroup",
       "field": "txns",
-      "type": "Vec<SignedTransaction>",
-      "import": "use algonaut_transaction::SignedTransaction;"
+      "type": "Vec<ApiSignedTransaction>",
+      "import": "use crate::transaction::ApiSignedTransaction;"
     },
     {
       "crate": "indexer",

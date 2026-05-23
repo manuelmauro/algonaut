@@ -7,7 +7,7 @@
 //!
 //! ```ignore
 //! use algonaut::simulate::SimulateRequestBuilder;
-//! use algonaut_algod::models::SimulateRequestTransactionGroup;
+//! use algonaut_model::algod::SimulateRequestTransactionGroup;
 //!
 //! let req = SimulateRequestBuilder::new(vec![SimulateRequestTransactionGroup::new(vec![])])
 //!     .allow_more_logging(true)
@@ -16,14 +16,14 @@
 //!     .build();
 //! ```
 
-use algonaut_algod::models::{
+use algonaut_model::algod::{
     SimulateRequest, SimulateRequestTransactionGroup, SimulateTraceConfig,
-    SimulateTransaction200Response,
+    SimulateTransactionResponse,
 };
 
 /// Hand-named view over algod's simulate response.
 ///
-/// Keeps the generated `SimulateTransaction200Response` out of the public
+/// Keeps the generated `SimulateTransactionResponse` out of the public
 /// composer API
 /// ([`SimulateOutcome`](crate::atomic::SimulateOutcome)),
 /// surfacing data through typed accessors. The accessor set is grown on
@@ -31,11 +31,11 @@ use algonaut_algod::models::{
 /// type wholesale.
 #[derive(Debug, Clone)]
 pub struct SimulateResponse {
-    inner: SimulateTransaction200Response,
+    inner: SimulateTransactionResponse,
 }
 
 impl SimulateResponse {
-    pub(crate) fn new(inner: SimulateTransaction200Response) -> Self {
+    pub(crate) fn new(inner: SimulateTransactionResponse) -> Self {
         Self { inner }
     }
 

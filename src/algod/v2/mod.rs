@@ -1,25 +1,17 @@
 use self::error::AlgodError;
 use crate::Error;
-use algonaut_algod::{
-    apis::configuration::{ApiKey, Configuration},
-    ext::block::BlockResponse,
-    models::{
-        self, Account, AccountApplicationInformation200Response,
-        AccountApplicationsInformation200Response, AccountAssetsInformation200Response,
-        Application, Asset, DebugSettingsProf, DryrunRequest, GetApplicationBoxes200Response,
-        GetBlockHash200Response, GetBlockLogs200Response, GetBlockTimeStampOffset200Response,
-        GetBlockTxids200Response, GetPendingTransactionsByAddress200Response,
-        GetSyncRound200Response, GetTransactionGroupLedgerStateDeltasForRound200Response,
-        GetTransactionProof200Response, LightBlockHeaderProof, PendingTransactionResponse,
-        RawTransaction200Response, SimulateRequest, SimulateTransaction200Response, StateProof,
-        TealDisassemble200Response, TealDryrun200Response, Version,
-    },
-};
-use algonaut_core::{
-    Address, AppId, AssetId, CompiledTeal, MicroAlgos, Round, ToMsgPack, TransactionId,
-};
+use algonaut_algod::apis::configuration::{ApiKey, Configuration};
+use algonaut_core::{Address, AppId, AssetId, CompiledTeal, Round, ToMsgPack, TransactionId};
 use algonaut_encoding::decode_base64;
-use algonaut_model::client_types::{NodeStatus, SuggestedParams, Supply};
+use algonaut_model::algod::ext::block::BlockResponse;
+use algonaut_model::algod::{
+    self as models, Account, AccountApplicationInformation, AccountApplicationsInformation,
+    AccountAssetsInformation, Application, ApplicationBoxes, Asset, BlockHash, BlockLogs,
+    BlockTimestampOffset, BlockTxids, DebugSettingsProf, DisassembledTeal, DryrunRequest,
+    DryrunResponse, LightBlockHeaderProof, NodeStatus, PendingTransactionResponse,
+    PendingTransactions, SimulateRequest, SimulateTransactionResponse, StateProof, SubmitResponse,
+    SuggestedParams, Supply, SyncRound, TransactionGroupStateDeltas, TransactionProof, Version,
+};
 use algonaut_transaction::SignedTransaction;
 
 /// Whether `teal_compile` should ask algod to include a source-map alongside
@@ -81,7 +73,7 @@ impl Algod {
         self,
         address: &Address,
         app_id: AppId,
-    ) -> Result<AccountApplicationInformation200Response, Error> {
+    ) -> Result<AccountApplicationInformation, Error> {
         Ok(
             algonaut_algod::apis::public_api::account_application_information(
                 &self.configuration,
@@ -104,7 +96,7 @@ impl Algod {
         limit: Option<u64>,
         next: Option<&str>,
         include: Option<&[String]>,
-    ) -> Result<AccountApplicationsInformation200Response, Error> {
+    ) -> Result<AccountApplicationsInformation, Error> {
         Ok(
             algonaut_algod::apis::public_api::account_applications_information(
                 &self.configuration,
@@ -124,7 +116,7 @@ impl Algod {
         address: &Address,
         limit: Option<u64>,
         next: Option<&str>,
-    ) -> Result<AccountAssetsInformation200Response, Error> {
+    ) -> Result<AccountAssetsInformation, Error> {
         Ok(
             algonaut_algod::apis::public_api::account_assets_information(
                 &self.configuration,
@@ -176,7 +168,7 @@ impl Algod {
         &self,
         app_id: AppId,
         max: Option<u64>,
-    ) -> Result<GetApplicationBoxes200Response, Error> {
+    ) -> Result<ApplicationBoxes, Error> {
         Ok(algonaut_algod::apis::public_api::get_application_boxes(
             &self.configuration,
             app_id.0,
@@ -214,7 +206,7 @@ impl Algod {
     }
 
     /// Get the block hash for the block on the given round.
-    pub async fn block_hash(&self, round: u64) -> Result<GetBlockHash200Response, Error> {
+    pub async fn block_hash(&self, round: u64) -> Result<BlockHash, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block_hash(&self.configuration, round)
                 .await
@@ -223,7 +215,7 @@ impl Algod {
     }
 
     /// Get all of the logs from outer and inner app calls in the given round.
-    pub async fn block_logs(&self, round: u64) -> Result<GetBlockLogs200Response, Error> {
+    pub async fn block_logs(&self, round: u64) -> Result<BlockLogs, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block_logs(&self.configuration, round)
                 .await
@@ -232,10 +224,7 @@ impl Algod {
     }
 
     /// Get the top level transaction IDs for the block on the given round.
-    pub async fn block_transaction_ids(
-        &self,
-        round: u64,
-    ) -> Result<GetBlockTxids200Response, Error> {
+    pub async fn block_transaction_ids(&self, round: u64) -> Result<BlockTxids, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block_txids(&self.configuration, round)
                 .await
@@ -244,9 +233,7 @@ impl Algod {
     }
 
     /// Get the current timestamp offset.
-    pub async fn block_timestamp_offset(
-        &self,
-    ) -> Result<GetBlockTimeStampOffset200Response, Error> {
+    pub async fn block_timestamp_offset(&self) -> Result<BlockTimestampOffset, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_block_time_stamp_offset(&self.configuration)
                 .await
@@ -309,7 +296,7 @@ impl Algod {
     pub async fn transaction_group_state_deltas_for_round(
         &self,
         round: u64,
-    ) -> Result<GetTransactionGroupLedgerStateDeltasForRound200Response, Error> {
+    ) -> Result<TransactionGroupStateDeltas, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_transaction_group_ledger_state_deltas_for_round(
                 &self.configuration,
@@ -343,7 +330,7 @@ impl Algod {
         &self,
         max: Option<u64>,
         format: Option<&str>,
-    ) -> Result<GetPendingTransactionsByAddress200Response, Error> {
+    ) -> Result<PendingTransactions, Error> {
         Ok(algonaut_algod::apis::public_api::get_pending_transactions(
             &self.configuration,
             max,
@@ -361,7 +348,7 @@ impl Algod {
         address: &Address,
         max: Option<u64>,
         format: Option<&str>,
-    ) -> Result<GetPendingTransactionsByAddress200Response, Error> {
+    ) -> Result<PendingTransactions, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_pending_transactions_by_address(
                 &self.configuration,
@@ -394,35 +381,24 @@ impl Algod {
 
     /// Gets the current node status.
     pub async fn status(&self) -> Result<NodeStatus, Error> {
-        let raw = algonaut_algod::apis::public_api::get_status(&self.configuration)
-            .await
-            .map_err(Into::<AlgodError>::into)?;
-        Ok(NodeStatus {
-            catchup_time: raw.catchup_time,
-            last_round: Round(raw.last_round),
-            last_version: raw.last_version,
-            next_version: raw.next_version,
-            next_version_round: Round(raw.next_version_round),
-            next_version_supported: raw.next_version_supported,
-            stopped_at_unsupported_round: raw.stopped_at_unsupported_round,
-            time_since_last_round: raw.time_since_last_round,
-        })
+        Ok(
+            algonaut_algod::apis::public_api::get_status(&self.configuration)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
     }
 
     /// Get the current supply reported by the ledger.
     pub async fn supply(&self) -> Result<Supply, Error> {
-        let raw = algonaut_algod::apis::public_api::get_supply(&self.configuration)
-            .await
-            .map_err(Into::<AlgodError>::into)?;
-        Ok(Supply {
-            current_round: Round(raw.current_round),
-            total_money: MicroAlgos(raw.total_money),
-            online_money: MicroAlgos(raw.online_money),
-        })
+        Ok(
+            algonaut_algod::apis::public_api::get_supply(&self.configuration)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
     }
 
     /// Gets the minimum sync round for the ledger.
-    pub async fn sync_round(&self) -> Result<GetSyncRound200Response, Error> {
+    pub async fn sync_round(&self) -> Result<SyncRound, Error> {
         Ok(
             algonaut_algod::apis::public_api::get_sync_round(&self.configuration)
                 .await
@@ -435,7 +411,7 @@ impl Algod {
         &self,
         round: u64,
         transaction_id: &TransactionId,
-    ) -> Result<GetTransactionProof200Response, Error> {
+    ) -> Result<TransactionProof, Error> {
         Ok(algonaut_algod::apis::public_api::get_transaction_proof(
             &self.configuration,
             round,
@@ -491,7 +467,7 @@ impl Algod {
     }
 
     /// Broadcasts a raw transaction or transaction group to the network.
-    pub async fn send_raw(&self, raw: &[u8]) -> Result<RawTransaction200Response, Error> {
+    pub async fn send_raw(&self, raw: &[u8]) -> Result<SubmitResponse, Error> {
         Ok(
             algonaut_algod::apis::public_api::raw_transaction(&self.configuration, raw)
                 .await
@@ -500,10 +476,7 @@ impl Algod {
     }
 
     /// Broadcasts a transaction to the network.
-    pub async fn send(
-        &self,
-        transaction: &SignedTransaction,
-    ) -> Result<RawTransaction200Response, Error> {
+    pub async fn send(&self, transaction: &SignedTransaction) -> Result<SubmitResponse, Error> {
         self.send_raw(&transaction.to_msg_pack()?).await
     }
 
@@ -513,7 +486,7 @@ impl Algod {
     pub async fn send_transactions(
         &self,
         transactions: &[SignedTransaction],
-    ) -> Result<RawTransaction200Response, Error> {
+    ) -> Result<SubmitResponse, Error> {
         let mut bytes = vec![];
         for t in transactions {
             bytes.push(t.to_msg_pack()?);
@@ -611,7 +584,7 @@ impl Algod {
     pub async fn simulate(
         &self,
         request: SimulateRequest,
-    ) -> Result<SimulateTransaction200Response, Error> {
+    ) -> Result<SimulateTransactionResponse, Error> {
         Ok(algonaut_algod::apis::public_api::simulate_transaction(
             &self.configuration,
             request,
@@ -671,10 +644,7 @@ impl Algod {
     }
 
     /// Given the program bytes, return the TEAL source code in plain text. This endpoint is only enabled when a node's configuration file sets EnableDeveloperAPI to true.
-    pub async fn teal_disassemble(
-        &self,
-        source: &[u8],
-    ) -> Result<TealDisassemble200Response, Error> {
+    pub async fn teal_disassemble(&self, source: &[u8]) -> Result<DisassembledTeal, Error> {
         Ok(
             algonaut_algod::apis::public_api::teal_disassemble(&self.configuration, source)
                 .await
@@ -686,7 +656,7 @@ impl Algod {
     pub async fn teal_dryrun(
         &self,
         request: Option<DryrunRequest>,
-    ) -> Result<TealDryrun200Response, Error> {
+    ) -> Result<DryrunResponse, Error> {
         Ok(
             algonaut_algod::apis::public_api::teal_dryrun(&self.configuration, request)
                 .await
@@ -696,17 +666,11 @@ impl Algod {
 
     /// Get parameters for constructing a new transaction.
     pub async fn suggested_params(&self) -> Result<SuggestedParams, Error> {
-        let raw = algonaut_algod::apis::public_api::transaction_params(&self.configuration)
-            .await
-            .map_err(Into::<AlgodError>::into)?;
-        Ok(SuggestedParams {
-            consensus_version: raw.consensus_version,
-            fee_per_byte: MicroAlgos(raw.fee),
-            genesis_hash: raw.genesis_hash,
-            genesis_id: raw.genesis_id,
-            last_round: Round(raw.last_round),
-            min_fee: MicroAlgos(raw.min_fee),
-        })
+        Ok(
+            algonaut_algod::apis::public_api::transaction_params(&self.configuration)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
     }
 
     /// Unset the ledger sync round.
@@ -720,19 +684,11 @@ impl Algod {
 
     /// Waits for a block to appear after round {round} and returns the node's status at the time.
     pub async fn status_after_block(&self, round: Round) -> Result<NodeStatus, Error> {
-        let raw = algonaut_algod::apis::public_api::wait_for_block(&self.configuration, round.0)
-            .await
-            .map_err(Into::<AlgodError>::into)?;
-        Ok(NodeStatus {
-            catchup_time: raw.catchup_time,
-            last_round: Round(raw.last_round),
-            last_version: raw.last_version,
-            next_version: raw.next_version,
-            next_version_round: Round(raw.next_version_round),
-            next_version_supported: raw.next_version_supported,
-            stopped_at_unsupported_round: raw.stopped_at_unsupported_round,
-            time_since_last_round: raw.time_since_last_round,
-        })
+        Ok(
+            algonaut_algod::apis::public_api::wait_for_block(&self.configuration, round.0)
+                .await
+                .map_err(Into::<AlgodError>::into)?,
+        )
     }
 
     /// Generate and install participation keys to the node, valid for rounds

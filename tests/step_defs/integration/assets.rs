@@ -1,7 +1,7 @@
 use crate::step_defs::integration::world::World;
 use algonaut::error::Error;
-use algonaut_algod::models::AssetParams;
 use algonaut_core::{Address, AssetId, TransactionId};
+use algonaut_model::algod::AssetParams;
 use algonaut_transaction::{
     AcceptAsset, ClawbackAsset, CreateAsset, FreezeAsset, TransferAsset,
     builder::{DestroyAsset, UpdateAsset},

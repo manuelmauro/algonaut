@@ -1,7 +1,7 @@
 use crate::step_defs::integration::world::World;
 use crate::step_defs::util::{parse_app_args, read_teal, split_addresses, split_uint64};
-use algonaut_algod::models::{Application, ApplicationLocalState};
 use algonaut_core::{AppId, AssetId};
+use algonaut_model::algod::{Application, ApplicationLocalState};
 use algonaut_transaction::CreateApplication;
 use algonaut_transaction::builder::{
     CallApplication, ClearApplication, CloseApplication, DeleteApplication, OptInApplication,

@@ -7,8 +7,8 @@ use algonaut_abi::{
     abi_interactions::{AbiArgType, AbiMethod, AbiReturn, AbiReturnType, ReferenceArgType},
     abi_type::{AbiType, AbiValue},
 };
-use algonaut_algod::models::PendingTransactionResponse;
 use algonaut_core::{Address, AppId, MicroAlgos};
+use algonaut_model::algod::PendingTransactionResponse;
 use algonaut_transaction::{
     Pay, Signer,
     transaction::{BoxReference, OnComplete, StateSchema},
@@ -354,7 +354,7 @@ struct MethodCallCtx {
     method: AbiMethod,
     method_args: Vec<AbiArgValue>,
     app_id: AppId,
-    params: algonaut_model::client_types::SuggestedParams,
+    params: algonaut_model::algod::SuggestedParams,
     sender: Address,
     signer: std::sync::Arc<dyn Signer>,
     on_complete: OnComplete,

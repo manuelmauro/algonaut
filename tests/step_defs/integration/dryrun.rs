@@ -1,8 +1,8 @@
 use crate::step_defs::integration::world::World;
 use algonaut::dryrun::{DryrunRequestBuilder, field_name, result};
-use algonaut_algod::models::{Application, ApplicationParams, DryrunSource};
 use algonaut_core::{Address, AppId, CompiledTeal, MicroAlgos};
 use algonaut_encoding::Bytes;
+use algonaut_model::algod::{Application, ApplicationParams, DryrunSource};
 use algonaut_transaction::{Pay, builder::TransactionParams, contract_account::ContractAccount};
 use cucumber::{given, then, when};
 use std::fs;
@@ -97,7 +97,7 @@ async fn i_get_execution_result(w: &mut World, expected: String) {
 // dryrun_testing.feature
 // -------------------------------------------------------------------
 
-fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_algod::models::DryrunRequest {
+fn build_dryrun_test_case(program_path: &str, kind: &str) -> algonaut_model::algod::DryrunRequest {
     let raw = read_program(program_path);
     let is_compiled = program_path.ends_with(".tok");
     let creator: Address = NONEXISTENT_SENDER.parse().expect("dummy address");
