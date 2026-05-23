@@ -36,6 +36,11 @@ async fn i_make_a_transaction_signer_for_the_account(w: &mut World, account_str:
 async fn a_new_atomic_transaction_composer(w: &mut World) {
     w.group_builder = Some(AtomicGroupBuilder::new());
     w.tx_composer_methods = Some(vec![]);
+    // A fresh composer discards any group staged or executed earlier in the
+    // scenario, so a later status check sees only the new group.
+    w.unsigned_group = None;
+    w.signed_group = None;
+    w.tx_composer_res = None;
 }
 
 #[when(
@@ -118,21 +123,23 @@ async fn i_gather_signatures_with_the_composer(w: &mut World) {
 #[then(regex = r#"^The composer should have a status of "([^"]*)"\.$"#)]
 async fn the_composer_should_have_a_status_of(w: &mut World, status_str: String) {
     // The typestate has no runtime status; map the harness's status names
-    // onto which staged state the World currently holds.
+    // onto which staged state the World currently holds. `execute` consumes
+    // the signed group and leaves the confirmed `ExecuteOutcome`, so a present
+    // `tx_composer_res` is the COMMITTED state.
     let actual = if w.signed_group.is_some() {
         "SIGNED"
     } else if w.unsigned_group.is_some() {
         "BUILT"
     } else if w.group_builder.is_some() {
         "BUILDING"
+    } else if w.tx_composer_res.is_some() {
+        "COMMITTED"
     } else {
         "NONE"
     };
 
-    // SUBMITTED/COMMITTED consume the group, leaving no World state to
-    // inspect; the harness's unit feature only asserts BUILDING/BUILT/SIGNED.
     let expected = match status_str.as_ref() {
-        s @ ("BUILDING" | "BUILT" | "SIGNED") => s,
+        s @ ("BUILDING" | "BUILT" | "SIGNED" | "COMMITTED") => s,
         other => panic!("Not handled status string: {}", other),
     };
 

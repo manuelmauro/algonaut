@@ -13,7 +13,6 @@ use algonaut_abi::{
 };
 use algonaut_core::TransactionId;
 use algonaut_model::algod::PendingTransactionResponse;
-use data_encoding::BASE64;
 
 use crate::{Error, simulate::SimulateResponse};
 
@@ -98,15 +97,16 @@ fn get_return_value_with_abi_type(
     let logs = pending_tx.logs.as_deref().ok_or(Error::MissingReturnLog)?;
     let ret_line = logs.last().ok_or(Error::MissingReturnLog)?;
 
-    let decoded_ret_line: Vec<u8> = BASE64
-        .decode(&ret_line.0[..])
-        .map_err(|source| Error::Base64DecodeError { source })?;
+    // `Bytes` already holds the decoded log bytes — its `Deserialize` base64-decodes
+    // the JSON string form and takes the msgpack `bin` form raw — so the last log is
+    // the raw ARC-4 return line, not a base64 string to decode again.
+    let decoded_ret_line = &ret_line.0;
 
     if !decoded_ret_line.starts_with(&ABI_RETURN_HASH) {
         return Err(Error::MissingReturnLog);
     }
 
-    let abi_encoded = &decoded_ret_line[ABI_RETURN_HASH.len()..decoded_ret_line.len()];
+    let abi_encoded = &decoded_ret_line[ABI_RETURN_HASH.len()..];
     Ok(match abi_type.decode(abi_encoded) {
         Ok(decoded) => Ok(AbiMethodReturnValue::Some(decoded)),
         Err(e) => Err(AbiReturnDecodeError(format!("{e:?}"))),
