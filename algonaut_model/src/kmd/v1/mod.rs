@@ -297,6 +297,42 @@ pub struct SignMultisigTransactionResponse {
     pub multisig: Vec<u8>,
 }
 
+/// SignProgramRequest is the request for `POST /v1/program/sign`
+#[derive(Serialize, Clone)]
+pub struct SignProgramRequest {
+    pub wallet_handle_token: String,
+    pub address: String,
+    #[serde(serialize_with = "serialize_bytes")]
+    pub data: Vec<u8>,
+    pub wallet_password: String,
+}
+
+/// SignProgramResponse is the response to `POST /v1/program/sign`
+#[derive(Debug, Deserialize, Clone)]
+pub struct SignProgramResponse {
+    #[serde(deserialize_with = "deserialize_bytes")]
+    pub sig: Vec<u8>,
+}
+
+/// SignProgramMultisigRequest is the request for `POST /v1/multisig/signprogram`
+#[derive(Serialize, Clone)]
+pub struct SignProgramMultisigRequest {
+    pub wallet_handle_token: String,
+    pub address: String,
+    #[serde(serialize_with = "serialize_bytes")]
+    pub data: Vec<u8>,
+    pub public_key: Ed25519PublicKey,
+    pub partial_multisig: Option<MultisigSignature>,
+    pub wallet_password: String,
+}
+
+/// SignProgramMultisigResponse is the response to `POST /v1/multisig/signprogram`
+#[derive(Debug, Deserialize, Clone)]
+pub struct SignProgramMultisigResponse {
+    #[serde(deserialize_with = "deserialize_bytes")]
+    pub multisig: Vec<u8>,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct ApiV1ResponseEnvelope {
     pub error: bool,
