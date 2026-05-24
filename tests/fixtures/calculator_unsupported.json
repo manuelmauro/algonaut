@@ -1,0 +1,40 @@
+{
+    "name": "CalculatorWithUnsupported",
+    "desc": "A contract with methods containing unsupported types for testing error messages",
+    "methods": [
+        {
+            "name": "add",
+            "desc": "Add two numbers (supported)",
+            "args": [
+                {"name": "a", "type": "uint64"},
+                {"name": "b", "type": "uint64"}
+            ],
+            "returns": {"type": "uint64"}
+        },
+        {
+            "name": "transfer",
+            "desc": "Transfer with payment (has transaction arg - unsupported)",
+            "args": [
+                {"name": "payment", "type": "pay"},
+                {"name": "amount", "type": "uint64"}
+            ],
+            "returns": {"type": "void"}
+        },
+        {
+            "name": "opt_in_asset",
+            "desc": "Opt into an asset (has reference arg - unsupported)",
+            "args": [
+                {"name": "asset", "type": "asset"}
+            ],
+            "returns": {"type": "void"}
+        },
+        {
+            "name": "batch_add",
+            "desc": "Add multiple numbers (has array arg - unsupported)",
+            "args": [
+                {"name": "numbers", "type": "uint64[]"}
+            ],
+            "returns": {"type": "uint64"}
+        }
+    ]
+}
