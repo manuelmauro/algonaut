@@ -3,6 +3,7 @@ use std::convert::TryInto;
 use crate::auction::{Bid, SignedBid};
 use crate::error::TransactionError;
 use crate::transaction::{SignedTransaction, Transaction, TransactionSignature};
+use algonaut_core::domain_separator::{BID_PREFIX, MESSAGE_PREFIX};
 use algonaut_core::{
     Address, CompiledTeal, MultisigAddress, MultisigSignature, MultisigSubsig, ToMsgPack,
 };
@@ -91,7 +92,7 @@ impl Account {
 
     /// Sign the given bytes, and wrap in signature. The message is prepended with an identifier for domain separation.
     pub fn generate_sig(&self, bytes: &[u8]) -> Signature {
-        let mut bytes_sign_prefix = b"MX".to_vec();
+        let mut bytes_sign_prefix = MESSAGE_PREFIX.to_vec();
         bytes_sign_prefix.extend_from_slice(bytes);
         self.generate_raw_sig(&bytes_sign_prefix)
     }
@@ -110,7 +111,7 @@ impl Account {
     /// Sign a bid with the account's private key
     pub fn sign_bid(&self, bid: Bid) -> Result<SignedBid, TransactionError> {
         let encoded_bid = bid.to_msg_pack()?;
-        let mut prefix_encoded_bid = b"aB".to_vec();
+        let mut prefix_encoded_bid = BID_PREFIX.to_vec();
         prefix_encoded_bid.extend_from_slice(&encoded_bid);
         let signature = self.generate_raw_sig(&prefix_encoded_bid);
         Ok(SignedBid {

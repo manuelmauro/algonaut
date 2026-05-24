@@ -1,4 +1,5 @@
 use algonaut_core::ToMsgPack;
+use algonaut_core::domain_separator::TRANSACTION_GROUP_PREFIX;
 use algonaut_crypto::HashDigest;
 use serde::{Deserialize, Serialize, Serializer};
 use sha2::Digest;
@@ -118,7 +119,7 @@ impl ToMsgPack for TransactionGroupDigests {}
 impl TransactionGroupDigests {
     fn bytes_to_sign(&self) -> Result<Vec<u8>, TransactionError> {
         let encoded_tx = self.to_msg_pack()?;
-        let mut prefix_encoded_tx = b"TG".to_vec();
+        let mut prefix_encoded_tx = TRANSACTION_GROUP_PREFIX.to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
         Ok(prefix_encoded_tx)
     }

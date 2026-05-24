@@ -17,6 +17,7 @@ pub use address::MultisigAddress;
 pub use multisig::MultisigSubsig;
 
 mod address;
+pub mod domain_separator;
 pub mod error;
 mod multisig;
 
@@ -375,7 +376,7 @@ pub struct CompiledTeal(pub Vec<u8>);
 
 impl CompiledTeal {
     pub fn bytes_to_sign(&self) -> Vec<u8> {
-        let mut prefix_encoded_tx = b"Program".to_vec();
+        let mut prefix_encoded_tx = domain_separator::PROGRAM_PREFIX.to_vec();
         prefix_encoded_tx.extend_from_slice(&self.0);
         prefix_encoded_tx
     }
