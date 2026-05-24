@@ -71,7 +71,7 @@ serde_bytes = "0.11.19"
 serde_derive = "1.0"
 serde_json = "1.0.149"
 serde_with = "3.20.0"
-sha2 = "0.11.0"
+sha2 = "0.10.9"
 static_assertions = "1.1.0"
 thiserror = "2.0.18"
 tokio = "1.52.3"
@@ -79,6 +79,17 @@ url = "2.5.8"
 urlencoding = "2.1.3"
 uuid = { version = "1.23", features = ["serde"] }
 wiremock = "0.6.5"
+
+# WalletConnect relay dependencies (optional, behind relay feature)
+chacha20poly1305 = "0.10.1"
+hkdf = "0.12.4"
+tokio-tungstenite = { version = "0.27.0", features = ["rustls-tls-webpki-roots"] }
+x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
+futures-util = "0.3.32"
+hex = "0.4.3"
+qrcode = "0.14.1"
+base64 = "0.22.1"
+bs58 = "0.5.1"
 
 [dependencies]
 algonaut_abi = { workspace = true }
@@ -142,6 +153,8 @@ rustls = ["algonaut_algod?/rustls", "algonaut_indexer?/rustls", "algonaut_kmd?/r
 
 # WalletConnect integration for signing with wallets like Pera.
 walletconnect = ["dep:algonaut_walletconnect"]
+# WalletConnect with built-in relay client (batteries-included).
+walletconnect-relay = ["walletconnect", "algonaut_walletconnect?/relay"]
 
 [[test]]
 name = "features_runner"
@@ -277,3 +290,7 @@ required-features = ["kmd"]
 [[example]]
 name = "pera_wallet"
 required-features = ["walletconnect", "algod"]
+
+[[example]]
+name = "pera_wallet_relay"
+required-features = ["walletconnect-relay", "algod"]

@@ -1,8 +1,8 @@
 ---
 id: pera-walletconnect-signer
 title: Pera Wallet signer for the atomic composer
-abstract: Integrate the atomic composer with Pera Wallet by adding a PeraSigner that implements the async, group-aware Signer trait in a new optional algonaut_walletconnect crate. It maps SigningRequest to an ARC-0001 algo_signTxn array over an injected, transport-agnostic WalletConnect v2 session, decodes returned blobs through the external-signature-ingress path, and inherits the one-Arc-one-prompt and Send/native-first trade-offs from async-signer-trait.
-status: proposed
+abstract: Integrate the atomic composer with Pera Wallet by adding a PeraSigner that implements the async, group-aware Signer trait in a new optional algonaut_walletconnect crate. It maps SigningRequest to an ARC-0001 algo_signTxn array over an injected, transport-agnostic WalletConnect v2 session, decodes returned blobs through the external-signature-ingress path, and inherits the one-Arc-one-prompt and Send/native-first trade-offs from async-signer-trait. An optional `relay` feature provides a batteries-included WalletConnect v2 relay client.
+status: accepted
 date: 2026-05-22
 deciders: []
 tags: [api, async, signing, walletconnect, pera]
@@ -12,7 +12,7 @@ tags: [api, async, signing, walletconnect, pera]
 
 ## Status
 
-Proposed. The concrete follow-up that
+Accepted. The concrete follow-up that
 [`async-signer-trait`](async-signer-trait.md) explicitly deferred — its
 out-of-scope note reads "this ADR does not define a concrete WalletConnect
 client." This ADR is that client, for Pera.
@@ -357,15 +357,67 @@ signer attached, and this ADR adds nothing to make it so; it just relies
 on the property already decided. Only `sign()` (and the `execute` after
 it) issues `algo_signTxn`.
 
+### Optional relay feature: batteries-included transport
+
+While the `WalletConnectSession` trait keeps the transport injectable and
+testable, requiring users to implement it themselves creates friction. To
+provide a turnkey solution, `algonaut_walletconnect` includes an **optional
+`relay` feature** that provides a concrete WalletConnect v2 relay
+implementation:
+
+```toml
+[features]
+default = []
+relay = ["tokio-tungstenite", "x25519-dalek", "chacha20poly1305", "hkdf", "sha2"]
+```
+
+When enabled, the crate exports:
+
+```rust
+/// A WalletConnect v2 relay client that implements WalletConnectSession.
+pub struct WalletConnectRelay {
+    // WebSocket connection to wss://relay.walletconnect.com
+    // X25519 key exchange for session encryption
+    // ChaCha20-Poly1305 symmetric encryption
+    // JSON-RPC message framing
+    // Pairing/session state machine
+}
+
+impl WalletConnectRelay {
+    /// Create a new relay client with a WalletConnect project ID.
+    pub async fn new(project_id: &str) -> Result<Self, RelayError>;
+
+    /// Generate a pairing URI for QR code / deep link.
+    pub fn pairing_uri(&self) -> String;
+
+    /// Wait for a wallet to pair and return the connected address.
+    pub async fn wait_for_session(&self) -> Result<Address, RelayError>;
+}
+
+impl WalletConnectSession for WalletConnectRelay { /* ... */ }
+```
+
+This design preserves the separation of concerns:
+
+- **Without `relay`:** Lean codec-only crate (~50 KB), users inject their
+  own transport, CI tests run against mock sessions.
+- **With `relay`:** Full batteries-included solution (~500 KB with crypto
+  deps), ready to connect to Pera out of the box.
+
+The relay implementation handles:
+
+- WebSocket connection to `wss://relay.walletconnect.com`
+- WalletConnect v2 pairing protocol (symmetric key derivation)
+- Session proposal/approval handshake
+- ChaCha20-Poly1305 envelope encryption
+- JSON-RPC 2.0 request/response framing
+- Algorand chain ID configuration (416001 MainNet, 416002 TestNet)
+
 ## What this ADR explicitly does not propose
 
-- **The concrete relay/transport client.** The websocket relay, pairing,
-  session approval, and the connect-time `Address` handshake live behind
-  the `WalletConnectSession` trait. Shipping a default implementation
-  (likely a companion crate over a Rust WalletConnect v2 client) is a
-  follow-up; this ADR fixes the seam, not the relay.
 - **The `?Send` / wasm-browser variant.** Inherited deferral from
   `async-signer-trait`; built when a real browser Pera integration lands.
+  The `relay` feature targets native (tokio) runtimes only.
 - **WalletConnect v1.** Sunset; not targeted.
 - **RPC methods beyond `algo_signTxn`.** `algo_signData`, multi-account
   selection within one session, and ARC-0025 (`algorand://`) URIs are out
@@ -409,3 +461,8 @@ it) issues `algo_signTxn`.
   of the Rust WalletConnect v2 ecosystem the eventual default transport
   will sit on. Both are isolated behind the `WalletConnectSession` seam,
   so they can evolve without touching the signer or the composer.
+- **The `relay` feature provides a turnkey solution.** Users who enable
+  `walletconnect` with `relay` get a working Pera integration out of the
+  box — no need to implement `WalletConnectSession` themselves. The
+  trade-off is heavier dependencies (tokio-tungstenite, crypto crates),
+  which is why it's opt-in.

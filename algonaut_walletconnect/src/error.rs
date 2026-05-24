@@ -59,4 +59,13 @@ pub enum WalletConnectError {
     /// MessagePack deserialization error.
     #[error("msgpack deserialization error: {0}")]
     MsgpackDecode(#[from] rmp_serde::decode::Error),
+
+    /// JSON serialization/deserialization error.
+    #[error("JSON error: {0}")]
+    Json(serde_json::Error),
+
+    /// Relay protocol error.
+    #[cfg(feature = "relay")]
+    #[error("relay error: {0}")]
+    Relay(#[from] crate::relay::RelayError),
 }
