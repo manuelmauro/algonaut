@@ -112,7 +112,8 @@ async fn i_renew_the_wallet_handle(w: &mut World) -> Result<(), Error> {
     let handle = w
         .created_wallet_handle
         .as_ref()
-        .expect("created wallet handle not set");
+        .or(w.handle.as_ref())
+        .expect("no wallet handle set");
     kmd.renew_wallet_handle(handle).await?;
     Ok(())
 }
@@ -123,7 +124,8 @@ async fn i_release_the_wallet_handle(w: &mut World) -> Result<(), Error> {
     let handle = w
         .created_wallet_handle
         .as_ref()
-        .expect("created wallet handle not set");
+        .or(w.handle.as_ref())
+        .expect("no wallet handle set");
     kmd.release_wallet_handle(handle).await?;
     Ok(())
 }
@@ -134,7 +136,8 @@ async fn the_wallet_handle_should_not_work(w: &mut World) {
     let handle = w
         .created_wallet_handle
         .as_ref()
-        .expect("created wallet handle not set");
+        .or(w.handle.as_ref())
+        .expect("no wallet handle set");
     assert!(
         kmd.get_wallet_info(handle).await.is_err(),
         "released wallet handle still works"
