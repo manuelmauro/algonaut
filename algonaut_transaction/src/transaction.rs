@@ -4,6 +4,7 @@ use algonaut_core::LogicSignature;
 use algonaut_core::SuggestedTransactionParams;
 use algonaut_core::ToMsgPack;
 use algonaut_core::TransactionTypeEnum;
+use algonaut_core::domain_separator::TRANSACTION_PREFIX;
 use algonaut_core::{Address, MultisigSignature};
 use algonaut_core::{AppId, AssetId, TransactionId};
 use algonaut_core::{MicroAlgos, Round, StateProofPk, VotePk, VrfPk};
@@ -90,7 +91,7 @@ pub struct Transaction {
 impl Transaction {
     pub fn bytes_to_sign(&self) -> Result<Vec<u8>, TransactionError> {
         let encoded_tx = self.to_owned().to_msg_pack()?;
-        let mut prefix_encoded_tx = b"TX".to_vec();
+        let mut prefix_encoded_tx = TRANSACTION_PREFIX.to_vec();
         prefix_encoded_tx.extend_from_slice(&encoded_tx);
         Ok(prefix_encoded_tx)
     }

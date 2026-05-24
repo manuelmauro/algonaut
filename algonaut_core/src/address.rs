@@ -1,4 +1,5 @@
 use crate::Signature;
+use crate::domain_separator::{MESSAGE_PREFIX, MULTISIG_ADDR_PREFIX};
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_encoding::U8_32Visitor;
 use data_encoding::BASE32_NOPAD;
@@ -55,7 +56,7 @@ impl Address {
     }
 
     pub fn verify_bytes(&self, message: &[u8], signature: &Signature) -> bool {
-        let mut message_to_verify = b"MX".to_vec();
+        let mut message_to_verify = MESSAGE_PREFIX.to_vec();
         message_to_verify.extend_from_slice(message);
         self.as_public_key().verify(&message_to_verify, signature)
     }
@@ -162,7 +163,7 @@ impl MultisigAddress {
 
     /// Generates a checksum from the contained public keys usable as an address
     pub fn address(&self) -> Address {
-        let mut buf = b"MultisigAddr".to_vec();
+        let mut buf = MULTISIG_ADDR_PREFIX.to_vec();
         buf.push(self.version);
         buf.push(self.threshold);
         for key in &self.public_keys {
