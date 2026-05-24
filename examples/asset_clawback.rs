@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::Algod;
 use algonaut::core::AssetId;
 use algonaut::transaction::ClawbackAsset;
 use algonaut::transaction::account::Account;

@@ -1,7 +1,7 @@
-use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::{LogicSignature, MicroAlgos};
 use algonaut::transaction::Pay;
 use algonaut::transaction::account::Account;
+use algonaut::{Algod, SourceMap};
 use algonaut_transaction::transaction::SignedLogic;
 use dotenv::dotenv;
 use std::env;

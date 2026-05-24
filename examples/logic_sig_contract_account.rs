@@ -1,7 +1,7 @@
-use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::MicroAlgos;
 use algonaut::transaction::Pay;
 use algonaut::transaction::contract_account::ContractAccount;
+use algonaut::{Algod, SourceMap};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

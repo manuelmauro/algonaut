@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::Algod;
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::DeleteApplication;

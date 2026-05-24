@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::Algod;
 use algonaut::core::{Round, StateProofPk, VotePk, VrfPk};
 use algonaut::transaction::RegisterKey;
 use algonaut::transaction::account::Account;

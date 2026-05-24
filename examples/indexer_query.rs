@@ -1,4 +1,4 @@
-use algonaut::indexer::v2::Indexer;
+use algonaut::Indexer;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;
