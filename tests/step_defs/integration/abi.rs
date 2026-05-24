@@ -149,11 +149,20 @@ async fn the_composer_should_have_a_status_of(w: &mut World, status_str: String)
 }
 
 #[then(expr = "I clone the composer.")]
+#[given(expr = "I clone the composer.")]
 async fn i_clone_the_composer(w: &mut World) {
-    // AtomicGroupBuilder is Clone (group ids are only assigned at build), so the
-    // "snapshot a common prefix" use case is a plain clone.
-    let builder = w.group_builder.as_ref().expect("composer not building");
+    // Python SDK's AtomicTransactionComposer.clone() returns a new composer
+    // with status BUILDING containing the same transactions. If the composer
+    // was already built/signed, we restore from the backup taken before build.
+    let builder = w
+        .group_builder
+        .as_ref()
+        .or(w.group_builder_backup.as_ref())
+        .expect("composer not building");
     w.group_builder = Some(builder.clone());
+    // Clear any staged built/signed state so the cloned builder can be used fresh.
+    w.unsigned_group = None;
+    w.signed_group = None;
 }
 
 #[when(regex = r#"I create the Method object from method signature "([^"]*)"$"#)]
