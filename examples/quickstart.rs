@@ -1,6 +1,6 @@
-use algonaut::algod::v2::Algod;
-use algonaut::indexer::v2::Indexer;
-use algonaut::kmd::v1::Kmd;
+use algonaut::Algod;
+use algonaut::Indexer;
+use algonaut::Kmd;
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

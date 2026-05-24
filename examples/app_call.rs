@@ -2,8 +2,8 @@
 //! [`AtomicGroupBuilder`] typestate chain and the fluent [`MethodCall`]
 //! builder. This is the recommended path for application calls.
 
+use algonaut::Algod;
 use algonaut::abi::abi_call;
-use algonaut::algod::v2::Algod;
 use algonaut::atomic::{AtomicGroupBuilder, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;

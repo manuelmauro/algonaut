@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::Algod;
 use algonaut::core::{MicroAlgos, MultisigAddress};
 use algonaut::transaction::Pay;
 use algonaut::transaction::account::Account;

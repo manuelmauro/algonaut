@@ -1,6 +1,6 @@
-use algonaut::algod::v2::Algod;
+use algonaut::Algod;
+use algonaut::Kmd;
 use algonaut::core::MicroAlgos;
-use algonaut::kmd::v1::Kmd;
 use algonaut::transaction::Pay;
 use dotenv::dotenv;
 use std::env;

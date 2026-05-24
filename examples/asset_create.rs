@@ -1,4 +1,4 @@
-use algonaut::algod::v2::Algod;
+use algonaut::Algod;
 use algonaut::transaction::CreateAsset;
 use algonaut::transaction::account::Account;
 use dotenv::dotenv;

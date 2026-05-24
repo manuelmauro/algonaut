@@ -1,7 +1,7 @@
-use algonaut::algod::v2::{Algod, SourceMap};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::builder::UpdateApplication;
+use algonaut::{Algod, SourceMap};
 use dotenv::dotenv;
 use std::env;
 use std::error::Error;

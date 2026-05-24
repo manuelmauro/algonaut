@@ -18,8 +18,8 @@
 //! argument encoding, group-id assignment, per-transaction signers, and
 //! return-value decoding for you.
 
+use algonaut::Algod;
 use algonaut::abi::abi_call;
-use algonaut::algod::v2::Algod;
 use algonaut::atomic::{AtomicGroupBuilder, MethodCall, TransactionWithSigner};
 use algonaut::core::{AppId, MicroAlgos};
 use algonaut::transaction::account::Account;

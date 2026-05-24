@@ -19,6 +19,16 @@ pub mod indexer;
 #[cfg(feature = "kmd")]
 pub mod kmd;
 
+// Convenience re-exports for ergonomic top-level imports.
+// The versioned paths (e.g., `algod::v2::Algod`) remain available for
+// backwards compatibility and explicit version selection.
+#[cfg(feature = "algod")]
+pub use algod::v2::{Algod, PendingSubmission, SourceMap};
+#[cfg(feature = "indexer")]
+pub use indexer::v2::Indexer;
+#[cfg(feature = "kmd")]
+pub use kmd::v1::Kmd;
+
 // atomic / dryrun / simulate build on the algod models (now in
 // `algonaut_model::algod`) and the algod transport, so they ride the `algod`
 // gate.
