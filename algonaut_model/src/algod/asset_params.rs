@@ -11,14 +11,19 @@
 use serde::{Deserialize, Serialize};
 
 use algonaut_crypto::{HashDigest, deserialize_opt_hash};
-use algonaut_encoding::Bytes;
+use algonaut_encoding::{Bytes, deserialize_opt_addr_string};
 
 /// AssetParams : AssetParams specifies the parameters for an asset.  \\[apar\\] when part of an AssetConfig transaction.  Definition: data/transactions/asset.go : AssetParams
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct AssetParams {
     /// \\[c\\] Address of account used to clawback holdings of this asset.  If empty, clawback is not permitted.
-    #[serde(rename = "clawback", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "clawback",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_opt_addr_string",
+        default
+    )]
     pub clawback: Option<String>,
     /// The address that created this asset. This is the address where the parameters for this asset can be found, and also the address where unwanted asset units can be sent in the worst case.
     #[serde(rename = "creator")]
@@ -30,10 +35,20 @@ pub struct AssetParams {
     #[serde(rename = "default-frozen", skip_serializing_if = "Option::is_none")]
     pub default_frozen: Option<bool>,
     /// \\[f\\] Address of account used to freeze holdings of this asset.  If empty, freezing is not permitted.
-    #[serde(rename = "freeze", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "freeze",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_opt_addr_string",
+        default
+    )]
     pub freeze: Option<String>,
     /// \\[m\\] Address of account used to manage the keys of this asset and to destroy it.
-    #[serde(rename = "manager", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "manager",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_opt_addr_string",
+        default
+    )]
     pub manager: Option<String>,
     /// \\[am\\] A commitment to some unspecified asset metadata. The format of this metadata is up to the application.
     #[serde(
@@ -50,7 +65,12 @@ pub struct AssetParams {
     #[serde(rename = "name-b64", skip_serializing_if = "Option::is_none")]
     pub name_b64: Option<Bytes>,
     /// \\[r\\] Address of account holding reserve (non-minted) units of this asset.
-    #[serde(rename = "reserve", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "reserve",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "deserialize_opt_addr_string",
+        default
+    )]
     pub reserve: Option<String>,
     /// \\[t\\] The total number of units of this asset.
     #[serde(rename = "total")]

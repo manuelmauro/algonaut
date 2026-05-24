@@ -11,3 +11,6 @@ version = "0.7.0"
 [dependencies]
 data-encoding = { workspace = true }
 serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

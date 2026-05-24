@@ -396,3 +396,68 @@ where
 {
     Ok(Option::<T>::deserialize(deserializer)?.unwrap_or_default())
 }
+
+/// The zero address in base32-checksum format (32 bytes of zeros).
+///
+/// The Algorand indexer returns this value for optional address fields (like
+/// `clawback`, `freeze`, `manager`, `reserve`) when they were not set during
+/// asset creation. This should be interpreted as `None` rather than a real
+/// address.
+pub const ZERO_ADDRESS: &str = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ";
+
+/// Deserialize an optional address string, treating the zero address as `None`.
+///
+/// The Algorand indexer returns the zero address
+/// (`AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ`) for optional
+/// address fields that were not set. This deserializer converts such values to
+/// `None`, which better represents their semantic meaning.
+///
+/// See: <https://github.com/manuelmauro/algonaut/issues/142>
+pub fn deserialize_opt_addr_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt: Option<String> = Option::deserialize(deserializer)?;
+    Ok(opt.filter(|s| s != ZERO_ADDRESS))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct TestAsset {
+        #[serde(deserialize_with = "deserialize_opt_addr_string", default)]
+        clawback: Option<String>,
+    }
+
+    #[test]
+    fn zero_address_becomes_none() {
+        let json = r#"{"clawback": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ"}"#;
+        let asset: TestAsset = serde_json::from_str(json).unwrap();
+        assert_eq!(asset.clawback, None);
+    }
+
+    #[test]
+    fn real_address_is_preserved() {
+        let addr = "7ZUECA7HFLZTXENRV24SHLU4AVPUTMTTDUFUBNBD64C73F3UHRTHAIOF6Q";
+        let json = format!(r#"{{"clawback": "{}"}}"#, addr);
+        let asset: TestAsset = serde_json::from_str(&json).unwrap();
+        assert_eq!(asset.clawback, Some(addr.to_string()));
+    }
+
+    #[test]
+    fn null_address_becomes_none() {
+        let json = r#"{"clawback": null}"#;
+        let asset: TestAsset = serde_json::from_str(json).unwrap();
+        assert_eq!(asset.clawback, None);
+    }
+
+    #[test]
+    fn missing_address_becomes_none() {
+        let json = r#"{}"#;
+        let asset: TestAsset = serde_json::from_str(json).unwrap();
+        assert_eq!(asset.clawback, None);
+    }
+}
