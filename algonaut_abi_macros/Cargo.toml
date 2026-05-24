@@ -6,7 +6,7 @@ keywords = ["Algorand", "sdk", "abi", "macros"]
 license = "MIT OR Apache-2.0"
 name = "algonaut_abi_macros"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.7.0"
+version = "0.8.0"
 
 [lib]
 proc-macro = true

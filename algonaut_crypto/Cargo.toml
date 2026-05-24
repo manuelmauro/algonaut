@@ -9,7 +9,7 @@ keywords = ["Algorand", "sdk"]
 license = "MIT OR Apache-2.0"
 name = "algonaut_crypto"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.7.0"
+version = "0.8.0"
 
 [dependencies]
 algonaut_encoding = { workspace = true }
