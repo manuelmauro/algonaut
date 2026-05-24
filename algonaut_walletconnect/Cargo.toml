@@ -1,0 +1,27 @@
+[package]
+authors = [
+    "Manuel Mauro <manuel.mauro@protonmail.com>",
+]
+description = "WalletConnect integration for algonaut, including Pera Wallet support."
+edition = "2024"
+keywords = ["Algorand", "sdk", "WalletConnect", "Pera"]
+license = "MIT OR Apache-2.0"
+name = "algonaut_walletconnect"
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.8.0"
+
+[dependencies]
+algonaut_core = { workspace = true }
+algonaut_crypto = { workspace = true }
+algonaut_encoding = { workspace = true }
+algonaut_model = { workspace = true }
+algonaut_transaction = { workspace = true }
+
+data-encoding = { workspace = true }
+rmp-serde = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
