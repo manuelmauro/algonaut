@@ -13,7 +13,8 @@ use algonaut_model::kmd::v1::{
     ListKeysResponse, ListMultisigRequest, ListMultisigResponse, ListWalletsResponse,
     ReleaseWalletHandleRequest, ReleaseWalletHandleResponse, RenameWalletRequest,
     RenameWalletResponse, RenewWalletHandleRequest, RenewWalletHandleResponse,
-    SignMultisigTransactionRequest, SignMultisigTransactionResponse, SignTransactionRequest,
+    SignMultisigTransactionRequest, SignMultisigTransactionResponse, SignProgramMultisigRequest,
+    SignProgramMultisigResponse, SignProgramRequest, SignProgramResponse, SignTransactionRequest,
     SignTransactionResponse, VersionsResponse,
 };
 use reqwest::Url;
@@ -379,6 +380,34 @@ impl Client {
         Ok(response)
     }
 
+    pub async fn sign_program(
+        &self,
+        wallet_handle: &str,
+        wallet_password: &str,
+        address: &Address,
+        data: Vec<u8>,
+    ) -> Result<SignProgramResponse, ClientError> {
+        let req = SignProgramRequest {
+            wallet_handle_token: wallet_handle.to_string(),
+            address: address.to_string(),
+            data,
+            wallet_password: wallet_password.to_string(),
+        };
+        let response = self
+            .http_client
+            .post(format!("{}v1/program/sign", self.address))
+            .header("Accept", "application/json")
+            .headers(self.headers.clone())
+            .json(&req)
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
+        Ok(response)
+    }
+
     pub async fn list_multisig(
         &self,
         wallet_handle: &str,
@@ -497,6 +526,38 @@ impl Client {
         let response = self
             .http_client
             .post(format!("{}v1/multisig/sign", self.address))
+            .header("Accept", "application/json")
+            .headers(self.headers.clone())
+            .json(&req)
+            .send()
+            .await?
+            .http_error_for_status()
+            .await?
+            .json()
+            .await?;
+        Ok(response)
+    }
+
+    pub async fn sign_program_multisig(
+        &self,
+        wallet_handle: &str,
+        wallet_password: &str,
+        address: &Address,
+        data: Vec<u8>,
+        public_key: Ed25519PublicKey,
+        partial_multisig: Option<MultisigSignature>,
+    ) -> Result<SignProgramMultisigResponse, ClientError> {
+        let req = SignProgramMultisigRequest {
+            wallet_handle_token: wallet_handle.to_string(),
+            address: address.to_string(),
+            data,
+            public_key,
+            partial_multisig,
+            wallet_password: wallet_password.to_string(),
+        };
+        let response = self
+            .http_client
+            .post(format!("{}v1/multisig/signprogram", self.address))
             .header("Accept", "application/json")
             .headers(self.headers.clone())
             .json(&req)
