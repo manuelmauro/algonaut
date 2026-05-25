@@ -2,7 +2,7 @@
 id: contract-macro-arc56-app-spec
 title: Generate contract clients from ARC-56 app specs
 abstract: 'Re-scope the contract! macro from "reads an ARC-4 ABI JSON" to "reads an ARC-56 Extended App Description," treating the ARC-4 contract JSON it understands today as the degenerate subset. ARC-56 is a strict superset that the official Algorand SDKs (algokit-utils, algokit-client-generator) already standardise on, and it carries exactly the metadata the macro is missing: named structs (which unblock tuple args/returns), readonly markers, default argument values, declared state, ARC-28 events, and create/call action sets. Extend the shared algonaut_abi_model leaf crate additively so ARC-4 files keep round-tripping unchanged, then layer the new code generation in phases.'
-status: proposed
+status: accepted
 date: 2026-05-25
 deciders: []
 tags: [api, abi, macros, codegen, arc56, ergonomics]
@@ -12,7 +12,13 @@ tags: [api, abi, macros, codegen, arc56, ergonomics]
 
 ## Status
 
-Proposed. Extends [`contract-macro-from-abi-json`](contract-macro-from-abi-json.md):
+Accepted. Phase 1 (D2 — extend `algonaut_abi_model` to parse the full ARC-56
+schema, with ARC-4 files round-tripping unchanged) is implemented on the
+`feat/contract-macro-arc56` branch; later phases (D3 named structs, D4/D5
+read-only and default values, D6 state/events/lifecycle) follow per the
+**Scope and phasing** section below.
+
+Extends [`contract-macro-from-abi-json`](contract-macro-from-abi-json.md):
 its **D4** ("type mapping for initial implementation") declared an honest scope
 boundary — scalar value types only, everything else a compile error. This ADR
 keeps that boundary as the *fallback* but moves the goalposts: the macro's input
