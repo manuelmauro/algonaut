@@ -282,6 +282,8 @@ fn generate_method(
             #builder_ident {
                 contract: self,
                 invocation,
+                on_complete:
+                    ::algonaut::transaction::transaction::ApplicationCallOnComplete::NoOp,
             }
         }
     })
@@ -346,15 +348,20 @@ fn generate_builders(
         let builder_ident = format_ident!("{}{}", struct_ident, to_pascal_case(method_name));
 
         let doc = format!("Builder for the `{}` method.", method_name);
+        let action_setters = lifecycle_setters(method);
 
         builders.push(quote! {
             #[doc = #doc]
             pub struct #builder_ident<'a> {
                 contract: &'a #struct_ident,
                 invocation: ::algonaut_abi::MethodInvocation,
+                on_complete:
+                    ::algonaut::transaction::transaction::ApplicationCallOnComplete,
             }
 
             impl<'a> #builder_ident<'a> {
+                #action_setters
+
                 /// Build the method call with the given suggested parameters.
                 pub fn build(
                     self,
@@ -366,6 +373,7 @@ fn generate_builders(
                         ::std::sync::Arc::clone(&self.contract.signer),
                     )
                     .invoke(self.invocation)
+                    .on_complete(self.on_complete)
                     .build(params)
                 }
 
@@ -396,6 +404,46 @@ fn generate_builders(
     }
 
     quote! { #(#builders)* }
+}
+
+/// Generate the on-completion setters a method's builder should expose, gated
+/// by the method's declared ARC-56 `call` actions.
+///
+/// `NoOp` is the default and needs no setter. Each other declared action gets
+/// an ergonomic setter (`opt_in`, `close_out`, `update`, `delete`) so a caller
+/// invokes, say, an opt-in method with `client.method(..).opt_in().build(..)`.
+/// Methods with no declared actions (e.g. plain ARC-4 methods) get none and
+/// stay NoOp-only.
+fn lifecycle_setters(method: &AbiMethod) -> TokenStream {
+    let actions = match &method.actions {
+        Some(actions) => actions,
+        None => return TokenStream::new(),
+    };
+
+    let mut setters = Vec::new();
+    for action in &actions.call {
+        let (setter, variant) = match action.as_str() {
+            "OptIn" => ("opt_in", "OptIn"),
+            "CloseOut" => ("close_out", "CloseOut"),
+            "UpdateApplication" => ("update", "UpdateApplication"),
+            "DeleteApplication" => ("delete", "DeleteApplication"),
+            // NoOp is the default; anything unknown is ignored.
+            _ => continue,
+        };
+        let setter_ident = Ident::new(setter, Span::call_site());
+        let variant_ident = Ident::new(variant, Span::call_site());
+        let doc = format!("Invoke this method with the `{action}` on-completion action.");
+        setters.push(quote! {
+            #[doc = #doc]
+            pub fn #setter_ident(mut self) -> Self {
+                self.on_complete =
+                    ::algonaut::transaction::transaction::ApplicationCallOnComplete::#variant_ident;
+                self
+            }
+        });
+    }
+
+    quote! { #(#setters)* }
 }
 
 // ===========================================================================

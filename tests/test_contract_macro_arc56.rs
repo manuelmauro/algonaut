@@ -143,6 +143,21 @@ fn literal_default_argument_is_omitted() {
 }
 
 #[test]
+fn declared_call_actions_get_lifecycle_setters() {
+    let alice = Account::generate();
+    let address = alice.address();
+    let signer = Arc::new(alice);
+    let vault = Vault::new(AppId(777), address, signer);
+    let params = mock_params();
+
+    // `enroll` declares the OptIn call action, so its builder exposes
+    // `.opt_in()`, which sets the OnComplete on the built call.
+    let _opt_in = vault.enroll().opt_in().build(&params);
+    // NoOp is still the default when no lifecycle setter is used.
+    let _noop = vault.enroll().build(&params);
+}
+
+#[test]
 fn arc28_events_decode_from_logs() {
     use algonaut::abi::abi_type::{AbiType, AbiValue};
     use sha2::{Digest, Sha512_256};

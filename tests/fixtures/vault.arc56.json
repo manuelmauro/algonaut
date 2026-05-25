@@ -59,6 +59,13 @@
         }
       ],
       "returns": { "type": "uint64" }
+    },
+    {
+      "name": "enroll",
+      "desc": "Opt the caller into the app",
+      "args": [],
+      "returns": { "type": "void" },
+      "actions": { "create": [], "call": ["NoOp", "OptIn"] }
     }
   ],
   "events": [
