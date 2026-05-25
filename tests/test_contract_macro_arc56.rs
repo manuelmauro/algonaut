@@ -117,6 +117,18 @@ async fn readonly_simulate_typechecks(
     vault.get_pair().simulate(algod, params).await
 }
 
+// Compile-only check: type-checks the generated global-state accessors against
+// the real algod app-info API. Never called (no node); compiling it verifies
+// the generated async getters and their return types line up.
+#[allow(dead_code)]
+async fn state_accessors_typecheck(
+    vault: &Vault,
+    algod: &algonaut::Algod,
+) -> Result<Option<algonaut::abi::abi_type::AbiValue>, algonaut::Error> {
+    let _owner = vault.global_owner(algod).await?;
+    vault.global_total(algod).await
+}
+
 #[test]
 fn literal_default_argument_is_omitted() {
     let alice = Account::generate();

@@ -68,6 +68,21 @@
       "args": [{ "name": "total", "type": "uint64" }]
     }
   ],
+  "state": {
+    "schema": {
+      "global": { "ints": 1, "bytes": 1 },
+      "local": { "ints": 0, "bytes": 0 }
+    },
+    "keys": {
+      "global": {
+        "total": { "keyType": "AVMString", "valueType": "uint64", "key": "dG90YWw=" },
+        "owner": { "keyType": "AVMString", "valueType": "address", "key": "b3duZXI=" }
+      },
+      "local": {},
+      "box": {}
+    },
+    "maps": { "global": {}, "local": {}, "box": {} }
+  },
   "networks": {
     "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=": { "appID": 777 }
   }
