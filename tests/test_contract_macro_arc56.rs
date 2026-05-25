@@ -129,6 +129,20 @@ async fn state_accessors_typecheck(
     vault.global_total(algod).await
 }
 
+// Compile-only check: type-checks the generated `deploy` constructor (compile
+// programs -> create txn -> sign -> execute -> read created app id) against the
+// real APIs. Never called (no node); compiling it verifies the whole chain,
+// including ExecuteOutcome::created_app_id.
+#[allow(dead_code)]
+async fn deploy_typechecks(
+    algod: &algonaut::Algod,
+    sender: algonaut_core::Address,
+    signer: std::sync::Arc<dyn algonaut_transaction::Signer>,
+    params: &SuggestedParams,
+) -> Result<Vault, algonaut::Error> {
+    Vault::deploy(algod, sender, signer, params).await
+}
+
 #[test]
 fn literal_default_argument_is_omitted() {
     let alice = Account::generate();

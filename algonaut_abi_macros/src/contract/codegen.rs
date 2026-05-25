@@ -45,6 +45,9 @@ pub fn generate_contract(contract: &AbiContract) -> Result<TokenStream, String> 
     // Generate global-state read accessors, if the contract declares state.
     let state = generate_state_accessors(contract, &struct_ident, &contract.structs);
 
+    // Generate a `deploy` constructor, if the contract carries TEAL source.
+    let deploy = generate_deploy(contract, &struct_ident);
+
     Ok(quote! {
         #structs
         #struct_def
@@ -53,6 +56,7 @@ pub fn generate_contract(contract: &AbiContract) -> Result<TokenStream, String> 
         #builders
         #events
         #state
+        #deploy
     })
 }
 
@@ -814,6 +818,106 @@ fn struct_abi_tuple_type(
         }
     }
     Some(format!("({})", parts.join(",")))
+}
+
+// ===========================================================================
+// ARC-56 deploy
+// ===========================================================================
+
+/// Generate a `deploy` associated function when the contract carries TEAL
+/// `source`.
+///
+/// `deploy` compiles the approval and clear programs through algod, submits a
+/// single app-create transaction with the declared state schema, and returns a
+/// client bound to the newly created application id. The TEAL source is
+/// base64-decoded at macro-expansion time; a contract without `source` (or with
+/// malformed base64) gets no `deploy`.
+fn generate_deploy(contract: &AbiContract, struct_ident: &Ident) -> TokenStream {
+    let source = match &contract.source {
+        Some(source) => source,
+        None => return TokenStream::new(),
+    };
+
+    let engine = base64::engine::general_purpose::STANDARD;
+    let approval = match engine.decode(&source.approval) {
+        Ok(bytes) => bytes,
+        Err(_) => return TokenStream::new(),
+    };
+    let clear = match engine.decode(&source.clear) {
+        Ok(bytes) => bytes,
+        Err(_) => return TokenStream::new(),
+    };
+
+    let (global_ints, global_bytes, local_ints, local_bytes) = contract
+        .state
+        .as_ref()
+        .map(|state| {
+            (
+                state.schema.global.ints,
+                state.schema.global.bytes,
+                state.schema.local.ints,
+                state.schema.local.bytes,
+            )
+        })
+        .unwrap_or((0, 0, 0, 0));
+
+    quote! {
+        impl #struct_ident {
+            /// Deploy a new instance of this contract.
+            ///
+            /// Compiles the contract's approval and clear programs through
+            /// algod, submits a single app-create transaction with the declared
+            /// state schema, waits for confirmation, and returns a client bound
+            /// to the newly created application id.
+            pub async fn deploy(
+                algod: &::algonaut::Algod,
+                sender: ::algonaut_core::Address,
+                signer: ::std::sync::Arc<dyn ::algonaut_transaction::Signer>,
+                params: &::algonaut_model::algod::SuggestedParams,
+            ) -> ::core::result::Result<Self, ::algonaut::Error> {
+                let __approval = algod
+                    .teal_compile(&[#(#approval),*], ::algonaut::SourceMap::Skip)
+                    .await?;
+                let __clear = algod
+                    .teal_compile(&[#(#clear),*], ::algonaut::SourceMap::Skip)
+                    .await?;
+
+                let __txn = ::algonaut::transaction::CreateApplication::new(
+                    sender,
+                    __approval,
+                    __clear,
+                    ::algonaut::transaction::transaction::StateSchema {
+                        number_ints: #global_ints,
+                        number_byteslices: #global_bytes,
+                    },
+                    ::algonaut::transaction::transaction::StateSchema {
+                        number_ints: #local_ints,
+                        number_byteslices: #local_bytes,
+                    },
+                )
+                .build(params)?;
+
+                let __outcome = ::algonaut::atomic::AtomicGroupBuilder::new()
+                    .add_transaction(::algonaut::atomic::TransactionWithSigner::new(
+                        __txn,
+                        ::std::sync::Arc::clone(&signer),
+                    ))
+                    .build()?
+                    .sign()
+                    .await?
+                    .execute(algod)
+                    .await?;
+
+                let __app_id = __outcome.created_app_id.ok_or_else(|| {
+                    ::algonaut::Error::Msg(
+                        "deploy: confirmed transaction did not create an application".to_owned(),
+                    )
+                })?;
+
+                ::core::result::Result::Ok(Self::new(__app_id, sender, signer))
+            }
+        }
+    }
 }
 
 /// Convert a string to PascalCase.
