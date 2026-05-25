@@ -74,12 +74,25 @@ naming overlay*, not a replacement. So `AbiMethod::get_signature()` stays correc
 unchanged, signature validation through `algonaut_abi_sig` is unaffected, and the
 struct name is purely a codegen concern.
 
-### Why not target ARC-32
+### Deprecation posture: keep ARC-4, ARC-32 is the format slated to go
 
-ARC-32 is the two-file predecessor ARC-56 was designed to replace. Supporting it
-directly would mean parsing a second, redundant format. We target ARC-56 (single
-file) and keep ARC-4 working; ARC-32 users convert once via AlgoKit. This mirrors
-the SDKs, which treat ARC-32 as a convert-on-ingest legacy format.
+We mirror the official SDKs on what is, and is not, deprecated — and ARC-4 is
+**not**. ARC-56's own Backwards Compatibility section guarantees its schema
+"should be compatible with all ARC-4 clients," and its Rationale describes ARC-56
+as taking "the existing JSON description of a contract as described in ARC-4 and
+[adding] more fields." ARC-4 remains the foundational ABI standard the SDKs build
+on; `algokit-utils` keeps ARC-4 backward-compatibility rather than removing it. So
+the macro keeps reading ARC-4 contract JSON — we do not deprecate it.
+
+The format actually on the deprecation path is **ARC-32**, the two-file
+predecessor ARC-56 was designed to consolidate (an ARC-32 file embeds the ARC-4
+JSON *and* adds a second file — redundant information). We do not target it
+directly: supporting it would mean parsing a second, redundant format for no
+capability ARC-56 doesn't already give us. ARC-32 users convert once via AlgoKit,
+exactly as the SDKs treat it — a convert-on-ingest legacy format, with ARC-56 the
+default. The official client generators, notably, never accepted bare ARC-4
+contract JSON as input at all (only ARC-32 or ARC-56), so "deprecating ARC-4" is
+not even a question their tooling faces.
 
 ## Decision
 
