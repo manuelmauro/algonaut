@@ -35,13 +35,16 @@ Accepted and largely implemented on the `feat/contract-macro-arc56` branch:
   app id on the atomic group: `ExecuteOutcome::created_app_id`. *(compile-verified
   against the real compile/create/execute APIs)*
 
+A full worked example of the generated surface lives in
+`examples/arc56_client.rs`.
+
 Runtime-coupled features that touch a node are verified by **compilation**
 against the real APIs; node-backed behaviour tests belong in the integration
 suite.
 
-Still open: **sourced (non-literal) default values** and **local/box/map state
-accessors** — both need a runtime read with extra arguments (an account address
-or a map key).
+The remaining gaps — node-backed integration tests for the runtime paths,
+sourced (non-literal) default values, local/box/map state accessors, typed
+return/value decoding, a richer `deploy`, and more — are tracked in #345.
 
 Extends [`contract-macro-from-abi-json`](contract-macro-from-abi-json.md):
 its **D4** ("type mapping for initial implementation") declared an honest scope
