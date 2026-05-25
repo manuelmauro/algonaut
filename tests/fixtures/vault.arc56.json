@@ -47,6 +47,18 @@
         { "name": "factor", "type": "uint64" }
       ],
       "returns": { "type": "uint64" }
+    },
+    {
+      "name": "incr",
+      "desc": "Increment by a step that defaults to the literal 1",
+      "args": [
+        {
+          "name": "step",
+          "type": "uint64",
+          "defaultValue": { "source": "literal", "data": "AAAAAAAAAAE=", "type": "uint64" }
+        }
+      ],
+      "returns": { "type": "uint64" }
     }
   ],
   "networks": {

@@ -12,12 +12,16 @@ tags: [api, abi, macros, codegen, arc56, ergonomics]
 
 ## Status
 
-Accepted. Phases 1–2 are implemented on the `feat/contract-macro-arc56`
-branch: Phase 1 (D2 — extend `algonaut_abi_model` to parse the full ARC-56
-schema, with ARC-4 files round-tripping unchanged) and Phase 2 (D3 — generate
-named-struct types from the `structs` map and accept them as typed `contract!`
-method arguments, closing the tuple-argument gap from #342). Later phases
-(D4/D5 read-only and default values, D6 state/events/lifecycle) follow per the
+Accepted. Implemented on the `feat/contract-macro-arc56` branch: Phase 1
+(D2 — parse the full ARC-56 schema in `algonaut_abi_model`, ARC-4 files
+round-tripping unchanged), Phase 2 (D3 — generate named-struct types from the
+`structs` map and accept them as typed `contract!` method arguments, closing
+the tuple-argument gap from #342), and the literal-default half of Phase 3
+(D5 — an argument with a `literal` default value is supplied automatically and
+omitted from the generated signature). The runtime-coupled remainder —
+read-only simulate execution (D4), sourced (non-literal) default values, and
+D6 state / events / lifecycle — needs an algod handle on the generated client
+and a live node for meaningful tests, and follows as separate work per the
 **Scope and phasing** section below.
 
 Extends [`contract-macro-from-abi-json`](contract-macro-from-abi-json.md):

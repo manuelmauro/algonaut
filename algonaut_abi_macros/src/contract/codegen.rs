@@ -5,10 +5,11 @@
 //! constructors.
 
 use crate::contract::parse::{
-    AbiContract, AbiMethod, StructField, StructFieldType, genesis_to_network,
+    AbiContract, AbiMethod, AbiMethodArg, StructField, StructFieldType, genesis_to_network,
 };
 use crate::contract::type_map::{abi_marker_type, rust_param_type};
 use algonaut_abi_sig::{ArgClass, parse_signature, parse_type};
+use base64::Engine;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 use std::collections::{BTreeSet, HashMap};
@@ -114,10 +115,50 @@ fn generate_impl(
 /// The parameter declaration and the argument-encoding expression for one
 /// method argument.
 struct ArgSpec {
-    /// `name: Type` for the generated method's parameter list.
-    param: TokenStream,
+    /// `name: Type` for the generated method's parameter list, or `None` when
+    /// the argument is supplied automatically (e.g. a literal default) and so
+    /// takes no parameter.
+    param: Option<TokenStream>,
     /// An expression producing the argument's [`AbiValue`].
     encode: TokenStream,
+}
+
+/// If an argument has a `literal` default value, build the expression that
+/// decodes that constant into an [`AbiValue`] at run time, so the caller can
+/// omit it. The base64 payload is decoded at macro-expansion time (failing
+/// fast on malformed input); the ABI decode happens at run time via the type
+/// the contract declares. Returns `None` for arguments with no literal default
+/// — including the other `defaultValue` sources (box/global/local/method),
+/// which need a runtime read and remain required parameters for now.
+fn literal_default_encode(model_arg: &AbiMethodArg) -> Option<TokenStream> {
+    let default_value = model_arg.default_value.as_ref()?;
+    if default_value.source != "literal" {
+        return None;
+    }
+
+    // The default's own `type` wins; otherwise the value is encoded as the
+    // argument's ABI type. AVM types (e.g. "AVMUint64") do not parse as ABI
+    // types, so such defaults fall through and the argument stays required.
+    let type_str = default_value
+        .type_
+        .as_deref()
+        .unwrap_or(model_arg.type_.as_str());
+    parse_type(type_str).ok()?;
+
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(&default_value.data)
+        .ok()?;
+
+    Some(quote! {
+        {
+            let __ty: ::algonaut_abi::abi_type::AbiType = #type_str
+                .parse()
+                .expect("contract!: ABI type validated at macro expansion");
+            __ty
+                .decode(&[#(#bytes),*])
+                .expect("contract!: literal default value")
+        }
+    })
 }
 
 /// Build the per-argument specs for a method, or an error naming the first
@@ -150,6 +191,15 @@ fn method_arg_specs(
             Ident::new(&arg_name, Span::call_site())
         };
 
+        // A literal default value lets the caller omit the argument entirely.
+        if let Some(encode) = model_arg.and_then(literal_default_encode) {
+            specs.push(ArgSpec {
+                param: None,
+                encode,
+            });
+            continue;
+        }
+
         // ARC-56 named struct argument: use the generated Rust struct as the
         // parameter type and encode it as an ABI tuple.
         if let Some(struct_name) = model_arg.and_then(|a| a.struct_.as_ref()) {
@@ -160,7 +210,7 @@ fn method_arg_specs(
             }
             let ty = Ident::new(&to_pascal_case(struct_name), Span::call_site());
             specs.push(ArgSpec {
-                param: quote! { #arg_ident: #ty },
+                param: Some(quote! { #arg_ident: #ty }),
                 encode: quote! { #arg_ident.abi_encode() },
             });
             continue;
@@ -172,7 +222,7 @@ fn method_arg_specs(
                 let marker = abi_marker_type(ty)?;
 
                 specs.push(ArgSpec {
-                    param: quote! { #arg_ident: #rust_type },
+                    param: Some(quote! { #arg_ident: #rust_type }),
                     encode: quote! {
                         ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(#arg_ident)
                     },
@@ -199,7 +249,7 @@ fn generate_method(
     let specs = method_arg_specs(method, supported_structs)?;
     let signature = method.get_signature();
 
-    let params = specs.iter().map(|s| &s.param);
+    let params = specs.iter().filter_map(|s| s.param.as_ref());
     let encode_calls = specs.iter().map(|s| &s.encode);
 
     let method_name_str = &method.name;

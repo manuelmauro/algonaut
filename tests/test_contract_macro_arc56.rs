@@ -103,3 +103,16 @@ fn nested_struct_and_mixed_args_build() {
     // phase; the call itself is unaffected).
     let _get = vault.get_pair().build(&params);
 }
+
+#[test]
+fn literal_default_argument_is_omitted() {
+    let alice = Account::generate();
+    let address = alice.address();
+    let signer = Arc::new(alice);
+    let vault = Vault::new(AppId(777), address, signer);
+    let params = mock_params();
+
+    // `incr`'s only argument has a literal default, so it takes no parameter:
+    // the constant is supplied automatically.
+    let _call = vault.incr().build(&params);
+}
