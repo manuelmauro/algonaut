@@ -1,0 +1,55 @@
+{
+  "arcs": [56],
+  "name": "Vault",
+  "desc": "An ARC-56 contract exercising named-struct arguments",
+  "structs": {
+    "Pair": [
+      { "name": "first", "type": "uint64" },
+      { "name": "second", "type": "uint64" }
+    ],
+    "Holder": [
+      { "name": "owner", "type": "address" },
+      { "name": "amount", "type": "uint64" }
+    ],
+    "Wrapper": [
+      { "name": "inner", "type": "Pair" },
+      { "name": "label", "type": "string" }
+    ]
+  },
+  "methods": [
+    {
+      "name": "store",
+      "desc": "Store a pair",
+      "args": [{ "name": "p", "type": "(uint64,uint64)", "struct": "Pair" }],
+      "returns": { "type": "void" }
+    },
+    {
+      "name": "store_wrapped",
+      "args": [
+        {
+          "name": "w",
+          "type": "((uint64,uint64),string)",
+          "struct": "Wrapper"
+        }
+      ],
+      "returns": { "type": "void" }
+    },
+    {
+      "name": "get_pair",
+      "args": [],
+      "returns": { "type": "(uint64,uint64)", "struct": "Pair" }
+    },
+    {
+      "name": "scale",
+      "desc": "Mix a struct argument with a scalar",
+      "args": [
+        { "name": "p", "type": "(uint64,uint64)", "struct": "Pair" },
+        { "name": "factor", "type": "uint64" }
+      ],
+      "returns": { "type": "uint64" }
+    }
+  ],
+  "networks": {
+    "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=": { "appID": 777 }
+  }
+}

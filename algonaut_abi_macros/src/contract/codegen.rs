@@ -1,32 +1,44 @@
 //! Code generation for the `contract!` macro.
 //!
-//! Generates a typed contract struct with methods for each ABI method,
-//! plus optional network-specific constructors.
+//! Generates a typed contract struct with methods for each ABI method, the
+//! named ARC-56 structs those methods use, and optional network-specific
+//! constructors.
 
-use crate::contract::parse::{AbiContract, AbiMethod, genesis_to_network};
+use crate::contract::parse::{
+    AbiContract, AbiMethod, StructField, StructFieldType, genesis_to_network,
+};
 use crate::contract::type_map::{abi_marker_type, rust_param_type};
-use algonaut_abi_sig::{ArgClass, parse_signature};
+use algonaut_abi_sig::{ArgClass, parse_signature, parse_type};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
+use std::collections::{BTreeSet, HashMap};
 
 /// Generate all code for a contract from its parsed JSON.
 pub fn generate_contract(contract: &AbiContract) -> Result<TokenStream, String> {
     let struct_name = to_pascal_case(&contract.name);
     let struct_ident = Ident::new(&struct_name, Span::call_site());
 
+    // Resolve which ARC-56 named structs can be fully generated. Methods that
+    // reference an unsupported struct fall back to a `compile_error!`.
+    let supported_structs = resolve_supported_structs(&contract.structs);
+
+    // Generate the Rust structs for the supported ARC-56 structs.
+    let structs = generate_structs(&contract.structs, &supported_structs)?;
+
     // Generate the struct definition
     let struct_def = generate_struct(&struct_ident);
 
     // Generate the impl block with new() and method functions
-    let impl_block = generate_impl(contract, &struct_ident)?;
+    let impl_block = generate_impl(contract, &struct_ident, &supported_structs);
 
     // Generate network-specific constructors if networks are present
     let network_constructors = generate_network_constructors(contract, &struct_ident);
 
-    // Generate builder structs for each method
-    let builders = generate_builders(contract, &struct_ident)?;
+    // Generate builder structs for each supported method
+    let builders = generate_builders(contract, &struct_ident, &supported_structs);
 
     Ok(quote! {
+        #structs
         #struct_def
         #impl_block
         #network_constructors
@@ -47,11 +59,15 @@ fn generate_struct(struct_ident: &Ident) -> TokenStream {
 }
 
 /// Generate the main impl block with new() and all method functions.
-fn generate_impl(contract: &AbiContract, struct_ident: &Ident) -> Result<TokenStream, String> {
+fn generate_impl(
+    contract: &AbiContract,
+    struct_ident: &Ident,
+    supported_structs: &BTreeSet<String>,
+) -> TokenStream {
     let mut methods = Vec::new();
 
     for method in &contract.methods {
-        match generate_method(method, struct_ident) {
+        match generate_method(method, struct_ident, supported_structs) {
             Ok(m) => methods.push(m),
             Err(e) => {
                 // Generate a compile_error! for unsupported methods
@@ -69,7 +85,7 @@ fn generate_impl(contract: &AbiContract, struct_ident: &Ident) -> Result<TokenSt
         }
     }
 
-    Ok(quote! {
+    quote! {
         impl #struct_ident {
             /// Create a new contract client.
             pub fn new(
@@ -92,25 +108,37 @@ fn generate_impl(contract: &AbiContract, struct_ident: &Ident) -> Result<TokenSt
 
             #(#methods)*
         }
-    })
+    }
 }
 
-/// Generate a single method function.
-fn generate_method(method: &AbiMethod, struct_ident: &Ident) -> Result<TokenStream, String> {
-    let signature = method.get_signature();
+/// The parameter declaration and the argument-encoding expression for one
+/// method argument.
+struct ArgSpec {
+    /// `name: Type` for the generated method's parameter list.
+    param: TokenStream,
+    /// An expression producing the argument's [`AbiValue`].
+    encode: TokenStream,
+}
 
-    // Parse and validate the signature using algonaut_abi_sig
+/// Build the per-argument specs for a method, or an error naming the first
+/// unsupported argument.
+///
+/// Shared by [`generate_method`] (which emits the function) and
+/// [`generate_builders`] (which only needs to know whether the method is
+/// supported), so the two can never disagree about which methods exist.
+fn method_arg_specs(
+    method: &AbiMethod,
+    supported_structs: &BTreeSet<String>,
+) -> Result<Vec<ArgSpec>, String> {
+    let signature = method.get_signature();
     let parsed = parse_signature(&signature).map_err(|e| e.reason)?;
 
-    // Generate parameter list
-    let mut params = Vec::new();
-    let mut param_idents = Vec::new();
-    let mut encode_calls = Vec::new();
+    let mut specs = Vec::with_capacity(parsed.args.len());
 
     for (i, arg_class) in parsed.args.iter().enumerate() {
-        let arg_name = method
-            .args
-            .get(i)
+        let model_arg = method.args.get(i);
+
+        let arg_name = model_arg
             .and_then(|a| a.name.as_ref())
             .map(|n| to_snake_case(n))
             .unwrap_or_else(|| format!("arg{i}"));
@@ -122,14 +150,32 @@ fn generate_method(method: &AbiMethod, struct_ident: &Ident) -> Result<TokenStre
             Ident::new(&arg_name, Span::call_site())
         };
 
+        // ARC-56 named struct argument: use the generated Rust struct as the
+        // parameter type and encode it as an ABI tuple.
+        if let Some(struct_name) = model_arg.and_then(|a| a.struct_.as_ref()) {
+            if !supported_structs.contains(struct_name) {
+                return Err(format!(
+                    "struct argument `{struct_name}` has unsupported field types"
+                ));
+            }
+            let ty = Ident::new(&to_pascal_case(struct_name), Span::call_site());
+            specs.push(ArgSpec {
+                param: quote! { #arg_ident: #ty },
+                encode: quote! { #arg_ident.abi_encode() },
+            });
+            continue;
+        }
+
         match arg_class {
             ArgClass::Value(ty) => {
                 let rust_type = rust_param_type(ty)?;
                 let marker = abi_marker_type(ty)?;
 
-                params.push(quote! { #arg_ident: #rust_type });
-                encode_calls.push(quote! {
-                    ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(#arg_ident)
+                specs.push(ArgSpec {
+                    param: quote! { #arg_ident: #rust_type },
+                    encode: quote! {
+                        ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(#arg_ident)
+                    },
                 });
             }
             ArgClass::Transaction(tx_type) => {
@@ -139,9 +185,22 @@ fn generate_method(method: &AbiMethod, struct_ident: &Ident) -> Result<TokenStre
                 return Err(format!("reference argument `{ref_type}`"));
             }
         }
-
-        param_idents.push(arg_ident);
     }
+
+    Ok(specs)
+}
+
+/// Generate a single method function.
+fn generate_method(
+    method: &AbiMethod,
+    struct_ident: &Ident,
+    supported_structs: &BTreeSet<String>,
+) -> Result<TokenStream, String> {
+    let specs = method_arg_specs(method, supported_structs)?;
+    let signature = method.get_signature();
+
+    let params = specs.iter().map(|s| &s.param);
+    let encode_calls = specs.iter().map(|s| &s.encode);
 
     let method_name_str = &method.name;
     let method_ident = Ident::new(&to_snake_case(method_name_str), Span::call_site());
@@ -209,27 +268,18 @@ fn generate_network_constructors(contract: &AbiContract, struct_ident: &Ident) -
 }
 
 /// Generate builder structs for each supported method.
-fn generate_builders(contract: &AbiContract, struct_ident: &Ident) -> Result<TokenStream, String> {
+fn generate_builders(
+    contract: &AbiContract,
+    struct_ident: &Ident,
+    supported_structs: &BTreeSet<String>,
+) -> TokenStream {
     let mut builders = Vec::new();
 
     for method in &contract.methods {
-        let signature = method.get_signature();
-
-        // Skip methods with unsupported types (they get compile_error! in the method)
-        let parsed = match parse_signature(&signature) {
-            Ok(p) => p,
-            Err(_) => continue,
-        };
-
-        let has_unsupported = parsed.args.iter().any(|arg| {
-            matches!(arg, ArgClass::Transaction(_) | ArgClass::Reference(_))
-                || match arg {
-                    ArgClass::Value(ty) => rust_param_type(ty).is_err(),
-                    _ => false,
-                }
-        });
-
-        if has_unsupported {
+        // Skip methods with unsupported arguments (they get a compile_error! in
+        // the impl block). Sharing `method_arg_specs` keeps this in lockstep
+        // with `generate_method`.
+        if method_arg_specs(method, supported_structs).is_err() {
             continue;
         }
 
@@ -263,7 +313,152 @@ fn generate_builders(contract: &AbiContract, struct_ident: &Ident) -> Result<Tok
         });
     }
 
-    Ok(quote! { #(#builders)* })
+    quote! { #(#builders)* }
+}
+
+// ===========================================================================
+// ARC-56 named structs
+// ===========================================================================
+
+/// Resolve which named structs can be fully generated.
+///
+/// A struct is supported when every field is supported: a leaf field whose
+/// type maps to a Rust type, or a field referencing another supported struct.
+/// Inline nested structs and unsupported leaf types (arrays, tuples, `ufixed`)
+/// make a struct unsupported. Computed to a fixpoint so a struct that
+/// references one defined later is still resolved; reference cycles (which
+/// would be infinitely sized, and so are invalid) simply stay unsupported.
+fn resolve_supported_structs(structs: &HashMap<String, Vec<StructField>>) -> BTreeSet<String> {
+    let mut supported = BTreeSet::new();
+
+    loop {
+        let mut changed = false;
+        for (name, fields) in structs {
+            if supported.contains(name) {
+                continue;
+            }
+            if fields
+                .iter()
+                .all(|f| field_supported(&f.type_, structs, &supported))
+            {
+                supported.insert(name.clone());
+                changed = true;
+            }
+        }
+        if !changed {
+            break;
+        }
+    }
+
+    supported
+}
+
+/// Whether a struct field's type can be generated, given the structs already
+/// known to be supported.
+fn field_supported(
+    field_type: &StructFieldType,
+    structs: &HashMap<String, Vec<StructField>>,
+    supported: &BTreeSet<String>,
+) -> bool {
+    match field_type {
+        StructFieldType::Type(s) => {
+            if structs.contains_key(s) {
+                // A reference to another named struct.
+                supported.contains(s)
+            } else {
+                // A leaf ABI type: supported iff it maps to a Rust type.
+                parse_type(s)
+                    .ok()
+                    .map(|t| rust_param_type(&t).is_ok())
+                    .unwrap_or(false)
+            }
+        }
+        // Inline nested structs are not generated in this phase.
+        StructFieldType::Nested(_) => false,
+    }
+}
+
+/// Generate the Rust struct definitions (and their `abi_encode`) for the
+/// supported ARC-56 structs, in a deterministic (name-sorted) order.
+fn generate_structs(
+    structs: &HashMap<String, Vec<StructField>>,
+    supported: &BTreeSet<String>,
+) -> Result<TokenStream, String> {
+    let mut names: Vec<&String> = structs.keys().filter(|n| supported.contains(*n)).collect();
+    names.sort();
+
+    let mut defs = Vec::new();
+
+    for name in names {
+        let fields = &structs[name];
+        let struct_ident = Ident::new(&to_pascal_case(name), Span::call_site());
+
+        let mut field_defs = Vec::new();
+        let mut field_encodes = Vec::new();
+
+        for field in fields {
+            let field_name = to_snake_case(&field.name);
+            let field_ident = if is_rust_keyword(&field_name) {
+                format_ident!("r#{}", field_name)
+            } else {
+                Ident::new(&field_name, Span::call_site())
+            };
+
+            let (ty, encode) = struct_field_type_and_encode(&field.type_, structs, &field_ident)?;
+            field_defs.push(quote! { pub #field_ident: #ty });
+            field_encodes.push(encode);
+        }
+
+        let doc = format!("Generated ARC-56 struct `{name}`.");
+
+        defs.push(quote! {
+            #[doc = #doc]
+            #[derive(Debug, Clone)]
+            pub struct #struct_ident {
+                #(#field_defs),*
+            }
+
+            impl #struct_ident {
+                /// Encode this struct as its ARC-4 ABI tuple value.
+                pub fn abi_encode(self) -> ::algonaut_abi::abi_type::AbiValue {
+                    ::algonaut_abi::abi_type::AbiValue::Array(::std::vec![
+                        #(#field_encodes),*
+                    ])
+                }
+            }
+        });
+    }
+
+    Ok(quote! { #(#defs)* })
+}
+
+/// The Rust type and the encode expression for a single struct field, where
+/// the encode expression reads `self.<field_ident>`.
+fn struct_field_type_and_encode(
+    field_type: &StructFieldType,
+    structs: &HashMap<String, Vec<StructField>>,
+    field_ident: &Ident,
+) -> Result<(TokenStream, TokenStream), String> {
+    match field_type {
+        StructFieldType::Type(s) => {
+            if structs.contains_key(s) {
+                // Reference to another generated struct.
+                let ty = Ident::new(&to_pascal_case(s), Span::call_site());
+                Ok((quote! { #ty }, quote! { self.#field_ident.abi_encode() }))
+            } else {
+                let sig = parse_type(s).map_err(|e| e.reason)?;
+                let rust_type = rust_param_type(&sig)?;
+                let marker = abi_marker_type(&sig)?;
+                Ok((
+                    quote! { #rust_type },
+                    quote! {
+                        ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(self.#field_ident)
+                    },
+                ))
+            }
+        }
+        StructFieldType::Nested(_) => Err("inline nested struct".to_owned()),
+    }
 }
 
 /// Convert a string to PascalCase.
@@ -387,6 +582,13 @@ fn sanitize_identifier(s: &str) -> String {
 mod tests {
     use super::*;
 
+    fn leaf(name: &str, ty: &str) -> StructField {
+        StructField {
+            name: name.to_owned(),
+            type_: StructFieldType::Type(ty.to_owned()),
+        }
+    }
+
     #[test]
     fn test_to_pascal_case() {
         assert_eq!(to_pascal_case("calculator"), "Calculator");
@@ -406,5 +608,51 @@ mod tests {
         assert!(is_rust_keyword("type"));
         assert!(is_rust_keyword("fn"));
         assert!(!is_rust_keyword("add"));
+    }
+
+    #[test]
+    fn scalar_struct_is_supported() {
+        let mut structs = HashMap::new();
+        structs.insert(
+            "Pair".to_owned(),
+            vec![leaf("first", "uint64"), leaf("second", "uint64")],
+        );
+        let supported = resolve_supported_structs(&structs);
+        assert!(supported.contains("Pair"));
+    }
+
+    #[test]
+    fn struct_referencing_another_struct_resolves() {
+        // `Wrapper` references `Pair`, defined in the same map; the fixpoint
+        // resolves both regardless of iteration order.
+        let mut structs = HashMap::new();
+        structs.insert("Wrapper".to_owned(), vec![leaf("p", "Pair")]);
+        structs.insert(
+            "Pair".to_owned(),
+            vec![leaf("first", "uint64"), leaf("second", "uint64")],
+        );
+        let supported = resolve_supported_structs(&structs);
+        assert!(supported.contains("Pair"));
+        assert!(supported.contains("Wrapper"));
+    }
+
+    #[test]
+    fn struct_with_unsupported_field_is_unsupported() {
+        // A `ufixed` field has no canonical Rust type.
+        let mut structs = HashMap::new();
+        structs.insert("Bad".to_owned(), vec![leaf("x", "ufixed64x2")]);
+        let supported = resolve_supported_structs(&structs);
+        assert!(!supported.contains("Bad"));
+
+        // Inline nested structs are not generated in this phase.
+        let mut nested = HashMap::new();
+        nested.insert(
+            "Outer".to_owned(),
+            vec![StructField {
+                name: "inner".to_owned(),
+                type_: StructFieldType::Nested(vec![leaf("a", "uint64")]),
+            }],
+        );
+        assert!(!resolve_supported_structs(&nested).contains("Outer"));
     }
 }

@@ -6,9 +6,11 @@
 //! parallel structs in sync. This module only adds the compile-time
 //! file-parsing entry point.
 
-pub use algonaut_abi_model::{AbiContract, AbiMethod, genesis_to_network};
+pub use algonaut_abi_model::{
+    AbiContract, AbiMethod, StructField, StructFieldType, genesis_to_network,
+};
 
-/// Parse an ARC-4 contract JSON string into the shared model.
+/// Parse an ARC-56 / ARC-4 contract JSON string into the shared model.
 pub fn parse_contract_json(json_str: &str) -> Result<AbiContract, String> {
     serde_json::from_str(json_str).map_err(|e| format!("failed to parse ABI JSON: {e}"))
 }
