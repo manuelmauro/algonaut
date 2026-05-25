@@ -10,6 +10,7 @@ version = "0.8.0"
 
 [dependencies]
 algonaut_abi_macros = { workspace = true }
+algonaut_abi_model = { workspace = true }
 algonaut_abi_sig = { workspace = true }
 algonaut_core = { workspace = true }
 derive_more = { workspace = true, features = ["display", "from"] }

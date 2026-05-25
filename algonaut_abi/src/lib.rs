@@ -51,7 +51,7 @@ use abi_type::AbiType;
 /// // `&str` cannot stand in for `uint64`: no `AbiArg<Uint<64>>` impl.
 /// let _ = algonaut_abi::abi_call!("add(uint64,uint64)uint64", "two", 3u64);
 /// ```
-pub use algonaut_abi_macros::{abi_call, abi_method};
+pub use algonaut_abi_macros::{abi_call, abi_method, contract};
 
 #[doc(inline)]
 pub use macro_support::MethodInvocation;

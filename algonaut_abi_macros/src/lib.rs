@@ -12,11 +12,16 @@
 //!   a per-type `AbiArg<T>` bound, expanding to an `algonaut_abi::MethodInvocation`.
 //! - [`macro@abi_method`] — `abi_method!("add(uint64,uint64)uint64")` is the
 //!   signature-only base: validate the literal and expand to an `AbiMethod`.
+//! - [`macro@contract`] — `contract!("path/to/contract.json")` reads an ARC-4
+//!   ABI JSON file and generates a typed struct with methods for each ABI
+//!   method.
 //!
-//! Both are re-exported from `algonaut_abi`, so call sites write
+//! All macros are re-exported from `algonaut_abi`, so call sites write
 //! `algonaut_abi::abi_call!` (or `algonaut::abi::abi_call!`). The grammar is
 //! the one in [`algonaut_abi_sig`], the same crate `from_signature` parses
 //! with at run time — so the macros and the runtime parser cannot disagree.
+
+mod contract;
 
 use algonaut_abi_sig::{ArgClass, SigType};
 use proc_macro::TokenStream;
@@ -210,4 +215,59 @@ fn plural(n: usize) -> &'static str {
 
 fn were_was(n: usize) -> &'static str {
     if n == 1 { "was" } else { "were" }
+}
+
+/// `contract!("path/to/contract.json")`: generate a typed contract client from
+/// an ARC-4 ABI JSON file.
+///
+/// The macro reads the ABI JSON at compile time and generates a struct named
+/// after the contract (PascalCase) with methods for each ABI method. The path
+/// is resolved relative to `CARGO_MANIFEST_DIR`, matching `include_str!` behavior.
+///
+/// # Example
+///
+/// ```ignore
+/// algonaut::contract!("contracts/calculator.json");
+///
+/// // Use the generated struct
+/// let client = Calculator::new(AppId(5), alice.address(), signer);
+/// let call = client.add(2u64, 3u64).build(&params);
+/// ```
+///
+/// # Generated Code
+///
+/// For a contract with methods `add(uint64,uint64)uint64` and `subtract(uint64,uint64)uint64`:
+///
+/// ```ignore
+/// pub struct Calculator {
+///     app_id: AppId,
+///     sender: Address,
+///     signer: Arc<dyn Signer>,
+/// }
+///
+/// impl Calculator {
+///     pub fn new(app_id, sender, signer) -> Self { ... }
+///     pub fn add(&self, a: u64, b: u64) -> CalculatorAddBuilder { ... }
+///     pub fn subtract(&self, a: u64, b: u64) -> CalculatorSubtractBuilder { ... }
+/// }
+/// ```
+///
+/// If the ABI JSON contains a `networks` field, named constructors are generated
+/// for known networks (testnet, mainnet, betanet).
+///
+/// # Supported Types
+///
+/// The initial implementation supports scalar types with canonical Rust
+/// representations: `uint8`-`uint512`, `bool`, `address`, `string`, `byte[]`.
+/// Methods with transaction args, reference args, or compound types (arrays,
+/// tuples) generate a compile error with guidance to use the dynamic path.
+///
+/// # Feature Requirements
+///
+/// The generated code uses `MethodCall` from the `algonaut::atomic` module,
+/// which requires the `algod` feature (included in default features). Ensure
+/// your `algonaut` dependency includes this feature.
+#[proc_macro]
+pub fn contract(input: TokenStream) -> TokenStream {
+    contract::expand(input)
 }
