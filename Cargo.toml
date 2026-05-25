@@ -162,6 +162,10 @@ name = "contract_client"
 required-features = ["algod"]
 
 [[example]]
+name = "arc56_client"
+required-features = ["algod"]
+
+[[example]]
 name = "app_clear_state"
 required-features = ["algod"]
 
