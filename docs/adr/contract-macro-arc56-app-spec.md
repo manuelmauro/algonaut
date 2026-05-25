@@ -12,17 +12,35 @@ tags: [api, abi, macros, codegen, arc56, ergonomics]
 
 ## Status
 
-Accepted. Implemented on the `feat/contract-macro-arc56` branch: Phase 1
-(D2 — parse the full ARC-56 schema in `algonaut_abi_model`, ARC-4 files
-round-tripping unchanged), Phase 2 (D3 — generate named-struct types from the
-`structs` map and accept them as typed `contract!` method arguments, closing
-the tuple-argument gap from #342), and the literal-default half of Phase 3
-(D5 — an argument with a `literal` default value is supplied automatically and
-omitted from the generated signature). The runtime-coupled remainder —
-read-only simulate execution (D4), sourced (non-literal) default values, and
-D6 state / events / lifecycle — needs an algod handle on the generated client
-and a live node for meaningful tests, and follows as separate work per the
-**Scope and phasing** section below.
+Accepted and largely implemented on the `feat/contract-macro-arc56` branch:
+
+- **Phase 1 (D2):** parse the full ARC-56 schema in `algonaut_abi_model`;
+  ARC-4 files round-trip unchanged. *(unit + round-trip tested)*
+- **Phase 2 (D3):** generate named-struct types from `structs` and accept them
+  as typed `contract!` method arguments — closing the tuple-argument gap from
+  #342. *(integration tested)*
+- **Phase 3 (D5, literal):** an argument with a `literal` default value is
+  decoded and supplied automatically, omitted from the signature. *(tested)*
+- **Phase 3 (D4, read-only):** every method builder gains a `simulate` read
+  path. *(compile-verified against the real simulate API)*
+- **Phase 4 (events):** an ARC-28 event decoder (`decode_events`) over a
+  transaction's logs. *(unit tested with synthetic logs)*
+- **Phase 4 (state):** `global_<key>` read accessors that fetch and decode
+  declared global state. *(compile-verified against the algod app-info API)*
+- **Phase 5 (lifecycle):** declared `call` actions become builder setters
+  (`opt_in`/`close_out`/`update`/`delete`) that set the on-complete. *(tested)*
+
+Runtime-coupled features that touch a node are verified by **compilation**
+against the real APIs; node-backed behaviour tests belong in the integration
+suite.
+
+Still open: **sourced (non-literal) default values** and **local/box/map state
+accessors** (both need a runtime read with extra arguments), and **deploy**
+(D6 / AppFactory — create from `source`/`byteCode`). Deploy is intentionally
+deferred: extracting the created app id after a bare create is not cleanly
+exposed by the current public atomic-group API (`ExecuteOutcome` surfaces it
+only via ABI `method_results`), so it needs API/design work plus node-backed
+tests rather than blind code generation.
 
 Extends [`contract-macro-from-abi-json`](contract-macro-from-abi-json.md):
 its **D4** ("type mapping for initial implementation") declared an honest scope
