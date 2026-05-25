@@ -359,6 +359,29 @@ fn generate_builders(
                     .invoke(self.invocation)
                     .build(params)
                 }
+
+                /// Dry-run this single-method call through algod's simulate
+                /// endpoint and return the outcome, including the decoded ABI
+                /// return value (`method_results[0].return_value`).
+                ///
+                /// This is the read path for read-only (ARC-22) methods: it
+                /// signs with placeholder signatures and submits nothing, so it
+                /// neither charges fees nor changes state.
+                pub async fn simulate(
+                    self,
+                    algod: &::algonaut::Algod,
+                    params: &::algonaut_model::algod::SuggestedParams,
+                ) -> ::core::result::Result<
+                    ::algonaut::atomic::SimulateOutcome,
+                    ::algonaut::Error,
+                > {
+                    let call = self.build(params);
+                    ::algonaut::atomic::AtomicGroupBuilder::new()
+                        .add_method_call(call)
+                        .build()?
+                        .simulate(algod)
+                        .await
+                }
             }
         });
     }

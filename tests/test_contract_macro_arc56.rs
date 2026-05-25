@@ -104,6 +104,19 @@ fn nested_struct_and_mixed_args_build() {
     let _get = vault.get_pair().build(&params);
 }
 
+// Compile-only check: type-checks the generated read-only `simulate` path
+// against the real simulate API. It is never called (no node to talk to);
+// merely compiling it verifies the generated async method's signature and the
+// `AtomicGroupBuilder`/`simulate` chain line up.
+#[allow(dead_code)]
+async fn readonly_simulate_typechecks(
+    vault: &Vault,
+    algod: &algonaut::Algod,
+    params: &SuggestedParams,
+) -> Result<algonaut::atomic::SimulateOutcome, algonaut::Error> {
+    vault.get_pair().simulate(algod, params).await
+}
+
 #[test]
 fn literal_default_argument_is_omitted() {
     let alice = Account::generate();
