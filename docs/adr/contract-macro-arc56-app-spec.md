@@ -29,18 +29,19 @@ Accepted and largely implemented on the `feat/contract-macro-arc56` branch:
   declared global state. *(compile-verified against the algod app-info API)*
 - **Phase 5 (lifecycle):** declared `call` actions become builder setters
   (`opt_in`/`close_out`/`update`/`delete`) that set the on-complete. *(tested)*
+- **Phase 5 (deploy):** a `deploy` constructor compiles the contract's TEAL
+  `source` through algod, submits an app-create with the declared schema, and
+  returns a client bound to the new app id. This required exposing the created
+  app id on the atomic group: `ExecuteOutcome::created_app_id`. *(compile-verified
+  against the real compile/create/execute APIs)*
 
 Runtime-coupled features that touch a node are verified by **compilation**
 against the real APIs; node-backed behaviour tests belong in the integration
 suite.
 
 Still open: **sourced (non-literal) default values** and **local/box/map state
-accessors** (both need a runtime read with extra arguments), and **deploy**
-(D6 / AppFactory — create from `source`/`byteCode`). Deploy is intentionally
-deferred: extracting the created app id after a bare create is not cleanly
-exposed by the current public atomic-group API (`ExecuteOutcome` surfaces it
-only via ABI `method_results`), so it needs API/design work plus node-backed
-tests rather than blind code generation.
+accessors** — both need a runtime read with extra arguments (an account address
+or a map key).
 
 Extends [`contract-macro-from-abi-json`](contract-macro-from-abi-json.md):
 its **D4** ("type mapping for initial implementation") declared an honest scope
