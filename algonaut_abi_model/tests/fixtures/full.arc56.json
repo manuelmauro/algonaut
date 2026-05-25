@@ -1,0 +1,101 @@
+{
+  "arcs": [22, 28, 56],
+  "name": "Vault",
+  "desc": "A vault contract exercising the full ARC-56 schema",
+  "networks": {
+    "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=": { "appID": 1001 },
+    "SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=": { "appID": 2002 }
+  },
+  "structs": {
+    "Pair": [
+      { "name": "first", "type": "uint64" },
+      { "name": "second", "type": "uint64" }
+    ],
+    "Outer": [{ "name": "inner", "type": [{ "name": "a", "type": "uint64" }] }]
+  },
+  "methods": [
+    {
+      "name": "store",
+      "desc": "Store a pair scaled by a factor",
+      "args": [
+        { "type": "(uint64,uint64)", "struct": "Pair", "name": "p" },
+        {
+          "type": "uint64",
+          "name": "factor",
+          "defaultValue": {
+            "source": "literal",
+            "data": "AAAAAAAAAAE=",
+            "type": "uint64"
+          }
+        }
+      ],
+      "returns": {
+        "type": "(uint64,uint64)",
+        "struct": "Pair",
+        "desc": "the stored pair"
+      },
+      "actions": { "create": [], "call": ["NoOp"] },
+      "readonly": false,
+      "events": [],
+      "recommendations": {
+        "innerTransactionCount": 1,
+        "boxes": { "key": "Ym94", "readBytes": 100, "writeBytes": 100 },
+        "apps": [123],
+        "accounts": [],
+        "assets": []
+      }
+    },
+    {
+      "name": "get_total",
+      "args": [],
+      "returns": { "type": "uint64" },
+      "actions": { "create": [], "call": ["NoOp"] },
+      "readonly": true
+    }
+  ],
+  "state": {
+    "schema": {
+      "global": { "ints": 1, "bytes": 0 },
+      "local": { "ints": 0, "bytes": 0 }
+    },
+    "keys": {
+      "global": {
+        "total": { "keyType": "AVMString", "valueType": "uint64", "key": "dG90YWw=" }
+      },
+      "local": {},
+      "box": {}
+    },
+    "maps": {
+      "global": {},
+      "local": {},
+      "box": {
+        "balances": { "keyType": "address", "valueType": "uint64", "prefix": "Yg==" }
+      }
+    }
+  },
+  "bareActions": { "create": ["NoOp"], "call": [] },
+  "sourceInfo": {
+    "approval": {
+      "sourceInfo": [
+        { "pc": [0, 1], "errorMessage": "assert failed", "teal": 5 }
+      ],
+      "pcOffsetMethod": "cblocks"
+    },
+    "clear": { "sourceInfo": [], "pcOffsetMethod": "none" }
+  },
+  "source": { "approval": "I3ByYWdtYQ==", "clear": "I3ByYWdtYQ==" },
+  "byteCode": { "approval": "AQ==", "clear": "AQ==" },
+  "compilerInfo": {
+    "compiler": "puya",
+    "compilerVersion": { "major": 4, "minor": 0, "patch": 1, "commitHash": "abc123" }
+  },
+  "events": [
+    {
+      "name": "Stored",
+      "desc": "emitted on store",
+      "args": [{ "type": "uint64", "name": "value" }]
+    }
+  ],
+  "templateVariables": { "TMPL_OWNER": { "type": "address" } },
+  "scratchVariables": { "counter": { "slot": 0, "type": "uint64" } }
+}
