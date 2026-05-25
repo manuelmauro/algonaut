@@ -32,7 +32,7 @@ via `add_transaction`. See
 annotated version.
 
 ```rust
-use algonaut::algod::v2::Algod;
+use algonaut::Algod;
 use algonaut::atomic::AtomicGroupBuilder;
 use algonaut::core::AppId;
 use algonaut::transaction::Signer;
@@ -89,13 +89,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 ## What's new since 0.4.2
 
-`algonaut` rested at `0.4.2` for years; the `0.5`–`0.7` line is a ground-up
+`algonaut` rested at `0.4.2` for years; the `0.5`–`0.8` line is a ground-up
 modernization, and the example above is the API as it stands today:
 
 - **0.5** — Rust 2024 edition (MSRV 1.85); `ring` swapped for `ed25519-dalek`, so `wasm32` builds need no C toolchain; workspace-wide dependency refresh; `lefthook` + `make ci`.
 - **0.6** — `simulate` and dry-run request builders, a TEAL V3 source-map decoder, and domain types that serialize to both JSON and msgpack.
-- **0.7** — identifier newtypes (`AppId`, `AssetId`, `TxId`) at the client boundary, block / account-resource / ledger-delta endpoints, and msgpack response decoding.
-- **unreleased** — an open, async `Signer` trait (HSM / remote KMS / WalletConnect friendly), the typestate `AtomicGroupBuilder` shown above, compile-time-checked ARC-4 calls via `abi_call!`, and typed contract clients generated from ABI JSON with `contract!`.
+- **0.7** — identifier newtypes (`AppId`, `AssetId`, `TransactionId`) at the client boundary, block / account-resource / ledger-delta endpoints, and msgpack response decoding.
+- **0.8** — an open, async `Signer` trait (HSM / remote KMS / WalletConnect friendly), the typestate `AtomicGroupBuilder` shown above, compile-time-checked ARC-4 calls via `abi_call!`, Cargo feature gates for clients (`algod`, `indexer`, `kmd`), and structured error types with full source-chaining.
+- **unreleased** — typed contract clients generated from an ARC-4 ABI JSON at compile time with `contract!`.
 
 Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG.md](./CHANGELOG.md) has the full entry-by-entry history.
 
