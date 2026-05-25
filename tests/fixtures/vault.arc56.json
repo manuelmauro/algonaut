@@ -61,6 +61,13 @@
       "returns": { "type": "uint64" }
     }
   ],
+  "events": [
+    {
+      "name": "Counted",
+      "desc": "Emitted when the counter changes",
+      "args": [{ "name": "total", "type": "uint64" }]
+    }
+  ],
   "networks": {
     "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=": { "appID": 777 }
   }

@@ -129,3 +129,31 @@ fn literal_default_argument_is_omitted() {
     // the constant is supplied automatically.
     let _call = vault.incr().build(&params);
 }
+
+#[test]
+fn arc28_events_decode_from_logs() {
+    use algonaut::abi::abi_type::{AbiType, AbiValue};
+    use sha2::{Digest, Sha512_256};
+
+    // Build a synthetic ARC-28 log for `Counted(uint64)` with total = 42:
+    // the 4-byte selector followed by the ABI-encoded argument tuple.
+    let selector = &Sha512_256::digest(b"Counted(uint64)")[..4];
+    let tuple: AbiType = "(uint64)".parse().unwrap();
+    let body = tuple
+        .encode(AbiValue::Array(vec![AbiValue::from(42u64)]))
+        .unwrap();
+    let mut log = selector.to_vec();
+    log.extend_from_slice(&body);
+
+    // A log that matches no event selector is ignored.
+    let noise = vec![0u8, 1, 2, 3, 4];
+
+    let events = Vault::decode_events(&[noise, log]);
+    assert_eq!(events.len(), 1);
+    match &events[0] {
+        VaultEvent::Counted(AbiValue::Array(fields)) => {
+            assert_eq!(fields, &vec![AbiValue::from(42u64)]);
+        }
+        other => panic!("unexpected event: {other:?}"),
+    }
+}

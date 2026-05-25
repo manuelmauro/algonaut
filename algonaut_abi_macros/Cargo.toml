@@ -18,4 +18,5 @@ base64 = "0.22"
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 serde_json = { workspace = true }
+sha2 = { workspace = true }
 syn = { workspace = true }
