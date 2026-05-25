@@ -22,12 +22,14 @@ members = [
   "algonaut_kmd",
   "algonaut_transaction",
   "algonaut_abi",
+  "algonaut_abi_model",
   "algonaut_abi_sig",
   "algonaut_abi_macros",
 ]
 
 [workspace.dependencies]
 algonaut_abi = { path = "algonaut_abi", version = "0.8.0" }
+algonaut_abi_model = { path = "algonaut_abi_model", version = "0.8.0" }
 algonaut_abi_sig = { path = "algonaut_abi_sig", version = "0.8.0" }
 algonaut_abi_macros = { path = "algonaut_abi_macros", version = "0.8.0" }
 algonaut_algod = { path = "algonaut_algod", version = "0.8.0", default-features = false }

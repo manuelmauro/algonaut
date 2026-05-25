@@ -1,5 +1,6 @@
 use super::abi_type::AbiType;
 use crate::abi_error::AbiError;
+use algonaut_abi_model as model;
 use algonaut_core::{AppId, TransactionTypeEnum, error::CoreError};
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
@@ -79,22 +80,19 @@ impl ReferenceArgType {
 
 /// Represents an ABI Method argument
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(from = "model::AbiMethodArg", into = "model::AbiMethodArg")]
 pub struct AbiMethodArg {
     /// User-friendly name for the argument
-    #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
     /// The type of the argument as a string.
     /// See [get_type_object](get_type_object) to obtain the ABI type object
-    #[serde(rename = "type")]
     pub(crate) type_: String,
 
     /// User-friendly description for the argument
-    #[serde(rename = "desc", skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
-    /// Cache that holds the parsed type object
-    #[serde(skip)]
+    /// Cache that holds the parsed type object (not part of the JSON shape)
     pub(crate) parsed: Option<AbiType>,
 }
 
@@ -154,18 +152,16 @@ impl AbiMethodArg {
 
 /// Represents an ABI method return value
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(from = "model::AbiReturn", into = "model::AbiReturn")]
 pub struct AbiReturn {
     /// The type of the argument as a string. See the [get_type_object](get_type_object) to
     /// obtain the ABI type object
-    #[serde(rename = "type")]
     pub(crate) type_: String,
 
     /// User-friendly description for the argument
-    #[serde(rename = "desc", skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
-    /// Cache that holds the parsed type object
-    #[serde(skip)]
+    /// Cache that holds the parsed type object (not part of the JSON shape)
     pub(crate) parsed: Option<AbiType>,
 }
 
@@ -210,21 +206,18 @@ pub enum AbiReturnType {
 
 /// Represents an ABI method return value
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(from = "model::AbiMethod", into = "model::AbiMethod")]
 pub struct AbiMethod {
     /// The name of the method
-    #[serde(rename = "name")]
     pub name: String,
 
     /// User-friendly description for the method
-    #[serde(rename = "desc", skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
     /// The arguments of the method, in order
-    #[serde(default, rename = "args", skip_serializing_if = "Vec::is_empty")]
     pub args: Vec<AbiMethodArg>,
 
     /// Information about the method's return value
-    #[serde(rename = "returns")]
     pub returns: AbiReturn,
 }
 
@@ -314,48 +307,168 @@ impl AbiMethod {
 
 /// Represents an ABI interface, which is a logically grouped collection of methods
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "model::AbiInterface", into = "model::AbiInterface")]
 pub struct AbiInterface {
     /// The name of the interface
-    #[serde(rename = "name")]
     pub name: String,
 
     /// User-friendly description for the interface
-    #[serde(rename = "desc", skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
     /// The methods that the interface contains
-    #[serde(rename = "methods", skip_serializing_if = "Vec::is_empty")]
     pub methods: Vec<AbiMethod>,
 }
 
 /// Network-specific information about the contract
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(
+    from = "model::AbiContractNetworkInfo",
+    into = "model::AbiContractNetworkInfo"
+)]
 pub struct AbiContractNetworkInfo {
     /// The application ID of the contract for this network
-    #[serde(rename = "appID")]
     pub app_id: AppId,
 }
 
 /// Represents an ABI contract, which is a concrete set of methods implemented by a single app
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "model::AbiContract", into = "model::AbiContract")]
 pub struct AbiContract {
     /// The name of the contract
-    #[serde(rename = "name")]
     pub name: String,
 
     /// User-friendly description for the contract
-    #[serde(rename = "desc", skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 
     /// Optional information about the contract's instances across different networks
-    #[serde(
-        default,
-        rename = "networks",
-        skip_serializing_if = "HashMap::is_empty"
-    )]
     pub networks: HashMap<String, AbiContractNetworkInfo>,
 
     /// The methods that the interface contains
-    #[serde(default, rename = "methods", skip_serializing_if = "Vec::is_empty")]
     pub methods: Vec<AbiMethod>,
+}
+
+// ---------------------------------------------------------------------------
+// Conversions to/from the wire model (`algonaut_abi_model`).
+//
+// The JSON shape is single-sourced in the model crate; these runtime types add
+// the lazily-parsed `AbiType` cache and a typed `AppId`, and (de)serialize by
+// delegating to the model via the `#[serde(from / into)]` attributes above.
+// ---------------------------------------------------------------------------
+
+impl From<model::AbiMethodArg> for AbiMethodArg {
+    fn from(m: model::AbiMethodArg) -> Self {
+        Self {
+            name: m.name,
+            type_: m.type_,
+            description: m.desc,
+            parsed: None,
+        }
+    }
+}
+
+impl From<AbiMethodArg> for model::AbiMethodArg {
+    fn from(a: AbiMethodArg) -> Self {
+        Self {
+            name: a.name,
+            type_: a.type_,
+            desc: a.description,
+        }
+    }
+}
+
+impl From<model::AbiReturn> for AbiReturn {
+    fn from(m: model::AbiReturn) -> Self {
+        Self {
+            type_: m.type_,
+            description: m.desc,
+            parsed: None,
+        }
+    }
+}
+
+impl From<AbiReturn> for model::AbiReturn {
+    fn from(r: AbiReturn) -> Self {
+        Self {
+            type_: r.type_,
+            desc: r.description,
+        }
+    }
+}
+
+impl From<model::AbiMethod> for AbiMethod {
+    fn from(m: model::AbiMethod) -> Self {
+        Self {
+            name: m.name,
+            description: m.desc,
+            args: m.args.into_iter().map(Into::into).collect(),
+            returns: m.returns.into(),
+        }
+    }
+}
+
+impl From<AbiMethod> for model::AbiMethod {
+    fn from(m: AbiMethod) -> Self {
+        Self {
+            name: m.name,
+            desc: m.description,
+            args: m.args.into_iter().map(Into::into).collect(),
+            returns: m.returns.into(),
+        }
+    }
+}
+
+impl From<model::AbiInterface> for AbiInterface {
+    fn from(m: model::AbiInterface) -> Self {
+        Self {
+            name: m.name,
+            description: m.desc,
+            methods: m.methods.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<AbiInterface> for model::AbiInterface {
+    fn from(i: AbiInterface) -> Self {
+        Self {
+            name: i.name,
+            desc: i.description,
+            methods: i.methods.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<model::AbiContractNetworkInfo> for AbiContractNetworkInfo {
+    fn from(m: model::AbiContractNetworkInfo) -> Self {
+        Self {
+            app_id: AppId(m.app_id),
+        }
+    }
+}
+
+impl From<AbiContractNetworkInfo> for model::AbiContractNetworkInfo {
+    fn from(n: AbiContractNetworkInfo) -> Self {
+        Self { app_id: n.app_id.0 }
+    }
+}
+
+impl From<model::AbiContract> for AbiContract {
+    fn from(m: model::AbiContract) -> Self {
+        Self {
+            name: m.name,
+            description: m.desc,
+            networks: m.networks.into_iter().map(|(k, v)| (k, v.into())).collect(),
+            methods: m.methods.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<AbiContract> for model::AbiContract {
+    fn from(c: AbiContract) -> Self {
+        Self {
+            name: c.name,
+            desc: c.description,
+            networks: c.networks.into_iter().map(|(k, v)| (k, v.into())).collect(),
+            methods: c.methods.into_iter().map(Into::into).collect(),
+        }
+    }
 }

@@ -1,0 +1,20 @@
+[package]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+description = "Pure ARC-4 ABI JSON data model (contract/method/arg/return), shared by algonaut_abi and its compile-time macros."
+edition = "2024"
+keywords = ["Algorand", "sdk", "abi"]
+license = "MIT OR Apache-2.0"
+name = "algonaut_abi_model"
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.8.0"
+
+# The on-the-wire ARC-4 ABI/app-spec JSON shape, shared by the runtime parser
+# (algonaut_abi, which builds its richer types from these) and the proc-macros
+# (algonaut_abi_macros, which reads them at compile time). Kept to serde-derive
+# only — no I/O, no resolved types, no algonaut_core — so it can sit below both
+# without a cycle. See algonaut_abi_sig for the sibling signature/type grammar.
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+serde_json = { workspace = true }

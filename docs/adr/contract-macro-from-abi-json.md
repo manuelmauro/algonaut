@@ -181,6 +181,16 @@ internal `ContractJson` struct is defined in the macro crate to avoid
 depending on `algonaut_abi` (which would create a circular dependency
 through re-exports).
 
+> **Amended** (see
+> [`abi-json-model-shared-leaf-crate`](abi-json-model-shared-leaf-crate.md)):
+> the minimal internal structs were replaced by a shared leaf crate,
+> `algonaut_abi_model`, that both the macro and `algonaut_abi` depend on, so the
+> ABI JSON shape has a single definition. The cycle is still avoided — the model
+> is a leaf below both — and the macro keeps only its `serde_json` dependency
+> (the `serde` derive moved to the model crate). The "avoids adding another
+> workspace crate" point above no longer holds; that trade-off is accepted in
+> [`publish-entire-workspace`](publish-entire-workspace.md).
+
 Re-export path: `algonaut::contract!` (via `algonaut_abi::contract!`).
 
 ### D6 — Method name conversion

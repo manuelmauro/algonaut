@@ -3,14 +3,14 @@
 //! Generates a typed contract struct with methods for each ABI method,
 //! plus optional network-specific constructors.
 
-use crate::contract::parse::{ContractJson, MethodJson, genesis_to_network};
+use crate::contract::parse::{AbiContract, AbiMethod, genesis_to_network};
 use crate::contract::type_map::{abi_marker_type, rust_param_type};
 use algonaut_abi_sig::{ArgClass, parse_signature};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 
 /// Generate all code for a contract from its parsed JSON.
-pub fn generate_contract(contract: &ContractJson) -> Result<TokenStream, String> {
+pub fn generate_contract(contract: &AbiContract) -> Result<TokenStream, String> {
     let struct_name = to_pascal_case(&contract.name);
     let struct_ident = Ident::new(&struct_name, Span::call_site());
 
@@ -47,7 +47,7 @@ fn generate_struct(struct_ident: &Ident) -> TokenStream {
 }
 
 /// Generate the main impl block with new() and all method functions.
-fn generate_impl(contract: &ContractJson, struct_ident: &Ident) -> Result<TokenStream, String> {
+fn generate_impl(contract: &AbiContract, struct_ident: &Ident) -> Result<TokenStream, String> {
     let mut methods = Vec::new();
 
     for method in &contract.methods {
@@ -96,8 +96,8 @@ fn generate_impl(contract: &ContractJson, struct_ident: &Ident) -> Result<TokenS
 }
 
 /// Generate a single method function.
-fn generate_method(method: &MethodJson, struct_ident: &Ident) -> Result<TokenStream, String> {
-    let signature = method.signature();
+fn generate_method(method: &AbiMethod, struct_ident: &Ident) -> Result<TokenStream, String> {
+    let signature = method.get_signature();
 
     // Parse and validate the signature using algonaut_abi_sig
     let parsed = parse_signature(&signature).map_err(|e| e.reason)?;
@@ -170,7 +170,7 @@ fn generate_method(method: &MethodJson, struct_ident: &Ident) -> Result<TokenStr
 }
 
 /// Generate network-specific constructors (e.g., testnet(), mainnet()).
-fn generate_network_constructors(contract: &ContractJson, struct_ident: &Ident) -> TokenStream {
+fn generate_network_constructors(contract: &AbiContract, struct_ident: &Ident) -> TokenStream {
     let mut constructors = Vec::new();
 
     for (genesis_hash, network_info) in &contract.networks {
@@ -209,11 +209,11 @@ fn generate_network_constructors(contract: &ContractJson, struct_ident: &Ident) 
 }
 
 /// Generate builder structs for each supported method.
-fn generate_builders(contract: &ContractJson, struct_ident: &Ident) -> Result<TokenStream, String> {
+fn generate_builders(contract: &AbiContract, struct_ident: &Ident) -> Result<TokenStream, String> {
     let mut builders = Vec::new();
 
     for method in &contract.methods {
-        let signature = method.signature();
+        let signature = method.get_signature();
 
         // Skip methods with unsupported types (they get compile_error! in the method)
         let parsed = match parse_signature(&signature) {

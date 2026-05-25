@@ -111,6 +111,7 @@ Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG
 | `algonaut_crypto`      | Ed25519 sign/verify (via `ed25519-dalek`) and BIP-39 mnemonics                           |
 | `algonaut_transaction` | Transaction builders and the open `Signer` trait                                         |
 | `algonaut_abi`         | ARC-4 ABI types, method encoding, TEAL source-map decoder                                |
+| `algonaut_abi_model`   | Pure serde data model for ARC-4 ABI JSON, shared by the runtime and the macros           |
 | `algonaut_abi_sig`     | ARC-4 signature/type grammar shared by the macros and the runtime                        |
 | `algonaut_abi_macros`  | `contract!` client generator plus `abi_call!` / `abi_method!` compile-time-checked ABI proc-macros |
 | `algonaut_encoding`    | Shared `serde` visitors and base32/base64 helpers                                        |
