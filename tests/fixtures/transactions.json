@@ -1,0 +1,8 @@
+{
+  "name": "Deposits",
+  "desc": "ARC-4 contract exercising transaction arguments",
+  "methods": [
+    { "name": "deposit", "args": [{ "name": "payment", "type": "pay" }, { "name": "expected", "type": "uint64" }], "returns": { "type": "void" } },
+    { "name": "swap", "args": [{ "name": "xfer", "type": "axfer" }], "returns": { "type": "void" } }
+  ]
+}
