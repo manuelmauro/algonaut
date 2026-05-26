@@ -59,7 +59,8 @@ make cucumber        # run the cucumber suite against the sandbox
 
 # ARC-56 end-to-end tests use a lighter prebuilt-image sandbox instead:
 make sandbox         # boot a dev algod+kmd on :4001/:4002
-make test-e2e        # deploy + exercise the contract! client against it
+make test-e2e        # deploy + exercise the contract! client against it (self-funds)
+make fund            # fund the examples.env accounts (needed to run examples/)
 ```
 
 See `docs/adr/` for the architectural decisions behind the cross-SDK cucumber wiring, the simulate / dryrun builders, the V3 source-map decoder, and the dual-format (`JSON`/msgpack) domain-type serialization.

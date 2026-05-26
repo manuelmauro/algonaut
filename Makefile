@@ -1,4 +1,4 @@
-.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release cucumber check-cucumber test-e2e harness harness-down sandbox sandbox-down sandbox-clean docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
+.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release cucumber check-cucumber test-e2e harness harness-down sandbox sandbox-down sandbox-clean fund docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
 
 # Version of openapi-generator used to regenerate the algod/indexer clients.
 OPENAPI_GENERATOR_VERSION := v6.6.0
@@ -84,6 +84,8 @@ harness-down:
 SANDBOX_DIR := sandbox
 SANDBOX_REPO := https://github.com/algorand/sandbox
 SANDBOX_CONFIG ?= dev
+# microAlgos sent to each example account by `make fund`.
+FUND_AMOUNT ?= 1000000000
 
 # Bring up a fast local sandbox for development (prebuilt images, no rebuild)
 sandbox:
@@ -98,6 +100,20 @@ sandbox-down:
 sandbox-clean:
 	@if [ -d "$(SANDBOX_DIR)" ]; then cd "$(SANDBOX_DIR)" && ./sandbox clean || true; fi
 	rm -rf "$(SANDBOX_DIR)"
+
+# The example accounts aren't in the dev genesis, and a fresh sandbox resets
+# balances; FUND_AMOUNT (microAlgos) overrides the per-account amount.
+# Fund the example accounts (every *_ADDRESS in examples.env); run after `make sandbox`
+fund:
+	@test -d "$(SANDBOX_DIR)" || { echo "no $(SANDBOX_DIR)/ — run 'make sandbox' first"; exit 1; }
+	@set -e; \
+	from=$$(cd "$(SANDBOX_DIR)" && ./sandbox goal account list | awk '/microAlgos/{print $$2; exit}'); \
+	if [ -z "$$from" ]; then echo "no funded genesis account found — is the sandbox up?"; exit 1; fi; \
+	addrs=$$(sed -n 's/^export [A-Z0-9_]*_ADDRESS="\(.*\)"/\1/p' examples.env); \
+	for a in $$addrs; do \
+	  (cd "$(SANDBOX_DIR)" && ./sandbox goal clerk send -a $(FUND_AMOUNT) -f "$$from" -t "$$a") >/dev/null; \
+	  echo "funded $$a with $(FUND_AMOUNT) microAlgos"; \
+	done
 
 # Build the Rust SDK testing docker image
 docker-rustsdk-build:
