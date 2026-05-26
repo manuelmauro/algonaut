@@ -375,3 +375,35 @@ async fn account_reference_round_trips() {
         other => panic!("unexpected who return: {other:?}"),
     }
 }
+
+#[tokio::test]
+async fn array_arguments_sum_on_chain() {
+    use algonaut::atomic::AbiMethodReturnValue;
+    let algod = algod();
+    let (vault, _) = deploy_vault(&algod, &kmd()).await;
+    let params = algod.suggested_params().await.unwrap();
+
+    // Dynamic array: sum([10,20,30]) = 60.
+    let dynamic = vault.sum(vec![10u64, 20, 30]).build(&params);
+    // Static array: sum3([1,2,3]) = 6.
+    let stat = vault.sum3([1u64, 2, 3]).build(&params);
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(dynamic)
+        .add_method_call(stat)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    match &executed.method_results[0].return_value {
+        Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(60u64)),
+        other => panic!("unexpected sum return: {other:?}"),
+    }
+    match &executed.method_results[1].return_value {
+        Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(6u64)),
+        other => panic!("unexpected sum3 return: {other:?}"),
+    }
+}

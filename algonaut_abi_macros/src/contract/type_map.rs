@@ -21,14 +21,23 @@ pub fn rust_param_type(ty: &SigType) -> Result<TokenStream, String> {
         SigType::DynamicArray { child_type } if matches!(**child_type, SigType::Byte) => {
             Ok(quote! { ::std::vec::Vec<u8> })
         }
+        // Non-byte dynamic arrays map to `Vec<R>` over the element's Rust type.
+        SigType::DynamicArray { child_type } => {
+            let inner = rust_param_type(child_type)?;
+            Ok(quote! { ::std::vec::Vec<#inner> })
+        }
+        // Static arrays map to `[R; N]` over the element's Rust type.
+        SigType::StaticArray { len, child_type } => {
+            let inner = rust_param_type(child_type)?;
+            let n = proc_macro2::Literal::usize_unsuffixed(*len as usize);
+            Ok(quote! { [#inner; #n] })
+        }
         SigType::UFixed {
             bit_size,
             precision,
         } => Err(format!(
             "ufixed{bit_size}x{precision} (no canonical Rust type)"
         )),
-        SigType::StaticArray { .. } => Err("static array".to_owned()),
-        SigType::DynamicArray { .. } => Err("dynamic array".to_owned()),
         SigType::Tuple { .. } => Err("tuple".to_owned()),
     }
 }
@@ -64,6 +73,43 @@ pub fn abi_marker_type(ty: &SigType) -> Result<TokenStream, String> {
         }
         other => Err(unsupported_type_message(other)),
     }
+}
+
+/// Build the expression that encodes `value` (an owned Rust value of
+/// [`rust_param_type`] shape) into its [`AbiValue`]. Scalars defer to the
+/// `AbiArg<Marker>` impls; arrays map each element recursively and wrap them in
+/// `AbiValue::Array`, the representation `algonaut_abi` decodes both static and
+/// dynamic arrays from. `depth` keeps the per-level closure binding unique.
+pub fn arg_encode_expr(
+    ty: &SigType,
+    value: &TokenStream,
+    depth: usize,
+) -> Result<TokenStream, String> {
+    match ty {
+        // byte[] keeps its canonical Vec<u8> path via the Bytes marker.
+        SigType::DynamicArray { child_type } if matches!(**child_type, SigType::Byte) => {
+            Ok(quote! {
+                ::algonaut_abi::macro_support::AbiArg::<::algonaut_abi::macro_support::Bytes>::encode(#value)
+            })
+        }
+        SigType::DynamicArray { child_type } => array_encode(child_type, value, depth),
+        SigType::StaticArray { child_type, .. } => array_encode(child_type, value, depth),
+        scalar => {
+            let marker = abi_marker_type(scalar)?;
+            Ok(quote! { ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(#value) })
+        }
+    }
+}
+
+fn array_encode(child: &SigType, value: &TokenStream, depth: usize) -> Result<TokenStream, String> {
+    let elem = quote::format_ident!("__elem{depth}");
+    let elem_expr = quote! { #elem };
+    let inner = arg_encode_expr(child, &elem_expr, depth + 1)?;
+    Ok(quote! {
+        ::algonaut_abi::abi_type::AbiValue::Array(
+            ::std::iter::IntoIterator::into_iter(#value).map(|#elem| #inner).collect()
+        )
+    })
 }
 
 fn unsupported_type_message(ty: &SigType) -> String {

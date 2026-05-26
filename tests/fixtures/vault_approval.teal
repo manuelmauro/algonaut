@@ -72,6 +72,16 @@ dispatch:
     ==
     bnz who
 
+    method "sum(uint64[])uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz sum
+
+    method "sum3(uint64[3])uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz sum3
+
     err
 
 // create(): owner = caller, total = 0
@@ -182,6 +192,65 @@ who:
     txna ApplicationArgs 1
     btoi
     txnas Accounts
+    concat
+    log
+    b approve
+
+// sum(uint64[]) -> uint64: sum a dynamic array (2-byte length prefix, then
+// big-endian uint64s). Loops over the count.
+sum:
+    txna ApplicationArgs 1
+    int 0
+    extract_uint16
+    store 0
+    int 0
+    store 1
+    int 0
+    store 2
+sum_loop:
+    load 1
+    load 0
+    ==
+    bnz sum_done
+    txna ApplicationArgs 1
+    int 2
+    load 1
+    int 8
+    *
+    +
+    extract_uint64
+    load 2
+    +
+    store 2
+    load 1
+    int 1
+    +
+    store 1
+    b sum_loop
+sum_done:
+    byte 0x151f7c75
+    load 2
+    itob
+    concat
+    log
+    b approve
+
+// sum3(uint64[3]) -> uint64: sum a fixed 3-element static array (24 bytes, no
+// length prefix).
+sum3:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    txna ApplicationArgs 1
+    int 16
+    extract_uint64
+    +
+    itob
     concat
     log
     b approve
