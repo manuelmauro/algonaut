@@ -291,3 +291,64 @@ async fn arc56_test_deploys_via_abi_create() {
         "ABI-method create with a substituted template variable should create the app"
     );
 }
+
+#[tokio::test]
+#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
+async fn non_creator_can_call_and_owner_stays_the_creator() {
+    // Vault records `owner = Txn.Sender` at create and never changes it, so a
+    // second account calling the app exercises the caller != creator case: the
+    // call succeeds (no access control), `total` reflects it, but `owner` stays
+    // the deployer.
+    let algod = algod();
+    let kmd = kmd();
+
+    // Account A deploys; the contract records owner = A.
+    let (vault, creator) = deploy_vault(&algod, &kmd).await;
+
+    // A different funded account B binds a client to the same app id.
+    let caller = funded_account(&algod, &kmd).await;
+    let caller_addr = caller.address();
+    assert_ne!(
+        caller_addr, creator,
+        "the caller must differ from the creator"
+    );
+    let caller_signer: Arc<dyn Signer> = Arc::new(caller);
+    let as_caller = Vault::new(vault.app_id(), caller_addr, caller_signer);
+
+    // B calls store(8,9): total = 8 + 9 = 17. Vault has no access control, so a
+    // non-creator's call confirms.
+    let params = algod.suggested_params().await.unwrap();
+    let store = as_caller
+        .store(Pair {
+            first: 8,
+            second: 9,
+        })
+        .build(&params);
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(store)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    assert!(
+        executed.confirmed_round.is_some(),
+        "a non-creator's call should confirm"
+    );
+
+    // `total` reflects B's call...
+    assert_eq!(
+        vault.global_total(&algod).await.unwrap(),
+        Some(AbiValue::from(17u64)),
+        "store(8,9) sets total = 8 + 9",
+    );
+    // ...but `owner` is still A: set at create, untouched by `store`.
+    assert_eq!(
+        vault.global_owner(&algod).await.unwrap(),
+        Some(AbiValue::Address(creator)),
+        "owner stays the creator even though a different account called",
+    );
+}
