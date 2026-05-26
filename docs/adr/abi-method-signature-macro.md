@@ -53,7 +53,7 @@ Neither is checked then.
 `"add(unt64,uint64)uint64"` — `unt64` for `uint64` — compiles cleanly and
 fails only when the line executes: `?` propagates an `AbiError::TypeParse`
 in the examples, `.unwrap()` panics in the step-defs
-(`tests/step_defs/integration/abi.rs`). A misspelled type, an unbalanced
+(`tests/cucumber/step_defs/integration/abi.rs`). A misspelled type, an unbalanced
 paren, an out-of-range bit size (`uint65`), or a missing return type all sit
 latent until the path runs.
 

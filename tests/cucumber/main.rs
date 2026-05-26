@@ -3,7 +3,8 @@
 //! The Algorand cross-SDK acceptance suite is sourced from
 //! [`algorand-sdk-testing`](https://github.com/algorand/algorand-sdk-testing).
 //! `./test-harness.sh up` clones the harness and copies its features into
-//! `tests/features/{integration,unit}` (both directories are gitignored).
+//! `tests/cucumber/features/{integration,unit}` (both directories are
+//! gitignored).
 //!
 //! Coverage is tracked via ADRs under `docs/adr/` — see
 //! `cucumber-test-suite-coverage-strategy` for the overarching plan and
@@ -18,7 +19,7 @@
 //! - **Stubbed** (`gate: Some(reason)`) — listed for visibility, skipped
 //!   at runtime until the gating ADR lands.
 //!
-//! Adding a feature: drop a step-def module under `tests/step_defs/`,
+//! Adding a feature: drop a step-def module under `tests/cucumber/step_defs/`,
 //! flip the corresponding entry's `gate` to `None`, and remove the ADR
 //! reference.
 
@@ -44,79 +45,79 @@ struct Feature {
 
 const INTEGRATION_FEATURES: &[Feature] = &[
     Feature {
-        path: "tests/features/integration/applications.feature",
+        path: "tests/cucumber/features/integration/applications.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/abi.feature",
+        path: "tests/cucumber/features/integration/abi.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/c2c.feature",
+        path: "tests/cucumber/features/integration/c2c.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/algod.feature",
+        path: "tests/cucumber/features/integration/algod.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/compile.feature",
+        path: "tests/cucumber/features/integration/compile.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/assets.feature",
+        path: "tests/cucumber/features/integration/assets.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/auction.feature",
+        path: "tests/cucumber/features/integration/auction.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/dryrun.feature",
+        path: "tests/cucumber/features/integration/dryrun.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/dryrun_testing.feature",
+        path: "tests/cucumber/features/integration/dryrun_testing.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/kmd.feature",
+        path: "tests/cucumber/features/integration/kmd.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/rekey.feature",
+        path: "tests/cucumber/features/integration/rekey.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/send.feature",
+        path: "tests/cucumber/features/integration/send.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/integration/simulate.feature",
+        path: "tests/cucumber/features/integration/simulate.feature",
         gate: None,
         // `simulate.exec_trace_with_stack_scratch` trips the same ATC
         // base64-decode issue tracked in #266; the
@@ -133,43 +134,43 @@ const INTEGRATION_FEATURES: &[Feature] = &[
 
 const UNIT_FEATURES: &[Feature] = &[
     Feature {
-        path: "tests/features/unit/abijson.feature",
+        path: "tests/cucumber/features/unit/abijson.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/algodclient_paths.feature",
+        path: "tests/cucumber/features/unit/algodclient_paths.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/atomic_transaction_composer.feature",
+        path: "tests/cucumber/features/unit/atomic_transaction_composer.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/client-no-headers.feature",
+        path: "tests/cucumber/features/unit/client-no-headers.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/dryrun_trace.feature",
+        path: "tests/cucumber/features/unit/dryrun_trace.feature",
         gate: Some("blocked on ADRs dryrun-request-builder and cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/feetest.feature",
+        path: "tests/cucumber/features/unit/feetest.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/offline.feature",
+        path: "tests/cucumber/features/unit/offline.feature",
         gate: None,
         // Only the address/mnemonic/microalgos round-trip scenarios are
         // wired so far. The transaction-signing scenarios share step
@@ -188,43 +189,43 @@ const UNIT_FEATURES: &[Feature] = &[
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/program_sanity_check.feature",
+        path: "tests/cucumber/features/unit/program_sanity_check.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/rekey.feature",
+        path: "tests/cucumber/features/unit/rekey.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/responses.feature",
+        path: "tests/cucumber/features/unit/responses.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/sourcemap.feature",
+        path: "tests/cucumber/features/unit/sourcemap.feature",
         gate: Some("blocked on ADRs teal-source-map-decoder and cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/tealsign.feature",
+        path: "tests/cucumber/features/unit/tealsign.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/transactions.feature",
+        path: "tests/cucumber/features/unit/transactions.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/v2algodclient_paths.feature",
+        path: "tests/cucumber/features/unit/v2algodclient_paths.feature",
         gate: None,
         excluded_tags: &[],
         // Excluded scenarios, each for a concrete capability gap — never an
@@ -237,13 +238,13 @@ const UNIT_FEATURES: &[Feature] = &[
         excluded_scenarios: &["Get Block, header-only"],
     },
     Feature {
-        path: "tests/features/unit/v2algodclient_responses.feature",
+        path: "tests/cucumber/features/unit/v2algodclient_responses.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/features/unit/v2indexerclient_paths.feature",
+        path: "tests/cucumber/features/unit/v2indexerclient_paths.feature",
         gate: None,
         excluded_tags: &[],
         // Excluded scenarios, each for a concrete capability gap — never an
@@ -264,7 +265,7 @@ const UNIT_FEATURES: &[Feature] = &[
         ],
     },
     Feature {
-        path: "tests/features/unit/v2indexerclient_responses.feature",
+        path: "tests/cucumber/features/unit/v2indexerclient_responses.feature",
         gate: None,
         excluded_tags: &[],
         excluded_scenarios: &[],

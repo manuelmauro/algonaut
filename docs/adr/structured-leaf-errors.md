@@ -201,7 +201,7 @@ each crate):
   about preserving causes.
 - **Per the migration-consistency rule, the change lands everywhere at
   once within each crate** — test scaffolding, `dryrun_printer`, the
-  integration step-defs in `tests/step_defs` included. No "promote the
+  integration step-defs in `tests/cucumber/step_defs` included. No "promote the
   enum but leave the call sites on a deprecated `Msg`" half-state.
 - **Tests gain something to match on.** ABI parse/decode failures become
   variant-matchable, so future step-defs can assert

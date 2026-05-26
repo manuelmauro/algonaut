@@ -141,13 +141,30 @@ kmd = ["dep:algonaut_kmd"]
 native = ["algonaut_algod?/native", "algonaut_indexer?/native", "algonaut_kmd?/native"]
 rustls = ["algonaut_algod?/rustls", "algonaut_indexer?/rustls", "algonaut_kmd?/rustls"]
 
+# Offline integration tests (the `contract!`-generated clients and logic sigs),
+# grouped as modules under one binary. `algod` gates the ARC-56 module's typed
+# `deploy`/state accessors; default features include it, so it runs normally.
 [[test]]
-name = "features_runner"
+name = "integration"
+path = "tests/integration/main.rs"
+required-features = ["algod"]
+
+[[test]]
+name = "cucumber"
+path = "tests/cucumber/main.rs"
 # Allows Cucumber to print output instead of libtest
 harness = false
 test = false
 # The cucumber acceptance suite drives the live algod/indexer/kmd clients.
 required-features = ["algod", "indexer", "kmd"]
+
+[[test]]
+name = "e2e"
+path = "tests/e2e/main.rs"
+# The ARC-56 end-to-end suite deploys to a live algod and self-funds via kmd.
+# Its tests are #[ignore]d (run with `make test-e2e`), so the default `cargo
+# test` only compiles them; this just skips that compile without the clients.
+required-features = ["algod", "kmd"]
 
 # Examples declare the client features they exercise, so a slimmer build
 # (e.g. `--no-default-features --features algod`) skips the ones it cannot

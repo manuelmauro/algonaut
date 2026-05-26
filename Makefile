@@ -1,4 +1,4 @@
-.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release integration check-integration harness harness-down sandbox sandbox-down sandbox-clean docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
+.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release cucumber check-cucumber test-e2e harness harness-down sandbox sandbox-down sandbox-clean docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
 
 # Version of openapi-generator used to regenerate the algod/indexer clients.
 OPENAPI_GENERATOR_VERSION := v6.6.0
@@ -53,15 +53,21 @@ test:
 test-release:
 	cargo test --release --workspace --lib --examples --tests
 
-# Run cucumber integration tests (requires a running harness)
-integration:
-	cargo test --test features_runner --
+# Run the cucumber acceptance suite (requires a running harness)
+cucumber:
+	cargo test --test cucumber --
 
 # Compile-check the cucumber runner without invoking it (it would need
 # a live harness). Catches type errors that `cargo check` skips because
-# `[[test]] test = false` for features_runner.
-check-integration:
-	cargo test --test features_runner --no-run
+# `[[test]] test = false` for the cucumber suite.
+check-cucumber:
+	cargo test --test cucumber --no-run
+
+# Run the ARC-56 end-to-end tests against a running node (e.g. `make sandbox`).
+# They are #[ignore]d, so this runs them explicitly; they self-fund from KMD.
+# Override ALGOD_URL/ALGOD_TOKEN/KMD_URL/KMD_TOKEN to target another node.
+test-e2e:
+	cargo test --test e2e -- --ignored --nocapture
 
 # Bring the integration test harness up
 harness:
@@ -137,8 +143,8 @@ generate-clients:
 	@echo '  git diff --no-index openapi/generated/indexer/src/models algonaut_model/src/indexer'
 	@echo '  git diff --no-index openapi/generated/indexer/src/apis   algonaut_indexer/src/apis'
 
-# Run all CI checks (fmt-check, clippy, test, check-integration, build)
-ci: fmt-check clippy test check-integration build
+# Run all CI checks (fmt-check, clippy, test, check-cucumber, build)
+ci: fmt-check clippy test check-cucumber build
 
 # Generate documentation
 doc:

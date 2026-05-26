@@ -13,7 +13,7 @@ signed.tx
 *.feature
 test-harness
 /sandbox
-tests/features
+tests/cucumber/features
 
 # regenerated openapi clients (review-only, see openapi/README.md)
 openapi/generated/

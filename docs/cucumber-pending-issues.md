@@ -86,4 +86,4 @@ ADR-0001's coverage tracker. The list:
 - `compile.feature` (everything except the mapping-enabled scenario)
 
 Each PR should flip the corresponding `gate` in
-`tests/features_runner.rs` from `Some(...)` to `None`.
+`tests/cucumber/main.rs` from `Some(...)` to `None`.

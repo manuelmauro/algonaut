@@ -46,7 +46,8 @@ START=$(date "+%s")
 
 THIS=$(basename "$0")
 ENV_FILE="test.env"
-TEST_DIR="tests"
+# Cucumber feature files are copied here (see tests/cucumber/main.rs).
+TEST_DIR="tests/cucumber"
 
 set -a
 source "$ENV_FILE"

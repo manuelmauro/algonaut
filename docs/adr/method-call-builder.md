@@ -32,7 +32,7 @@ positional `builder(...)` arguments. The core decision here — replacing the
 `extra_pages`, `note`, `lease`, `rekey_to`, `signer`, `boxes`. The
 composer takes it by `&mut` and consumes it.
 
-`tests/step_defs/integration/abi.rs` funnels every method call through
+`tests/cucumber/step_defs/integration/abi.rs` funnels every method call through
 one private helper with **twelve positional arguments**, most of them
 `Option`:
 
