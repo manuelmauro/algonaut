@@ -1,0 +1,175 @@
+#pragma version 8
+
+// Vault - a minimal but real ARC-56 reference contract.
+//
+// It backs `examples/arc56_client.rs` and the `vault.arc56.json` app spec:
+// the embedded base64 in that spec's `source.approval` is this file, and
+// `Vault::deploy` compiles it through algod at runtime.
+//
+// Global state (matches the spec schema: 1 uint, 1 byteslice):
+//   "total" : AVMUint64 - running counter
+//   "owner" : address   - the account that created the app
+//
+// It dispatches ARC-4 ABI calls by selector and emits the ARC-28
+// `Counted(uint64)` event whenever `total` changes. The `method "..."`
+// pseudo-ops below assemble to the same SHA-512/256 selectors the generated
+// Rust client sends, so the two always agree.
+
+// --- app creation -----------------------------------------------------------
+txn ApplicationID
+int 0
+==
+bnz create
+
+// --- opt-in: the `enroll` lifecycle action ----------------------------------
+txn OnCompletion
+int OptIn
+==
+bnz approve
+
+// --- ABI method dispatch (NoOp) ---------------------------------------------
+txn OnCompletion
+int NoOp
+==
+bnz dispatch
+
+// Reject every other on-completion (update / delete / close-out).
+err
+
+dispatch:
+    method "store((uint64,uint64))void"
+    txna ApplicationArgs 0
+    ==
+    bnz store
+
+    method "store_wrapped(((uint64,uint64),string))void"
+    txna ApplicationArgs 0
+    ==
+    bnz store_wrapped
+
+    method "get_pair()(uint64,uint64)"
+    txna ApplicationArgs 0
+    ==
+    bnz get_pair
+
+    method "scale((uint64,uint64),uint64)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz scale
+
+    method "incr(uint64)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz incr
+
+    method "enroll()void"
+    txna ApplicationArgs 0
+    ==
+    bnz approve
+
+    err
+
+// create(): owner = caller, total = 0
+create:
+    byte "owner"
+    txn Sender
+    app_global_put
+    byte "total"
+    int 0
+    app_global_put
+    b approve
+
+// store(p): total = p.first + p.second; emit Counted(total)
+// The (uint64,uint64) tuple is a 16-byte static encoding in arg 1.
+store:
+    byte "total"
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    app_global_put
+    method "Counted(uint64)"
+    byte "total"
+    app_global_get
+    itob
+    concat
+    log
+    b approve
+
+// store_wrapped(w): total = w.inner.first + w.inner.second; emit Counted(total)
+// The wrapper is (((uint64,uint64),string)); the inner pair is the static head
+// at offset 0, so the trailing string is simply ignored here.
+store_wrapped:
+    byte "total"
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    app_global_put
+    method "Counted(uint64)"
+    byte "total"
+    app_global_get
+    itob
+    concat
+    log
+    b approve
+
+// get_pair() -> (uint64,uint64): returns (total, total)
+get_pair:
+    byte 0x151f7c75
+    byte "total"
+    app_global_get
+    itob
+    byte "total"
+    app_global_get
+    itob
+    concat
+    concat
+    log
+    b approve
+
+// scale(p, factor) -> uint64: (p.first + p.second) * factor
+// arg 1 is the (uint64,uint64) pair, arg 2 is the scalar factor.
+scale:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    txna ApplicationArgs 2
+    btoi
+    *
+    itob
+    concat
+    log
+    b approve
+
+// incr(step) -> uint64: total += step; returns total
+incr:
+    byte "total"
+    byte "total"
+    app_global_get
+    txna ApplicationArgs 1
+    btoi
+    +
+    app_global_put
+    byte 0x151f7c75
+    byte "total"
+    app_global_get
+    itob
+    concat
+    log
+    b approve
+
+approve:
+    int 1
+    return
