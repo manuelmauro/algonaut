@@ -5,12 +5,13 @@
 //! typed global-state reads, ARC-28 event decoding, the declared OptIn
 //! lifecycle action, and a literal default argument.
 //!
-//! They are `#[ignore]`d, so the default `cargo test` (and CI without a node)
-//! only *compiles* them. Run them against a local node with:
+//! The suite is `[[test]] test = false`, so the default `cargo test` (and CI
+//! without a node) skips it, and `make check-e2e` compile-checks it. Run it
+//! against a local node with:
 //!
 //! ```sh
 //! make sandbox     # a dev algod+kmd on :4001/:4002 with the dev token
-//! make test-e2e    # cargo test --test e2e_contract_macro_arc56 -- --ignored
+//! make test-e2e    # = cargo test --test e2e
 //! ```
 //!
 //! They self-fund: each test mints a fresh account and tops it up from the
@@ -131,14 +132,12 @@ async fn deploy_arc56_test(algod: &Algod, kmd: &Kmd) -> (ARC56Test, Address) {
 }
 
 #[tokio::test]
-#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
 async fn deploy_creates_app() {
     let (vault, _) = deploy_vault(&algod(), &kmd()).await;
     assert!(vault.app_id().0 > 0, "deploy should create an application");
 }
 
 #[tokio::test]
-#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
 async fn full_walkthrough() {
     let algod = algod();
     let (vault, sender) = deploy_vault(&algod, &kmd()).await;
@@ -228,7 +227,6 @@ async fn full_walkthrough() {
 }
 
 #[tokio::test]
-#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
 async fn opt_in_via_enroll_succeeds() {
     let algod = algod();
     let (vault, _) = deploy_vault(&algod, &kmd()).await;
@@ -251,7 +249,6 @@ async fn opt_in_via_enroll_succeeds() {
 }
 
 #[tokio::test]
-#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
 async fn incr_uses_literal_default_on_chain() {
     let algod = algod();
     let (vault, _) = deploy_vault(&algod, &kmd()).await;
@@ -277,7 +274,6 @@ async fn incr_uses_literal_default_on_chain() {
 }
 
 #[tokio::test]
-#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
 async fn arc56_test_deploys_via_abi_create() {
     // The real, AlgoKit-produced contract is created on-chain through its ABI
     // `createApplication()` method (the generated `deploy` passes that method's
@@ -293,7 +289,6 @@ async fn arc56_test_deploys_via_abi_create() {
 }
 
 #[tokio::test]
-#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
 async fn non_creator_can_call_and_owner_stays_the_creator() {
     // Vault records `owner = Txn.Sender` at create and never changes it, so a
     // second account calling the app exercises the caller != creator case: the

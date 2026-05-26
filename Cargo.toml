@@ -162,9 +162,10 @@ required-features = ["algod", "indexer", "kmd"]
 [[test]]
 name = "e2e"
 path = "tests/e2e/main.rs"
-# The ARC-56 end-to-end suite deploys to a live algod and self-funds via kmd.
-# Its tests are #[ignore]d (run with `make test-e2e`), so the default `cargo
-# test` only compiles them; this just skips that compile without the clients.
+# The ARC-56 end-to-end suite deploys to a live algod and self-funds via kmd, so
+# it is excluded from the default `cargo test` (run it with `make test-e2e`,
+# compile-check it with `make check-e2e`).
+test = false
 required-features = ["algod", "kmd"]
 
 # Examples declare the client features they exercise, so a slimmer build

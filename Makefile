@@ -1,4 +1,4 @@
-.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release cucumber check-cucumber test-e2e harness harness-down sandbox sandbox-down sandbox-clean fund docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
+.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release cucumber check-cucumber test-e2e check-e2e harness harness-down sandbox sandbox-down sandbox-clean fund docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
 
 # Version of openapi-generator used to regenerate the algod/indexer clients.
 OPENAPI_GENERATOR_VERSION := v6.6.0
@@ -64,10 +64,15 @@ check-cucumber:
 	cargo test --test cucumber --no-run
 
 # Run the ARC-56 end-to-end tests against a running node (e.g. `make sandbox`).
-# They are #[ignore]d, so this runs them explicitly; they self-fund from KMD.
-# Override ALGOD_URL/ALGOD_TOKEN/KMD_URL/KMD_TOKEN to target another node.
+# They self-fund from KMD; the suite is `[[test]] test = false`, so it is run
+# explicitly here. Override ALGOD_URL/ALGOD_TOKEN/KMD_URL/KMD_TOKEN to retarget.
 test-e2e:
-	cargo test --test e2e -- --ignored --nocapture
+	cargo test --test e2e --
+
+# Compile-check the e2e suite without a node (it is `[[test]] test = false`, so
+# the default `cargo test` skips it). Mirrors check-cucumber.
+check-e2e:
+	cargo test --test e2e --no-run
 
 # Bring the integration test harness up
 harness:
@@ -159,8 +164,8 @@ generate-clients:
 	@echo '  git diff --no-index openapi/generated/indexer/src/models algonaut_model/src/indexer'
 	@echo '  git diff --no-index openapi/generated/indexer/src/apis   algonaut_indexer/src/apis'
 
-# Run all CI checks (fmt-check, clippy, test, check-cucumber, build)
-ci: fmt-check clippy test check-cucumber build
+# Run all CI checks (fmt-check, clippy, test, check-cucumber, check-e2e, build)
+ci: fmt-check clippy test check-cucumber check-e2e build
 
 # Generate documentation
 doc:

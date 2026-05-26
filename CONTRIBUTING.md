@@ -29,7 +29,8 @@ Before submitting your pull request to the repository, please make sure you have
    2. `make clippy` — `cargo clippy --workspace --all-targets -- -D warnings`
    3. `make test` — `cargo test --workspace --lib --examples --tests`
    4. `make check-cucumber` — compile-checks the cucumber runner
-   5. `make build` — `cargo build --workspace`
+   5. `make check-e2e` — compile-checks the e2e suite
+   6. `make build` — `cargo build --workspace`
 
    The `lefthook` pre-commit hook runs `make ci` for you; install it with `make setup`.
 3. If your change affects behaviour covered by the cucumber integration suite, you have run it against a local Algorand sandbox. See [Running the test suite](#running-the-test-suite) below; `make docker-test` runs the whole flow in Docker.
@@ -45,15 +46,16 @@ per category:
   `step_defs/` + harness-copied `features/`); needs the `test-harness.sh`
   sandbox. Run with `make cucumber`.
 - **`tests/e2e/`** — the ARC-56 end-to-end suite: deploys to a live node and
-  self-funds via KMD. `#[ignore]`d by default; run with `make test-e2e`
-  against `make sandbox`.
+  self-funds via KMD. It is `[[test]] test = false`, so a plain `cargo test`
+  skips it; run it with `make test-e2e` against `make sandbox`, and
+  compile-check it (no node) with `make check-e2e`.
 
 (Unit tests live next to the code as `#[cfg(test)]` modules. `tests/fixtures/`
 holds shared app specs and TEAL.)
 
 ```bash
 make setup           # rustfmt + clippy + lefthook hooks
-make ci              # fmt-check, clippy, unit tests, build, cucumber compile-check
+make ci              # fmt-check, clippy, unit tests, cucumber + e2e compile-check, build
 ./test-harness.sh up # boot a local algorand sandbox (ports 60000/60001/60002)
 make cucumber        # run the cucumber suite against the sandbox
 
