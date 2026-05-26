@@ -1,0 +1,10 @@
+{
+  "name": "References",
+  "desc": "ARC-4 contract exercising reference arguments",
+  "methods": [
+    { "name": "use_account", "args": [{ "name": "acct", "type": "account" }], "returns": { "type": "void" } },
+    { "name": "use_asset", "args": [{ "name": "asset", "type": "asset" }], "returns": { "type": "void" } },
+    { "name": "use_app", "args": [{ "name": "app", "type": "application" }], "returns": { "type": "void" } },
+    { "name": "mixed", "args": [{ "name": "acct", "type": "account" }, { "name": "amount", "type": "uint64" }], "returns": { "type": "void" } }
+  ]
+}
