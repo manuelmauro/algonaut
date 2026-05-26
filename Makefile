@@ -1,4 +1,4 @@
-.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release integration check-integration harness harness-down docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
+.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release integration check-integration harness harness-down sandbox sandbox-down sandbox-clean docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
 
 # Version of openapi-generator used to regenerate the algod/indexer clients.
 OPENAPI_GENERATOR_VERSION := v6.6.0
@@ -69,6 +69,29 @@ harness:
 # Bring the integration test harness down
 harness-down:
 	./test-harness.sh down
+
+# Local Algorand sandbox (https://github.com/algorand/sandbox), cloned on first
+# use into a git-ignored directory. Unlike `harness`, which compiles algod and
+# indexer from source, the sandbox runs prebuilt release images on the standard
+# ports examples.env expects: algod :4001, kmd :4002, indexer :8980, token of
+# 64 'a's. The `dev` config enables DevMode (a block per transaction).
+SANDBOX_DIR := sandbox
+SANDBOX_REPO := https://github.com/algorand/sandbox
+SANDBOX_CONFIG ?= dev
+
+# Bring up a fast local sandbox for development (prebuilt images, no rebuild)
+sandbox:
+	@if [ ! -d "$(SANDBOX_DIR)/.git" ]; then \
+	  git clone --depth 1 "$(SANDBOX_REPO)" "$(SANDBOX_DIR)"; \
+	fi
+	cd "$(SANDBOX_DIR)" && ./sandbox up $(SANDBOX_CONFIG)
+# Tear down the sandbox network; keeps the clone so the next `sandbox` is quick
+sandbox-down:
+	@if [ -d "$(SANDBOX_DIR)" ]; then cd "$(SANDBOX_DIR)" && ./sandbox down; fi
+# Delete the sandbox containers, data, and the clone entirely
+sandbox-clean:
+	@if [ -d "$(SANDBOX_DIR)" ]; then cd "$(SANDBOX_DIR)" && ./sandbox clean || true; fi
+	rm -rf "$(SANDBOX_DIR)"
 
 # Build the Rust SDK testing docker image
 docker-rustsdk-build:
