@@ -82,6 +82,16 @@ dispatch:
     ==
     bnz sum3
 
+    method "box_put(string,uint64)void"
+    txna ApplicationArgs 0
+    ==
+    bnz box_put
+
+    method "box_get(string)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz box_get
+
     err
 
 // create(): owner = caller, total = 0
@@ -251,6 +261,27 @@ sum3:
     extract_uint64
     +
     itob
+    concat
+    log
+    b approve
+
+// box_put(name, value): write the 8-byte uint64 `value` into box `name`.
+// arg1 is an ABI string (2-byte length prefix + bytes); strip the prefix to get
+// the raw key the client attaches as a box reference. arg2 is the 8-byte uint64.
+box_put:
+    txna ApplicationArgs 1
+    extract 2 0
+    txna ApplicationArgs 2
+    box_put
+    b approve
+
+// box_get(name) -> uint64: read box `name` and return its 8 bytes as uint64.
+box_get:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    extract 2 0
+    box_get
+    assert
     concat
     log
     b approve

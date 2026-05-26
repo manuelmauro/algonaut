@@ -223,6 +223,7 @@ pub(super) fn generate_method(
                 invocation,
                 on_complete:
                     ::algonaut::transaction::transaction::ApplicationCallOnComplete::NoOp,
+                boxes: ::std::vec::Vec::new(),
             }
         }
     })
@@ -257,10 +258,40 @@ pub(super) fn generate_builders(
                 invocation: ::algonaut_abi::MethodInvocation,
                 on_complete:
                     ::algonaut::transaction::transaction::ApplicationCallOnComplete,
+                boxes: ::std::vec::Vec<
+                    ::algonaut::transaction::transaction::BoxReference,
+                >,
             }
 
             impl<'a> #builder_ident<'a> {
                 #action_setters
+
+                /// Attach a reference to a box of THIS application by its raw key bytes.
+                /// Required for methods that read or write box storage; the AVM rejects a
+                /// box access whose reference is absent from the transaction.
+                pub fn box_ref(
+                    mut self,
+                    name: impl ::core::convert::Into<::std::vec::Vec<u8>>,
+                ) -> Self {
+                    self.boxes.push(::algonaut::transaction::transaction::BoxReference {
+                        app_id: ::core::option::Option::None,
+                        name: name.into(),
+                    });
+                    self
+                }
+
+                /// Attach a reference to a box owned by another application.
+                pub fn box_ref_of(
+                    mut self,
+                    app_id: ::algonaut_core::AppId,
+                    name: impl ::core::convert::Into<::std::vec::Vec<u8>>,
+                ) -> Self {
+                    self.boxes.push(::algonaut::transaction::transaction::BoxReference {
+                        app_id: ::core::option::Option::Some(app_id),
+                        name: name.into(),
+                    });
+                    self
+                }
 
                 /// Build the method call with the given suggested parameters.
                 pub fn build(
@@ -274,6 +305,7 @@ pub(super) fn generate_builders(
                     )
                     .invoke(self.invocation)
                     .on_complete(self.on_complete)
+                    .boxes(self.boxes)
                     .build(params)
                 }
 
