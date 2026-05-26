@@ -213,11 +213,12 @@ because each needs a runtime capability the current value-only codegen does not:
 
 ### D7 — The scope boundary omits methods rather than failing the build
 
-Anything the macro cannot yet generate (a `ufixed` arg, an inline-nested struct,
-a transaction/reference arg, an unsupported `defaultValue` source) leaves that
+Anything the macro cannot yet generate (a `ufixed` arg, a compound array, a
+transaction/reference arg, an unsupported `defaultValue` source) leaves that
 method out of the generated client; the omission and its reason are recorded in
 the client struct's doc comment. A struct whose name is not a valid Rust
-identifier is likewise skipped.
+identifier is likewise skipped. (Named *and* inline-nested structs are now
+generated — see the struct mapping above.)
 
 This supersedes the predecessor ADR's "unsupported → `compile_error!`" stance.
 That floor let a single unmodelled method sink an entire spec, so `contract!`

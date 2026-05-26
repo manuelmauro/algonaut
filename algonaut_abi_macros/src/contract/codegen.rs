@@ -633,8 +633,11 @@ fn field_supported(
                     .unwrap_or(false)
             }
         }
-        // Inline nested structs are not generated in this phase.
-        StructFieldType::Nested(_) => false,
+        // An inline nested struct is supported when all of its own fields are;
+        // it is generated as its own Rust sub-struct (see `emit_struct_def`).
+        StructFieldType::Nested(sub_fields) => sub_fields
+            .iter()
+            .all(|f| field_supported(&f.type_, structs, supported)),
     }
 }
 
@@ -648,77 +651,80 @@ fn generate_structs(
     names.sort();
 
     let mut defs = Vec::new();
-
     for name in names {
-        let fields = &structs[name];
-        let struct_ident = Ident::new(&to_pascal_case(name), Span::call_site());
-
-        let mut field_defs = Vec::new();
-        let mut field_encodes = Vec::new();
-
-        for field in fields {
-            let field_name = to_snake_case(&field.name);
-            let field_ident = if is_rust_keyword(&field_name) {
-                format_ident!("r#{}", field_name)
-            } else {
-                Ident::new(&field_name, Span::call_site())
-            };
-
-            let (ty, encode) = struct_field_type_and_encode(&field.type_, structs, &field_ident)?;
-            field_defs.push(quote! { pub #field_ident: #ty });
-            field_encodes.push(encode);
-        }
-
-        let doc = format!("Generated ARC-56 struct `{name}`.");
-
-        defs.push(quote! {
-            #[doc = #doc]
-            #[derive(Debug, Clone)]
-            pub struct #struct_ident {
-                #(#field_defs),*
-            }
-
-            impl #struct_ident {
-                /// Encode this struct as its ARC-4 ABI tuple value.
-                pub fn abi_encode(self) -> ::algonaut_abi::abi_type::AbiValue {
-                    ::algonaut_abi::abi_type::AbiValue::Array(::std::vec![
-                        #(#field_encodes),*
-                    ])
-                }
-            }
-        });
+        emit_struct_def(&to_pascal_case(name), &structs[name], structs, &mut defs)?;
     }
-
     Ok(quote! { #(#defs)* })
 }
 
-/// The Rust type and the encode expression for a single struct field, where
-/// the encode expression reads `self.<field_ident>`.
-fn struct_field_type_and_encode(
-    field_type: &StructFieldType,
+/// Emit the Rust struct (and its `abi_encode`) for `name_pascal`, pushing it
+/// onto `defs`. Inline nested struct fields are emitted recursively as their
+/// own sub-structs named `<Parent><Field>`.
+fn emit_struct_def(
+    name_pascal: &str,
+    fields: &[StructField],
     structs: &HashMap<String, Vec<StructField>>,
-    field_ident: &Ident,
-) -> Result<(TokenStream, TokenStream), String> {
-    match field_type {
-        StructFieldType::Type(s) => {
-            if structs.contains_key(s) {
-                // Reference to another generated struct.
+    defs: &mut Vec<TokenStream>,
+) -> Result<(), String> {
+    let struct_ident = Ident::new(name_pascal, Span::call_site());
+    let mut field_defs = Vec::new();
+    let mut field_encodes = Vec::new();
+
+    for field in fields {
+        let field_name = to_snake_case(&field.name);
+        let field_ident = if is_rust_keyword(&field_name) {
+            format_ident!("r#{}", field_name)
+        } else {
+            Ident::new(&field_name, Span::call_site())
+        };
+
+        let (ty, encode) = match &field.type_ {
+            StructFieldType::Type(s) if structs.contains_key(s) => {
+                // Reference to another named struct.
                 let ty = Ident::new(&to_pascal_case(s), Span::call_site());
-                Ok((quote! { #ty }, quote! { self.#field_ident.abi_encode() }))
-            } else {
+                (quote! { #ty }, quote! { self.#field_ident.abi_encode() })
+            }
+            StructFieldType::Type(s) => {
                 let sig = parse_type(s).map_err(|e| e.reason)?;
                 let rust_type = rust_param_type(&sig)?;
                 let marker = abi_marker_type(&sig)?;
-                Ok((
+                (
                     quote! { #rust_type },
                     quote! {
                         ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(self.#field_ident)
                     },
-                ))
+                )
+            }
+            StructFieldType::Nested(sub_fields) => {
+                // Synthesize a sub-struct for the anonymous inline fields.
+                let sub_name = format!("{name_pascal}{}", to_pascal_case(&field.name));
+                emit_struct_def(&sub_name, sub_fields, structs, defs)?;
+                let ty = Ident::new(&sub_name, Span::call_site());
+                (quote! { #ty }, quote! { self.#field_ident.abi_encode() })
+            }
+        };
+        field_defs.push(quote! { pub #field_ident: #ty });
+        field_encodes.push(encode);
+    }
+
+    let doc = format!("Generated ARC-56 struct `{name_pascal}`.");
+    defs.push(quote! {
+        #[doc = #doc]
+        #[derive(Debug, Clone)]
+        pub struct #struct_ident {
+            #(#field_defs),*
+        }
+
+        impl #struct_ident {
+            /// Encode this struct as its ARC-4 ABI tuple value.
+            pub fn abi_encode(self) -> ::algonaut_abi::abi_type::AbiValue {
+                ::algonaut_abi::abi_type::AbiValue::Array(::std::vec![
+                    #(#field_encodes),*
+                ])
             }
         }
-        StructFieldType::Nested(_) => Err("inline nested struct".to_owned()),
-    }
+    });
+    Ok(())
 }
 
 // ===========================================================================
@@ -833,19 +839,28 @@ fn struct_abi_tuple_type(
     name: &str,
     structs: &HashMap<String, Vec<StructField>>,
 ) -> Option<String> {
-    let fields = structs.get(name)?;
+    fields_abi_tuple_type(structs.get(name)?, structs)
+}
+
+/// The canonical ABI tuple-type string for a list of struct fields, recursing
+/// into named-struct references and inline nested structs alike.
+fn fields_abi_tuple_type(
+    fields: &[StructField],
+    structs: &HashMap<String, Vec<StructField>>,
+) -> Option<String> {
     let mut parts = Vec::with_capacity(fields.len());
     for field in fields {
         match &field.type_ {
-            StructFieldType::Type(s) => {
-                if structs.contains_key(s) {
-                    parts.push(struct_abi_tuple_type(s, structs)?);
-                } else {
-                    parse_type(s).ok()?;
-                    parts.push(s.clone());
-                }
+            StructFieldType::Type(s) if structs.contains_key(s) => {
+                parts.push(fields_abi_tuple_type(&structs[s], structs)?);
             }
-            StructFieldType::Nested(_) => return None,
+            StructFieldType::Type(s) => {
+                parse_type(s).ok()?;
+                parts.push(s.clone());
+            }
+            StructFieldType::Nested(sub_fields) => {
+                parts.push(fields_abi_tuple_type(sub_fields, structs)?);
+            }
         }
     }
     Some(format!("({})", parts.join(",")))
@@ -1220,7 +1235,8 @@ mod tests {
         let supported = resolve_supported_structs(&structs);
         assert!(!supported.contains("Bad"));
 
-        // Inline nested structs are not generated in this phase.
+        // An inline nested struct is supported when its sub-fields are (it is
+        // generated as its own sub-struct).
         let mut nested = HashMap::new();
         nested.insert(
             "Outer".to_owned(),
@@ -1229,6 +1245,17 @@ mod tests {
                 type_: StructFieldType::Nested(vec![leaf("a", "uint64")]),
             }],
         );
-        assert!(!resolve_supported_structs(&nested).contains("Outer"));
+        assert!(resolve_supported_structs(&nested).contains("Outer"));
+
+        // ...but not when a nested sub-field is itself unsupported.
+        let mut nested_bad = HashMap::new();
+        nested_bad.insert(
+            "OuterBad".to_owned(),
+            vec![StructField {
+                name: "inner".to_owned(),
+                type_: StructFieldType::Nested(vec![leaf("x", "ufixed64x2")]),
+            }],
+        );
+        assert!(!resolve_supported_structs(&nested_bad).contains("OuterBad"));
     }
 }

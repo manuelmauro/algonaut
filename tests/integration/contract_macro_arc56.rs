@@ -14,7 +14,7 @@ use std::sync::Arc;
 // Generate the Vault contract client, which uses named-struct arguments.
 contract!("tests/fixtures/vault.arc56.json");
 
-fn mock_params() -> SuggestedParams {
+pub(crate) fn mock_params() -> SuggestedParams {
     SuggestedParams {
         consensus_version: "test".to_string(),
         fee: algonaut_core::MicroAlgos(0),
