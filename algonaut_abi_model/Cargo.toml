@@ -17,4 +17,5 @@ version = "0.8.0"
 serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
+jsonschema = { workspace = true }
 serde_json = { workspace = true }

@@ -63,3 +63,61 @@ fn full_arc56_round_trips_by_value() {
     let reparsed: AbiContract = serde_json::from_str(&serialized).unwrap();
     assert_eq!(parsed, reparsed);
 }
+
+// Real, compiler-produced ARC-56 specs vendored verbatim from
+// algokit-client-generator-ts — a regression corpus beyond the hand-written
+// `full.arc56.json`, kept byte-for-byte as the toolchain emits them (including
+// the `source`/`sourceInfo`/`byteCode` blobs, so the model is exercised on
+// those too).
+//
+//   structs           - struct-heavy (the macro's headline feature)
+//   reti              - Reti's `ValidatorRegistry` (a large staking contract)
+//   nfd               - an NFDomains instance contract
+//   zero_coupon_bond  - a zero-coupon-bond contract
+const STRUCTS_ARC56: &str = include_str!("fixtures/structs.arc56.json");
+const RETI_ARC56: &str = include_str!("fixtures/reti.arc56.json");
+const NFD_ARC56: &str = include_str!("fixtures/nfd.arc56.json");
+const ZERO_COUPON_BOND_ARC56: &str = include_str!("fixtures/zero_coupon_bond.arc56.json");
+
+const REAL_WORLD_SPECS: &[(&str, &str)] = &[
+    ("Structs", STRUCTS_ARC56),
+    ("Reti", RETI_ARC56),
+    ("Nfd", NFD_ARC56),
+    ("ZeroCouponBond", ZERO_COUPON_BOND_ARC56),
+];
+
+#[test]
+fn real_world_specs_parse() {
+    let parse = |label: &str, src: &str| -> AbiContract {
+        serde_json::from_str(src).unwrap_or_else(|e| panic!("{label} parses: {e}"))
+    };
+
+    let structs = parse("Structs", STRUCTS_ARC56);
+    assert_eq!(structs.name, "Structs");
+    assert_eq!(structs.structs.len(), 3);
+
+    let reti = parse("Reti", RETI_ARC56);
+    assert_eq!(reti.name, "ValidatorRegistry");
+    assert_eq!(reti.methods.len(), 34);
+    assert_eq!(reti.structs.len(), 9);
+
+    let nfd = parse("Nfd", NFD_ARC56);
+    assert_eq!(nfd.name, "NFDInstance");
+    assert_eq!(nfd.methods.len(), 26);
+
+    let zcb = parse("ZeroCouponBond", ZERO_COUPON_BOND_ARC56);
+    assert_eq!(zcb.name, "ZeroCouponBond");
+    assert_eq!(zcb.methods.len(), 20);
+    assert_eq!(zcb.structs.len(), 9);
+}
+
+#[test]
+fn real_world_specs_round_trip_by_value() {
+    for (label, src) in REAL_WORLD_SPECS {
+        let parsed: AbiContract = serde_json::from_str(src).unwrap();
+        let serialized = serde_json::to_string(&parsed).unwrap();
+        let reparsed: AbiContract =
+            serde_json::from_str(&serialized).unwrap_or_else(|e| panic!("{label} reparse: {e}"));
+        assert_eq!(parsed, reparsed, "{label} did not round-trip by value");
+    }
+}
