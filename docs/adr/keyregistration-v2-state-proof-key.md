@@ -16,7 +16,7 @@ Accepted
 
 ## Context
 
-`tests/features/integration/send.feature` includes a
+`tests/cucumber/features/integration/send.feature` includes a
 `@send.keyregtxn` scenario that exercises **V2** key registration with
 the `online`, `offline`, and `nonparticipation` variants. Other SDKs
 build the online variant from a fixed test fixture that includes a

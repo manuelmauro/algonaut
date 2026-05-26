@@ -88,7 +88,7 @@ literals.
 `SignedLogic`'s own `pub` fields stay open in this PR — closing them
 needs a `LogicSigSession`-style entry point that's a follow-up. The
 `SignedLogic { logic, args, sig }` literal still exists in two examples
-and `tests/test_logic_signature.rs`; both produce `SignedLogic` for
+and `tests/integration/logic_signature.rs`; both produce `SignedLogic` for
 `LogicSignature::DelegatedSig` / `DelegatedMultiSig`, which D5 leaves
 untouched.
 

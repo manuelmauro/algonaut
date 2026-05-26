@@ -40,7 +40,7 @@ type system knows the value is an `Address` or an `AppId`; the API
 throws that knowledge away at the call boundary and reconstructs it on
 the other side. Real call sites compensate with `.to_string()` /
 `.as_str()` stringification — `examples/rekey.rs` does it twice,
-`tests/step_defs/integration/assets.rs` and `general.rs` do it for every
+`tests/cucumber/step_defs/integration/assets.rs` and `general.rs` do it for every
 `account(...)` call.
 
 The companion D9 cuts are the same problem in miniature:
@@ -79,7 +79,7 @@ conversion from callers.
 ### `to_app_address` becomes a method
 
 `algonaut_core::to_app_address(u64)` deletes; `AppId::address(self) ->
-Address` replaces it. Both existing callers (`tests/step_defs/integration/abi.rs`,
+Address` replaces it. Both existing callers (`tests/cucumber/step_defs/integration/abi.rs`,
 `src/util/dryrun_printer.rs`) drop the `.0` unwrap.
 
 ### `TransactionGroup` *is* the grouped batch

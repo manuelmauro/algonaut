@@ -28,19 +28,41 @@ Before submitting your pull request to the repository, please make sure you have
    1. `make fmt-check` — `cargo fmt --all -- --check`
    2. `make clippy` — `cargo clippy --workspace --all-targets -- -D warnings`
    3. `make test` — `cargo test --workspace --lib --examples --tests`
-   4. `make check-integration` — compile-checks the cucumber runner
-   5. `make build` — `cargo build --workspace`
+   4. `make check-cucumber` — compile-checks the cucumber runner
+   5. `make check-e2e` — compile-checks the e2e suite
+   6. `make build` — `cargo build --workspace`
 
    The `lefthook` pre-commit hook runs `make ci` for you; install it with `make setup`.
 3. If your change affects behaviour covered by the cucumber integration suite, you have run it against a local Algorand sandbox. See [Running the test suite](#running-the-test-suite) below; `make docker-test` runs the whole flow in Docker.
 
 ## Running the test suite
 
+Integration tests live under `tests/`, one folder (and one `[[test]]` binary)
+per category:
+
+- **`tests/integration/`** — offline tests of the public API and the
+  `contract!`-generated clients; run by a plain `cargo test`, no node needed.
+- **`tests/cucumber/`** — the Algorand cross-SDK acceptance suite (runner +
+  `step_defs/` + harness-copied `features/`); needs the `test-harness.sh`
+  sandbox. Run with `make cucumber`.
+- **`tests/e2e/`** — the ARC-56 end-to-end suite: deploys to a live node and
+  self-funds via KMD. It is `[[test]] test = false`, so a plain `cargo test`
+  skips it; run it with `make test-e2e` against `make sandbox`, and
+  compile-check it (no node) with `make check-e2e`.
+
+(Unit tests live next to the code as `#[cfg(test)]` modules. `tests/fixtures/`
+holds shared app specs and TEAL.)
+
 ```bash
 make setup           # rustfmt + clippy + lefthook hooks
-make ci              # fmt-check, clippy, unit tests, build, integration compile-check
+make ci              # fmt-check, clippy, unit tests, cucumber + e2e compile-check, build
 ./test-harness.sh up # boot a local algorand sandbox (ports 60000/60001/60002)
-make integration     # run the cucumber suite against the sandbox
+make cucumber        # run the cucumber suite against the sandbox
+
+# ARC-56 end-to-end tests use a lighter prebuilt-image sandbox instead:
+make sandbox         # boot a dev algod+kmd on :4001/:4002
+make test-e2e        # deploy + exercise the contract! client against it (self-funds)
+make fund            # fund the examples.env accounts (needed to run examples/)
 ```
 
 See `docs/adr/` for the architectural decisions behind the cross-SDK cucumber wiring, the simulate / dryrun builders, the V3 source-map decoder, and the dual-format (`JSON`/msgpack) domain-type serialization.

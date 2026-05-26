@@ -1,4 +1,4 @@
-.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release integration check-integration harness harness-down docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
+.PHONY: setup clean fmt-check fmt clippy clippy-release check check-release check-wasm build build-release test test-release cucumber check-cucumber test-e2e check-e2e harness harness-down sandbox sandbox-down sandbox-clean fund docker-rustsdk-build docker-rustsdk-run docker-test fetch-openapi-specs generate-clients ci doc help
 
 # Version of openapi-generator used to regenerate the algod/indexer clients.
 OPENAPI_GENERATOR_VERSION := v6.6.0
@@ -53,15 +53,26 @@ test:
 test-release:
 	cargo test --release --workspace --lib --examples --tests
 
-# Run cucumber integration tests (requires a running harness)
-integration:
-	cargo test --test features_runner --
+# Run the cucumber acceptance suite (requires a running harness)
+cucumber:
+	cargo test --test cucumber --
 
 # Compile-check the cucumber runner without invoking it (it would need
 # a live harness). Catches type errors that `cargo check` skips because
-# `[[test]] test = false` for features_runner.
-check-integration:
-	cargo test --test features_runner --no-run
+# `[[test]] test = false` for the cucumber suite.
+check-cucumber:
+	cargo test --test cucumber --no-run
+
+# Run the ARC-56 end-to-end tests against a running node (e.g. `make sandbox`).
+# They self-fund from KMD; the suite is `[[test]] test = false`, so it is run
+# explicitly here. Override ALGOD_URL/ALGOD_TOKEN/KMD_URL/KMD_TOKEN to retarget.
+test-e2e:
+	cargo test --test e2e --
+
+# Compile-check the e2e suite without a node (it is `[[test]] test = false`, so
+# the default `cargo test` skips it). Mirrors check-cucumber.
+check-e2e:
+	cargo test --test e2e --no-run
 
 # Bring the integration test harness up
 harness:
@@ -69,6 +80,45 @@ harness:
 # Bring the integration test harness down
 harness-down:
 	./test-harness.sh down
+
+# Local Algorand sandbox (https://github.com/algorand/sandbox), cloned on first
+# use into a git-ignored directory. Unlike `harness`, which compiles algod and
+# indexer from source, the sandbox runs prebuilt release images on the standard
+# ports examples.env expects: algod :4001, kmd :4002, indexer :8980, token of
+# 64 'a's. The `dev` config enables DevMode (a block per transaction).
+SANDBOX_DIR := sandbox
+SANDBOX_REPO := https://github.com/algorand/sandbox
+SANDBOX_CONFIG ?= dev
+# microAlgos sent to each example account by `make fund`.
+FUND_AMOUNT ?= 1000000000
+
+# Bring up a fast local sandbox for development (prebuilt images, no rebuild)
+sandbox:
+	@if [ ! -d "$(SANDBOX_DIR)/.git" ]; then \
+	  git clone --depth 1 "$(SANDBOX_REPO)" "$(SANDBOX_DIR)"; \
+	fi
+	cd "$(SANDBOX_DIR)" && ./sandbox up $(SANDBOX_CONFIG)
+# Tear down the sandbox network; keeps the clone so the next `sandbox` is quick
+sandbox-down:
+	@if [ -d "$(SANDBOX_DIR)" ]; then cd "$(SANDBOX_DIR)" && ./sandbox down; fi
+# Delete the sandbox containers, data, and the clone entirely
+sandbox-clean:
+	@if [ -d "$(SANDBOX_DIR)" ]; then cd "$(SANDBOX_DIR)" && ./sandbox clean || true; fi
+	rm -rf "$(SANDBOX_DIR)"
+
+# The example accounts aren't in the dev genesis, and a fresh sandbox resets
+# balances; FUND_AMOUNT (microAlgos) overrides the per-account amount.
+# Fund the example accounts (every *_ADDRESS in examples.env); run after `make sandbox`
+fund:
+	@test -d "$(SANDBOX_DIR)" || { echo "no $(SANDBOX_DIR)/ — run 'make sandbox' first"; exit 1; }
+	@set -e; \
+	from=$$(cd "$(SANDBOX_DIR)" && ./sandbox goal account list | awk '/microAlgos/{print $$2; exit}'); \
+	if [ -z "$$from" ]; then echo "no funded genesis account found — is the sandbox up?"; exit 1; fi; \
+	addrs=$$(sed -n 's/^export [A-Z0-9_]*_ADDRESS="\(.*\)"/\1/p' examples.env); \
+	for a in $$addrs; do \
+	  (cd "$(SANDBOX_DIR)" && ./sandbox goal clerk send -a $(FUND_AMOUNT) -f "$$from" -t "$$a") >/dev/null; \
+	  echo "funded $$a with $(FUND_AMOUNT) microAlgos"; \
+	done
 
 # Build the Rust SDK testing docker image
 docker-rustsdk-build:
@@ -114,8 +164,8 @@ generate-clients:
 	@echo '  git diff --no-index openapi/generated/indexer/src/models algonaut_model/src/indexer'
 	@echo '  git diff --no-index openapi/generated/indexer/src/apis   algonaut_indexer/src/apis'
 
-# Run all CI checks (fmt-check, clippy, test, check-integration, build)
-ci: fmt-check clippy test check-integration build
+# Run all CI checks (fmt-check, clippy, test, check-cucumber, check-e2e, build)
+ci: fmt-check clippy test check-cucumber check-e2e build
 
 # Generate documentation
 doc:

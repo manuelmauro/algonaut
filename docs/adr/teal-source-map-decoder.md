@@ -21,13 +21,13 @@ Algod's `POST /v2/teal/compile?sourcemap=true` response includes a
 JavaScript source maps: `version`, `sources`, `names`, `mappings`,
 `sourceRoot`, `file`). The features that rely on this are:
 
-- `tests/features/unit/sourcemap.feature` — six scenarios that parse a
+- `tests/cucumber/features/unit/sourcemap.feature` — six scenarios that parse a
   fixture and assert line-by-line mappings, including reverse lookups
   (PC → source line, source line → PC).
-- `tests/features/integration/compile.feature` (one scenario:
+- `tests/cucumber/features/integration/compile.feature` (one scenario:
   *"I compile a teal program with mapping enabled"* — followed by
   *"the resulting source map is the same as the json `<sourcemap>`"*).
-- `tests/features/unit/dryrun_trace.feature` — overlays source-map
+- `tests/cucumber/features/unit/dryrun_trace.feature` — overlays source-map
   positions onto dryrun trace results.
 
 The Rust SDK does not currently expose a source-map type. The
@@ -48,7 +48,7 @@ field as `serde_json::Value`, leaving parsing entirely to the caller.
    `CompiledTealWithMap` when callers opt in, while preserving the
    existing `CompiledTeal` shape for the default case.
 3. Cover the parser with the algorand-sdk-testing fixtures shipped in
-   `tests/features/resources/`.
+   `tests/cucumber/features/resources/`.
 
 ## Consequences
 

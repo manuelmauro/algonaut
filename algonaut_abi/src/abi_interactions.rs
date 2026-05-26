@@ -372,6 +372,10 @@ impl From<AbiMethodArg> for model::AbiMethodArg {
             name: a.name,
             type_: a.type_,
             desc: a.description,
+            // The runtime type does not (yet) carry the ARC-56 argument
+            // extensions; emit them as absent.
+            struct_: None,
+            default_value: None,
         }
     }
 }
@@ -391,6 +395,9 @@ impl From<AbiReturn> for model::AbiReturn {
         Self {
             type_: r.type_,
             desc: r.description,
+            // The runtime type does not (yet) carry the ARC-56 return struct
+            // name.
+            struct_: None,
         }
     }
 }
@@ -413,6 +420,12 @@ impl From<AbiMethod> for model::AbiMethod {
             desc: m.description,
             args: m.args.into_iter().map(Into::into).collect(),
             returns: m.returns.into(),
+            // The runtime type does not (yet) carry the ARC-56 method
+            // extensions; emit them as absent.
+            actions: None,
+            readonly: None,
+            events: Vec::new(),
+            recommendations: None,
         }
     }
 }
@@ -469,6 +482,20 @@ impl From<AbiContract> for model::AbiContract {
             desc: c.description,
             networks: c.networks.into_iter().map(|(k, v)| (k, v.into())).collect(),
             methods: c.methods.into_iter().map(Into::into).collect(),
+            // The runtime type does not (yet) carry the ARC-56 contract
+            // extensions; emit them as absent so an ARC-4-shaped value
+            // re-serializes byte-identically.
+            arcs: Vec::new(),
+            structs: HashMap::new(),
+            state: None,
+            bare_actions: None,
+            source_info: None,
+            source: None,
+            byte_code: None,
+            compiler_info: None,
+            events: Vec::new(),
+            template_variables: HashMap::new(),
+            scratch_variables: HashMap::new(),
         }
     }
 }

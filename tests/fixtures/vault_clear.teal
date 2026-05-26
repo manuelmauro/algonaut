@@ -1,0 +1,6 @@
+#pragma version 8
+
+// Vault clear-state program: always approve. Clearing local state is a no-op
+// because the contract declares no local state.
+int 1
+return

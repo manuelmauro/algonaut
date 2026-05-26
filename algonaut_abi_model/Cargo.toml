@@ -1,6 +1,6 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
-description = "Pure ARC-4 ABI JSON data model (contract/method/arg/return), shared by algonaut_abi and its compile-time macros."
+description = "Pure ARC-56 / ARC-4 app-spec JSON data model (contract/method/arg/return, structs, state, events), shared by algonaut_abi and its compile-time macros."
 edition = "2024"
 keywords = ["Algorand", "sdk", "abi"]
 license = "MIT OR Apache-2.0"
@@ -17,4 +17,5 @@ version = "0.8.0"
 serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
+jsonschema = { workspace = true }
 serde_json = { workspace = true }

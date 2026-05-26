@@ -25,7 +25,7 @@ method on the composer so callers can run the same group against
 drop down to `algod.simulate_txns()` with hand-built msgpack payloads,
 which the integration step-defs are not set up to do.
 
-`tests/features/integration/simulate.feature` includes the step:
+`tests/cucumber/features/integration/simulate.feature` includes the step:
 
 > `I simulate the current transaction group with the composer`
 

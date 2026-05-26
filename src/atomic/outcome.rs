@@ -11,7 +11,7 @@ use algonaut_abi::{
     abi_interactions::AbiReturnType,
     abi_type::{AbiType, AbiValue},
 };
-use algonaut_core::TransactionId;
+use algonaut_core::{AppId, TransactionId};
 use algonaut_model::algod::PendingTransactionResponse;
 
 use crate::{Error, simulate::SimulateResponse};
@@ -51,6 +51,12 @@ pub struct ExecuteOutcome {
     pub transaction_ids: Vec<TransactionId>,
     /// Return values for all the ABI method calls in the executed group
     pub method_results: Vec<AbiMethodResult>,
+    /// The id of the application created by the awaited transaction, if it
+    /// created one (e.g. a bare app-create). `None` otherwise. The awaited
+    /// transaction is the first ABI method call, or the first transaction when
+    /// the group has none — so this captures the common "deploy" case of a
+    /// lone create transaction.
+    pub created_app_id: Option<AppId>,
 }
 
 /// Result of [`simulating`](super::UnsignedAtomicGroup::simulate) a group. Mirrors

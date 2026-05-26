@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use algonaut_abi::abi_interactions::{AbiMethod, TransactionArgType};
+use algonaut_core::AppId;
 use algonaut_model::algod::{
     SimulateRequest, SimulateRequestTransactionGroup, SimulateTransactionResponse,
 };
@@ -344,6 +345,7 @@ impl SignedAtomicGroup {
             confirmed_round: pending_tx.confirmed_round,
             transaction_ids: transaction_ids(&self.signed_txs),
             method_results,
+            created_app_id: pending_tx.application_index.map(AppId),
         })
     }
 }
