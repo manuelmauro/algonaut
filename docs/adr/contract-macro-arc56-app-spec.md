@@ -64,9 +64,9 @@ edits to teach the whole stack the new fields.
 description and generates a typed client. The shape it understands lives in
 `algonaut_abi_model/src/lib.rs`: `name`, `desc`, `networks`, and `methods`
 (each `arg`/`return` carrying only an ABI type *string*). `type_map.rs` maps the
-scalar value types and `byte[]`, and returns an error — surfaced as a
-`compile_error!` — for tuples, arrays, `ufixed`, and transaction/reference
-arguments (tracked in #342).
+scalar value types and `byte[]`, and returns an error for tuples, arrays,
+`ufixed`, and transaction/reference arguments; methods using those are omitted
+from the generated client (see D7), tracked in #342.
 
 That format is the floor of what a contract can describe, not the ceiling.
 
@@ -168,7 +168,7 @@ per-call-site.
 When an arg or return carries `struct: "Name"`, the macro generates a Rust struct
 from that entry in the top-level `structs` map and uses it as the parameter /
 return type, with ABI tuple encode/decode derived from the field order. This is
-what turns "tuple → `compile_error!`" into a first-class typed surface and closes
+what turns "tuple → unsupported" into a first-class typed surface and closes
 the bulk of #342. Nested structs (a field whose `type` is itself a struct name or
 an inline `StructField[]`) are generated recursively. The generated type name is
 the PascalCase struct name, scoped to avoid collisions with the client struct.
@@ -211,13 +211,20 @@ because each needs a runtime capability the current value-only codegen does not:
   action sets. Create converges with deploy via `source` / `byteCode` /
   `compilerInfo` (an AppFactory-style story), which is the last and largest phase.
 
-### D7 — The scope boundary still produces honest compile errors
+### D7 — The scope boundary omits methods rather than failing the build
 
-D4 of the predecessor ADR remains the fallback: anything the macro cannot yet
-generate (a `ufixed` arg, an unsupported `defaultValue` source not yet wired, a
-state value type not yet decodable) produces a `compile_error!` naming the method
-and pointing at the dynamic `MethodCall::builder().invoke(...)` path. ARC-56
-shrinks this set; it does not introduce silent fallbacks.
+Anything the macro cannot yet generate (a `ufixed` arg, an inline-nested struct,
+a transaction/reference arg, an unsupported `defaultValue` source) leaves that
+method out of the generated client; the omission and its reason are recorded in
+the client struct's doc comment. A struct whose name is not a valid Rust
+identifier is likewise skipped.
+
+This supersedes the predecessor ADR's "unsupported → `compile_error!`" stance.
+That floor let a single unmodelled method sink an entire spec, so `contract!`
+could not target real-world contracts (Reti, NFD, AlgoKit's `Arc56Test`, …),
+which invariably carry at least one such method. Omitting yields a usable
+*partial* client instead. Parse-level errors (a malformed spec, a bad path)
+still fail loudly; ARC-56 introduces no silent *value* fallbacks.
 
 ### Scope and phasing
 
@@ -263,8 +270,10 @@ Phase 1 is a safe, reviewable change on its own; later phases each stand alone.
   default values, and event decoding require I/O; the generated struct will grow
   a way to supply a client. This is a deliberate, later-phase API addition, not a
   Phase 1 concern.
-- **`compile_error!` remains the honest floor.** What the macro can't yet model
-  fails loudly at the call site with guidance, exactly as today.
+- **Unsupported methods are omitted, not `compile_error!`d.** What the macro
+  can't yet model is left out of the client and listed in its doc comment, so a
+  real-world spec yields a usable partial client; parse-level errors still fail
+  loudly. (This reverses the predecessor ADR's `compile_error!` floor — see D7.)
 - **The predecessor ADR's D4 is re-scoped, not reversed.** Scalar value types
   still map as before; ARC-56 widens what "supported" means rather than changing
   any existing mapping.

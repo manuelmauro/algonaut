@@ -157,15 +157,22 @@ the coverage of `abi_call!`:
 | `byte[]` | `Vec<u8>` |
 
 Methods containing unsupported argument types (transaction args, reference
-args, `ufixed`, compound arrays, tuples) generate a compile error with
-guidance to use the dynamic path:
+args, `ufixed`, compound arrays, tuples) are omitted from the generated client,
+and the omission is recorded in the client struct's doc comment:
 
 ```text
-error: method `transfer` has unsupported argument type `pay`;
-       use MethodCall::builder().invoke(Invocation::new(...)) for this method
+# Omitted methods
+
+These methods are not generated because the macro does not support their
+argument types:
+
+- `transfer`: transaction argument `pay`
 ```
 
-This is an honest scope boundary, not a silent fallback.
+Callers that need an omitted method reach for the dynamic
+`MethodCall::builder().invoke(Invocation::new(...))` path. (This supersedes the
+original behaviour, where such a method produced a `compile_error!`; that sank
+whole real-world specs — see `contract-macro-arc56-app-spec.md` D7.)
 
 ### D5 — Placement in algonaut_abi_macros
 
@@ -239,8 +246,8 @@ Rust keywords are escaped with a raw identifier prefix (`r#`):
   crates.
 
 - **Partial type coverage by design.** Methods with unsupported argument
-  types produce a compile error rather than silently degrading. This is
-  consistent with `abi_call!`'s approach.
+  types are omitted from the generated client (and listed in its doc comment)
+  rather than compiled, so a real-world spec yields a usable partial client.
 
 - **File path resolution at compile time.** The ABI JSON must exist when
   `cargo build` runs; missing files are compile errors. This matches

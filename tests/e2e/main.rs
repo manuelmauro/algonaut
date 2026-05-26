@@ -28,6 +28,12 @@ use std::sync::Arc;
 
 algonaut::contract!("tests/fixtures/vault.arc56.json");
 
+// A real, AlgoKit-produced spec. It is created through an ABI `createApplication`
+// method (not a bare create), carries a `someNumber` TEAL template variable (a
+// generated `deploy` parameter), and its `foo` method (an inline-nested struct
+// arg) is omitted from the client rather than failing compilation.
+algonaut::contract!("tests/fixtures/arc56_test.arc56.json");
+
 fn env_or(key: &str, default: &str) -> String {
     env::var(key).unwrap_or_else(|_| default.to_owned())
 }
@@ -108,6 +114,20 @@ async fn deploy_vault(algod: &Algod, kmd: &Kmd) -> (Vault, Address) {
         .await
         .expect("deploy Vault");
     (vault, sender)
+}
+
+/// Deploy the real `ARC56Test` contract from a freshly funded account. Unlike
+/// Vault, it is created through its ABI `createApplication()` method, and its
+/// `someNumber` template variable is supplied as a `deploy` argument.
+async fn deploy_arc56_test(algod: &Algod, kmd: &Kmd) -> (ARC56Test, Address) {
+    let account = funded_account(algod, kmd).await;
+    let sender = account.address();
+    let signer: Arc<dyn Signer> = Arc::new(account);
+    let params = algod.suggested_params().await.expect("suggested params");
+    let client = ARC56Test::deploy(algod, sender, signer, &params, 1)
+        .await
+        .expect("deploy ARC56Test");
+    (client, sender)
 }
 
 #[tokio::test]
@@ -254,4 +274,20 @@ async fn incr_uses_literal_default_on_chain() {
         Ok(AbiMethodReturnValue::Some(value)) => assert_eq!(value, &AbiValue::from(1u64)),
         other => panic!("unexpected incr return: {other:?}"),
     }
+}
+
+#[tokio::test]
+#[ignore = "requires a live algod+kmd; run via `make test-e2e` (see `make sandbox`)"]
+async fn arc56_test_deploys_via_abi_create() {
+    // The real, AlgoKit-produced contract is created on-chain through its ABI
+    // `createApplication()` method (the generated `deploy` passes that method's
+    // selector as the create transaction's app argument) with its `someNumber`
+    // TEAL template variable substituted at deploy time. Its other methods need
+    // features beyond this client (an inline-nested struct arg, a box
+    // reference), so the deploy itself is what this exercises end-to-end.
+    let (client, _) = deploy_arc56_test(&algod(), &kmd()).await;
+    assert!(
+        client.app_id().0 > 0,
+        "ABI-method create with a substituted template variable should create the app"
+    );
 }

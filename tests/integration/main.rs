@@ -4,6 +4,8 @@
 //! and ARC-56) and the logic-signature APIs. Each area is a module below, all
 //! compiled into a single `integration` test binary.
 
+mod arc56_test;
 mod contract_macro;
 mod contract_macro_arc56;
 mod logic_signature;
+mod unsupported;

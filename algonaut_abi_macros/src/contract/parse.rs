@@ -7,7 +7,8 @@
 //! file-parsing entry point.
 
 pub use algonaut_abi_model::{
-    AbiContract, AbiMethod, AbiMethodArg, StructField, StructFieldType, genesis_to_network,
+    AbiContract, AbiMethod, AbiMethodArg, StructField, StructFieldType, TemplateVariable,
+    genesis_to_network,
 };
 
 /// Parse an ARC-56 / ARC-4 contract JSON string into the shared model.

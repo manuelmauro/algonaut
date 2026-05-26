@@ -1,0 +1,1034 @@
+{
+    "name": "ARC56Test",
+    "desc": "",
+    "methods": [
+        {
+            "name": "foo",
+            "args": [
+                {
+                    "name": "inputs",
+                    "type": "((uint64,uint64),(uint64,uint64))",
+                    "struct": "Inputs"
+                }
+            ],
+            "returns": {
+                "type": "(uint64,uint64)",
+                "struct": "Outputs"
+            },
+            "actions": {
+                "create": [],
+                "call": [
+                    "NoOp"
+                ]
+            }
+        },
+        {
+            "name": "optInToApplication",
+            "args": [],
+            "returns": {
+                "type": "void"
+            },
+            "actions": {
+                "create": [],
+                "call": [
+                    "OptIn"
+                ]
+            }
+        },
+        {
+            "name": "createApplication",
+            "args": [],
+            "returns": {
+                "type": "void"
+            },
+            "actions": {
+                "create": [
+                    "NoOp"
+                ],
+                "call": []
+            }
+        }
+    ],
+    "arcs": [
+        4,
+        56
+    ],
+    "structs": {
+        "{ foo: uint16; bar: uint16 }": [
+            {
+                "name": "foo",
+                "type": "uint16"
+            },
+            {
+                "name": "bar",
+                "type": "uint16"
+            }
+        ],
+        "Outputs": [
+            {
+                "name": "sum",
+                "type": "uint64"
+            },
+            {
+                "name": "difference",
+                "type": "uint64"
+            }
+        ],
+        "Inputs": [
+            {
+                "name": "add",
+                "type": [
+                    {
+                        "name": "a",
+                        "type": "uint64"
+                    },
+                    {
+                        "name": "b",
+                        "type": "uint64"
+                    }
+                ]
+            },
+            {
+                "name": "subtract",
+                "type": [
+                    {
+                        "name": "a",
+                        "type": "uint64"
+                    },
+                    {
+                        "name": "b",
+                        "type": "uint64"
+                    }
+                ]
+            }
+        ]
+    },
+    "state": {
+        "schema": {
+            "global": {
+                "bytes": 37,
+                "ints": 1
+            },
+            "local": {
+                "bytes": 13,
+                "ints": 1
+            }
+        },
+        "keys": {
+            "global": {
+                "globalKey": {
+                    "key": "Z2xvYmFsS2V5",
+                    "keyType": "AVMBytes",
+                    "valueType": "uint64"
+                }
+            },
+            "local": {
+                "localKey": {
+                    "key": "bG9jYWxLZXk=",
+                    "keyType": "AVMBytes",
+                    "valueType": "uint64"
+                }
+            },
+            "box": {
+                "boxKey": {
+                    "key": "Ym94S2V5",
+                    "keyType": "AVMBytes",
+                    "valueType": "string"
+                }
+            }
+        },
+        "maps": {
+            "global": {
+                "globalMap": {
+                    "keyType": "string",
+                    "valueType": "{ foo: uint16; bar: uint16 }",
+                    "prefix": "cA=="
+                }
+            },
+            "local": {
+                "localMap": {
+                    "keyType": "AVMBytes",
+                    "valueType": "string",
+                    "prefix": "cA=="
+                }
+            },
+            "box": {
+                "boxMap": {
+                    "keyType": "Inputs",
+                    "valueType": "Outputs",
+                    "prefix": "cA=="
+                }
+            }
+        }
+    },
+    "bareActions": {
+        "create": [],
+        "call": []
+    },
+    "sourceInfo": {
+        "approval": {
+            "sourceInfo": [
+                {
+                    "teal": 15,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        1,
+                        2
+                    ]
+                },
+                {
+                    "teal": 16,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        3
+                    ]
+                },
+                {
+                    "teal": 17,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        4,
+                        5
+                    ]
+                },
+                {
+                    "teal": 18,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        6
+                    ]
+                },
+                {
+                    "teal": 19,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        7,
+                        8
+                    ]
+                },
+                {
+                    "teal": 20,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        9
+                    ]
+                },
+                {
+                    "teal": 21,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19,
+                        20,
+                        21,
+                        22,
+                        23,
+                        24,
+                        25,
+                        26,
+                        27,
+                        28,
+                        29,
+                        30,
+                        31,
+                        32,
+                        33,
+                        34,
+                        35
+                    ]
+                },
+                {
+                    "teal": 25,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "errorMessage": "The requested action is not implemented in this contract. Are you using the correct OnComplete? Did you set your app ID?",
+                    "pc": [
+                        36
+                    ]
+                },
+                {
+                    "teal": 30,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        37,
+                        38,
+                        39,
+                        40,
+                        41,
+                        42
+                    ]
+                },
+                {
+                    "teal": 33,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        43,
+                        44,
+                        45
+                    ]
+                },
+                {
+                    "teal": 34,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        46
+                    ]
+                },
+                {
+                    "teal": 35,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        47
+                    ]
+                },
+                {
+                    "teal": 36,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        48,
+                        49
+                    ]
+                },
+                {
+                    "teal": 37,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        50
+                    ]
+                },
+                {
+                    "teal": 40,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "errorMessage": "argument 0 (inputs) for foo must be a ((uint64,uint64),(uint64,uint64))",
+                    "pc": [
+                        51
+                    ]
+                },
+                {
+                    "teal": 43,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        52,
+                        53,
+                        54
+                    ]
+                },
+                {
+                    "teal": 44,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        55
+                    ]
+                },
+                {
+                    "teal": 45,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        56
+                    ]
+                },
+                {
+                    "teal": 46,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        57
+                    ]
+                },
+                {
+                    "teal": 47,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        58
+                    ]
+                },
+                {
+                    "teal": 51,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        59,
+                        60,
+                        61
+                    ]
+                },
+                {
+                    "teal": 56,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        62,
+                        63
+                    ]
+                },
+                {
+                    "teal": 57,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        64,
+                        65,
+                        66
+                    ]
+                },
+                {
+                    "teal": 58,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        67
+                    ]
+                },
+                {
+                    "teal": 59,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        68,
+                        69
+                    ]
+                },
+                {
+                    "teal": 60,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        70,
+                        71,
+                        72
+                    ]
+                },
+                {
+                    "teal": 61,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        73
+                    ]
+                },
+                {
+                    "teal": 62,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        74
+                    ]
+                },
+                {
+                    "teal": 63,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "pc": [
+                        75,
+                        76,
+                        77
+                    ]
+                },
+                {
+                    "teal": 67,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:30",
+                    "errorMessage": "subtract.a must be greater than subtract.b",
+                    "pc": [
+                        78
+                    ]
+                },
+                {
+                    "teal": 72,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:32",
+                    "pc": [
+                        79,
+                        80,
+                        81,
+                        82,
+                        83,
+                        84,
+                        85,
+                        86,
+                        87,
+                        88,
+                        89
+                    ]
+                },
+                {
+                    "teal": 73,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:32",
+                    "pc": [
+                        90
+                    ]
+                },
+                {
+                    "teal": 74,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:32",
+                    "pc": [
+                        91
+                    ]
+                },
+                {
+                    "teal": 78,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:33",
+                    "pc": [
+                        92,
+                        93,
+                        94,
+                        95,
+                        96,
+                        97,
+                        98,
+                        99
+                    ]
+                },
+                {
+                    "teal": 79,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:33",
+                    "pc": [
+                        100,
+                        101,
+                        102,
+                        103,
+                        104,
+                        105
+                    ]
+                },
+                {
+                    "teal": 80,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:33",
+                    "pc": [
+                        106
+                    ]
+                },
+                {
+                    "teal": 87,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        107,
+                        108
+                    ]
+                },
+                {
+                    "teal": 88,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        109,
+                        110,
+                        111
+                    ]
+                },
+                {
+                    "teal": 89,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        112
+                    ]
+                },
+                {
+                    "teal": 90,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        113,
+                        114
+                    ]
+                },
+                {
+                    "teal": 91,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        115,
+                        116,
+                        117
+                    ]
+                },
+                {
+                    "teal": 92,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        118
+                    ]
+                },
+                {
+                    "teal": 93,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        119
+                    ]
+                },
+                {
+                    "teal": 94,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:36",
+                    "pc": [
+                        120
+                    ]
+                },
+                {
+                    "teal": 95,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        121,
+                        122
+                    ]
+                },
+                {
+                    "teal": 96,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        123,
+                        124,
+                        125
+                    ]
+                },
+                {
+                    "teal": 97,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        126
+                    ]
+                },
+                {
+                    "teal": 98,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        127,
+                        128
+                    ]
+                },
+                {
+                    "teal": 99,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        129,
+                        130,
+                        131
+                    ]
+                },
+                {
+                    "teal": 100,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        132
+                    ]
+                },
+                {
+                    "teal": 101,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        133
+                    ]
+                },
+                {
+                    "teal": 102,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        134
+                    ]
+                },
+                {
+                    "teal": 103,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:37",
+                    "pc": [
+                        135
+                    ]
+                },
+                {
+                    "teal": 104,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:29",
+                    "pc": [
+                        136
+                    ]
+                },
+                {
+                    "teal": 109,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:41",
+                    "pc": [
+                        137,
+                        138,
+                        139
+                    ]
+                },
+                {
+                    "teal": 110,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:41",
+                    "pc": [
+                        140
+                    ]
+                },
+                {
+                    "teal": 111,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:41",
+                    "pc": [
+                        141
+                    ]
+                },
+                {
+                    "teal": 115,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:41",
+                    "pc": [
+                        142,
+                        143,
+                        144
+                    ]
+                },
+                {
+                    "teal": 119,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:42",
+                    "pc": [
+                        145,
+                        146
+                    ]
+                },
+                {
+                    "teal": 120,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:42",
+                    "pc": [
+                        147,
+                        148,
+                        149,
+                        150,
+                        151,
+                        152,
+                        153,
+                        154,
+                        155,
+                        156
+                    ]
+                },
+                {
+                    "teal": 121,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:42",
+                    "pc": [
+                        157
+                    ]
+                },
+                {
+                    "teal": 122,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:42",
+                    "pc": [
+                        158
+                    ]
+                },
+                {
+                    "teal": 126,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:43",
+                    "pc": [
+                        159,
+                        160
+                    ]
+                },
+                {
+                    "teal": 127,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:43",
+                    "pc": [
+                        161,
+                        162,
+                        163,
+                        164,
+                        165,
+                        166
+                    ]
+                },
+                {
+                    "teal": 128,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:43",
+                    "pc": [
+                        167,
+                        168,
+                        169,
+                        170,
+                        171,
+                        172,
+                        173
+                    ]
+                },
+                {
+                    "teal": 129,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:43",
+                    "pc": [
+                        174
+                    ]
+                },
+                {
+                    "teal": 133,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:44",
+                    "pc": [
+                        175
+                    ]
+                },
+                {
+                    "teal": 134,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:44",
+                    "pc": [
+                        176
+                    ]
+                },
+                {
+                    "teal": 135,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:44",
+                    "pc": [
+                        177
+                    ]
+                },
+                {
+                    "teal": 136,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:44",
+                    "pc": [
+                        178
+                    ]
+                },
+                {
+                    "teal": 137,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:44",
+                    "pc": [
+                        179,
+                        180,
+                        181,
+                        182,
+                        183,
+                        184,
+                        185
+                    ]
+                },
+                {
+                    "teal": 138,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:44",
+                    "pc": [
+                        186
+                    ]
+                },
+                {
+                    "teal": 145,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:45",
+                    "pc": [
+                        187,
+                        188,
+                        189,
+                        190,
+                        191,
+                        192,
+                        193,
+                        194,
+                        195,
+                        196,
+                        197,
+                        198,
+                        199,
+                        200,
+                        201,
+                        202,
+                        203,
+                        204,
+                        205,
+                        206,
+                        207,
+                        208,
+                        209,
+                        210,
+                        211,
+                        212,
+                        213,
+                        214,
+                        215,
+                        216,
+                        217,
+                        218,
+                        219,
+                        220,
+                        221
+                    ]
+                },
+                {
+                    "teal": 146,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:47",
+                    "pc": [
+                        222,
+                        223,
+                        224,
+                        225,
+                        226,
+                        227,
+                        228,
+                        229,
+                        230,
+                        231,
+                        232,
+                        233,
+                        234,
+                        235,
+                        236,
+                        237,
+                        238,
+                        239
+                    ]
+                },
+                {
+                    "teal": 147,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:45",
+                    "pc": [
+                        240
+                    ]
+                },
+                {
+                    "teal": 148,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:41",
+                    "pc": [
+                        241
+                    ]
+                },
+                {
+                    "teal": 151,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        242
+                    ]
+                },
+                {
+                    "teal": 152,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        243
+                    ]
+                },
+                {
+                    "teal": 155,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        244,
+                        245,
+                        246,
+                        247,
+                        248,
+                        249
+                    ]
+                },
+                {
+                    "teal": 156,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        250,
+                        251,
+                        252
+                    ]
+                },
+                {
+                    "teal": 157,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        253,
+                        254,
+                        255,
+                        256
+                    ]
+                },
+                {
+                    "teal": 160,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "errorMessage": "this contract does not implement the given ABI method for create NoOp",
+                    "pc": [
+                        257
+                    ]
+                },
+                {
+                    "teal": 163,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        258,
+                        259,
+                        260,
+                        261,
+                        262,
+                        263
+                    ]
+                },
+                {
+                    "teal": 164,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        264,
+                        265,
+                        266
+                    ]
+                },
+                {
+                    "teal": 165,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        267,
+                        268,
+                        269,
+                        270
+                    ]
+                },
+                {
+                    "teal": 168,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "errorMessage": "this contract does not implement the given ABI method for call NoOp",
+                    "pc": [
+                        271
+                    ]
+                },
+                {
+                    "teal": 171,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        272,
+                        273,
+                        274,
+                        275,
+                        276,
+                        277
+                    ]
+                },
+                {
+                    "teal": 172,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        278,
+                        279,
+                        280
+                    ]
+                },
+                {
+                    "teal": 173,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "pc": [
+                        281,
+                        282,
+                        283,
+                        284
+                    ]
+                },
+                {
+                    "teal": 176,
+                    "source": "examples/arc56_test/arc56_test.algo.ts:11",
+                    "errorMessage": "this contract does not implement the given ABI method for call OptIn",
+                    "pc": [
+                        285
+                    ]
+                }
+            ],
+            "pcOffsetMethod": "cblocks"
+        },
+        "clear": {
+            "sourceInfo": [],
+            "pcOffsetMethod": "none"
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDEwCmludGNibG9jayAxIFRNUExfc29tZU51bWJlcgpieXRlY2Jsb2NrIDB4NjI2Zjc4NGI2NTc5CgovLyBUaGlzIFRFQUwgd2FzIGdlbmVyYXRlZCBieSBURUFMU2NyaXB0IHYwLjEwNS4zCi8vIGh0dHBzOi8vZ2l0aHViLmNvbS9hbGdvcmFuZGZvdW5kYXRpb24vVEVBTFNjcmlwdAoKLy8gVGhpcyBjb250cmFjdCBpcyBjb21wbGlhbnQgd2l0aCBhbmQvb3IgaW1wbGVtZW50cyB0aGUgZm9sbG93aW5nIEFSQ3M6IFsgQVJDNCBdCgovLyBUaGUgZm9sbG93aW5nIHRlbiBsaW5lcyBvZiBURUFMIGhhbmRsZSBpbml0aWFsIHByb2dyYW0gZmxvdwovLyBUaGlzIHBhdHRlcm4gaXMgdXNlZCB0byBtYWtlIGl0IGVhc3kgZm9yIGFueW9uZSB0byBwYXJzZSB0aGUgc3RhcnQgb2YgdGhlIHByb2dyYW0gYW5kIGRldGVybWluZSBpZiBhIHNwZWNpZmljIGFjdGlvbiBpcyBhbGxvd2VkCi8vIEhlcmUsIGFjdGlvbiByZWZlcnMgdG8gdGhlIE9uQ29tcGxldGUgaW4gY29tYmluYXRpb24gd2l0aCB3aGV0aGVyIHRoZSBhcHAgaXMgYmVpbmcgY3JlYXRlZCBvciBjYWxsZWQKLy8gRXZlcnkgcG9zc2libGUgYWN0aW9uIGZvciB0aGlzIGNvbnRyYWN0IGlzIHJlcHJlc2VudGVkIGluIHRoZSBzd2l0Y2ggc3RhdGVtZW50Ci8vIElmIHRoZSBhY3Rpb24gaXMgbm90IGltcGxlbWVudGVkIGluIHRoZSBjb250cmFjdCwgaXRzIHJlc3BlY3RpdmUgYnJhbmNoIHdpbGwgYmUgIipOT1RfSU1QTEVNRU5URUQiIHdoaWNoIGp1c3QgY29udGFpbnMgImVyciIKdHhuIEFwcGxpY2F0aW9uSUQKIQpwdXNoaW50IDYKKgp0eG4gT25Db21wbGV0aW9uCisKc3dpdGNoICpjYWxsX05vT3AgKmNhbGxfT3B0SW4gKk5PVF9JTVBMRU1FTlRFRCAqTk9UX0lNUExFTUVOVEVEICpOT1RfSU1QTEVNRU5URUQgKk5PVF9JTVBMRU1FTlRFRCAqY3JlYXRlX05vT3AgKk5PVF9JTVBMRU1FTlRFRCAqTk9UX0lNUExFTUVOVEVEICpOT1RfSU1QTEVNRU5URUQgKk5PVF9JTVBMRU1FTlRFRCAqTk9UX0lNUExFTUVOVEVECgoqTk9UX0lNUExFTUVOVEVEOgoJLy8gVGhlIHJlcXVlc3RlZCBhY3Rpb24gaXMgbm90IGltcGxlbWVudGVkIGluIHRoaXMgY29udHJhY3QuIEFyZSB5b3UgdXNpbmcgdGhlIGNvcnJlY3QgT25Db21wbGV0ZT8gRGlkIHlvdSBzZXQgeW91ciBhcHAgSUQ/CgllcnIKCi8vIGZvbygoKHVpbnQ2NCx1aW50NjQpLCh1aW50NjQsdWludDY0KSkpKHVpbnQ2NCx1aW50NjQpCiphYmlfcm91dGVfZm9vOgoJLy8gVGhlIEFCSSByZXR1cm4gcHJlZml4CglwdXNoYnl0ZXMgMHgxNTFmN2M3NQoKCS8vIGlucHV0czogKCh1aW50NjQsdWludDY0KSwodWludDY0LHVpbnQ2NCkpCgl0eG5hIEFwcGxpY2F0aW9uQXJncyAxCglkdXAKCWxlbgoJcHVzaGludCAzMgoJPT0KCgkvLyBhcmd1bWVudCAwIChpbnB1dHMpIGZvciBmb28gbXVzdCBiZSBhICgodWludDY0LHVpbnQ2NCksKHVpbnQ2NCx1aW50NjQpKQoJYXNzZXJ0CgoJLy8gZXhlY3V0ZSBmb28oKCh1aW50NjQsdWludDY0KSwodWludDY0LHVpbnQ2NCkpKSh1aW50NjQsdWludDY0KQoJY2FsbHN1YiBmb28KCWNvbmNhdAoJbG9nCglpbnRjIDAgLy8gMQoJcmV0dXJuCgovLyBmb28oaW5wdXRzOiBJbnB1dHMpOiBPdXRwdXRzCmZvbzoKCXByb3RvIDEgMQoKCS8vICppZjBfY29uZGl0aW9uCgkvLyBleGFtcGxlcy9hcmM1Nl90ZXN0L2FyYzU2X3Rlc3QuYWxnby50czozMAoJLy8gaW5wdXRzLnN1YnRyYWN0LmEgPCBpbnB1dHMuc3VidHJhY3QuYgoJZnJhbWVfZGlnIC0xIC8vIGlucHV0czogSW5wdXRzCglleHRyYWN0IDE2IDgKCWJ0b2kKCWZyYW1lX2RpZyAtMSAvLyBpbnB1dHM6IElucHV0cwoJZXh0cmFjdCAyNCA4CglidG9pCgk8CglieiAqaWYwX2VuZAoKCS8vICppZjBfY29uc2VxdWVudAoJLy8gc3VidHJhY3QuYSBtdXN0IGJlIGdyZWF0ZXIgdGhhbiBzdWJ0cmFjdC5iCgllcnIKCippZjBfZW5kOgoJLy8gZXhhbXBsZXMvYXJjNTZfdGVzdC9hcmM1Nl90ZXN0LmFsZ28udHM6MzIKCS8vIHRoaXMuZ2xvYmFsS2V5LnZhbHVlID0gdGhpcy5zb21lTnVtYmVyCglwdXNoYnl0ZXMgMHg2NzZjNmY2MjYxNmM0YjY1NzkgLy8gImdsb2JhbEtleSIKCWludGMgMSAvLyBUTVBMX3NvbWVOdW1iZXIKCWFwcF9nbG9iYWxfcHV0CgoJLy8gZXhhbXBsZXMvYXJjNTZfdGVzdC9hcmM1Nl90ZXN0LmFsZ28udHM6MzMKCS8vIHRoaXMuZ2xvYmFsTWFwKCdmb28nKS52YWx1ZSA9IHsgZm9vOiAxMywgYmFyOiAzNyB9CglwdXNoYnl0ZXMgMHg3MDAwMDM2NjZmNmYKCXB1c2hieXRlcyAweDAwMGQwMDI1CglhcHBfZ2xvYmFsX3B1dAoKCS8vIGV4YW1wbGVzL2FyYzU2X3Rlc3QvYXJjNTZfdGVzdC5hbGdvLnRzOjM1CgkvLyByZXR1cm4gewoJLy8gICAgICAgc3VtOiBpbnB1dHMuYWRkLmEgKyBpbnB1dHMuYWRkLmIsCgkvLyAgICAgICBkaWZmZXJlbmNlOiBpbnB1dHMuc3VidHJhY3QuYSAtIGlucHV0cy5zdWJ0cmFjdC5iLAoJLy8gICAgIH0KCWZyYW1lX2RpZyAtMSAvLyBpbnB1dHM6IElucHV0cwoJZXh0cmFjdCAwIDgKCWJ0b2kKCWZyYW1lX2RpZyAtMSAvLyBpbnB1dHM6IElucHV0cwoJZXh0cmFjdCA4IDgKCWJ0b2kKCSsKCWl0b2IKCWZyYW1lX2RpZyAtMSAvLyBpbnB1dHM6IElucHV0cwoJZXh0cmFjdCAxNiA4CglidG9pCglmcmFtZV9kaWcgLTEgLy8gaW5wdXRzOiBJbnB1dHMKCWV4dHJhY3QgMjQgOAoJYnRvaQoJLQoJaXRvYgoJY29uY2F0CglyZXRzdWIKCi8vIG9wdEluVG9BcHBsaWNhdGlvbigpdm9pZAoqYWJpX3JvdXRlX29wdEluVG9BcHBsaWNhdGlvbjoKCS8vIGV4ZWN1dGUgb3B0SW5Ub0FwcGxpY2F0aW9uKCl2b2lkCgljYWxsc3ViIG9wdEluVG9BcHBsaWNhdGlvbgoJaW50YyAwIC8vIDEKCXJldHVybgoKLy8gb3B0SW5Ub0FwcGxpY2F0aW9uKCk6IHZvaWQKb3B0SW5Ub0FwcGxpY2F0aW9uOgoJcHJvdG8gMCAwCgoJLy8gZXhhbXBsZXMvYXJjNTZfdGVzdC9hcmM1Nl90ZXN0LmFsZ28udHM6NDIKCS8vIHRoaXMubG9jYWxLZXkodGhpcy50eG4uc2VuZGVyKS52YWx1ZSA9IHRoaXMuc29tZU51bWJlcgoJdHhuIFNlbmRlcgoJcHVzaGJ5dGVzIDB4NmM2ZjYzNjE2YzRiNjU3OSAvLyAibG9jYWxLZXkiCglpbnRjIDEgLy8gVE1QTF9zb21lTnVtYmVyCglhcHBfbG9jYWxfcHV0CgoJLy8gZXhhbXBsZXMvYXJjNTZfdGVzdC9hcmM1Nl90ZXN0LmFsZ28udHM6NDMKCS8vIHRoaXMubG9jYWxNYXAodGhpcy50eG4uc2VuZGVyLCAnZm9vJykudmFsdWUgPSAnYmFyJwoJdHhuIFNlbmRlcgoJcHVzaGJ5dGVzIDB4NzA2NjZmNmYKCXB1c2hieXRlcyAweDAwMDM2MjYxNzIKCWFwcF9sb2NhbF9wdXQKCgkvLyBleGFtcGxlcy9hcmM1Nl90ZXN0L2FyYzU2X3Rlc3QuYWxnby50czo0NAoJLy8gdGhpcy5ib3hLZXkudmFsdWUgPSAnYmF6JwoJYnl0ZWMgMCAvLyAgImJveEtleSIKCWR1cAoJYm94X2RlbAoJcG9wCglwdXNoYnl0ZXMgMHgwMDAzNjI2MTdhCglib3hfcHV0CgoJLy8gZXhhbXBsZXMvYXJjNTZfdGVzdC9hcmM1Nl90ZXN0LmFsZ28udHM6NDUKCS8vIHRoaXMuYm94TWFwKHsgYWRkOiB7IGE6IDEsIGI6IDIgfSwgc3VidHJhY3Q6IHsgYTogNCwgYjogMyB9IH0pLnZhbHVlID0gewoJLy8gICAgICAgc3VtOiAzLAoJLy8gICAgICAgZGlmZmVyZW5jZTogMSwKCS8vICAgICB9CglwdXNoYnl0ZXMgMHg3MDAwMDAwMDAwMDAwMDAwMDEwMDAwMDAwMDAwMDAwMDAyMDAwMDAwMDAwMDAwMDAwNDAwMDAwMDAwMDAwMDAwMDMKCXB1c2hieXRlcyAweDAwMDAwMDAwMDAwMDAwMDMwMDAwMDAwMDAwMDAwMDAxCglib3hfcHV0CglyZXRzdWIKCiphYmlfcm91dGVfY3JlYXRlQXBwbGljYXRpb246CglpbnRjIDAgLy8gMQoJcmV0dXJuCgoqY3JlYXRlX05vT3A6CglwdXNoYnl0ZXMgMHhiODQ0N2IzNiAvLyBtZXRob2QgImNyZWF0ZUFwcGxpY2F0aW9uKCl2b2lkIgoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMAoJbWF0Y2ggKmFiaV9yb3V0ZV9jcmVhdGVBcHBsaWNhdGlvbgoKCS8vIHRoaXMgY29udHJhY3QgZG9lcyBub3QgaW1wbGVtZW50IHRoZSBnaXZlbiBBQkkgbWV0aG9kIGZvciBjcmVhdGUgTm9PcAoJZXJyCgoqY2FsbF9Ob09wOgoJcHVzaGJ5dGVzIDB4Mzk2ZDU1MGUgLy8gbWV0aG9kICJmb28oKCh1aW50NjQsdWludDY0KSwodWludDY0LHVpbnQ2NCkpKSh1aW50NjQsdWludDY0KSIKCXR4bmEgQXBwbGljYXRpb25BcmdzIDAKCW1hdGNoICphYmlfcm91dGVfZm9vCgoJLy8gdGhpcyBjb250cmFjdCBkb2VzIG5vdCBpbXBsZW1lbnQgdGhlIGdpdmVuIEFCSSBtZXRob2QgZm9yIGNhbGwgTm9PcAoJZXJyCgoqY2FsbF9PcHRJbjoKCXB1c2hieXRlcyAweDAxYTNhM2ZmIC8vIG1ldGhvZCAib3B0SW5Ub0FwcGxpY2F0aW9uKCl2b2lkIgoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMAoJbWF0Y2ggKmFiaV9yb3V0ZV9vcHRJblRvQXBwbGljYXRpb24KCgkvLyB0aGlzIGNvbnRyYWN0IGRvZXMgbm90IGltcGxlbWVudCB0aGUgZ2l2ZW4gQUJJIG1ldGhvZCBmb3IgY2FsbCBPcHRJbgoJZXJy",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDEw"
+    },
+    "templateVariables": {
+        "someNumber": {
+            "type": "uint64"
+        }
+    },
+    "scratchVariables": {
+        "someNumber": {
+            "type": "uint64",
+            "slot": 200
+        }
+    },
+    "compilerInfo": {
+        "compiler": "algod",
+        "compilerVersion": {
+            "major": 3,
+            "minor": 26,
+            "patch": 0,
+            "commitHash": "0d10b244"
+        }
+    }
+}

@@ -5,7 +5,8 @@
 //! constructors.
 
 use crate::contract::parse::{
-    AbiContract, AbiMethod, AbiMethodArg, StructField, StructFieldType, genesis_to_network,
+    AbiContract, AbiMethod, AbiMethodArg, StructField, StructFieldType, TemplateVariable,
+    genesis_to_network,
 };
 use crate::contract::type_map::{abi_marker_type, rust_param_type};
 use algonaut_abi_sig::{ArgClass, parse_signature, parse_type};
@@ -20,15 +21,20 @@ pub fn generate_contract(contract: &AbiContract) -> Result<TokenStream, String> 
     let struct_name = to_pascal_case(&contract.name);
     let struct_ident = Ident::new(&struct_name, Span::call_site());
 
-    // Resolve which ARC-56 named structs can be fully generated. Methods that
-    // reference an unsupported struct fall back to a `compile_error!`.
+    // Resolve which ARC-56 named structs can be fully generated. Methods whose
+    // arguments the macro can't model (unsupported struct, tuple, array,
+    // reference, transaction, …) are omitted rather than failing the build.
     let supported_structs = resolve_supported_structs(&contract.structs);
+
+    // The omitted methods, surfaced in the client's doc comment so a real-world
+    // spec yields a usable partial client instead of a `compile_error!`.
+    let omitted_methods = unsupported_methods(contract, &supported_structs);
 
     // Generate the Rust structs for the supported ARC-56 structs.
     let structs = generate_structs(&contract.structs, &supported_structs)?;
 
     // Generate the struct definition
-    let struct_def = generate_struct(&struct_ident);
+    let struct_def = generate_struct(&struct_ident, &omitted_methods);
 
     // Generate the impl block with new() and method functions
     let impl_block = generate_impl(contract, &struct_ident, &supported_structs);
@@ -60,10 +66,38 @@ pub fn generate_contract(contract: &AbiContract) -> Result<TokenStream, String> 
     })
 }
 
-/// Generate the main contract struct definition.
-fn generate_struct(struct_ident: &Ident) -> TokenStream {
+/// The methods the macro can't model yet, paired with why — so a real-world
+/// spec produces a usable partial client and the gaps stay discoverable.
+fn unsupported_methods(
+    contract: &AbiContract,
+    supported_structs: &BTreeSet<String>,
+) -> Vec<(String, String)> {
+    contract
+        .methods
+        .iter()
+        .filter_map(|method| {
+            method_arg_specs(method, supported_structs)
+                .err()
+                .map(|reason| (method.name.clone(), reason))
+        })
+        .collect()
+}
+
+/// Generate the main contract struct definition. Any methods the macro omits
+/// (unsupported argument types) are listed in the doc comment.
+fn generate_struct(struct_ident: &Ident, omitted_methods: &[(String, String)]) -> TokenStream {
+    let mut doc = String::from("Generated contract client.");
+    if !omitted_methods.is_empty() {
+        doc.push_str(
+            "\n\n# Omitted methods\n\nThese methods are not generated because the macro \
+             does not support their argument types:\n",
+        );
+        for (name, reason) in omitted_methods {
+            doc.push_str(&format!("\n- `{name}`: {reason}"));
+        }
+    }
     quote! {
-        #[doc = "Generated contract client."]
+        #[doc = #doc]
         pub struct #struct_ident {
             app_id: ::algonaut_core::AppId,
             sender: ::algonaut_core::Address,
@@ -81,21 +115,11 @@ fn generate_impl(
     let mut methods = Vec::new();
 
     for method in &contract.methods {
-        match generate_method(method, struct_ident, supported_structs) {
-            Ok(m) => methods.push(m),
-            Err(e) => {
-                // Generate a compile_error! for unsupported methods
-                let method_name = &method.name;
-                let error_msg =
-                    format!("method `{method_name}` has unsupported argument type: {e}");
-                let method_ident = Ident::new(&to_snake_case(method_name), Span::call_site());
-                methods.push(quote! {
-                    #[doc = "This method has unsupported argument types."]
-                    pub fn #method_ident(&self) {
-                        ::core::compile_error!(#error_msg);
-                    }
-                });
-            }
+        // Omit methods with unsupported argument types (they are listed in the
+        // client struct's doc comment). `generate_builders` skips the same set
+        // via `method_arg_specs`, so the two stay in lockstep.
+        if let Ok(m) = generate_method(method, struct_ident, supported_structs) {
+            methods.push(m);
         }
     }
 
@@ -566,6 +590,13 @@ fn resolve_supported_structs(structs: &HashMap<String, Vec<StructField>>) -> BTr
             if supported.contains(name) {
                 continue;
             }
+            // Some tools emit a struct whose *name* is an inline type literal
+            // (e.g. `{ foo: uint16; bar: uint16 }`), which is not a valid Rust
+            // identifier; such structs (and any method referencing them) are
+            // left unsupported rather than panicking `Ident::new`.
+            if !is_valid_ident(&to_pascal_case(name)) {
+                continue;
+            }
             if fields
                 .iter()
                 .all(|f| field_supported(&f.type_, structs, &supported))
@@ -861,25 +892,103 @@ fn generate_deploy(contract: &AbiContract, struct_ident: &Ident) -> TokenStream 
         })
         .unwrap_or((0, 0, 0, 0));
 
+    // TEAL source is text; template variables are substituted into it at deploy
+    // time, so carry it as a string rather than raw bytes.
+    let approval_src = match String::from_utf8(approval) {
+        Ok(src) => src,
+        Err(_) => return TokenStream::new(),
+    };
+    let clear_src = match String::from_utf8(clear) {
+        Ok(src) => src,
+        Err(_) => return TokenStream::new(),
+    };
+
+    // One typed `deploy` parameter per declared template variable, substituted
+    // for its `TMPL_<name>` token in the source before compiling. TEAL integers
+    // are uint64, so integer template variables map to `u64`; a contract using a
+    // non-integer template variable gets no generated `deploy` (it cannot be
+    // substituted safely yet).
+    let mut template_vars: Vec<(&String, &TemplateVariable)> =
+        contract.template_variables.iter().collect();
+    template_vars.sort_by(|a, b| a.0.cmp(b.0));
+    let mut tmpl_params = Vec::new();
+    let mut tmpl_replaces = Vec::new();
+    let mut tmpl_docs = Vec::new();
+    for (name, var) in template_vars {
+        if !var.type_.starts_with("uint") {
+            return TokenStream::new();
+        }
+        let param_name = to_snake_case(name);
+        let param_ident = if is_rust_keyword(&param_name) {
+            format_ident!("r#{}", param_name)
+        } else {
+            Ident::new(&param_name, Span::call_site())
+        };
+        let token = format!("TMPL_{name}");
+        tmpl_params.push(quote! { #param_ident: u64 });
+        // Chained on the source literal, so no `mut` is needed when empty.
+        tmpl_replaces.push(quote! { .replace(#token, &#param_ident.to_string()) });
+        tmpl_docs.push(format!(
+            "`{param_name}` sets the `{token}` template variable."
+        ));
+    }
+    let tmpl_doc = if tmpl_docs.is_empty() {
+        String::new()
+    } else {
+        format!("\n\nTemplate variables: {}", tmpl_docs.join(" "))
+    };
+
+    // How the app is created. Most real contracts create through an ABI method
+    // (e.g. `createApplication()`, `bareActions.create: []`) rather than a bare
+    // call; for a no-arg create method we pass its 4-byte selector as the create
+    // transaction's only app argument. With no such method we fall back to a
+    // bare NoOp create (what hand-written contracts like the example use).
+    let create_method = contract.methods.iter().find(|m| {
+        m.args.is_empty()
+            && m.actions
+                .as_ref()
+                .is_some_and(|a| a.create.iter().any(|c| c == "NoOp"))
+    });
+    let create_args = match create_method {
+        Some(method) => {
+            let digest = Sha512_256::digest(method.get_signature().as_bytes());
+            let (b0, b1, b2, b3) = (digest[0], digest[1], digest[2], digest[3]);
+            quote! { .app_arguments(::std::vec![::std::vec![#b0, #b1, #b2, #b3]]) }
+        }
+        None => quote! {},
+    };
+    let create_doc = match create_method {
+        Some(method) => format!(
+            "creates via the ABI method `{}` (its selector is the create \
+             transaction's app argument)",
+            method.name
+        ),
+        None => "submits a bare app-create".to_owned(),
+    };
+
     quote! {
         impl #struct_ident {
-            /// Deploy a new instance of this contract.
-            ///
-            /// Compiles the contract's approval and clear programs through
-            /// algod, submits a single app-create transaction with the declared
-            /// state schema, waits for confirmation, and returns a client bound
-            /// to the newly created application id.
+            #[doc = "Deploy a new instance of this contract."]
+            #[doc = ""]
+            #[doc = "Compiles the approval and clear programs through algod,"]
+            #[doc = #create_doc]
+            #[doc = "with the declared state schema, waits for confirmation, and"]
+            #[doc = "returns a client bound to the newly created application id."]
+            #[doc = #tmpl_doc]
             pub async fn deploy(
                 algod: &::algonaut::Algod,
                 sender: ::algonaut_core::Address,
                 signer: ::std::sync::Arc<dyn ::algonaut_transaction::Signer>,
-                params: &::algonaut_model::algod::SuggestedParams,
+                params: &::algonaut_model::algod::SuggestedParams
+                #(, #tmpl_params)*
             ) -> ::core::result::Result<Self, ::algonaut::Error> {
+                let __approval_src = ::std::string::String::from(#approval_src) #(#tmpl_replaces)*;
+                let __clear_src = ::std::string::String::from(#clear_src) #(#tmpl_replaces)*;
                 let __approval = algod
-                    .teal_compile(&[#(#approval),*], ::algonaut::SourceMap::Skip)
+                    .teal_compile(__approval_src.as_bytes(), ::algonaut::SourceMap::Skip)
                     .await?;
                 let __clear = algod
-                    .teal_compile(&[#(#clear),*], ::algonaut::SourceMap::Skip)
+                    .teal_compile(__clear_src.as_bytes(), ::algonaut::SourceMap::Skip)
                     .await?;
 
                 let __txn = ::algonaut::transaction::CreateApplication::new(
@@ -895,6 +1004,7 @@ fn generate_deploy(contract: &AbiContract, struct_ident: &Ident) -> TokenStream 
                         number_byteslices: #local_bytes,
                     },
                 )
+                #create_args
                 .build(params)?;
 
                 let __outcome = ::algonaut::atomic::AtomicGroupBuilder::new()
@@ -937,6 +1047,13 @@ fn to_pascal_case(s: &str) -> String {
     }
 
     result
+}
+
+/// Whether `s` is a valid, non-keyword Rust identifier — so it can name a
+/// generated type without panicking `Ident::new`. Real-world specs sometimes
+/// carry struct names that are inline type literals, not identifiers.
+fn is_valid_ident(s: &str) -> bool {
+    syn::parse_str::<syn::Ident>(s).is_ok()
 }
 
 /// Convert a string to snake_case.
