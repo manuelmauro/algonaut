@@ -104,45 +104,6 @@ fn nested_struct_and_mixed_args_build() {
     let _get = vault.get_pair().build(&params);
 }
 
-// Compile-only check: type-checks the generated read-only `simulate` path
-// against the real simulate API. It is never called (no node to talk to);
-// merely compiling it verifies the generated async method's signature and the
-// `AtomicGroupBuilder`/`simulate` chain line up.
-#[allow(dead_code)]
-async fn readonly_simulate_typechecks(
-    vault: &Vault,
-    algod: &algonaut::Algod,
-    params: &SuggestedParams,
-) -> Result<algonaut::atomic::SimulateOutcome, algonaut::Error> {
-    vault.get_pair().simulate(algod, params).await
-}
-
-// Compile-only check: type-checks the generated global-state accessors against
-// the real algod app-info API. Never called (no node); compiling it verifies
-// the generated async getters and their return types line up.
-#[allow(dead_code)]
-async fn state_accessors_typecheck(
-    vault: &Vault,
-    algod: &algonaut::Algod,
-) -> Result<Option<algonaut::abi::abi_type::AbiValue>, algonaut::Error> {
-    let _owner = vault.global_owner(algod).await?;
-    vault.global_total(algod).await
-}
-
-// Compile-only check: type-checks the generated `deploy` constructor (compile
-// programs -> create txn -> sign -> execute -> read created app id) against the
-// real APIs. Never called (no node); compiling it verifies the whole chain,
-// including ExecuteOutcome::created_app_id.
-#[allow(dead_code)]
-async fn deploy_typechecks(
-    algod: &algonaut::Algod,
-    sender: algonaut_core::Address,
-    signer: std::sync::Arc<dyn algonaut_transaction::Signer>,
-    params: &SuggestedParams,
-) -> Result<Vault, algonaut::Error> {
-    Vault::deploy(algod, sender, signer, params).await
-}
-
 #[test]
 fn literal_default_argument_is_omitted() {
     let alice = Account::generate();

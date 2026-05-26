@@ -1,11 +1,12 @@
-//! A real ARC-56 spec (AlgoKit's `ARC56Test`) exercises two macro behaviours a
-//! real-world contract relies on:
+//! A real ARC-56 spec (AlgoKit's `ARC56Test`). This offline test covers the
+//! inline-nested-struct generation a real-world contract relies on: its `foo`
+//! method takes `Inputs`, whose `add`/`subtract` fields are inline nested
+//! structs — generated recursively as `InputsAdd`/`InputsSubtract`.
 //!
-//! - its `foo` method takes `Inputs`, whose `add`/`subtract` fields are inline
-//!   nested structs — generated recursively as `InputsAdd`/`InputsSubtract`;
-//! - it is created through an ABI `createApplication()` method
-//!   (`bareActions.create: []`), which the generated `deploy` handles by
-//!   passing that method's selector as the create transaction's app argument.
+//! (The spec is also created through an ABI `createApplication()` method rather
+//! than a bare create; the generated `deploy` handles that by passing the
+//! method's selector as the create transaction's app argument, and the `e2e`
+//! suite exercises that path end-to-end against a live node.)
 
 use crate::contract_macro_arc56::mock_params;
 use algonaut::contract;
@@ -14,19 +15,6 @@ use algonaut_transaction::account::Account;
 use std::sync::Arc;
 
 contract!("tests/fixtures/arc56_test.arc56.json");
-
-// Compile-only: the ABI-method create path in the generated `deploy`
-// type-checks against the real APIs, including the `some_number` parameter
-// generated for the spec's `someNumber` template variable. Never called.
-#[allow(dead_code)]
-async fn deploy_typechecks(
-    algod: &algonaut::Algod,
-    sender: algonaut_core::Address,
-    signer: Arc<dyn algonaut_transaction::Signer>,
-    params: &algonaut_model::algod::SuggestedParams,
-) -> Result<ARC56Test, algonaut::Error> {
-    ARC56Test::deploy(algod, sender, signer, params, 42).await
-}
 
 #[test]
 fn inline_nested_struct_argument_builds_a_call() {
