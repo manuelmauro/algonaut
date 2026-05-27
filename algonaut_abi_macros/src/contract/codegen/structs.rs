@@ -3,7 +3,7 @@
 
 use super::naming::{is_rust_keyword, is_valid_ident, to_pascal_case, to_snake_case};
 use crate::contract::parse::{StructField, StructFieldType};
-use crate::contract::type_map::{abi_marker_type, rust_param_type};
+use crate::contract::type_map::{arg_encode_expr, rust_param_type};
 use algonaut_abi_sig::parse_type;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
@@ -125,13 +125,11 @@ fn emit_struct_def(
             StructFieldType::Type(s) => {
                 let sig = parse_type(s).map_err(|e| e.reason)?;
                 let rust_type = rust_param_type(&sig)?;
-                let marker = abi_marker_type(&sig)?;
-                (
-                    quote! { #rust_type },
-                    quote! {
-                        ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(self.#field_ident)
-                    },
-                )
+                // Route the leaf field through the shared encoder so array
+                // fields (now supported by `rust_param_type`) also encode
+                // correctly; scalars keep their `AbiArg<Marker>` path.
+                let encode = arg_encode_expr(&sig, &quote! { self.#field_ident }, 0)?;
+                (quote! { #rust_type }, encode)
             }
             StructFieldType::Nested(sub_fields) => {
                 // Synthesize a sub-struct for the anonymous inline fields.
@@ -219,6 +217,22 @@ mod tests {
         );
         let supported = resolve_supported_structs(&structs);
         assert!(supported.contains("Pair"));
+    }
+
+    #[test]
+    fn struct_with_array_field_is_supported() {
+        // `rust_param_type` accepts arrays, so a struct with a `uint64[]` (or a
+        // static `uint64[3]`) field is supported and encodes via the shared
+        // `arg_encode_expr` path — consistent with the support resolution.
+        let mut structs = HashMap::new();
+        structs.insert(
+            "Bag".to_owned(),
+            vec![leaf("items", "uint64[]"), leaf("triple", "uint64[3]")],
+        );
+        let supported = resolve_supported_structs(&structs);
+        assert!(supported.contains("Bag"));
+        // It also emits without error (every field encodes).
+        assert!(generate_structs(&structs, &supported).is_ok());
     }
 
     #[test]

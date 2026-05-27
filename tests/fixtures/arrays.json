@@ -1,0 +1,10 @@
+{
+  "name": "Arrays",
+  "desc": "ARC-4 contract exercising array arguments",
+  "methods": [
+    { "name": "sum", "args": [{ "name": "xs", "type": "uint64[]" }], "returns": { "type": "uint64" } },
+    { "name": "sum3", "args": [{ "name": "xs", "type": "uint64[3]" }], "returns": { "type": "uint64" } },
+    { "name": "first_byte", "args": [{ "name": "bs", "type": "byte[]" }], "returns": { "type": "byte" } },
+    { "name": "matrix", "args": [{ "name": "m", "type": "uint64[][]" }], "returns": { "type": "uint64" } }
+  ]
+}

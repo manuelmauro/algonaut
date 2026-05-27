@@ -4,7 +4,7 @@
 
 use super::naming::{is_rust_keyword, to_pascal_case, to_snake_case};
 use crate::contract::parse::{AbiContract, AbiMethod, AbiMethodArg};
-use crate::contract::type_map::{abi_marker_type, rust_param_type};
+use crate::contract::type_map::{arg_encode_expr, rust_param_type};
 use algonaut_abi_sig::{ArgClass, parse_signature, parse_type};
 use base64::Engine;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -135,13 +135,11 @@ fn method_arg_specs(
         match arg_class {
             ArgClass::Value(ty) => {
                 let rust_type = rust_param_type(ty)?;
-                let marker = abi_marker_type(ty)?;
-
+                let value = quote! { #arg_ident };
+                let encode = arg_encode_expr(ty, &value, 0)?;
                 specs.push(ArgSpec {
                     param: Some(quote! { #arg_ident: #rust_type }),
-                    encode: quote! {
-                        ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(#arg_ident)
-                    },
+                    encode,
                 });
             }
             ArgClass::Transaction(tx_type) => {

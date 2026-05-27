@@ -5,6 +5,7 @@
 //! compiled into a single `integration` test binary.
 
 mod arc56_test;
+mod array_args;
 mod contract_macro;
 mod contract_macro_arc56;
 mod logic_signature;
