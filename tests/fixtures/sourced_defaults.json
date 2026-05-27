@@ -1,0 +1,84 @@
+{
+  "arcs": [56],
+  "name": "Defaults",
+  "desc": "Exercises sourced (non-literal) defaultValue: global/local/box/method",
+  "methods": [
+    {
+      "name": "from_global",
+      "desc": "A uint64 arg defaulted from a global-state key",
+      "args": [
+        {
+          "name": "amount",
+          "type": "uint64",
+          "defaultValue": {
+            "source": "global",
+            "data": "dG90YWw=",
+            "type": "uint64"
+          }
+        }
+      ],
+      "returns": { "type": "uint64" }
+    },
+    {
+      "name": "from_local",
+      "desc": "A uint64 arg defaulted from the sender's local-state key",
+      "args": [
+        {
+          "name": "amount",
+          "type": "uint64",
+          "defaultValue": {
+            "source": "local",
+            "data": "Y291bnRlcg==",
+            "type": "uint64"
+          }
+        }
+      ],
+      "returns": { "type": "uint64" }
+    },
+    {
+      "name": "from_box",
+      "desc": "A string arg defaulted from a box",
+      "args": [
+        {
+          "name": "label",
+          "type": "string",
+          "defaultValue": {
+            "source": "box",
+            "data": "bGFiZWw=",
+            "type": "string"
+          }
+        }
+      ],
+      "returns": { "type": "string" }
+    },
+    {
+      "name": "from_method",
+      "desc": "A uint64 arg defaulted from a read-only method's return",
+      "args": [
+        {
+          "name": "seed",
+          "type": "uint64",
+          "defaultValue": {
+            "source": "method",
+            "data": "current_seed()uint64",
+            "type": "uint64"
+          }
+        }
+      ],
+      "returns": { "type": "uint64" }
+    },
+    {
+      "name": "current_seed",
+      "desc": "Read-only source method for the `from_method` default",
+      "readonly": true,
+      "args": [],
+      "returns": { "type": "uint64" }
+    },
+    {
+      "name": "plain",
+      "desc": "A control method with an ordinary required argument",
+      "args": [{ "name": "x", "type": "uint64" }],
+      "returns": { "type": "uint64" }
+    }
+  ]
+}

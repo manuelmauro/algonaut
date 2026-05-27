@@ -45,6 +45,8 @@ suite.
 The remaining gaps — node-backed integration tests for the runtime paths,
 sourced (non-literal) default values, local/box/map state accessors, typed
 return/value decoding, a richer `deploy`, and more — are tracked in #345.
+Sourced default values and the local/box/map state accessors are addressed in
+[`contract-macro-state-accessors`](contract-macro-state-accessors.md).
 
 Extends [`contract-macro-from-abi-json`](contract-macro-from-abi-json.md):
 its **D4** ("type mapping for initial implementation") declared an honest scope

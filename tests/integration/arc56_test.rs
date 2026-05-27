@@ -35,3 +35,52 @@ fn inline_nested_struct_argument_builds_a_call() {
     // The OptIn lifecycle method is still generated too.
     let _opt_in = client.opt_in_to_application();
 }
+
+#[test]
+fn state_accessors_are_generated_with_expected_signatures() {
+    use algonaut::Algod;
+    use algonaut::abi::abi_type::AbiValue;
+    use algonaut_core::Address;
+    use std::future::Future;
+
+    // The accessors are `async` and hit algod, so they can't run offline. Bind
+    // each one as a function pointer of its expected signature instead: a wrong
+    // shape (missing the account arg, wrong key type, …) fails to compile, so
+    // this asserts the generated API surface without a node.
+    //
+    // `arc56_test` declares (per its `state`):
+    //   global key `globalKey` : AVMBytes -> uint64
+    //   local  key `localKey`  : AVMBytes -> uint64   (needs an account)
+    //   box    key `boxKey`    : AVMBytes -> string
+    //   local map `localMap`   : AVMBytes -> string   (account + &[u8] key)
+    // The `globalMap` (inline-struct value) and `boxMap` (struct *key*) are
+    // skipped: their key/value types aren't decodable scalars.
+
+    type Fetch<'a> =
+        std::pin::Pin<Box<dyn Future<Output = Result<Option<AbiValue>, algonaut::Error>> + 'a>>;
+
+    // global_<key>(&self, &Algod)
+    fn assert_global<'a>(c: &'a ARC56Test, a: &'a Algod) -> Fetch<'a> {
+        Box::pin(c.global_global_key(a))
+    }
+    // local_<key>(&self, &Algod, &Address)
+    fn assert_local<'a>(c: &'a ARC56Test, a: &'a Algod, acct: &'a Address) -> Fetch<'a> {
+        Box::pin(c.local_local_key(a, acct))
+    }
+    // box_<key>(&self, &Algod)
+    fn assert_box<'a>(c: &'a ARC56Test, a: &'a Algod) -> Fetch<'a> {
+        Box::pin(c.box_box_key(a))
+    }
+    // <class>_<map>(&self, &Algod, [&Address,] key)
+    fn assert_local_map<'a>(c: &'a ARC56Test, a: &'a Algod, acct: &'a Address) -> Fetch<'a> {
+        Box::pin(c.local_local_map(a, acct, b"k".as_slice()))
+    }
+
+    // Reference the items so the asserts above are exercised by the type-checker.
+    let _ = (
+        assert_global as fn(_, _) -> _,
+        assert_local as fn(_, _, _) -> _,
+        assert_box as fn(_, _) -> _,
+        assert_local_map as fn(_, _, _) -> _,
+    );
+}

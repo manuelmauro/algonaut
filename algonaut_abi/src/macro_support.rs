@@ -184,3 +184,24 @@ impl MethodInvocation {
         (self.method, self.args)
     }
 }
+
+// === base64 helpers =======================================================
+//
+// The `contract!` state accessors compute storage keys at run time and compare
+// them against algod's base64-encoded key strings. These keep the generated
+// code free of a direct `base64` dependency, which a downstream consumer of the
+// macro might not have — generated code already names `algonaut_abi`.
+
+/// Base64-encode `bytes` with the standard alphabet (matches algod's key
+/// encoding for global/local state entries).
+pub fn b64_encode(bytes: &[u8]) -> String {
+    use base64::Engine;
+    base64::engine::general_purpose::STANDARD.encode(bytes)
+}
+
+/// Base64-decode `s` with the standard alphabet. Returns `None` on malformed
+/// input.
+pub fn b64_decode(s: &str) -> Option<Vec<u8>> {
+    use base64::Engine;
+    base64::engine::general_purpose::STANDARD.decode(s).ok()
+}

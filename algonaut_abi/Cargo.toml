@@ -13,6 +13,7 @@ algonaut_abi_macros = { workspace = true }
 algonaut_abi_model = { workspace = true }
 algonaut_abi_sig = { workspace = true }
 algonaut_core = { workspace = true }
+base64 = { workspace = true }
 derive_more = { workspace = true, features = ["display", "from"] }
 num-bigint = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
