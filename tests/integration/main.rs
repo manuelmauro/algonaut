@@ -6,6 +6,7 @@
 
 mod arc56_test;
 mod array_args;
+mod box_references;
 mod contract_macro;
 mod contract_macro_arc56;
 mod logic_signature;

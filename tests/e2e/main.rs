@@ -407,3 +407,73 @@ async fn array_arguments_sum_on_chain() {
         other => panic!("unexpected sum3 return: {other:?}"),
     }
 }
+
+#[tokio::test]
+async fn box_put_get_round_trips() {
+    use algonaut::atomic::AbiMethodReturnValue;
+    use algonaut::core::MicroAlgos;
+    use algonaut::transaction::Pay;
+    let algod = algod();
+    let kmd = kmd();
+    let account = funded_account(&algod, &kmd).await;
+    let sender = account.address();
+    let signer: Arc<dyn Signer> = Arc::new(account);
+    let params = algod.suggested_params().await.unwrap();
+    let vault = Vault::deploy(&algod, sender, Arc::clone(&signer), &params)
+        .await
+        .expect("deploy Vault");
+
+    // A box raises the app account's min balance, so fund the app account.
+    let fund = Pay::new(sender, vault.app_id().address(), MicroAlgos(200_000))
+        .build(&params)
+        .expect("build app funding");
+    AtomicGroupBuilder::new()
+        .add_transaction(algonaut::atomic::TransactionWithSigner::new(
+            fund,
+            Arc::clone(&signer),
+        ))
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+
+    // box_put("k", 42) writes the box; the box reference must be attached.
+    let put = vault
+        .box_put("k".to_owned(), 42)
+        .box_ref(b"k".to_vec())
+        .build(&params);
+    AtomicGroupBuilder::new()
+        .add_method_call(put)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+
+    // box_get("k") reads it back as 42.
+    let get = vault
+        .box_get("k".to_owned())
+        .box_ref(b"k".to_vec())
+        .build(&params);
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(get)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    match &executed.method_results[0].return_value {
+        Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(42u64)),
+        other => panic!("unexpected box_get return: {other:?}"),
+    }
+}
