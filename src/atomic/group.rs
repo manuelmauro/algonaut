@@ -14,7 +14,8 @@ use std::sync::Arc;
 use algonaut_abi::abi_interactions::{AbiMethod, TransactionArgType};
 use algonaut_core::AppId;
 use algonaut_model::algod::{
-    SimulateRequest, SimulateRequestTransactionGroup, SimulateTransactionResponse,
+    PendingTransactionResponse, SimulateRequest, SimulateRequestTransactionGroup,
+    SimulateTransactionResponse,
 };
 use algonaut_model::transaction::ApiSignedTransaction;
 use algonaut_transaction::group::assign_in_place;
@@ -304,48 +305,66 @@ impl SignedAtomicGroup {
         let pending_tx = poll_until_confirmed(algod, &transaction_id).await?;
 
         let mut method_results: Vec<AbiMethodResult> = vec![];
+        // Created application id per group index, in group order. A create can
+        // sit at any slot of a mixed group (a bare create, an app-create method
+        // call, …), so we collect them all rather than only the awaited txn's.
+        let mut created_app_ids: Vec<(usize, AppId)> = vec![];
 
         for i in 0..self.signed_txs.len() {
+            let txn_id = self.signed_txs[i].transaction_id().clone();
+
+            // The slot we already polled needs no extra fetch; for the rest we
+            // fetch each one's own pending transaction. The awaited slot is
+            // always available; a later fetch failure is tolerated (we keep
+            // what we can: the per-result error below, and no created id).
+            let fetched: Option<PendingTransactionResponse> = if i == index_to_wait {
+                Some(pending_tx.clone())
+            } else {
+                algod.pending_transaction(&txn_id).await.ok()
+            };
+
+            // Record a created app id for this slot, regardless of whether it is
+            // a method call or a bare transaction.
+            if let Some(app_id) = fetched
+                .as_ref()
+                .and_then(|tx| tx.application_index)
+                .map(AppId)
+            {
+                created_app_ids.push((i, app_id));
+            }
+
+            // Method calls additionally contribute a decoded return value.
             if !self.method_map.contains_key(&i) {
                 continue;
             }
-
             let return_type = self.method_map[&i].returns.clone().type_()?;
-
-            // The slot we already polled needs no extra fetch — decode it
-            // straight from the confirmed response we are holding.
-            if i == index_to_wait {
-                method_results.push(get_return_value_with_return_type(
-                    &pending_tx,
-                    &transaction_id,
-                    return_type,
-                )?);
-                continue;
-            }
-
-            // Other method calls in the group: fetch each one's own pending
-            // transaction. A fetch failure is surfaced per-result rather
-            // than failing the whole group.
-            let other_transaction_id = self.signed_txs[i].transaction_id().clone();
-            match algod.pending_transaction(&other_transaction_id).await {
-                Ok(other_pending_tx) => method_results.push(get_return_value_with_return_type(
-                    &other_pending_tx,
-                    &other_transaction_id,
+            match fetched {
+                Some(tx) => method_results.push(get_return_value_with_return_type(
+                    &tx,
+                    &txn_id,
                     return_type,
                 )?),
-                Err(e) => method_results.push(AbiMethodResult {
-                    transaction_id: other_transaction_id,
+                None => method_results.push(AbiMethodResult {
+                    transaction_id: txn_id,
                     transaction_info: pending_tx.clone(),
-                    return_value: Err(AbiReturnDecodeError(format!("{e:?}"))),
+                    return_value: Err(AbiReturnDecodeError(
+                        "failed to fetch pending transaction".to_owned(),
+                    )),
                 }),
             }
         }
+
+        // `created_app_id` stays the awaited transaction's created id (the
+        // common lone-create / deploy case); `created_app_ids` carries every
+        // slot's, for mixed groups where a create sits elsewhere.
+        let created_app_id = pending_tx.application_index.map(AppId);
 
         Ok(ExecuteOutcome {
             confirmed_round: pending_tx.confirmed_round,
             transaction_ids: transaction_ids(&self.signed_txs),
             method_results,
-            created_app_id: pending_tx.application_index.map(AppId),
+            created_app_id,
+            created_app_ids,
         })
     }
 }

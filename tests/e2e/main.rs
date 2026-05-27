@@ -254,9 +254,9 @@ async fn incr_uses_literal_default_on_chain() {
     let (vault, _) = deploy_vault(&algod, &kmd()).await;
     let params = algod.suggested_params().await.unwrap();
 
-    // `incr`'s `step` has a literal default of 1, supplied automatically. On a
-    // fresh deploy total=0, so incr returns 0 + 1 = 1.
-    let incr = vault.incr().build(&params);
+    // `incr`'s `step` is an `Option<u64>`. `None` uses the literal default of 1;
+    // on a fresh deploy total=0, so incr(None) returns 0 + 1 = 1.
+    let incr = vault.incr(None).build(&params);
     let executed = AtomicGroupBuilder::new()
         .add_method_call(incr)
         .build()
@@ -271,6 +271,72 @@ async fn incr_uses_literal_default_on_chain() {
         Ok(AbiMethodReturnValue::Some(value)) => assert_eq!(value, &AbiValue::from(1u64)),
         other => panic!("unexpected incr return: {other:?}"),
     }
+
+    // `Some(v)` overrides the default: incr(Some(10)) returns 1 + 10 = 11.
+    let incr_over = vault.incr(Some(10)).build(&params);
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(incr_over)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    match &executed.method_results[0].return_value {
+        Ok(AbiMethodReturnValue::Some(value)) => assert_eq!(value, &AbiValue::from(11u64)),
+        other => panic!("unexpected incr override return: {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn get_pair_simulate_decoded_returns_typed_struct() {
+    let algod = algod();
+    let (vault, _) = deploy_vault(&algod, &kmd()).await;
+    let params = algod.suggested_params().await.unwrap();
+
+    // store(2,3) sets total = 5.
+    let store = vault
+        .store(Pair {
+            first: 2,
+            second: 3,
+        })
+        .build(&params);
+    AtomicGroupBuilder::new()
+        .add_method_call(store)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+
+    // get_pair's return carries a `struct: "Pair"` overlay, so `simulate_decoded`
+    // returns the typed `Pair` directly (total, total) = (5, 5).
+    let pair: Pair = vault
+        .get_pair()
+        .simulate_decoded(&algod, &params)
+        .await
+        .unwrap();
+    assert_eq!(pair.first, 5);
+    assert_eq!(pair.second, 5);
+
+    // A scalar return decodes too: scale((4,5),10) returns (4 + 5) * 10 = 90.
+    let scaled: u64 = vault
+        .scale(
+            Pair {
+                first: 4,
+                second: 5,
+            },
+            10,
+        )
+        .simulate_decoded(&algod, &params)
+        .await
+        .unwrap();
+    assert_eq!(scaled, 90);
 }
 
 #[tokio::test]

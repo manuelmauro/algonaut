@@ -112,6 +112,71 @@ fn array_encode(child: &SigType, value: &TokenStream, depth: usize) -> Result<To
     })
 }
 
+/// Build the expression that decodes `value` (a `TokenStream` producing an
+/// owned [`AbiValue`]) into a `Result<#rust_type, AbiDecodeError>`, the reverse
+/// of [`arg_encode_expr`]. Scalars defer to the `AbiDecode<Marker>` impls;
+/// dynamic arrays map each element through the same path and `collect` into a
+/// `Vec<R>`; static arrays additionally check the element count and build
+/// `[R; N]`. `depth` keeps each level's binding unique.
+pub fn arg_decode_expr(
+    ty: &SigType,
+    value: &TokenStream,
+    depth: usize,
+) -> Result<TokenStream, String> {
+    match ty {
+        // byte[] keeps its canonical Vec<u8> path via the Bytes marker.
+        SigType::DynamicArray { child_type } if matches!(**child_type, SigType::Byte) => {
+            Ok(quote! {
+                ::algonaut_abi::macro_support::AbiDecode::<::algonaut_abi::macro_support::Bytes>::decode(#value)
+            })
+        }
+        SigType::DynamicArray { child_type } => {
+            let elem = quote::format_ident!("__delem{depth}");
+            let inner = arg_decode_expr(child_type, &quote! { #elem }, depth + 1)?;
+            Ok(quote! {
+                ::algonaut_abi::macro_support::decode_array_items(#value)
+                    .and_then(|__items| {
+                        __items
+                            .into_iter()
+                            .map(|#elem| #inner)
+                            .collect::<::core::result::Result<
+                                ::std::vec::Vec<_>,
+                                ::algonaut_abi::macro_support::AbiDecodeError,
+                            >>()
+                    })
+            })
+        }
+        SigType::StaticArray { len, child_type } => {
+            let elem = quote::format_ident!("__delem{depth}");
+            let inner = arg_decode_expr(child_type, &quote! { #elem }, depth + 1)?;
+            let n = proc_macro2::Literal::usize_unsuffixed(*len as usize);
+            Ok(quote! {
+                ::algonaut_abi::macro_support::decode_array_items(#value)
+                    .and_then(|__items| {
+                        let __decoded = __items
+                            .into_iter()
+                            .map(|#elem| #inner)
+                            .collect::<::core::result::Result<
+                                ::std::vec::Vec<_>,
+                                ::algonaut_abi::macro_support::AbiDecodeError,
+                            >>()?;
+                        <[_; #n]>::try_from(__decoded).map_err(|__v: ::std::vec::Vec<_>| {
+                            ::algonaut_abi::macro_support::AbiDecodeError::new(format!(
+                                "expected {} elements, got {}", #n, __v.len(),
+                            ))
+                        })
+                    })
+            })
+        }
+        scalar => {
+            let marker = abi_marker_type(scalar)?;
+            Ok(quote! {
+                ::algonaut_abi::macro_support::AbiDecode::<#marker>::decode(#value)
+            })
+        }
+    }
+}
+
 fn unsupported_type_message(ty: &SigType) -> String {
     let type_name = match ty {
         SigType::UFixed { .. } => "ufixed",

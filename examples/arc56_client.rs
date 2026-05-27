@@ -115,9 +115,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // 3. A default argument: `incr`'s `step` has a literal default of 1, so the
-    //    generated method takes no parameter — the constant is supplied for you.
-    let _incr = vault.incr().build(&params);
-    info!("default: built incr() with no argument — `step` defaults to the literal 1");
+    //    generated method takes an `Option<u64>` — pass `None` for the literal
+    //    default, or `Some(v)` to override it.
+    let _incr = vault.incr(None).build(&params);
+    let _incr_override = vault.incr(Some(5)).build(&params);
+    info!("default: built incr(None) (uses literal 1) and incr(Some(5)) (overrides it)");
 
     // 4. Lifecycle: `enroll` declares the `OptIn` call action, so its builder
     //    exposes `.opt_in()`, which sets the transaction's on-complete.
