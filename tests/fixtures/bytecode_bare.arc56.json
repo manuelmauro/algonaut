@@ -1,0 +1,27 @@
+{
+  "arcs": [56],
+  "name": "ByteCodeBare",
+  "desc": "A synthetic ARC-56 spec shipping only precompiled byteCode (no TEAL source) and created with a bare app-create (no ABI create method). Exercises the byteCode-only deploy path through the bare-create branch offline.",
+  "structs": {},
+  "methods": [
+    {
+      "name": "ping",
+      "args": [],
+      "returns": { "type": "uint64" }
+    }
+  ],
+  "events": [],
+  "state": {
+    "schema": {
+      "global": { "ints": 1, "bytes": 0 },
+      "local": { "ints": 0, "bytes": 0 }
+    },
+    "keys": { "global": {}, "local": {}, "box": {} },
+    "maps": { "global": {}, "local": {}, "box": {} }
+  },
+  "bareActions": { "create": ["NoOp"], "call": ["NoOp"] },
+  "byteCode": {
+    "approval": "CoEB",
+    "clear": "CoEB"
+  }
+}

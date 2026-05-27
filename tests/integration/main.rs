@@ -9,6 +9,7 @@ mod array_args;
 mod box_references;
 mod contract_macro;
 mod contract_macro_arc56;
+mod contract_macro_deploy;
 mod logic_signature;
 mod reference_args;
 mod transaction_args;
