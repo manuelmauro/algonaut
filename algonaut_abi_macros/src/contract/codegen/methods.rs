@@ -18,8 +18,17 @@ struct ArgSpec {
     /// the argument is supplied automatically (e.g. a literal default) and so
     /// takes no parameter.
     param: Option<TokenStream>,
-    /// An expression producing the argument's [`AbiValue`].
-    encode: TokenStream,
+    /// How this argument contributes to the invocation's argument vector.
+    encode: ArgEncode,
+}
+
+/// How an argument contributes to the invocation's argument vector.
+enum ArgEncode {
+    /// An expression producing an `AbiValue` (scalars, structs, defaults).
+    Value(TokenStream),
+    /// An expression producing an `AbiArgValue` directly (transaction args,
+    /// which occupy their own slot in the atomic group).
+    Arg(TokenStream),
 }
 
 /// The methods the macro can't model yet, paired with why — so a real-world
@@ -111,7 +120,7 @@ fn method_arg_specs(
         if let Some(encode) = model_arg.and_then(literal_default_encode) {
             specs.push(ArgSpec {
                 param: None,
-                encode,
+                encode: ArgEncode::Value(encode),
             });
             continue;
         }
@@ -127,7 +136,7 @@ fn method_arg_specs(
             let ty = Ident::new(&to_pascal_case(struct_name), Span::call_site());
             specs.push(ArgSpec {
                 param: Some(quote! { #arg_ident: #ty }),
-                encode: quote! { #arg_ident.abi_encode() },
+                encode: ArgEncode::Value(quote! { #arg_ident.abi_encode() }),
             });
             continue;
         }
@@ -139,11 +148,20 @@ fn method_arg_specs(
                 let encode = arg_encode_expr(ty, &value, 0)?;
                 specs.push(ArgSpec {
                     param: Some(quote! { #arg_ident: #rust_type }),
-                    encode,
+                    encode: ArgEncode::Value(encode),
                 });
             }
-            ArgClass::Transaction(tx_type) => {
-                return Err(format!("transaction argument `{tx_type}`"));
+            ArgClass::Transaction(_tx_type) => {
+                // A caller-supplied transaction the builder places immediately
+                // before this method call in the atomic group. Any transaction
+                // type is accepted as a `TransactionWithSigner`; the AVM checks
+                // the precise type.
+                specs.push(ArgSpec {
+                    param: Some(quote! { #arg_ident: ::algonaut::atomic::TransactionWithSigner }),
+                    encode: ArgEncode::Arg(
+                        quote! { ::algonaut::atomic::AbiArgValue::from(#arg_ident) },
+                    ),
+                });
             }
             ArgClass::Reference(ref_type) => {
                 // ARC-4 reference argument: the value flows as a plain
@@ -179,7 +197,7 @@ fn method_arg_specs(
 
                 specs.push(ArgSpec {
                     param: Some(quote! { #arg_ident: #rust_type }),
-                    encode,
+                    encode: ArgEncode::Value(encode),
                 });
             }
         }
@@ -198,7 +216,10 @@ pub(super) fn generate_method(
     let signature = method.get_signature();
 
     let params = specs.iter().filter_map(|s| s.param.as_ref());
-    let encode_calls = specs.iter().map(|s| &s.encode);
+    let invocation_args = specs.iter().map(|s| match &s.encode {
+        ArgEncode::Value(v) => quote! { ::algonaut::atomic::AbiArgValue::AbiValue(#v) },
+        ArgEncode::Arg(a) => a.clone(),
+    });
 
     let method_name_str = &method.name;
     let method_ident = Ident::new(&to_snake_case(method_name_str), Span::call_site());
@@ -215,9 +236,9 @@ pub(super) fn generate_method(
         pub fn #method_ident(&self, #(#params),*) -> #builder_ident<'_> {
             let method = ::algonaut_abi::abi_interactions::AbiMethod::from_signature(#signature)
                 .expect("contract!: signature validated at macro expansion");
-            let args: ::std::vec::Vec<::algonaut_abi::abi_type::AbiValue> =
-                ::std::vec![ #(#encode_calls),* ];
-            let invocation = ::algonaut_abi::MethodInvocation::new(method, args);
+            let args: ::std::vec::Vec<::algonaut::atomic::AbiArgValue> =
+                ::std::vec![ #(#invocation_args),* ];
+            let invocation = ::algonaut::atomic::Invocation::new(method, args);
             #builder_ident {
                 contract: self,
                 invocation,
@@ -255,7 +276,7 @@ pub(super) fn generate_builders(
             #[doc = #doc]
             pub struct #builder_ident<'a> {
                 contract: &'a #struct_ident,
-                invocation: ::algonaut_abi::MethodInvocation,
+                invocation: ::algonaut::atomic::Invocation,
                 on_complete:
                     ::algonaut::transaction::transaction::ApplicationCallOnComplete,
                 boxes: ::std::vec::Vec<

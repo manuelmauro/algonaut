@@ -477,3 +477,47 @@ async fn box_put_get_round_trips() {
         other => panic!("unexpected box_get return: {other:?}"),
     }
 }
+
+#[tokio::test]
+async fn payment_transaction_argument_round_trips() {
+    use algonaut::atomic::TransactionWithSigner;
+    use algonaut::core::MicroAlgos;
+    use algonaut::transaction::Pay;
+    let algod = algod();
+    let kmd = kmd();
+    let account = funded_account(&algod, &kmd).await;
+    let sender = account.address();
+    let signer: Arc<dyn Signer> = Arc::new(account);
+    let params = algod.suggested_params().await.unwrap();
+    let vault = Vault::deploy(&algod, sender, Arc::clone(&signer), &params)
+        .await
+        .expect("deploy Vault");
+
+    // A payment to the app account, supplied as a transaction argument; the
+    // builder places it immediately before the method call. The amount clears
+    // the app account's 100_000 µAlgo base min balance, so the receiving app
+    // account stays valid.
+    let pay = Pay::new(sender, vault.app_id().address(), MicroAlgos(200_000))
+        .build(&params)
+        .expect("build pay");
+    let call = vault
+        .deposit(
+            TransactionWithSigner::new(pay, Arc::clone(&signer)),
+            200_000u64,
+        )
+        .build(&params);
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(call)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    assert!(
+        executed.confirmed_round.is_some(),
+        "the grouped payment + method call should confirm"
+    );
+}

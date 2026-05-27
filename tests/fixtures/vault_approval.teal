@@ -92,6 +92,11 @@ dispatch:
     ==
     bnz box_get
 
+    method "deposit(pay,uint64)void"
+    txna ApplicationArgs 0
+    ==
+    bnz deposit
+
     err
 
 // create(): owner = caller, total = 0
@@ -284,6 +289,27 @@ box_get:
     assert
     concat
     log
+    b approve
+
+// deposit(pay, expected): the preceding group transaction must be a payment of
+// `expected` microAlgos to this app's account. The pay sits at our group index
+// minus one (the builder places transaction args right before the call).
+deposit:
+    txn GroupIndex
+    int 1
+    -
+    store 0
+    load 0
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert
+    load 0
+    gtxns Amount
+    txna ApplicationArgs 1
+    btoi
+    ==
+    assert
     b approve
 
 approve:
