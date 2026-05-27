@@ -67,6 +67,11 @@ dispatch:
     ==
     bnz approve
 
+    method "who(account)address"
+    txna ApplicationArgs 0
+    ==
+    bnz who
+
     err
 
 // create(): owner = caller, total = 0
@@ -166,6 +171,17 @@ incr:
     byte "total"
     app_global_get
     itob
+    concat
+    log
+    b approve
+
+// who(account) -> address: returns the referenced account (resolved via the
+// uint8 index the client encoded into the Accounts foreign array).
+who:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    btoi
+    txnas Accounts
     concat
     log
     b approve

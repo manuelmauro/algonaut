@@ -347,3 +347,31 @@ async fn non_creator_can_call_and_owner_stays_the_creator() {
         "owner stays the creator even though a different account called",
     );
 }
+
+#[tokio::test]
+async fn account_reference_round_trips() {
+    use algonaut::atomic::AbiMethodReturnValue;
+    let algod = algod();
+    let (vault, _) = deploy_vault(&algod, &kmd()).await;
+    let params = algod.suggested_params().await.unwrap();
+
+    // A fresh account passed as an `account` reference; the contract echoes the
+    // address it resolves from the Accounts foreign array.
+    let target = Account::generate();
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(vault.who(target.address()).build(&params))
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    match &executed.method_results[0].return_value {
+        Ok(AbiMethodReturnValue::Some(value)) => {
+            assert_eq!(value, &AbiValue::Address(target.address()))
+        }
+        other => panic!("unexpected who return: {other:?}"),
+    }
+}

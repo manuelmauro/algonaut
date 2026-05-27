@@ -8,4 +8,5 @@ mod arc56_test;
 mod contract_macro;
 mod contract_macro_arc56;
 mod logic_signature;
+mod reference_args;
 mod unsupported;

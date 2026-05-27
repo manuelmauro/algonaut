@@ -148,7 +148,41 @@ fn method_arg_specs(
                 return Err(format!("transaction argument `{tx_type}`"));
             }
             ArgClass::Reference(ref_type) => {
-                return Err(format!("reference argument `{ref_type}`"));
+                // ARC-4 reference argument: the value flows as a plain
+                // `AbiValue` through `MethodInvocation`. At group-build time the
+                // method-call encoder reclassifies it by the method signature,
+                // appends it to the transaction's foreign accounts/assets/apps
+                // array, and encodes the `uint8` index as the ABI argument — so
+                // here the macro only needs a typed parameter and the right
+                // `AbiValue`.
+                let (rust_type, encode) = match ref_type.as_str() {
+                    "account" => (
+                        quote! { ::algonaut_core::Address },
+                        quote! { ::algonaut_abi::abi_type::AbiValue::Address(#arg_ident) },
+                    ),
+                    "asset" => (
+                        quote! { ::algonaut_core::AssetId },
+                        quote! {
+                            ::algonaut_abi::abi_type::AbiValue::Int(
+                                ::num_bigint::BigUint::from(#arg_ident.0)
+                            )
+                        },
+                    ),
+                    "application" => (
+                        quote! { ::algonaut_core::AppId },
+                        quote! {
+                            ::algonaut_abi::abi_type::AbiValue::Int(
+                                ::num_bigint::BigUint::from(#arg_ident.0)
+                            )
+                        },
+                    ),
+                    other => return Err(format!("reference argument `{other}`")),
+                };
+
+                specs.push(ArgSpec {
+                    param: Some(quote! { #arg_ident: #rust_type }),
+                    encode,
+                });
             }
         }
     }
