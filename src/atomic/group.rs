@@ -344,9 +344,12 @@ impl SignedAtomicGroup {
                     &txn_id,
                     return_type,
                 )?),
+                // The fetch for this slot failed, so we have no transaction info
+                // for it. Leave it empty rather than misattributing the awaited
+                // transaction's response (`pending_tx`) to this slot.
                 None => method_results.push(AbiMethodResult {
                     transaction_id: txn_id,
-                    transaction_info: pending_tx.clone(),
+                    transaction_info: PendingTransactionResponse::default(),
                     return_value: Err(AbiReturnDecodeError(
                         "failed to fetch pending transaction".to_owned(),
                     )),
