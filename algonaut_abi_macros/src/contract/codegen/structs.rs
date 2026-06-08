@@ -3,7 +3,7 @@
 
 use super::naming::{is_rust_keyword, is_valid_ident, to_pascal_case, to_snake_case};
 use crate::contract::parse::{StructField, StructFieldType};
-use crate::contract::type_map::{arg_encode_expr, rust_param_type};
+use crate::contract::type_map::{arg_decode_expr, arg_encode_expr, rust_param_type};
 use algonaut_abi_sig::parse_type;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
@@ -107,8 +107,12 @@ fn emit_struct_def(
     let struct_ident = Ident::new(name_pascal, Span::call_site());
     let mut field_defs = Vec::new();
     let mut field_encodes = Vec::new();
+    // Each entry decodes one positional tuple element (bound as `__fields[i]`,
+    // moved out) into its field's Rust value, producing `field: value`.
+    let mut field_decode_binds = Vec::new();
+    let mut field_idents = Vec::new();
 
-    for field in fields {
+    for (i, field) in fields.iter().enumerate() {
         let field_name = to_snake_case(&field.name);
         let field_ident = if is_rust_keyword(&field_name) {
             format_ident!("r#{}", field_name)
@@ -116,11 +120,18 @@ fn emit_struct_def(
             Ident::new(&field_name, Span::call_site())
         };
 
-        let (ty, encode) = match &field.type_ {
+        let idx = proc_macro2::Literal::usize_unsuffixed(i);
+        let elem = quote! { __take(&mut __fields, #idx)? };
+
+        let (ty, encode, decode) = match &field.type_ {
             StructFieldType::Type(s) if structs.contains_key(s) => {
                 // Reference to another named struct.
                 let ty = Ident::new(&to_pascal_case(s), Span::call_site());
-                (quote! { #ty }, quote! { self.#field_ident.abi_encode() })
+                (
+                    quote! { #ty },
+                    quote! { self.#field_ident.abi_encode() },
+                    quote! { #ty::abi_decode(#elem)? },
+                )
             }
             StructFieldType::Type(s) => {
                 let sig = parse_type(s).map_err(|e| e.reason)?;
@@ -129,20 +140,28 @@ fn emit_struct_def(
                 // fields (now supported by `rust_param_type`) also encode
                 // correctly; scalars keep their `AbiArg<Marker>` path.
                 let encode = arg_encode_expr(&sig, &quote! { self.#field_ident }, 0)?;
-                (quote! { #rust_type }, encode)
+                let decode = arg_decode_expr(&sig, &elem, 0)?;
+                (quote! { #rust_type }, encode, quote! { (#decode)? })
             }
             StructFieldType::Nested(sub_fields) => {
                 // Synthesize a sub-struct for the anonymous inline fields.
                 let sub_name = format!("{name_pascal}{}", to_pascal_case(&field.name));
                 emit_struct_def(&sub_name, sub_fields, structs, defs)?;
                 let ty = Ident::new(&sub_name, Span::call_site());
-                (quote! { #ty }, quote! { self.#field_ident.abi_encode() })
+                (
+                    quote! { #ty },
+                    quote! { self.#field_ident.abi_encode() },
+                    quote! { #ty::abi_decode(#elem)? },
+                )
             }
         };
         field_defs.push(quote! { pub #field_ident: #ty });
         field_encodes.push(encode);
+        field_decode_binds.push(quote! { let #field_ident = #decode; });
+        field_idents.push(field_ident);
     }
 
+    let field_count = proc_macro2::Literal::usize_unsuffixed(fields.len());
     let doc = format!("Generated ARC-56 struct `{name_pascal}`.");
     defs.push(quote! {
         #[doc = #doc]
@@ -157,6 +176,44 @@ fn emit_struct_def(
                 ::algonaut_abi::abi_type::AbiValue::Array(::std::vec![
                     #(#field_encodes),*
                 ])
+            }
+
+            /// Decode this struct from its ARC-4 ABI tuple value (the reverse of
+            /// [`abi_encode`](Self::abi_encode)). Errors on a shape mismatch
+            /// (wrong arity or element type) or an out-of-range integer.
+            pub fn abi_decode(
+                value: ::algonaut_abi::abi_type::AbiValue,
+            ) -> ::core::result::Result<Self, ::algonaut_abi::macro_support::AbiDecodeError> {
+                fn __take(
+                    fields: &mut [::core::option::Option<
+                        ::algonaut_abi::abi_type::AbiValue,
+                    >],
+                    i: usize,
+                ) -> ::core::result::Result<
+                    ::algonaut_abi::abi_type::AbiValue,
+                    ::algonaut_abi::macro_support::AbiDecodeError,
+                > {
+                    fields
+                        .get_mut(i)
+                        .and_then(::core::option::Option::take)
+                        .ok_or_else(|| ::algonaut_abi::macro_support::AbiDecodeError::new(
+                            ::std::format!("missing tuple element {}", i),
+                        ))
+                }
+
+                let __items = ::algonaut_abi::macro_support::decode_array_items(value)?;
+                if __items.len() != #field_count {
+                    return ::core::result::Result::Err(
+                        ::algonaut_abi::macro_support::AbiDecodeError::new(::std::format!(
+                            "expected {} tuple elements, got {}", #field_count, __items.len(),
+                        )),
+                    );
+                }
+                let mut __fields: ::std::vec::Vec<::core::option::Option<
+                    ::algonaut_abi::abi_type::AbiValue,
+                >> = __items.into_iter().map(::core::option::Option::Some).collect();
+                #(#field_decode_binds)*
+                ::core::result::Result::Ok(Self { #(#field_idents),* })
             }
         }
     });

@@ -15,6 +15,7 @@
 use crate::abi_type::AbiValue;
 use algonaut_core::Address as CoreAddress;
 use num_bigint::BigUint;
+use std::fmt;
 use std::marker::PhantomData;
 
 use crate::abi_interactions::AbiMethod;
@@ -147,6 +148,170 @@ impl AbiArg<Bytes> for Vec<u8> {
     }
 }
 
+// === Typed decoding =======================================================
+//
+// The reverse of `AbiArg<T>`: turn an [`AbiValue`] back into the Rust type the
+// macro picked for ABI type `T`. The generated struct `abi_decode`, the typed
+// return/state/event accessors, and the scalar decoders all funnel through
+// these impls, so the encode and decode mappings stay symmetric by
+// construction.
+
+/// An error decoding an [`AbiValue`] into its generated Rust type — a shape
+/// mismatch (e.g. an integer where a tuple was expected) or an out-of-range
+/// integer (e.g. a `uint64` value that does not fit the chosen `u32`).
+///
+/// Named here, in the runtime crate, rather than emitted per `contract!`
+/// invocation, so two clients in one module share one error type.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AbiDecodeError(pub String);
+
+impl AbiDecodeError {
+    /// Build an error with a human-readable message.
+    pub fn new(msg: impl Into<String>) -> Self {
+        AbiDecodeError(msg.into())
+    }
+}
+
+impl fmt::Display for AbiDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ABI decode error: {}", self.0)
+    }
+}
+
+impl std::error::Error for AbiDecodeError {}
+
+/// "This Rust type is the decoded form of ABI type `T`." The dual of
+/// [`AbiArg`]: [`decode`](AbiDecode::decode) turns an [`AbiValue`] back into the
+/// Rust value, failing on a shape or range mismatch.
+pub trait AbiDecode<T>: Sized {
+    /// Decode `value` as the Rust representation of ABI type `T`.
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError>;
+}
+
+/// Pull the [`BigUint`] out of an [`AbiValue::Int`] (or a single
+/// [`AbiValue::Byte`], the `byte`/`uint8` overlap), erroring otherwise.
+fn as_biguint(value: AbiValue) -> Result<BigUint, AbiDecodeError> {
+    match value {
+        AbiValue::Int(n) => Ok(n),
+        AbiValue::Byte(b) => Ok(BigUint::from(b)),
+        other => Err(AbiDecodeError(format!(
+            "expected an integer, got {other:?}"
+        ))),
+    }
+}
+
+/// `uintN` → native unsigned integers, range-checked by the target type's
+/// `TryFrom<&BigUint>`. Mirrors `impl_abi_arg_uint_native`.
+macro_rules! impl_abi_decode_uint_native {
+    ($native:ty => [$($bits:literal),* $(,)?]) => {$(
+        impl AbiDecode<Uint<$bits>> for $native {
+            fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+                let n = as_biguint(value)?;
+                <$native>::try_from(&n).map_err(|_| {
+                    AbiDecodeError(format!(
+                        "value {n} does not fit {}",
+                        stringify!($native),
+                    ))
+                })
+            }
+        }
+    )*};
+}
+
+impl_abi_decode_uint_native!(u8 => [8, 16, 32, 64, 128]);
+impl_abi_decode_uint_native!(u16 => [16, 32, 64, 128]);
+impl_abi_decode_uint_native!(u32 => [32, 64, 128]);
+impl_abi_decode_uint_native!(u64 => [64, 128]);
+impl_abi_decode_uint_native!(u128 => [128]);
+
+/// `uintN` → [`BigUint`], for every ABI uint width (including non-native ones).
+macro_rules! impl_abi_decode_uint_bigint {
+    ([$($bits:literal),* $(,)?]) => {$(
+        impl AbiDecode<Uint<$bits>> for BigUint {
+            fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+                as_biguint(value)
+            }
+        }
+    )*};
+}
+
+impl_abi_decode_uint_bigint!([
+    8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168,
+    176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304, 312, 320,
+    328, 336, 344, 352, 360, 368, 376, 384, 392, 400, 408, 416, 424, 432, 440, 448, 456, 464, 472,
+    480, 488, 496, 504, 512
+]);
+
+impl AbiDecode<Byte> for u8 {
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+        match value {
+            AbiValue::Byte(b) => Ok(b),
+            AbiValue::Int(n) => u8::try_from(&n)
+                .map_err(|_| AbiDecodeError(format!("byte value {n} does not fit u8"))),
+            other => Err(AbiDecodeError(format!("expected a byte, got {other:?}"))),
+        }
+    }
+}
+
+impl AbiDecode<Bool> for bool {
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+        match value {
+            AbiValue::Bool(b) => Ok(b),
+            other => Err(AbiDecodeError(format!("expected a bool, got {other:?}"))),
+        }
+    }
+}
+
+impl AbiDecode<Address> for CoreAddress {
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+        match value {
+            AbiValue::Address(a) => Ok(a),
+            other => Err(AbiDecodeError(format!(
+                "expected an address, got {other:?}"
+            ))),
+        }
+    }
+}
+
+impl AbiDecode<AbiString> for String {
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+        match value {
+            AbiValue::String(s) => Ok(s),
+            other => Err(AbiDecodeError(format!("expected a string, got {other:?}"))),
+        }
+    }
+}
+
+impl AbiDecode<Bytes> for Vec<u8> {
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+        match value {
+            // `byte[]` decodes to an array of `Byte` elements.
+            AbiValue::Array(items) => items
+                .into_iter()
+                .map(|item| match item {
+                    AbiValue::Byte(b) => Ok(b),
+                    AbiValue::Int(n) => u8::try_from(&n)
+                        .map_err(|_| AbiDecodeError(format!("byte value {n} does not fit u8"))),
+                    other => Err(AbiDecodeError(format!("expected a byte, got {other:?}"))),
+                })
+                .collect(),
+            other => Err(AbiDecodeError(format!("expected byte[], got {other:?}"))),
+        }
+    }
+}
+
+/// Pull the elements out of an [`AbiValue::Array`], erroring otherwise. The
+/// generated array/struct decoders use this to walk a tuple or array value
+/// before decoding each element.
+pub fn decode_array_items(value: AbiValue) -> Result<Vec<AbiValue>, AbiDecodeError> {
+    match value {
+        AbiValue::Array(items) => Ok(items),
+        other => Err(AbiDecodeError(format!(
+            "expected a tuple/array, got {other:?}"
+        ))),
+    }
+}
+
 /// `ufixedNxM` ← the raw, *unscaled* `N`-bit integer, carrying its
 /// `M`-decimal-place scale in the type. ARC-4 encodes a `ufixedNxM` exactly as
 /// a `uintN`: the on-wire value is `round(real * 10^M)`, so this newtype holds
@@ -185,6 +350,16 @@ impl<const BITS: u16, const PRECISION: u16> AbiArg<UFixed<BITS, PRECISION>>
     }
 }
 
+impl<const BITS: u16, const PRECISION: u16> AbiDecode<UFixed<BITS, PRECISION>>
+    for Ufixed<BITS, PRECISION>
+{
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+        // ufixed shares the uint wire encoding: read the raw integer back into
+        // the unscaled newtype, mirroring `AbiArg::<UFixed>::encode`.
+        Ok(Ufixed::new(as_biguint(value)?))
+    }
+}
+
 // === MethodInvocation =====================================================
 
 /// A checked ABI method invocation: an [`AbiMethod`] plus its already-encoded
@@ -220,5 +395,48 @@ impl MethodInvocation {
     /// Decompose into the method and its encoded arguments.
     pub fn into_parts(self) -> (AbiMethod, Vec<AbiValue>) {
         (self.method, self.args)
+    }
+}
+
+#[cfg(test)]
+mod decode_tests {
+    use super::*;
+
+    #[test]
+    fn scalar_decode_is_the_inverse_of_encode() {
+        // Each `AbiDecode` impl inverts the matching `AbiArg::encode`.
+        let v: AbiValue = AbiArg::<Uint<64>>::encode(42u64);
+        assert_eq!(AbiDecode::<Uint<64>>::decode(v), Ok(42u64));
+
+        let v: AbiValue = AbiArg::<Bool>::encode(true);
+        assert_eq!(AbiDecode::<Bool>::decode(v), Ok(true));
+
+        let v: AbiValue = AbiArg::<AbiString>::encode("hi".to_owned());
+        assert_eq!(AbiDecode::<AbiString>::decode(v), Ok("hi".to_owned()));
+
+        let v: AbiValue = AbiArg::<Bytes>::encode(vec![1u8, 2, 3]);
+        assert_eq!(AbiDecode::<Bytes>::decode(v), Ok(vec![1u8, 2, 3]));
+
+        let v: AbiValue = AbiArg::<Uint<256>>::encode(BigUint::from(7u64));
+        assert_eq!(AbiDecode::<Uint<256>>::decode(v), Ok(BigUint::from(7u64)));
+    }
+
+    #[test]
+    fn out_of_range_integer_is_an_error() {
+        // A `uint64` value of 300 does not fit a `u8`.
+        let v = AbiValue::from(300u64);
+        let decoded: Result<u8, _> = AbiDecode::<Uint<8>>::decode(v);
+        assert!(decoded.is_err());
+    }
+
+    #[test]
+    fn shape_mismatch_is_an_error() {
+        // A string is not an integer.
+        let v = AbiValue::String("nope".to_owned());
+        let decoded: Result<u64, _> = AbiDecode::<Uint<64>>::decode(v);
+        assert!(decoded.is_err());
+
+        // A scalar is not a tuple/array.
+        assert!(decode_array_items(AbiValue::from(1u64)).is_err());
     }
 }
