@@ -27,3 +27,7 @@ openapi/generated/
 
 # os
 **.DS_Store
+
+# agent tooling
+.claude/
+.pi/
