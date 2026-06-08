@@ -118,7 +118,7 @@ method-create and bare-create paths and to both program sources.
 
 ### D5 — The `deploy` parameter order is fixed and additive
 
-```
+```text
 deploy(algod, sender, signer, params [, <template vars> ] [, <create args> ])
 ```
 
