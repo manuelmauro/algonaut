@@ -33,7 +33,10 @@ Accepted and largely implemented on the `feat/contract-macro-arc56` branch:
   `source` through algod, submits an app-create with the declared schema, and
   returns a client bound to the new app id. This required exposing the created
   app id on the atomic group: `ExecuteOutcome::created_app_id`. *(compile-verified
-  against the real compile/create/execute APIs)*
+  against the real compile/create/execute APIs)* — the `byteCode`-only program
+  source and a richer create (typed constructor args, declared create
+  OnComplete, foreign references, auto-sized extra pages) followed in
+  [`contract-macro-arc56-deploy`](contract-macro-arc56-deploy.md).
 
 A full worked example of the generated surface lives in
 `examples/arc56_client.rs`.

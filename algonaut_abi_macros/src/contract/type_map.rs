@@ -1,8 +1,10 @@
 //! Maps ABI type strings to Rust types for generated method parameters.
 //!
-//! The initial implementation covers scalar types that have canonical Rust
-//! representations. Unsupported types (transaction/reference args, compound
-//! types) return an error with guidance to use the dynamic path.
+//! Covers the scalar types with canonical Rust representations, `byte[]`,
+//! arrays (`T[]`/`T[N]`), anonymous tuples (`(T1,T2,…)` → Rust tuples), and
+//! `ufixedNxM` (the [`Ufixed`](::algonaut_abi::macro_support::Ufixed) newtype).
+//! A type the macro still can't model (e.g. a non-standard uint width) returns
+//! an error with guidance to use the dynamic path.
 
 use algonaut_abi_sig::SigType;
 use proc_macro2::TokenStream;
@@ -32,13 +34,25 @@ pub fn rust_param_type(ty: &SigType) -> Result<TokenStream, String> {
             let n = proc_macro2::Literal::usize_unsuffixed(*len as usize);
             Ok(quote! { [#inner; #n] })
         }
+        // ufixedNxM maps to the `Ufixed<N, M>` value newtype, which carries the
+        // scale in the type and encodes on the wire exactly like `uintN`.
         SigType::UFixed {
             bit_size,
             precision,
-        } => Err(format!(
-            "ufixed{bit_size}x{precision} (no canonical Rust type)"
-        )),
-        SigType::Tuple { .. } => Err("tuple".to_owned()),
+        } => {
+            let bits = proc_macro2::Literal::u16_unsuffixed(*bit_size);
+            let prec = proc_macro2::Literal::u16_unsuffixed(*precision);
+            Ok(quote! { ::algonaut_abi::macro_support::Ufixed<#bits, #prec> })
+        }
+        // Anonymous tuples `(T1,T2,…)` map to Rust tuple types `(R1,R2,…)` over
+        // the element mappings. The empty tuple `()` maps to Rust's unit `()`.
+        SigType::Tuple { child_types } => {
+            let inners = child_types
+                .iter()
+                .map(rust_param_type)
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(quote! { ( #(#inners,)* ) })
+        }
     }
 }
 
@@ -71,6 +85,14 @@ pub fn abi_marker_type(ty: &SigType) -> Result<TokenStream, String> {
         SigType::DynamicArray { child_type } if matches!(**child_type, SigType::Byte) => {
             Ok(quote! { ::algonaut_abi::macro_support::Bytes })
         }
+        SigType::UFixed {
+            bit_size,
+            precision,
+        } => {
+            let bits = proc_macro2::Literal::u16_unsuffixed(*bit_size);
+            let prec = proc_macro2::Literal::u16_unsuffixed(*precision);
+            Ok(quote! { ::algonaut_abi::macro_support::UFixed<#bits, #prec> })
+        }
         other => Err(unsupported_type_message(other)),
     }
 }
@@ -94,11 +116,48 @@ pub fn arg_encode_expr(
         }
         SigType::DynamicArray { child_type } => array_encode(child_type, value, depth),
         SigType::StaticArray { child_type, .. } => array_encode(child_type, value, depth),
+        SigType::Tuple { child_types } => tuple_encode(child_types, value, depth),
         scalar => {
             let marker = abi_marker_type(scalar)?;
             Ok(quote! { ::algonaut_abi::macro_support::AbiArg::<#marker>::encode(#value) })
         }
     }
+}
+
+/// Encode a Rust tuple value as its ARC-4 ABI tuple — the same
+/// `AbiValue::Array` representation named ARC-56 structs encode to (a struct is
+/// a tuple under the hood; see `codegen/structs.rs::abi_encode`). Each element
+/// is mapped recursively and accessed by its tuple index. The value is bound
+/// once to a fresh local so the argument expression is evaluated exactly once,
+/// even for nested tuples; `depth` keeps that binding unique per level.
+fn tuple_encode(
+    children: &[SigType],
+    value: &TokenStream,
+    depth: usize,
+) -> Result<TokenStream, String> {
+    // The empty tuple `()` (Rust's unit) is an empty ABI array; still bind the
+    // value so the argument expression is consumed (and not warned as unused).
+    if children.is_empty() {
+        return Ok(quote! {
+            {
+                let _ = #value;
+                ::algonaut_abi::abi_type::AbiValue::Array(::std::vec![])
+            }
+        });
+    }
+    let tup = quote::format_ident!("__tuple{depth}");
+    let mut element_encodes = Vec::with_capacity(children.len());
+    for (i, child) in children.iter().enumerate() {
+        let index = proc_macro2::Literal::usize_unsuffixed(i);
+        let field = quote! { #tup.#index };
+        element_encodes.push(arg_encode_expr(child, &field, depth + 1)?);
+    }
+    Ok(quote! {
+        {
+            let #tup = #value;
+            ::algonaut_abi::abi_type::AbiValue::Array(::std::vec![ #(#element_encodes),* ])
+        }
+    })
 }
 
 fn array_encode(child: &SigType, value: &TokenStream, depth: usize) -> Result<TokenStream, String> {
@@ -168,6 +227,7 @@ pub fn arg_decode_expr(
                     })
             })
         }
+        SigType::Tuple { child_types } => tuple_decode(child_types, value, depth),
         scalar => {
             let marker = abi_marker_type(scalar)?;
             Ok(quote! {
@@ -175,6 +235,61 @@ pub fn arg_decode_expr(
             })
         }
     }
+}
+
+/// Decode an ARC-4 ABI tuple value into a Rust tuple `(R1, R2, …)` — the reverse
+/// of [`tuple_encode`]. Checks the element count, then decodes each element in
+/// order; the empty tuple `()` decodes from an empty array. `depth` keeps each
+/// level's binding unique.
+fn tuple_decode(
+    children: &[SigType],
+    value: &TokenStream,
+    depth: usize,
+) -> Result<TokenStream, String> {
+    if children.is_empty() {
+        return Ok(quote! {
+            ::algonaut_abi::macro_support::decode_array_items(#value).and_then(|__items| {
+                if !__items.is_empty() {
+                    return ::core::result::Result::Err(
+                        ::algonaut_abi::macro_support::AbiDecodeError::new(::std::format!(
+                            "expected 0 tuple elements, got {}", __items.len(),
+                        )),
+                    );
+                }
+                ::core::result::Result::Ok(())
+            })
+        });
+    }
+    let n = proc_macro2::Literal::usize_unsuffixed(children.len());
+    let it = quote::format_ident!("__dtuple{depth}");
+    let mut binds = Vec::with_capacity(children.len());
+    let mut idents = Vec::with_capacity(children.len());
+    for (i, child) in children.iter().enumerate() {
+        let elem_ident = quote::format_ident!("__dtuple{depth}_{i}");
+        let idx = proc_macro2::Literal::usize_unsuffixed(i);
+        let next = quote! {
+            #it.next().ok_or_else(|| ::algonaut_abi::macro_support::AbiDecodeError::new(
+                ::std::format!("missing tuple element {}", #idx),
+            ))?
+        };
+        let inner = arg_decode_expr(child, &next, depth + 1)?;
+        binds.push(quote! { let #elem_ident = (#inner)?; });
+        idents.push(elem_ident);
+    }
+    Ok(quote! {
+        ::algonaut_abi::macro_support::decode_array_items(#value).and_then(|__items| {
+            if __items.len() != #n {
+                return ::core::result::Result::Err(
+                    ::algonaut_abi::macro_support::AbiDecodeError::new(::std::format!(
+                        "expected {} tuple elements, got {}", #n, __items.len(),
+                    )),
+                );
+            }
+            let mut #it = ::std::iter::IntoIterator::into_iter(__items);
+            #(#binds)*
+            ::core::result::Result::Ok(( #(#idents,)* ))
+        })
+    })
 }
 
 fn unsupported_type_message(ty: &SigType) -> String {

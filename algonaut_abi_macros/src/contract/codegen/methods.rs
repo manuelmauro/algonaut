@@ -13,17 +13,17 @@ use std::collections::BTreeSet;
 
 /// The parameter declaration and the argument-encoding expression for one
 /// method argument.
-struct ArgSpec {
+pub(super) struct ArgSpec {
     /// `name: Type` for the generated method's parameter list, or `None` when
     /// the argument is supplied automatically (e.g. a literal default) and so
     /// takes no parameter.
-    param: Option<TokenStream>,
+    pub(super) param: Option<TokenStream>,
     /// How this argument contributes to the invocation's argument vector.
-    encode: ArgEncode,
+    pub(super) encode: ArgEncode,
 }
 
 /// How an argument contributes to the invocation's argument vector.
-enum ArgEncode {
+pub(super) enum ArgEncode {
     /// An expression producing an `AbiValue` (scalars, structs, defaults).
     Value(TokenStream),
     /// An expression producing an `AbiArgValue` directly (transaction args,
@@ -89,10 +89,11 @@ fn literal_default_value(model_arg: &AbiMethodArg) -> Option<TokenStream> {
 /// Build the per-argument specs for a method, or an error naming the first
 /// unsupported argument.
 ///
-/// Shared by [`generate_method`] (which emits the function), [`generate_builders`]
-/// and [`unsupported_methods`], so they can never disagree about which methods
+/// Shared by [`generate_method`] (which emits the function), [`generate_builders`],
+/// [`unsupported_methods`], and the `deploy` generator (for create-method
+/// constructor arguments), so they can never disagree about which methods
 /// exist.
-fn method_arg_specs(
+pub(super) fn method_arg_specs(
     method: &AbiMethod,
     supported_structs: &BTreeSet<String>,
 ) -> Result<Vec<ArgSpec>, String> {

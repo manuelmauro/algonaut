@@ -35,6 +35,13 @@ algonaut::contract!("tests/fixtures/vault.arc56.json");
 // arg) is omitted from the client rather than failing compilation.
 algonaut::contract!("tests/fixtures/arc56_test.arc56.json");
 
+// A spec that ships only precompiled `byteCode` (no TEAL `source`) and is
+// created with a bare app-create. Its programs (`int 1`) approve any call, so
+// `deploy` exercises the byteCode-only path end-to-end against a live node:
+// the macro builds the approval/clear programs directly from the base64
+// byteCode instead of compiling TEAL through algod.
+algonaut::contract!("tests/fixtures/bytecode_bare.arc56.json");
+
 fn env_or(key: &str, default: &str) -> String {
     env::var(key).unwrap_or_else(|_| default.to_owned())
 }
@@ -131,10 +138,34 @@ async fn deploy_arc56_test(algod: &Algod, kmd: &Kmd) -> (ARC56Test, Address) {
     (client, sender)
 }
 
+/// Deploy the `byteCode`-only `ByteCodeBare` contract from a freshly funded
+/// account. Unlike Vault, the macro does not compile TEAL `source` through
+/// algod — it builds the programs directly from the spec's precompiled
+/// `byteCode`.
+async fn deploy_bytecode_bare(algod: &Algod, kmd: &Kmd) -> (ByteCodeBare, Address) {
+    let account = funded_account(algod, kmd).await;
+    let sender = account.address();
+    let signer: Arc<dyn Signer> = Arc::new(account);
+    let params = algod.suggested_params().await.expect("suggested params");
+    let client = ByteCodeBare::deploy(algod, sender, signer, &params)
+        .await
+        .expect("deploy ByteCodeBare");
+    (client, sender)
+}
+
 #[tokio::test]
 async fn deploy_creates_app() {
     let (vault, _) = deploy_vault(&algod(), &kmd()).await;
     assert!(vault.app_id().0 > 0, "deploy should create an application");
+}
+
+#[tokio::test]
+async fn deploy_from_bytecode_creates_app() {
+    let (client, _) = deploy_bytecode_bare(&algod(), &kmd()).await;
+    assert!(
+        client.app_id().0 > 0,
+        "byteCode-only deploy should create an application"
+    );
 }
 
 #[tokio::test]
@@ -471,6 +502,42 @@ async fn array_arguments_sum_on_chain() {
     match &executed.method_results[1].return_value {
         Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(6u64)),
         other => panic!("unexpected sum3 return: {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn tuple_and_ufixed_arguments_round_trip_on_chain() {
+    use algonaut::abi::macro_support::Ufixed;
+    use algonaut::atomic::AbiMethodReturnValue;
+    let algod = algod();
+    let (vault, _) = deploy_vault(&algod, &kmd()).await;
+    let params = algod.suggested_params().await.unwrap();
+
+    // Anonymous tuple argument: add_pair((4, 5)) = 9. The generated client
+    // takes a plain Rust `(u64, u64)` (no named-struct overlay on this method).
+    let pair = vault.add_pair((4u64, 5u64)).build(&params);
+    // ufixed64x2 argument: price_raw(1.50) returns the raw, unscaled 150 (the
+    // `Ufixed` newtype wraps the already-scaled integer; on the wire it is the
+    // same big-endian uint64 the contract reads back).
+    let price = vault.price_raw(Ufixed::new(150u64)).build(&params);
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(pair)
+        .add_method_call(price)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    match &executed.method_results[0].return_value {
+        Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(9u64)),
+        other => panic!("unexpected add_pair return: {other:?}"),
+    }
+    match &executed.method_results[1].return_value {
+        Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(150u64)),
+        other => panic!("unexpected price_raw return: {other:?}"),
     }
 }
 

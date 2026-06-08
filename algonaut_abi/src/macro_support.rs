@@ -50,8 +50,8 @@ pub struct Address;
 pub struct AbiString;
 /// `byte[]` marker — the one compound type with a canonical Rust rep.
 pub struct Bytes;
-/// `ufixedNxM` marker. No `AbiArg` impl yet (no native Rust type); present so
-/// the macro can name the slot.
+/// `ufixedNxM` marker. The `contract!` macro and `abi_call!` accept the
+/// [`Ufixed`] value newtype in this slot (its `AbiArg` impl is below).
 pub struct UFixed<const BITS: u16, const PRECISION: u16>;
 /// `T[]` marker.
 pub struct DynArray<T>(PhantomData<T>);
@@ -309,6 +309,54 @@ pub fn decode_array_items(value: AbiValue) -> Result<Vec<AbiValue>, AbiDecodeErr
         other => Err(AbiDecodeError(format!(
             "expected a tuple/array, got {other:?}"
         ))),
+    }
+}
+
+/// `ufixedNxM` ← the raw, *unscaled* `N`-bit integer, carrying its
+/// `M`-decimal-place scale in the type. ARC-4 encodes a `ufixedNxM` exactly as
+/// a `uintN`: the on-wire value is `round(real * 10^M)`, so this newtype holds
+/// that already-scaled integer directly (a `ufixed64x2` value of `1.50` is
+/// `Ufixed::<64, 2>::new(150u64)`). No `AbiValue::UFixed` variant is needed —
+/// it shares the `AbiValue::Int` representation and the `uintN` encoder.
+///
+/// The bit size and precision are const generic so the macro can pin them from
+/// the signature and the type-checker rejects mixing, say, a `ufixed64x2` value
+/// where a `ufixed64x3` is expected. The width is range-checked at encode time
+/// by `AbiType::encode`, as with any `BigUint`-sourced argument.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ufixed<const BITS: u16, const PRECISION: u16>(BigUint);
+
+impl<const BITS: u16, const PRECISION: u16> Ufixed<BITS, PRECISION> {
+    /// Wrap an already-scaled, unscaled-integer value (`round(real * 10^M)`).
+    #[inline]
+    pub fn new(raw: impl Into<BigUint>) -> Self {
+        Ufixed(raw.into())
+    }
+
+    /// The raw, unscaled integer this value wraps.
+    #[inline]
+    pub fn into_raw(self) -> BigUint {
+        self.0
+    }
+}
+
+impl<const BITS: u16, const PRECISION: u16> AbiArg<UFixed<BITS, PRECISION>>
+    for Ufixed<BITS, PRECISION>
+{
+    #[inline]
+    fn encode(self) -> AbiValue {
+        // ufixed shares the uint wire encoding: emit the raw integer.
+        AbiValue::Int(self.0)
+    }
+}
+
+impl<const BITS: u16, const PRECISION: u16> AbiDecode<UFixed<BITS, PRECISION>>
+    for Ufixed<BITS, PRECISION>
+{
+    fn decode(value: AbiValue) -> Result<Self, AbiDecodeError> {
+        // ufixed shares the uint wire encoding: read the raw integer back into
+        // the unscaled newtype, mirroring `AbiArg::<UFixed>::encode`.
+        Ok(Ufixed::new(as_biguint(value)?))
     }
 }
 

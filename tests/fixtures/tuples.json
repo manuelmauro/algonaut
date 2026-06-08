@@ -1,0 +1,10 @@
+{
+  "name": "Tuples",
+  "desc": "ARC-4 contract exercising anonymous tuple arguments",
+  "methods": [
+    { "name": "store_pair", "args": [{ "name": "p", "type": "(uint64,uint64)" }], "returns": { "type": "void" } },
+    { "name": "mixed", "args": [{ "name": "t", "type": "(uint64,bool,address)" }], "returns": { "type": "void" } },
+    { "name": "nested", "args": [{ "name": "t", "type": "((uint64,uint64),string)" }], "returns": { "type": "void" } },
+    { "name": "tuple_of_array", "args": [{ "name": "t", "type": "(uint64[],uint64)" }], "returns": { "type": "void" } }
+  ]
+}

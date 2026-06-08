@@ -309,9 +309,11 @@ mod tests {
 
     #[test]
     fn struct_with_unsupported_field_is_unsupported() {
-        // A `ufixed` field has no canonical Rust type.
+        // A non-standard-width uint (e.g. `uint24`) has no canonical Rust type.
+        // (`ufixed` is now supported via the `Ufixed` newtype, so it no longer
+        // serves as the unsupported example here.)
         let mut structs = HashMap::new();
-        structs.insert("Bad".to_owned(), vec![leaf("x", "ufixed64x2")]);
+        structs.insert("Bad".to_owned(), vec![leaf("x", "uint24")]);
         let supported = resolve_supported_structs(&structs);
         assert!(!supported.contains("Bad"));
 
@@ -333,9 +335,23 @@ mod tests {
             "OuterBad".to_owned(),
             vec![StructField {
                 name: "inner".to_owned(),
-                type_: StructFieldType::Nested(vec![leaf("x", "ufixed64x2")]),
+                type_: StructFieldType::Nested(vec![leaf("x", "uint24")]),
             }],
         );
         assert!(!resolve_supported_structs(&nested_bad).contains("OuterBad"));
+    }
+
+    #[test]
+    fn struct_with_ufixed_or_tuple_field_is_supported() {
+        // `rust_param_type` now accepts `ufixed` (via the `Ufixed` newtype) and
+        // anonymous tuples, so a struct with such fields is supported and emits.
+        let mut structs = HashMap::new();
+        structs.insert(
+            "Mixed".to_owned(),
+            vec![leaf("price", "ufixed64x2"), leaf("pair", "(uint64,uint64)")],
+        );
+        let supported = resolve_supported_structs(&structs);
+        assert!(supported.contains("Mixed"));
+        assert!(generate_structs(&structs, &supported).is_ok());
     }
 }
