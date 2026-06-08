@@ -4,7 +4,7 @@
 
 use super::naming::{is_rust_keyword, to_pascal_case, to_snake_case};
 use crate::contract::parse::{AbiContract, AbiMethod, AbiMethodArg};
-use crate::contract::type_map::{arg_encode_expr, rust_param_type};
+use crate::contract::type_map::{arg_decode_expr, arg_encode_expr, rust_param_type};
 use algonaut_abi_sig::{ArgClass, parse_signature, parse_type};
 use base64::Engine;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -13,19 +13,18 @@ use std::collections::BTreeSet;
 
 /// The parameter declaration and the argument-encoding expression for one
 /// method argument.
-struct ArgSpec {
+pub(super) struct ArgSpec {
     /// `name: Type` for the generated method's parameter list, or `None` when
     /// the argument is supplied automatically (e.g. a literal default) and so
     /// takes no parameter.
-    param: Option<TokenStream>,
+    pub(super) param: Option<TokenStream>,
     /// How this argument contributes to the invocation's argument vector.
-    encode: ArgEncode,
+    pub(super) encode: ArgEncode,
 }
 
 /// How an argument contributes to the invocation's argument vector.
-enum ArgEncode {
-    /// An expression producing an `AbiValue` (scalars, structs, literal
-    /// defaults).
+pub(super) enum ArgEncode {
+    /// An expression producing an `AbiValue` (scalars, structs, defaults).
     Value(TokenStream),
     /// An expression producing an `AbiArgValue` directly (transaction args,
     /// which occupy their own slot in the atomic group).
@@ -60,7 +59,7 @@ pub(super) fn unsupported_methods(
 /// the contract declares. Returns `None` for arguments with no literal default
 /// — the other `defaultValue` sources (box/global/local/method) need a runtime
 /// read and are handled by [`sourced_default_resolve`] instead.
-fn literal_default_encode(model_arg: &AbiMethodArg) -> Option<TokenStream> {
+fn literal_default_value(model_arg: &AbiMethodArg) -> Option<TokenStream> {
     let default_value = model_arg.default_value.as_ref()?;
     if default_value.source != "literal" {
         return None;
@@ -109,7 +108,7 @@ fn sourced_default_type(model_arg: &AbiMethodArg, default_type: Option<&str>) ->
 /// simulates the named read-only method and takes its return value.
 ///
 /// Returns `None` for a `literal` default (handled by
-/// [`literal_default_encode`]) or for a sourced default the macro can't model
+/// [`literal_default_value`]) or for a sourced default the macro can't model
 /// (an undecodable value type, or an unknown source) — leaving the argument a
 /// required parameter.
 fn sourced_default_resolve(model_arg: &AbiMethodArg) -> Option<TokenStream> {
@@ -231,10 +230,11 @@ fn sourced_default_resolve(model_arg: &AbiMethodArg) -> Option<TokenStream> {
 /// Build the per-argument specs for a method, or an error naming the first
 /// unsupported argument.
 ///
-/// Shared by [`generate_method`] (which emits the function), [`generate_builders`]
-/// and [`unsupported_methods`], so they can never disagree about which methods
+/// Shared by [`generate_method`] (which emits the function), [`generate_builders`],
+/// [`unsupported_methods`], and the `deploy` generator (for create-method
+/// constructor arguments), so they can never disagree about which methods
 /// exist.
-fn method_arg_specs(
+pub(super) fn method_arg_specs(
     method: &AbiMethod,
     supported_structs: &BTreeSet<String>,
 ) -> Result<Vec<ArgSpec>, String> {
@@ -258,11 +258,36 @@ fn method_arg_specs(
             Ident::new(&arg_name, Span::call_site())
         };
 
-        // A literal default value lets the caller omit the argument entirely.
-        if let Some(encode) = model_arg.and_then(literal_default_encode) {
+        // A literal default value: the argument becomes an `Option<T>`
+        // parameter. `None` supplies the spec's literal default; `Some(v)`
+        // overrides it with the caller's value (encoded the same way a plain
+        // value argument is). The argument's own ABI type drives both the Rust
+        // parameter type and the override encode, so a struct- or AVM-typed
+        // default that is not an ABI value falls through to a required
+        // positional below.
+        if let Some(default_value) = model_arg.and_then(literal_default_value) {
+            if let ArgClass::Value(ty) = arg_class
+                && let (Ok(rust_type), Ok(value_encode)) =
+                    (rust_param_type(ty), arg_encode_expr(ty, &quote! { __v }, 0))
+            {
+                specs.push(ArgSpec {
+                    param: Some(quote! {
+                        #arg_ident: ::core::option::Option<#rust_type>
+                    }),
+                    encode: ArgEncode::Value(quote! {
+                        match #arg_ident {
+                            ::core::option::Option::Some(__v) => #value_encode,
+                            ::core::option::Option::None => #default_value,
+                        }
+                    }),
+                });
+                continue;
+            }
+            // Compound/struct-typed defaults: keep the old "supplied
+            // automatically, omitted from the signature" behaviour.
             specs.push(ArgSpec {
                 param: None,
-                encode: ArgEncode::Value(encode),
+                encode: ArgEncode::Value(default_value),
             });
             continue;
         }
@@ -357,6 +382,39 @@ fn method_arg_specs(
     }
 
     Ok(specs)
+}
+
+/// Compute the decoded-return Rust type and the expression that decodes an
+/// `AbiValue` (bound as `__value`) into it, honoring the `struct` overlay.
+///
+/// Returns `None` when the return is `void` or its type is not decodable into a
+/// Rust type (the builder then offers only the raw `simulate`, not a typed
+/// decode). The decode expression yields a
+/// `Result<#rust_type, ::algonaut_abi::macro_support::AbiDecodeError>`.
+fn return_decode(
+    method: &AbiMethod,
+    supported_structs: &BTreeSet<String>,
+) -> Option<(TokenStream, TokenStream)> {
+    let returns = &method.returns;
+    if returns.type_ == "void" {
+        return None;
+    }
+
+    // A `struct` overlay on the return decodes into the generated Rust struct.
+    if let Some(struct_name) = returns.struct_.as_ref() {
+        if !supported_structs.contains(struct_name) {
+            return None;
+        }
+        let ty = Ident::new(&to_pascal_case(struct_name), Span::call_site());
+        let decode = quote! { #ty::abi_decode(__value) };
+        return Some((quote! { #ty }, decode));
+    }
+
+    // Otherwise decode the return's ABI type into its scalar/array Rust type.
+    let sig = parse_type(&returns.type_).ok()?;
+    let rust_type = rust_param_type(&sig).ok()?;
+    let decode = arg_decode_expr(&sig, &quote! { __value }, 0).ok()?;
+    Some((rust_type, decode))
 }
 
 /// Generate a single method function.
@@ -470,6 +528,7 @@ pub(super) fn generate_builders(
 
         let doc = format!("Builder for the `{}` method.", method_name);
         let action_setters = lifecycle_setters(method);
+        let simulate_decoded = simulate_decoded_method(method, supported_structs);
 
         builders.push(quote! {
             #[doc = #doc]
@@ -551,11 +610,67 @@ pub(super) fn generate_builders(
                         .simulate(algod)
                         .await
                 }
+
+                #simulate_decoded
             }
         });
     }
 
     quote! { #(#builders)* }
+}
+
+/// The typed `simulate_decoded` builder method for a method whose return is
+/// decodable, or an empty stream otherwise. It dry-runs the call and decodes
+/// the ABI return value into its Rust type (a generated struct when the return
+/// carries a `struct` overlay, a scalar otherwise) — the read path that returns
+/// the typed value directly instead of a raw [`AbiValue`].
+fn simulate_decoded_method(
+    method: &AbiMethod,
+    supported_structs: &BTreeSet<String>,
+) -> TokenStream {
+    let (rust_type, decode) = match return_decode(method, supported_structs) {
+        Some(pair) => pair,
+        None => return TokenStream::new(),
+    };
+
+    quote! {
+        /// Dry-run this single-method call through simulate and decode its ABI
+        /// return value into its typed Rust representation.
+        ///
+        /// Like [`simulate`](Self::simulate), but returns the decoded return
+        /// value directly. Errors if the call fails, returns no value, or the
+        /// value does not decode into the expected type.
+        pub async fn simulate_decoded(
+            self,
+            algod: &::algonaut::Algod,
+            params: &::algonaut_model::algod::SuggestedParams,
+        ) -> ::core::result::Result<#rust_type, ::algonaut::Error> {
+            let __outcome = self.simulate(algod, params).await?;
+            let __result = __outcome.method_results.into_iter().next().ok_or_else(|| {
+                ::algonaut::Error::Msg(::std::string::String::from(
+                    "simulate returned no method result",
+                ))
+            })?;
+            let __value = match __result.return_value {
+                ::core::result::Result::Ok(
+                    ::algonaut::atomic::AbiMethodReturnValue::Some(__v),
+                ) => __v,
+                ::core::result::Result::Ok(
+                    ::algonaut::atomic::AbiMethodReturnValue::Void,
+                ) => {
+                    return ::core::result::Result::Err(::algonaut::Error::Msg(
+                        ::std::string::String::from("method returned void"),
+                    ));
+                }
+                ::core::result::Result::Err(__e) => {
+                    return ::core::result::Result::Err(::algonaut::Error::Msg(
+                        ::std::format!("ABI return decode failed: {}", __e.0),
+                    ));
+                }
+            };
+            #decode.map_err(|__e| ::algonaut::Error::Msg(__e.to_string()))
+        }
+    }
 }
 
 /// Generate the on-completion setters a method's builder should expose, gated

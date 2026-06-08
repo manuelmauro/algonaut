@@ -103,6 +103,16 @@ dispatch:
     ==
     bnz deposit
 
+    method "add_pair((uint64,uint64))uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz add_pair
+
+    method "price_raw(ufixed64x2)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz price_raw
+
     err
 
 // opt-in (the `enroll` lifecycle action): record local "seen" = 1 for the
@@ -325,6 +335,37 @@ deposit:
     btoi
     ==
     assert
+    b approve
+
+// add_pair(p) -> uint64: p.first + p.second, where p is an *anonymous* ABI
+// tuple (uint64,uint64) — the 16-byte static encoding in arg 1. This mirrors
+// `store`, but the generated client takes a plain Rust `(u64, u64)` tuple
+// rather than a named struct.
+add_pair:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    itob
+    concat
+    log
+    b approve
+
+// price_raw(p) -> uint64: returns the raw, unscaled integer of a ufixed64x2.
+// A ufixed64x2 encodes on the wire exactly as a uint64, so arg 1 is the 8-byte
+// big-endian integer the `Ufixed` client value wrapped — return it verbatim.
+price_raw:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    itob
+    concat
+    log
     b approve
 
 approve:

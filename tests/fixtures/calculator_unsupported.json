@@ -38,12 +38,20 @@
         },
         {
             "name": "add_fixed",
-            "desc": "Add two fixed-point numbers (has ufixed arg - unsupported)",
+            "desc": "Add two fixed-point numbers (has ufixed arg - supported)",
             "args": [
                 {"name": "a", "type": "ufixed64x2"},
                 {"name": "b", "type": "ufixed64x2"}
             ],
             "returns": {"type": "ufixed64x2"}
+        },
+        {
+            "name": "odd_width",
+            "desc": "Takes a non-standard-width uint (no canonical Rust type - unsupported)",
+            "args": [
+                {"name": "n", "type": "uint24"}
+            ],
+            "returns": {"type": "void"}
         }
     ]
 }

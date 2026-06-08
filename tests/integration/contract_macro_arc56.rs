@@ -105,16 +105,17 @@ fn nested_struct_and_mixed_args_build() {
 }
 
 #[test]
-fn literal_default_argument_is_omitted() {
+fn literal_default_argument_is_overridable() {
     let alice = Account::generate();
     let address = alice.address();
     let signer = Arc::new(alice);
     let vault = Vault::new(AppId(777), address, signer);
     let params = mock_params();
 
-    // `incr`'s only argument has a literal default, so it takes no parameter:
-    // the constant is supplied automatically.
-    let _call = vault.incr().build(&params);
+    // `incr`'s only argument has a literal default, so it takes an `Option<u64>`
+    // parameter: `None` supplies the spec default (1), `Some(v)` overrides it.
+    let _default = vault.incr(None).build(&params);
+    let _override = vault.incr(Some(5u64)).build(&params);
 }
 
 #[test]
@@ -192,4 +193,69 @@ fn arc28_events_decode_from_logs() {
         }
         other => panic!("unexpected event: {other:?}"),
     }
+}
+
+#[test]
+fn struct_abi_decode_round_trips() {
+    use algonaut::abi::abi_type::AbiValue;
+
+    // Each generated struct gains an `abi_decode` that is the exact inverse of
+    // `abi_encode`: encode → decode returns an equal value, with scalars coming
+    // back as their Rust types (u64, Address, String).
+    let pair = Pair {
+        first: 10,
+        second: 20,
+    };
+    let decoded = Pair::abi_decode(pair.clone().abi_encode()).unwrap();
+    assert_eq!(decoded.first, 10);
+    assert_eq!(decoded.second, 20);
+
+    let alice = Account::generate();
+    let holder = Holder {
+        owner: alice.address(),
+        amount: 100,
+    };
+    let decoded = Holder::abi_decode(holder.clone().abi_encode()).unwrap();
+    assert_eq!(decoded.owner, alice.address());
+    assert_eq!(decoded.amount, 100);
+
+    // A struct with a nested-struct field and a string field round-trips too.
+    let wrapper = Wrapper {
+        inner: Pair {
+            first: 1,
+            second: 2,
+        },
+        label: "demo".to_string(),
+    };
+    let decoded = Wrapper::abi_decode(wrapper.abi_encode()).unwrap();
+    assert_eq!(decoded.inner.first, 1);
+    assert_eq!(decoded.inner.second, 2);
+    assert_eq!(decoded.label, "demo");
+
+    // A shape mismatch (an integer where a tuple is expected) is an error, not a
+    // panic.
+    assert!(Pair::abi_decode(AbiValue::from(7u64)).is_err());
+    // Wrong arity (one element where two are expected) is also an error.
+    assert!(Pair::abi_decode(AbiValue::Array(vec![AbiValue::from(7u64)])).is_err());
+}
+
+#[test]
+fn struct_decode_from_wire_bytes() {
+    use algonaut::abi::abi_type::{AbiType, AbiValue};
+
+    // Decoding the on-wire ABI bytes (what a return/state/event read yields)
+    // back through the named struct gives the typed value. `(uint64,uint64)` is
+    // Pair's tuple type; this mirrors what `get_pair`'s `struct: "Pair"` return
+    // overlay does after a simulate.
+    let tuple: AbiType = "(uint64,uint64)".parse().unwrap();
+    let wire = tuple
+        .encode(AbiValue::Array(vec![
+            AbiValue::from(13u64),
+            AbiValue::from(13u64),
+        ]))
+        .unwrap();
+    let value = tuple.decode(&wire).unwrap();
+    let pair = Pair::abi_decode(value).unwrap();
+    assert_eq!(pair.first, 13);
+    assert_eq!(pair.second, 13);
 }
