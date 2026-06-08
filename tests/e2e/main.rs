@@ -440,6 +440,42 @@ async fn array_arguments_sum_on_chain() {
 }
 
 #[tokio::test]
+async fn tuple_and_ufixed_arguments_round_trip_on_chain() {
+    use algonaut::abi::macro_support::Ufixed;
+    use algonaut::atomic::AbiMethodReturnValue;
+    let algod = algod();
+    let (vault, _) = deploy_vault(&algod, &kmd()).await;
+    let params = algod.suggested_params().await.unwrap();
+
+    // Anonymous tuple argument: add_pair((4, 5)) = 9. The generated client
+    // takes a plain Rust `(u64, u64)` (no named-struct overlay on this method).
+    let pair = vault.add_pair((4u64, 5u64)).build(&params);
+    // ufixed64x2 argument: price_raw(1.50) returns the raw, unscaled 150 (the
+    // `Ufixed` newtype wraps the already-scaled integer; on the wire it is the
+    // same big-endian uint64 the contract reads back).
+    let price = vault.price_raw(Ufixed::new(150u64)).build(&params);
+    let executed = AtomicGroupBuilder::new()
+        .add_method_call(pair)
+        .add_method_call(price)
+        .build()
+        .unwrap()
+        .sign()
+        .await
+        .unwrap()
+        .execute(&algod)
+        .await
+        .unwrap();
+    match &executed.method_results[0].return_value {
+        Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(9u64)),
+        other => panic!("unexpected add_pair return: {other:?}"),
+    }
+    match &executed.method_results[1].return_value {
+        Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(150u64)),
+        other => panic!("unexpected price_raw return: {other:?}"),
+    }
+}
+
+#[tokio::test]
 async fn box_put_get_round_trips() {
     use algonaut::atomic::AbiMethodReturnValue;
     use algonaut::core::MicroAlgos;
