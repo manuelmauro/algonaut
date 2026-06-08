@@ -12,4 +12,6 @@ mod contract_macro_arc56;
 mod logic_signature;
 mod reference_args;
 mod transaction_args;
+mod tuple_args;
+mod ufixed_args;
 mod unsupported;
