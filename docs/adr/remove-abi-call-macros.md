@@ -77,8 +77,9 @@ marker types, `AbiDecode`, the `Ufixed` newtype, and `AbiMethod::from_signature`
 — all still used by `contract!` and the runtime parser. The `algonaut_abi_macros`
 crate stays; it now exposes only `contract!`.
 
-The `examples/app_call.rs` and `examples/atomic.rs` examples and the
-`method_call` unit tests move to the `Invocation::new` + `from_signature` form.
+The `examples/method_call_dynamic.rs` (formerly `app_call.rs`) and
+`examples/atomic.rs` examples and the `method_call` unit tests move to the
+`Invocation::new` + `from_signature` form.
 
 ## Consequences
 

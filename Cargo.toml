@@ -176,15 +176,15 @@ name = "algod_client"
 required-features = ["algod"]
 
 [[example]]
-name = "app_call"
+name = "method_call_dynamic"
 required-features = ["algod"]
 
 [[example]]
-name = "contract_client"
+name = "contract_arc4"
 required-features = ["algod"]
 
 [[example]]
-name = "arc56_client"
+name = "contract_arc56"
 required-features = ["algod"]
 
 [[example]]

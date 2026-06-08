@@ -1,6 +1,13 @@
-//! Call an ARC-4 method on a deployed application via the
-//! [`AtomicGroupBuilder`] typestate chain and the fluent [`MethodCall`]
-//! builder. This is the recommended path for application calls.
+//! Call an ARC-4 method on a deployed application via the **dynamic path**:
+//! parse a method signature at run time with [`AbiMethod::from_signature`] and
+//! build the call with [`Invocation::new`]. Reach for this when the signature
+//! is only known at run time (app-spec JSON, user input) or for a quick one-off
+//! call.
+//!
+//! For the recommended, fully-typed path — a client generated at compile time
+//! from an ARC-4 ABI or ARC-56 app spec, with arguments type-checked by
+//! `cargo build` — use the `contract!` macro instead; see
+//! `examples/contract_arc4.rs` and `examples/contract_arc56.rs`.
 
 use algonaut::Algod;
 use algonaut::abi::abi_interactions::AbiMethod;
@@ -31,9 +38,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // TODO point this at a real ARC-4 method on a real deployed contract.
     // The signature here is illustrative — `add(uint64,uint64)uint64` takes two
-    // unsigned-64 arguments and returns one. `AbiMethod::from_signature` parses
-    // it at run time; for a fully typed client generated from an app spec, see
-    // the `contract!` macro (examples/contract_client.rs).
+    // unsigned-64 arguments and returns one. This is the dynamic path:
+    // `AbiMethod::from_signature` parses the signature at run time. For a typed
+    // client generated from an app spec, see `examples/contract_arc4.rs`.
     info!("building method call");
     let call = MethodCall::builder(AppId(5), alice.address(), signer)
         .invoke(Invocation::new(

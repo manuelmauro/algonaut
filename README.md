@@ -28,7 +28,7 @@ straight from the spec, call a method with a typed-struct argument, dry-run the
 group with `simulate`, then `sign` and `execute` the very same group — the
 headline `algonaut` flow. Raw transactions (payments, asset ops) drop into the
 same group via `add_transaction`. See
-[`examples/arc56_client.rs`](./examples/arc56_client.rs) for the fully annotated
+[`examples/contract_arc56.rs`](./examples/contract_arc56.rs) for the fully annotated
 version (events, defaults, lifecycle actions, and more).
 
 ```rust

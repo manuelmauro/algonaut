@@ -39,7 +39,7 @@ Accepted and largely implemented on the `feat/contract-macro-arc56` branch:
   [`contract-macro-arc56-deploy`](contract-macro-arc56-deploy.md).
 
 A full worked example of the generated surface lives in
-`examples/arc56_client.rs`.
+`examples/contract_arc56.rs`.
 
 Runtime-coupled features that touch a node are verified by **compilation**
 against the real APIs; node-backed behaviour tests belong in the integration
