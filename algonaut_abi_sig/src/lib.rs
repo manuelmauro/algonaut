@@ -263,7 +263,10 @@ pub fn split_signature(method: &str) -> Result<RawSignature, SigError> {
     })
 }
 
-fn classify_arg(s: &str) -> Result<ArgClass, SigError> {
+/// Classify a single signature argument as a value (an ABI type), a
+/// transaction type (`pay`, `axfer`, …), or a reference type (`account`,
+/// `asset`, `application`).
+pub fn classify_arg(s: &str) -> Result<ArgClass, SigError> {
     if is_transaction_arg(s) {
         Ok(ArgClass::Transaction(s.to_owned()))
     } else if is_reference_arg(s) {

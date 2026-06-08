@@ -10,6 +10,12 @@
 //   "total" : AVMUint64 - running counter
 //   "owner" : address   - the account that created the app
 //
+// Local state (matches the spec schema: 1 uint):
+//   "seen"  : AVMUint64 - set to 1 in the caller's local state on opt-in
+//
+// It also writes uint64 boxes via `box_put`; the `boxes` state map declares
+// those (AVMString key -> AVMUint64 value) so the client gets a box-map getter.
+//
 // It dispatches ARC-4 ABI calls by selector and emits the ARC-28
 // `Counted(uint64)` event whenever `total` changes. The `method "..."`
 // pseudo-ops below assemble to the same SHA-512/256 selectors the generated
@@ -25,7 +31,7 @@ bnz create
 txn OnCompletion
 int OptIn
 ==
-bnz approve
+bnz optin
 
 // --- ABI method dispatch (NoOp) ---------------------------------------------
 txn OnCompletion
@@ -108,6 +114,15 @@ dispatch:
     bnz price_raw
 
     err
+
+// opt-in (the `enroll` lifecycle action): record local "seen" = 1 for the
+// caller, then approve. Requires the local schema to allow 1 uint.
+optin:
+    int 0          // account index 0 = Txn.Sender
+    byte "seen"
+    int 1
+    app_local_put
+    b approve
 
 // create(): owner = caller, total = 0
 create:

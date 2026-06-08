@@ -29,6 +29,10 @@ pub(super) enum ArgEncode {
     /// An expression producing an `AbiArgValue` directly (transaction args,
     /// which occupy their own slot in the atomic group).
     Arg(TokenStream),
+    /// An `async` expression producing an `AbiValue` by reading from algod at
+    /// call time — a sourced (non-literal) `defaultValue`. Its presence makes
+    /// the generated method `async` and gives it an `&Algod` parameter.
+    SourcedDefault(TokenStream),
 }
 
 /// The methods the macro can't model yet, paired with why — so a real-world
@@ -49,12 +53,12 @@ pub(super) fn unsupported_methods(
 }
 
 /// If an argument has a `literal` default value, build the expression that
-/// decodes that constant into an [`AbiValue`] at run time. The base64 payload is
-/// decoded at macro-expansion time (failing fast on malformed input); the ABI
-/// decode happens at run time via the type the contract declares. Returns `None`
-/// for arguments with no literal default — including the other `defaultValue`
-/// sources (box/global/local/method), which need a runtime read and remain
-/// required parameters for now.
+/// decodes that constant into an [`AbiValue`] at run time, so the caller can
+/// omit it. The base64 payload is decoded at macro-expansion time (failing
+/// fast on malformed input); the ABI decode happens at run time via the type
+/// the contract declares. Returns `None` for arguments with no literal default
+/// — the other `defaultValue` sources (box/global/local/method) need a runtime
+/// read and are handled by [`sourced_default_resolve`] instead.
 fn literal_default_value(model_arg: &AbiMethodArg) -> Option<TokenStream> {
     let default_value = model_arg.default_value.as_ref()?;
     if default_value.source != "literal" {
@@ -84,6 +88,143 @@ fn literal_default_value(model_arg: &AbiMethodArg) -> Option<TokenStream> {
                 .expect("contract!: literal default value")
         }
     })
+}
+
+/// The ABI type string to decode a sourced default's storage value with: the
+/// default's own `type` wins, else the argument's type. Returns `None` when
+/// neither is a decodable ABI type (e.g. AVM types), so the default falls
+/// through and the argument stays required.
+fn sourced_default_type(model_arg: &AbiMethodArg, default_type: Option<&str>) -> Option<String> {
+    let type_str = default_type.unwrap_or(model_arg.type_.as_str());
+    parse_type(type_str).ok()?;
+    Some(type_str.to_owned())
+}
+
+/// If an argument has a *sourced* (non-literal) default value, build the
+/// `async` expression that reads it at call time and yields an `AbiValue`, so
+/// the caller can omit it. Reads run against the `algod` parameter the method
+/// gains; `global`/`box` reads are keyed by the default's base64 `data`,
+/// `local` reads use the client's configured `self.sender`, and `method`
+/// simulates the named read-only method and takes its return value.
+///
+/// Returns `None` for a `literal` default (handled by
+/// [`literal_default_value`]) or for a sourced default the macro can't model
+/// (an undecodable value type, or an unknown source) — leaving the argument a
+/// required parameter.
+fn sourced_default_resolve(model_arg: &AbiMethodArg) -> Option<TokenStream> {
+    let default_value = model_arg.default_value.as_ref()?;
+    let data = default_value.data.as_str();
+
+    let abi = quote! { ::algonaut_abi::abi_type::AbiValue };
+
+    // A `global`/`box`/`local` storage read decodes raw bytes with this type.
+    let decode_storage = |bytes_var: TokenStream| -> Option<TokenStream> {
+        let type_str = sourced_default_type(model_arg, default_value.type_.as_deref())?;
+        Some(quote! {
+            {
+                let __ty: ::algonaut_abi::abi_type::AbiType = #type_str
+                    .parse()
+                    .expect("contract!: default value type validated at macro expansion");
+                __ty.decode(#bytes_var)?
+            }
+        })
+    };
+
+    match default_value.source.as_str() {
+        "literal" => None,
+        "global" => {
+            let decode = decode_storage(quote! { &__tv.bytes })?;
+            Some(quote! {
+                {
+                    let __app = algod.app(self.app_id).await?;
+                    let mut __value: ::core::option::Option<#abi> = ::core::option::Option::None;
+                    if let ::core::option::Option::Some(__entries) = &__app.params.global_state {
+                        for __kv in __entries {
+                            if __kv.key == #data {
+                                let __tv = &__kv.value;
+                                __value = ::core::option::Option::Some(#decode);
+                                break;
+                            }
+                        }
+                    }
+                    __value.ok_or_else(|| ::algonaut::Error::Internal(
+                        ::std::format!("contract!: default global key {} not found", #data)
+                    ))?
+                }
+            })
+        }
+        "local" => {
+            let decode = decode_storage(quote! { &__tv.bytes })?;
+            Some(quote! {
+                {
+                    let __info = algod.clone().account_app(&self.sender, self.app_id).await?;
+                    let mut __value: ::core::option::Option<#abi> = ::core::option::Option::None;
+                    if let ::core::option::Option::Some(__state) = &__info.app_local_state {
+                        if let ::core::option::Option::Some(__entries) = &__state.key_value {
+                            for __kv in __entries {
+                                if __kv.key == #data {
+                                    let __tv = &__kv.value;
+                                    __value = ::core::option::Option::Some(#decode);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    __value.ok_or_else(|| ::algonaut::Error::Internal(
+                        ::std::format!("contract!: default local key {} not found", #data)
+                    ))?
+                }
+            })
+        }
+        "box" => {
+            let decode = decode_storage(quote! { &__box.value.0 })?;
+            let goal_name = format!("b64:{data}");
+            Some(quote! {
+                {
+                    let __box = algod.app_box(self.app_id, #goal_name).await?;
+                    #decode
+                }
+            })
+        }
+        "method" => {
+            // `data` is the signature of a read-only method; simulate it with
+            // no arguments and take its return value. The signature is
+            // validated at macro-expansion time.
+            parse_signature(data).ok()?;
+            Some(quote! {
+                {
+                    let __method = ::algonaut_abi::abi_interactions::AbiMethod::from_signature(#data)
+                        .expect("contract!: default method signature validated at macro expansion");
+                    let __invocation = ::algonaut::atomic::Invocation::new(
+                        __method,
+                        ::std::vec::Vec::<::algonaut::atomic::AbiArgValue>::new(),
+                    );
+                    let __params = algod.suggested_params().await?;
+                    let __call = ::algonaut::atomic::MethodCall::builder(
+                        self.app_id,
+                        self.sender,
+                        ::std::sync::Arc::clone(&self.signer),
+                    )
+                    .invoke(__invocation)
+                    .build(&__params);
+                    let __outcome = ::algonaut::atomic::AtomicGroupBuilder::new()
+                        .add_method_call(__call)
+                        .build()?
+                        .simulate(algod)
+                        .await?;
+                    match &__outcome.method_results[0].return_value {
+                        ::core::result::Result::Ok(
+                            ::algonaut::atomic::AbiMethodReturnValue::Some(__v)
+                        ) => __v.clone(),
+                        _ => return ::core::result::Result::Err(::algonaut::Error::Internal(
+                            ::std::format!("contract!: default method {} returned no value", #data)
+                        )),
+                    }
+                }
+            })
+        }
+        _ => None,
+    }
 }
 
 /// Build the per-argument specs for a method, or an error naming the first
@@ -147,6 +288,17 @@ pub(super) fn method_arg_specs(
             specs.push(ArgSpec {
                 param: None,
                 encode: ArgEncode::Value(default_value),
+            });
+            continue;
+        }
+
+        // A sourced (non-literal) default is resolved by a runtime read; the
+        // method gains an `&Algod` parameter and becomes `async`. The argument
+        // takes no parameter, exactly like a literal default.
+        if let Some(resolve) = model_arg.and_then(sourced_default_resolve) {
+            specs.push(ArgSpec {
+                param: None,
+                encode: ArgEncode::SourcedDefault(resolve),
             });
             continue;
         }
@@ -275,10 +427,30 @@ pub(super) fn generate_method(
     let signature = method.get_signature();
 
     let params = specs.iter().filter_map(|s| s.param.as_ref());
-    let invocation_args = specs.iter().map(|s| match &s.encode {
-        ArgEncode::Value(v) => quote! { ::algonaut::atomic::AbiArgValue::AbiValue(#v) },
-        ArgEncode::Arg(a) => a.clone(),
-    });
+
+    // A sourced default must be resolved with an `await`, so build the argument
+    // vector through per-slot `let` bindings rather than an inline `vec!`. This
+    // also makes the whole method `async` and gives it an `&Algod` parameter.
+    let has_sourced_default = specs
+        .iter()
+        .any(|s| matches!(s.encode, ArgEncode::SourcedDefault(_)));
+
+    let mut arg_bindings = Vec::new();
+    let mut arg_idents = Vec::new();
+    for (i, spec) in specs.iter().enumerate() {
+        let ident = format_ident!("__arg{i}");
+        let bind = match &spec.encode {
+            ArgEncode::Value(v) => {
+                quote! { let #ident = ::algonaut::atomic::AbiArgValue::AbiValue(#v); }
+            }
+            ArgEncode::Arg(a) => quote! { let #ident = #a; },
+            ArgEncode::SourcedDefault(r) => {
+                quote! { let #ident = ::algonaut::atomic::AbiArgValue::AbiValue(#r); }
+            }
+        };
+        arg_bindings.push(bind);
+        arg_idents.push(ident);
+    }
 
     let method_name_str = &method.name;
     let method_ident = Ident::new(&to_snake_case(method_name_str), Span::call_site());
@@ -290,23 +462,49 @@ pub(super) fn generate_method(
         .map(|d| quote! { #[doc = #d] })
         .unwrap_or_default();
 
-    Ok(quote! {
-        #doc
-        pub fn #method_ident(&self, #(#params),*) -> #builder_ident<'_> {
-            let method = ::algonaut_abi::abi_interactions::AbiMethod::from_signature(#signature)
-                .expect("contract!: signature validated at macro expansion");
-            let args: ::std::vec::Vec<::algonaut::atomic::AbiArgValue> =
-                ::std::vec![ #(#invocation_args),* ];
-            let invocation = ::algonaut::atomic::Invocation::new(method, args);
-            #builder_ident {
-                contract: self,
-                invocation,
-                on_complete:
-                    ::algonaut::transaction::transaction::ApplicationCallOnComplete::NoOp,
-                boxes: ::std::vec::Vec::new(),
-            }
+    let build_body = quote! {
+        let method = ::algonaut_abi::abi_interactions::AbiMethod::from_signature(#signature)
+            .expect("contract!: signature validated at macro expansion");
+        #(#arg_bindings)*
+        let args: ::std::vec::Vec<::algonaut::atomic::AbiArgValue> =
+            ::std::vec![ #(#arg_idents),* ];
+        let invocation = ::algonaut::atomic::Invocation::new(method, args);
+        #builder_ident {
+            contract: self,
+            invocation,
+            on_complete:
+                ::algonaut::transaction::transaction::ApplicationCallOnComplete::NoOp,
+            boxes: ::std::vec::Vec::new(),
         }
-    })
+    };
+
+    if has_sourced_default {
+        // Reads at call time: the method is `async` and returns a `Result`
+        // because a default read can fail. An extra doc line flags the shape so
+        // the divergence from the sync builder methods is discoverable.
+        let async_doc = " \n\nThis method has one or more sourced (non-literal) default arguments, \
+             so it reads them from algod at call time: it takes an `&Algod` and is `async`, \
+             returning the builder once the defaults resolve. `local` defaults read the client's \
+             sender.";
+        Ok(quote! {
+            #doc
+            #[doc = #async_doc]
+            pub async fn #method_ident(
+                &self,
+                algod: &::algonaut::Algod,
+                #(#params),*
+            ) -> ::core::result::Result<#builder_ident<'_>, ::algonaut::Error> {
+                ::core::result::Result::Ok({ #build_body })
+            }
+        })
+    } else {
+        Ok(quote! {
+            #doc
+            pub fn #method_ident(&self, #(#params),*) -> #builder_ident<'_> {
+                #build_body
+            }
+        })
+    }
 }
 
 /// Generate builder structs for each supported method.

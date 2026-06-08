@@ -134,6 +134,40 @@ fn declared_call_actions_get_lifecycle_setters() {
 }
 
 #[test]
+fn local_and_box_map_accessors_are_generated() {
+    use algonaut::Algod;
+    use algonaut::abi::abi_type::AbiValue;
+    use algonaut_core::Address;
+    use std::future::Future;
+
+    // Vault declares (in its `state`): a global `total`/`owner`, a local `seen`
+    // key, and a `boxes` box map. The accessors are `async` and hit algod, so
+    // bind each as a future of its expected signature — a wrong shape (missing
+    // the account for local, wrong key type for the map) fails to compile.
+    type Fetch<'a> =
+        std::pin::Pin<Box<dyn Future<Output = Result<Option<AbiValue>, algonaut::Error>> + 'a>>;
+
+    // global_<key>(&self, &Algod) — no extra argument.
+    fn global<'a>(v: &'a Vault, a: &'a Algod) -> Fetch<'a> {
+        Box::pin(v.global_total(a))
+    }
+    // local_<key>(&self, &Algod, &Address) — per account.
+    fn local<'a>(v: &'a Vault, a: &'a Algod, acct: &'a Address) -> Fetch<'a> {
+        Box::pin(v.local_seen(a, acct))
+    }
+    // box_<map>(&self, &Algod, key) — AVMString key takes `&str`.
+    fn box_map<'a>(v: &'a Vault, a: &'a Algod) -> Fetch<'a> {
+        Box::pin(v.box_boxes(a, "counter"))
+    }
+
+    let _ = (
+        global as fn(_, _) -> _,
+        local as fn(_, _, _) -> _,
+        box_map as fn(_, _) -> _,
+    );
+}
+
+#[test]
 fn arc28_events_decode_from_logs() {
     use algonaut::abi::abi_type::{AbiType, AbiValue};
     use sha2::{Digest, Sha512_256};

@@ -260,11 +260,19 @@ async fn full_walkthrough() {
 #[tokio::test]
 async fn opt_in_via_enroll_succeeds() {
     let algod = algod();
-    let (vault, _) = deploy_vault(&algod, &kmd()).await;
+    let (vault, sender) = deploy_vault(&algod, &kmd()).await;
     let params = algod.suggested_params().await.unwrap();
 
+    // Before opting in, the caller has no local state: the `seen` accessor is
+    // `None`.
+    assert_eq!(
+        vault.local_seen(&algod, &sender).await.unwrap(),
+        None,
+        "no local state before opt-in",
+    );
+
     // `enroll` declares the OptIn call action; `.opt_in()` sets the on-complete,
-    // and the contract approves the opt-in.
+    // and the contract approves the opt-in, writing local `seen = 1`.
     let opt_in = vault.enroll().opt_in().build(&params);
     let executed = AtomicGroupBuilder::new()
         .add_method_call(opt_in)
@@ -277,6 +285,13 @@ async fn opt_in_via_enroll_succeeds() {
         .await
         .unwrap();
     assert!(executed.confirmed_round.is_some(), "opt-in should confirm");
+
+    // Typed local-state read for the opted-in account: `seen` is 1.
+    assert_eq!(
+        vault.local_seen(&algod, &sender).await.unwrap(),
+        Some(AbiValue::from(1u64)),
+        "opt-in records local seen = 1",
+    );
 }
 
 #[tokio::test]
@@ -609,6 +624,21 @@ async fn box_put_get_round_trips() {
         Ok(AbiMethodReturnValue::Some(v)) => assert_eq!(v, &AbiValue::from(42u64)),
         other => panic!("unexpected box_get return: {other:?}"),
     }
+
+    // The same box is also readable through the generated box-map accessor,
+    // which reads algod's box endpoint directly (no method call) and decodes
+    // the raw 8-byte value per the map's AVMUint64 value type.
+    assert_eq!(
+        vault.box_boxes(&algod, "k").await.unwrap(),
+        Some(AbiValue::from(42u64)),
+        "box-map accessor reads the box `k` written by box_put",
+    );
+    // A box that was never written reads back as absent (404 → None).
+    assert_eq!(
+        vault.box_boxes(&algod, "missing").await.unwrap(),
+        None,
+        "an unwritten box reads as None",
+    );
 }
 
 #[tokio::test]

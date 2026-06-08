@@ -284,6 +284,18 @@ fn pick_create_method<'a>(
             })?;
         let variant = on_complete_variant(action)?;
         let specs = method_arg_specs(method, supported_structs).ok()?;
+        // A create method whose arguments include a *sourced* default (a
+        // box/global/local/method read) cannot be deployed: those resolve by
+        // reading the app's own state, which does not exist yet at create time.
+        // Skip it so `deploy` is still generated for another usable create
+        // method (or omitted) rather than emitting code that reads a
+        // not-yet-created app.
+        if specs
+            .iter()
+            .any(|s| matches!(s.encode, ArgEncode::SourcedDefault(_)))
+        {
+            return None;
+        }
         Some((method, specs, Ident::new(variant, Span::call_site())))
     })
 }
@@ -297,6 +309,14 @@ fn build_method_create(method: &AbiMethod, specs: &[ArgSpec], on_complete: &Iden
     let invocation_args = specs.iter().map(|s| match &s.encode {
         ArgEncode::Value(v) => quote! { ::algonaut::atomic::AbiArgValue::AbiValue(#v) },
         ArgEncode::Arg(a) => a.clone(),
+        // `pick_create_method` rejects create methods with sourced defaults
+        // (they read the not-yet-created app), so this never occurs here; keep
+        // the match exhaustive with a clear signal if that ever changes.
+        ArgEncode::SourcedDefault(_) => quote! {
+            compile_error!(
+                "contract!: a create/deploy method argument with a sourced default is not supported"
+            )
+        },
     });
 
     quote! {
