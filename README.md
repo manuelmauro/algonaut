@@ -16,7 +16,7 @@ A Rust SDK for the [Algorand](https://www.algorand.com/) blockchain. Pre-1.0 —
 - Async clients for `algod` v2, `kmd` v1, and `indexer` v2
 - One-call transaction builders for payments, asset config / transfer / freeze / clawback, application calls, key registration, and state proofs
 - A typestate `AtomicGroupBuilder` — bundle transactions and ARC-4 ABI calls, then `simulate`, `sign`, and `execute`
-- Typed contract clients generated at compile time from an ARC-4 ABI or a full ARC-56 app spec (`contract!`) — typed-struct args, a `deploy` constructor, state readers, and ARC-28 events — or compile-time-checked one-off calls with `abi_call!`
+- Typed contract clients generated at compile time from an ARC-4 ABI or a full ARC-56 app spec (`contract!`) — typed-struct args, a `deploy` constructor, state readers, and ARC-28 events
 - An open, async `Signer` trait: `Account` out of the box, or plug in an HSM, remote KMS, or WalletConnect
 - TEAL compile / disassemble + V3 source-map decoder
 - Cucumber acceptance suite that exercises the algorand-sdk-testing harness end-to-end
@@ -28,7 +28,7 @@ straight from the spec, call a method with a typed-struct argument, dry-run the
 group with `simulate`, then `sign` and `execute` the very same group — the
 headline `algonaut` flow. Raw transactions (payments, asset ops) drop into the
 same group via `add_transaction`. See
-[`examples/arc56_client.rs`](./examples/arc56_client.rs) for the fully annotated
+[`examples/contract_arc56.rs`](./examples/contract_arc56.rs) for the fully annotated
 version (events, defaults, lifecycle actions, and more).
 
 ```rust
@@ -89,7 +89,7 @@ modernization, and the example above is the API as it stands today:
 - **0.5** — Rust 2024 edition (MSRV 1.85); `ring` swapped for `ed25519-dalek`, so `wasm32` builds need no C toolchain; workspace-wide dependency refresh; `lefthook` + `make ci`.
 - **0.6** — `simulate` and dry-run request builders, a TEAL V3 source-map decoder, and domain types that serialize to both JSON and msgpack.
 - **0.7** — identifier newtypes (`AppId`, `AssetId`, `TransactionId`) at the client boundary, block / account-resource / ledger-delta endpoints, and msgpack response decoding.
-- **0.8** — an open, async `Signer` trait (HSM / remote KMS / WalletConnect friendly), the typestate `AtomicGroupBuilder` shown above, compile-time-checked ARC-4 calls via `abi_call!`, Cargo feature gates for clients (`algod`, `indexer`, `kmd`), and structured error types with full source-chaining.
+- **0.8** — an open, async `Signer` trait (HSM / remote KMS / WalletConnect friendly), the typestate `AtomicGroupBuilder` shown above, Cargo feature gates for clients (`algod`, `indexer`, `kmd`), and structured error types with full source-chaining.
 - **unreleased** — `contract!` now generates a typed client from a full ARC-56 app spec: a `deploy` constructor, typed-struct arguments, `global_*` state readers, ARC-28 events, and a read-only `simulate` path, extending the earlier ARC-4 support.
 
 Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG.md](./CHANGELOG.md) has the full entry-by-entry history.
@@ -107,8 +107,8 @@ Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG
 | `algonaut_transaction` | Transaction builders and the open `Signer` trait                                         |
 | `algonaut_abi`         | ARC-4 ABI types, method encoding, TEAL source-map decoder                                |
 | `algonaut_abi_model`   | Pure serde data model for ARC-4 / ARC-56 app-spec JSON, shared by the runtime and the macros |
-| `algonaut_abi_sig`     | ARC-4 signature/type grammar shared by the macros and the runtime                        |
-| `algonaut_abi_macros`  | `contract!` client generator plus `abi_call!` / `abi_method!` compile-time-checked ABI proc-macros |
+| `algonaut_abi_sig`     | ARC-4 signature/type grammar shared by the `contract!` macro and the runtime             |
+| `algonaut_abi_macros`  | `contract!` proc-macro: typed ARC-4/ARC-56 contract client generator                     |
 | `algonaut_encoding`    | Shared `serde` visitors and base32/base64 helpers                                        |
 | `algonaut_model`       | Hand-written response models shared between the clients                                  |
 

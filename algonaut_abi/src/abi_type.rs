@@ -231,9 +231,9 @@ impl FromStr for AbiType {
     /// Parses an ABI type string, e.g. `"(uint64,byte[])"`.
     ///
     /// Delegates to the shared [`algonaut_abi_sig`] grammar, so the runtime
-    /// parser and the `abi_call!`/`abi_method!` macros accept exactly the same
-    /// inputs — a signature the macros reject at compile time fails here too,
-    /// and vice-versa.
+    /// parser and the `contract!` macro accept exactly the same inputs — a
+    /// signature the macro rejects at compile time fails here too, and
+    /// vice-versa.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         algonaut_abi_sig::parse_type(s)
             .map(AbiType::from_sig_type)

@@ -2,7 +2,7 @@
 
 // Vault - a minimal but real ARC-56 reference contract.
 //
-// It backs `examples/arc56_client.rs` and the `vault.arc56.json` app spec:
+// It backs `examples/contract_arc56.rs` and the `vault.arc56.json` app spec:
 // the embedded base64 in that spec's `source.approval` is this file, and
 // `Vault::deploy` compiles it through algod at runtime.
 //

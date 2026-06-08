@@ -1,16 +1,17 @@
-//! Support surface for the `abi_call!` / `abi_method!` macros.
+//! Support surface for the [`contract!`](algonaut_abi_macros::contract) macro.
 //!
-//! Everything the macros' *expansion* references lives here: the per-ABI-type
+//! Everything the macro's *expansion* references lives here: the per-ABI-type
 //! marker types, the [`AbiArg`] trait that pins a Rust value to an ABI type at
-//! compile time, and [`MethodInvocation`], the checked value the macros
-//! produce. Call sites use the macros, not these items directly; they are
-//! `pub` because macro output must name them.
+//! compile time and its [`AbiDecode`] inverse, the [`Ufixed`] value newtype, and
+//! the base64 helpers the generated state accessors use. Call sites use the
+//! generated client, not these items directly; they are `pub` because macro
+//! output must name them.
 //!
-//! The design mirrors `format!`: a marker type plays the role of a format
+//! The encode design mirrors `format!`: a marker type plays the role of a format
 //! specifier (`{}` ⇒ `Display`), and `AbiArg<Marker>` plays the role of the
-//! trait the specifier selects. `abi_call!("…(uint64)…", x)` emits
-//! `AbiArg::<Uint<64>>::encode(x)`; if `x`'s type has no `AbiArg<Uint<64>>`
-//! impl, the type-checker rejects it, spanned to `x`.
+//! trait the specifier selects. The macro emits `AbiArg::<Uint<64>>::encode(x)`
+//! for a `uint64` argument; if `x`'s type has no `AbiArg<Uint<64>>` impl, the
+//! type-checker rejects it, spanned to `x`.
 
 use crate::abi_type::AbiValue;
 use algonaut_core::Address as CoreAddress;
@@ -18,10 +19,8 @@ use num_bigint::BigUint;
 use std::fmt;
 use std::marker::PhantomData;
 
-use crate::abi_interactions::AbiMethod;
-
 /// "This Rust type may stand in for ABI type `T`." Implemented for each Rust
-/// representation accepted in an `abi_call!` argument slot of ABI type `T`;
+/// representation the `contract!` macro accepts for ABI type `T`;
 /// [`encode`](AbiArg::encode) turns the value into its [`AbiValue`].
 ///
 /// Reuses the `From<…> for AbiValue` conversions in
@@ -50,8 +49,8 @@ pub struct Address;
 pub struct AbiString;
 /// `byte[]` marker — the one compound type with a canonical Rust rep.
 pub struct Bytes;
-/// `ufixedNxM` marker. The `contract!` macro and `abi_call!` accept the
-/// [`Ufixed`] value newtype in this slot (its `AbiArg` impl is below).
+/// `ufixedNxM` marker. The `contract!` macro accepts the [`Ufixed`] value
+/// newtype in this slot (its `AbiArg` impl is below).
 pub struct UFixed<const BITS: u16, const PRECISION: u16>;
 /// `T[]` marker.
 pub struct DynArray<T>(PhantomData<T>);
@@ -357,44 +356,6 @@ impl<const BITS: u16, const PRECISION: u16> AbiDecode<UFixed<BITS, PRECISION>>
         // ufixed shares the uint wire encoding: read the raw integer back into
         // the unscaled newtype, mirroring `AbiArg::<UFixed>::encode`.
         Ok(Ufixed::new(as_biguint(value)?))
-    }
-}
-
-// === MethodInvocation =====================================================
-
-/// A checked ABI method invocation: an [`AbiMethod`] plus its already-encoded
-/// value arguments. This is what `abi_call!` expands to; `MethodCall`'s builder
-/// consumes it via `.invoke(...)`.
-///
-/// Construct one with the `abi_call!` macro (compile-time checked) or with
-/// [`MethodInvocation::new`] (for runtime-sourced values, e.g. app-spec JSON).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MethodInvocation {
-    method: AbiMethod,
-    args: Vec<AbiValue>,
-}
-
-impl MethodInvocation {
-    /// Pair a method with its already-encoded value arguments. The macro calls
-    /// this after type-checking each argument; runtime callers can call it
-    /// directly with values they encoded themselves.
-    pub fn new(method: AbiMethod, args: Vec<AbiValue>) -> Self {
-        MethodInvocation { method, args }
-    }
-
-    /// The method being invoked.
-    pub fn method(&self) -> &AbiMethod {
-        &self.method
-    }
-
-    /// The encoded value arguments, in signature order.
-    pub fn args(&self) -> &[AbiValue] {
-        &self.args
-    }
-
-    /// Decompose into the method and its encoded arguments.
-    pub fn into_parts(self) -> (AbiMethod, Vec<AbiValue>) {
-        (self.method, self.args)
     }
 }
 
