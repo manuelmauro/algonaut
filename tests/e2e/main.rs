@@ -35,6 +35,13 @@ algonaut::contract!("tests/fixtures/vault.arc56.json");
 // arg) is omitted from the client rather than failing compilation.
 algonaut::contract!("tests/fixtures/arc56_test.arc56.json");
 
+// A spec that ships only precompiled `byteCode` (no TEAL `source`) and is
+// created with a bare app-create. Its programs (`int 1`) approve any call, so
+// `deploy` exercises the byteCode-only path end-to-end against a live node:
+// the macro builds the approval/clear programs directly from the base64
+// byteCode instead of compiling TEAL through algod.
+algonaut::contract!("tests/fixtures/bytecode_bare.arc56.json");
+
 fn env_or(key: &str, default: &str) -> String {
     env::var(key).unwrap_or_else(|_| default.to_owned())
 }
@@ -131,10 +138,34 @@ async fn deploy_arc56_test(algod: &Algod, kmd: &Kmd) -> (ARC56Test, Address) {
     (client, sender)
 }
 
+/// Deploy the `byteCode`-only `ByteCodeBare` contract from a freshly funded
+/// account. Unlike Vault, the macro does not compile TEAL `source` through
+/// algod — it builds the programs directly from the spec's precompiled
+/// `byteCode`.
+async fn deploy_bytecode_bare(algod: &Algod, kmd: &Kmd) -> (ByteCodeBare, Address) {
+    let account = funded_account(algod, kmd).await;
+    let sender = account.address();
+    let signer: Arc<dyn Signer> = Arc::new(account);
+    let params = algod.suggested_params().await.expect("suggested params");
+    let client = ByteCodeBare::deploy(algod, sender, signer, &params)
+        .await
+        .expect("deploy ByteCodeBare");
+    (client, sender)
+}
+
 #[tokio::test]
 async fn deploy_creates_app() {
     let (vault, _) = deploy_vault(&algod(), &kmd()).await;
     assert!(vault.app_id().0 > 0, "deploy should create an application");
+}
+
+#[tokio::test]
+async fn deploy_from_bytecode_creates_app() {
+    let (client, _) = deploy_bytecode_bare(&algod(), &kmd()).await;
+    assert!(
+        client.app_id().0 > 0,
+        "byteCode-only deploy should create an application"
+    );
 }
 
 #[tokio::test]

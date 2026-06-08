@@ -38,7 +38,7 @@ pub fn generate_contract(contract: &AbiContract) -> Result<TokenStream, String> 
     let builders = methods::generate_builders(contract, &struct_ident, &supported_structs);
     let events_def = events::generate_events(contract, &struct_ident);
     let state_def = state::generate_state_accessors(contract, &struct_ident, &contract.structs);
-    let deploy_def = deploy::generate_deploy(contract, &struct_ident);
+    let deploy_def = deploy::generate_deploy(contract, &struct_ident, &supported_structs);
 
     Ok(quote! {
         #structs_def

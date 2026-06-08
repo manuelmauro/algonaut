@@ -1,0 +1,42 @@
+{
+  "arcs": [22, 28, 56],
+  "name": "ByteCodeDeploy",
+  "desc": "A synthetic ARC-56 spec that ships only precompiled byteCode (no TEAL source) and is created through an ABI createApplication method with typed constructor arguments. Exercises the byteCode-only deploy path and create-method constructor parameters offline.",
+  "structs": {},
+  "methods": [
+    {
+      "name": "createApplication",
+      "desc": "Create the app with an initial owner and seed amount.",
+      "args": [
+        { "name": "owner", "type": "address" },
+        { "name": "seed", "type": "uint64" }
+      ],
+      "returns": { "type": "void" },
+      "actions": { "create": ["NoOp"], "call": [] }
+    },
+    {
+      "name": "ping",
+      "args": [],
+      "returns": { "type": "uint64" },
+      "actions": { "create": [], "call": ["NoOp"] }
+    }
+  ],
+  "events": [],
+  "state": {
+    "schema": {
+      "global": { "ints": 2, "bytes": 1 },
+      "local": { "ints": 0, "bytes": 0 }
+    },
+    "keys": { "global": {}, "local": {}, "box": {} },
+    "maps": { "global": {}, "local": {}, "box": {} }
+  },
+  "bareActions": { "create": [], "call": [] },
+  "byteCode": {
+    "approval": "CoEB",
+    "clear": "CoEB"
+  },
+  "compilerInfo": {
+    "compiler": "puya",
+    "compilerVersion": { "major": 4, "minor": 0, "patch": 0 }
+  }
+}
