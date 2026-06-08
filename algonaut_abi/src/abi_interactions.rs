@@ -253,11 +253,11 @@ impl AbiMethod {
     /// Decodes a method signature string into a Method object.
     ///
     /// The signature is split by the shared [`algonaut_abi_sig`] grammar — the
-    /// same grammar the `abi_call!`/`abi_method!` macros validate against — and
-    /// each argument's ABI type is parsed (and cached) exactly as before. Use
-    /// this for signatures that arrive at run time (app-spec JSON, user input);
-    /// for compile-time literals, prefer `abi_method!` / `abi_call!`, which
-    /// perform this validation at build time.
+    /// same grammar the `contract!` macro validates against — and each
+    /// argument's ABI type is parsed (and cached) exactly as before. Use this
+    /// for one-off calls and for signatures that arrive at run time (app-spec
+    /// JSON, user input); a fully typed client generated at compile time from an
+    /// app spec uses the `contract!` macro instead.
     pub fn from_signature(method_str: &str) -> Result<AbiMethod, AbiError> {
         let sig = algonaut_abi_sig::split_signature(method_str).map_err(|e| {
             AbiError::MethodSignature {

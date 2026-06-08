@@ -19,8 +19,8 @@
 //! return-value decoding for you.
 
 use algonaut::Algod;
-use algonaut::abi::abi_call;
-use algonaut::atomic::{AtomicGroupBuilder, MethodCall, TransactionWithSigner};
+use algonaut::abi::abi_interactions::AbiMethod;
+use algonaut::atomic::{AtomicGroupBuilder, Invocation, MethodCall, TransactionWithSigner};
 use algonaut::core::{AppId, MicroAlgos};
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Signer};
@@ -63,7 +63,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("building the method call add(2, 3)");
     let call = MethodCall::builder(app_id, alice.address(), alice_signer.clone())
-        .invoke(abi_call!("add(uint64,uint64)uint64", 2u64, 3u64))
+        .invoke(Invocation::new(
+            AbiMethod::from_signature("add(uint64,uint64)uint64")?,
+            [2u64, 3u64],
+        ))
         .build(&params);
 
     info!("composing the atomic group");

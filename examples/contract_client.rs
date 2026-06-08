@@ -2,8 +2,8 @@
 //! the [`contract!`] macro.
 //!
 //! This example demonstrates how `contract!` simplifies contract interaction
-//! compared to manually using `MethodCall::builder()` with `abi_call!`. The
-//! macro reads the ABI JSON at compile time and generates a struct with
+//! compared to manually using `MethodCall::builder()` with `Invocation::new`.
+//! The macro reads the ABI JSON at compile time and generates a struct with
 //! typed methods for each ABI method.
 //!
 //! # Comparison
@@ -11,7 +11,10 @@
 //! **Before (manual):**
 //! ```ignore
 //! let call = MethodCall::builder(AppId(123), alice.address(), signer)
-//!     .invoke(abi_call!("add(uint64,uint64)uint64", 2u64, 3u64))
+//!     .invoke(Invocation::new(
+//!         AbiMethod::from_signature("add(uint64,uint64)uint64")?,
+//!         [2u64, 3u64],
+//!     ))
 //!     .build(&params);
 //! ```
 //!

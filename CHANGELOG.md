@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A `contract!` method argument with a `literal` `defaultValue` is now generated as an `Option<T>` parameter instead of being dropped from the signature: pass `None` to use the spec's literal default, or `Some(v)` to override it. Such methods previously took no parameter for the defaulted argument, so existing call sites must pass `None` (part of #345)
 
+### Removed
+
+- **Breaking:** the `abi_call!` and `abi_method!` macros, and the `algonaut_abi::MethodInvocation` type they expanded to, are removed. They were a partial, stringly-typed compile-time-checked call path now subsumed by the `contract!` macro (complete, fully-typed clients generated from an ARC-4/ARC-56 spec). Build a one-off or runtime-sourced call with `MethodCall::builder(app_id, sender, signer).invoke(Invocation::new(AbiMethod::from_signature("add(uint64,uint64)uint64")?, [2u64, 3u64]))`. The shared `algonaut_abi_sig` grammar, the `AbiArg`/`AbiDecode` traits and marker types, the `Ufixed` newtype, and `AbiMethod::from_signature` are all unchanged. See `docs/adr/remove-abi-call-macros.md`
+
 ## [0.8.0] - 2026-05-24
 
 ### Added

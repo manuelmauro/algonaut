@@ -3,8 +3,8 @@
 //! builder. This is the recommended path for application calls.
 
 use algonaut::Algod;
-use algonaut::abi::abi_call;
-use algonaut::atomic::{AtomicGroupBuilder, MethodCall};
+use algonaut::abi::abi_interactions::AbiMethod;
+use algonaut::atomic::{AtomicGroupBuilder, Invocation, MethodCall};
 use algonaut::core::AppId;
 use algonaut::transaction::account::Account;
 use dotenv::dotenv;
@@ -30,13 +30,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let params = algod.suggested_params().await?;
 
     // TODO point this at a real ARC-4 method on a real deployed contract.
-    // The signature here is illustrative — `add(uint64,uint64)uint64`
-    // takes two unsigned-64 arguments and returns one. `abi_call!` validates
-    // the signature and type-checks the two `u64` arguments at compile time,
-    // so there is no `?` here: a typo or a wrong argument is a build error.
+    // The signature here is illustrative — `add(uint64,uint64)uint64` takes two
+    // unsigned-64 arguments and returns one. `AbiMethod::from_signature` parses
+    // it at run time; for a fully typed client generated from an app spec, see
+    // the `contract!` macro (examples/contract_client.rs).
     info!("building method call");
     let call = MethodCall::builder(AppId(5), alice.address(), signer)
-        .invoke(abi_call!("add(uint64,uint64)uint64", 2u64, 3u64))
+        .invoke(Invocation::new(
+            AbiMethod::from_signature("add(uint64,uint64)uint64")?,
+            [2u64, 3u64],
+        ))
         .build(&params);
 
     info!("composing and executing");

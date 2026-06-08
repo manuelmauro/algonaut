@@ -343,7 +343,7 @@ pub(super) fn method_arg_specs(
             }
             ArgClass::Reference(ref_type) => {
                 // ARC-4 reference argument: the value flows as a plain
-                // `AbiValue` through `MethodInvocation`. At group-build time the
+                // `AbiValue` through the method-call `Invocation`. At group-build time the
                 // method-call encoder reclassifies it by the method signature,
                 // appends it to the transaction's foreign accounts/assets/apps
                 // array, and encodes the `uint8` index as the ABI argument — so
