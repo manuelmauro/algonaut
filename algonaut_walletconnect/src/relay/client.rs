@@ -27,8 +27,8 @@ use crate::codec::{SignedTxnResponse, WalletTransaction};
 use crate::error::WalletConnectError;
 use crate::session::{SessionFuture, WalletConnectSession};
 
-/// Default WalletConnect relay URL.
-const DEFAULT_RELAY_URL: &str = "wss://relay.walletconnect.org";
+/// Default WalletConnect relay URL (matches @perawallet/connect).
+const DEFAULT_RELAY_URL: &str = "wss://relay.walletconnect.com";
 
 /// Default TTL for published messages (5 minutes).
 const DEFAULT_TTL: u64 = 300;

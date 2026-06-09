@@ -30,7 +30,7 @@ use algonaut::crypto::HashDigest;
 use algonaut::model::algod::SuggestedParams;
 use algonaut::transaction::account::Account;
 use algonaut::transaction::{Pay, Signer};
-use algonaut::walletconnect::{PeraSigner, SessionProposalConfig, WalletConnectRelay};
+use algonaut::walletconnect::{PeraSigner, WalletConnectRelay};
 use std::error::Error;
 use std::sync::Arc;
 
@@ -44,12 +44,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Connecting to WalletConnect relay...");
 
-    // Create the relay client. This example signs a TestNet transaction, so the
-    // session proposal must request the TestNet chain — requiredNamespaces means
-    // the wallet has to satisfy exactly the chain(s) we list.
-    let relay = Arc::new(
-        WalletConnectRelay::with_config(project_id, SessionProposalConfig::testnet()).await?,
-    );
+    // Create the relay client. The default config mirrors @perawallet/connect:
+    // it requests both MainNet and TestNet under requiredNamespaces, so an
+    // Algorand account (the same address on both networks) can approve and then
+    // sign the TestNet transaction below.
+    let relay = Arc::new(WalletConnectRelay::new(project_id).await?);
 
     // Get pairing URI for QR code / deep link
     let pairing_uri = relay.pairing_uri();

@@ -94,12 +94,15 @@ impl Default for SessionProposalConfig {
                 icons: vec![],
                 redirect: None,
             },
-            // A single chain only: with requiredNamespaces the wallet must
-            // satisfy every listed chain, and wallets (e.g. Pera) reject a
-            // proposal that requires both MainNet and TestNet at once. Use
-            // `testnet()` / `with_chains()` to target a different network.
-            chains: vec![super::messages::chains::MAINNET.to_string()],
-            methods: vec!["algo_signTxn".to_string()],
+            // Mirror Pera's own @perawallet/connect SDK proposal exactly: both
+            // MainNet and TestNet chains and both signing methods, all under
+            // requiredNamespaces. Use `mainnet()` / `testnet()` to narrow to a
+            // single network.
+            chains: vec![
+                super::messages::chains::MAINNET.to_string(),
+                super::messages::chains::TESTNET.to_string(),
+            ],
+            methods: vec!["algo_signTxn".to_string(), "algo_signData".to_string()],
             events: vec![],
         }
     }
