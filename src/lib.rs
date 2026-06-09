@@ -23,6 +23,9 @@ pub mod indexer;
 #[cfg(feature = "kmd")]
 pub mod kmd;
 
+#[cfg(feature = "walletconnect")]
+pub use algonaut_walletconnect as walletconnect;
+
 // Convenience re-exports for ergonomic top-level imports.
 // The versioned paths (e.g., `algod::v2::Algod`) remain available for
 // backwards compatibility and explicit version selection.

@@ -1,0 +1,66 @@
+[package]
+authors = [
+    "Manuel Mauro <manuel.mauro@protonmail.com>",
+]
+description = "WalletConnect integration for algonaut, including Pera Wallet support."
+edition = "2024"
+keywords = ["Algorand", "sdk", "WalletConnect", "Pera"]
+license = "MIT OR Apache-2.0"
+name = "algonaut_walletconnect"
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.8.0"
+
+[features]
+default = []
+# Enable the built-in WalletConnect v2 relay client.
+# This adds dependencies for WebSocket, encryption, and key exchange.
+relay = [
+    "dep:base64",
+    "dep:bs58",
+    "dep:chacha20poly1305",
+    "dep:ed25519-dalek",
+    "dep:futures-util",
+    "dep:getrandom",
+    "dep:hkdf",
+    "dep:hex",
+    "dep:qrcode",
+    "dep:rand",
+    "dep:sha2",
+    "dep:tokio",
+    "dep:tokio-tungstenite",
+    "dep:urlencoding",
+    "dep:x25519-dalek",
+]
+
+[dependencies]
+algonaut_core = { workspace = true }
+algonaut_crypto = { workspace = true }
+algonaut_encoding = { workspace = true }
+algonaut_model = { workspace = true }
+algonaut_transaction = { workspace = true }
+
+data-encoding = { workspace = true }
+rmp-serde = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+# Optional relay dependencies
+base64 = { workspace = true, optional = true }
+bs58 = { workspace = true, optional = true }
+chacha20poly1305 = { workspace = true, optional = true }
+ed25519-dalek = { workspace = true, optional = true }
+futures-util = { workspace = true, optional = true }
+getrandom = { workspace = true, optional = true }
+hkdf = { workspace = true, optional = true }
+hex = { workspace = true, optional = true }
+qrcode = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
+tokio = { workspace = true, features = ["rt", "sync", "time", "net"], optional = true }
+tokio-tungstenite = { workspace = true, optional = true }
+urlencoding = { workspace = true, optional = true }
+x25519-dalek = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

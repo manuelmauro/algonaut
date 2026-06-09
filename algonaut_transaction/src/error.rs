@@ -1,9 +1,16 @@
 extern crate derive_more;
+use std::error::Error as StdError;
 use std::fmt::Debug;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TransactionError {
+    /// An error from a [`Signer`] implementation.
+    ///
+    /// This variant allows typed errors from external signers (like WalletConnect)
+    /// to flow through the signing pipeline without requiring a reverse dependency.
+    #[error("signer error: {0}")]
+    Signer(#[source] Box<dyn StdError + Send + Sync>),
     #[error("Transaction sender does not match multisig identity.")]
     InvalidSenderInMultisig,
     #[error("Multisig identity does not contain this secret key.")]
