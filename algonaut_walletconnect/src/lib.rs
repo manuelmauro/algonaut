@@ -44,4 +44,4 @@ pub use session::{SessionFuture, WalletConnectSession};
 pub use signer::{PeraSigner, WalletConnectSigner};
 
 #[cfg(feature = "relay")]
-pub use relay::{PairingUri, RelayError, WalletConnectRelay};
+pub use relay::{PairingUri, RelayError, SessionProposalConfig, WalletConnectRelay};

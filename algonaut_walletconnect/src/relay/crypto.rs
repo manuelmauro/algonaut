@@ -43,6 +43,11 @@ impl SymmetricKey {
         hex::encode(self.key)
     }
 
+    /// The raw 32-byte key.
+    pub fn as_bytes(&self) -> &[u8; 32] {
+        &self.key
+    }
+
     /// Encrypt a message using ChaCha20-Poly1305 with Type 0 envelope.
     ///
     /// Envelope format: type (1 byte) + nonce (12 bytes) + ciphertext + tag

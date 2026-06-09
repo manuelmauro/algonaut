@@ -43,3 +43,4 @@ mod session;
 pub use client::WalletConnectRelay;
 pub use error::RelayError;
 pub use pairing::PairingUri;
+pub use session::SessionProposalConfig;

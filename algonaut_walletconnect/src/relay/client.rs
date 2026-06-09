@@ -28,7 +28,7 @@ use crate::error::WalletConnectError;
 use crate::session::{SessionFuture, WalletConnectSession};
 
 /// Default WalletConnect relay URL.
-const DEFAULT_RELAY_URL: &str = "wss://relay.walletconnect.com";
+const DEFAULT_RELAY_URL: &str = "wss://relay.walletconnect.org";
 
 /// Default TTL for published messages (5 minutes).
 const DEFAULT_TTL: u64 = 300;
@@ -185,12 +185,12 @@ impl WalletConnectRelay {
             }
 
             // If we have a proposed session topic and haven't subscribed yet, subscribe now
-            if let Some(topic) = pending_session_topic {
-                if !session_topic_subscribed {
-                    eprintln!("[DEBUG] Subscribing to session topic: {}", &topic[..16]);
-                    self.subscribe(&topic).await?;
-                    session_topic_subscribed = true;
-                }
+            if let Some(topic) = pending_session_topic
+                && !session_topic_subscribed
+            {
+                eprintln!("[DEBUG] Subscribing to session topic: {}", &topic[..16]);
+                self.subscribe(&topic).await?;
+                session_topic_subscribed = true;
             }
 
             if tokio::time::Instant::now() > deadline {
@@ -230,14 +230,17 @@ impl WalletConnectRelay {
                     "icons": self.config.metadata.icons
                 }
             },
-            "requiredNamespaces": {},
-            "optionalNamespaces": {
+            // Pera (and most Algorand wallets) expect the algorand namespace under
+            // requiredNamespaces; an optional-only proposal is decoded but never
+            // turns into an approval prompt, so the wallet times out.
+            "requiredNamespaces": {
                 "algorand": {
                     "chains": self.config.chains,
                     "methods": self.config.methods,
                     "events": self.config.events
                 }
             },
+            "optionalNamespaces": {},
             "pairingTopic": self.pairing_topic,
             "expiryTimestamp": expiry
         });
@@ -291,10 +294,8 @@ impl WalletConnectRelay {
     ) -> Result<(), RelayError> {
         // Encrypt the message
         let encrypted = sym_key.encrypt(message.as_bytes())?;
-        let encoded = base64::Engine::encode(
-            &base64::engine::general_purpose::URL_SAFE_NO_PAD,
-            &encrypted,
-        );
+        let encoded =
+            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &encrypted);
 
         let params = PublishParams {
             topic: topic.to_string(),
@@ -310,7 +311,13 @@ impl WalletConnectRelay {
         Ok(())
     }
 
-    /// Generate a unique request ID (13-digit timestamp + 6-digit entropy).
+    /// Generate a unique request ID (13-digit ms timestamp + 3-digit entropy).
+    ///
+    /// WalletConnect's `payloadId` is `Date.now() * 1000 + entropy`, which keeps
+    /// the id at ~16 digits — within JavaScript's `Number.MAX_SAFE_INTEGER`
+    /// (2^53). A larger id (e.g. ms * 1_000_000) overflows the wallet's JSON
+    /// number handling, so it receives the request but cannot respond and the
+    /// handshake silently fails.
     fn generate_request_id(&self) -> u64 {
         use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -319,10 +326,10 @@ impl WalletConnectRelay {
             .unwrap()
             .as_millis() as u64;
 
-        let entropy = self.request_id.fetch_add(1, Ordering::SeqCst) % 1_000_000;
+        let entropy = self.request_id.fetch_add(1, Ordering::SeqCst) % 1_000;
 
-        // Combine: timestamp * 1_000_000 + entropy
-        timestamp * 1_000_000 + entropy
+        // Combine: timestamp * 1_000 + entropy (matches WalletConnect payloadId).
+        timestamp * 1_000 + entropy
     }
 
     /// Send a JSON-RPC request to the relay and wait for response.
@@ -381,8 +388,20 @@ impl WalletConnectRelay {
                     "[DEBUG] send_relay_request received: {}",
                     &msg[..msg.len().min(200)]
                 );
-                // Try parsing as a JSON-RPC response (relay response to our request)
-                if let Ok(response) = serde_json::from_str::<JsonRpcResponse>(&msg) {
+                // A relay push (irn_subscription) has a required `method`; a
+                // response to our request does not. Try request first so the
+                // lenient JsonRpcResponse parse doesn't swallow pushes that
+                // arrive while we wait for our response.
+                if let Ok(request) = serde_json::from_str::<JsonRpcRequest>(&msg) {
+                    eprintln!("[DEBUG] Parsed as JsonRpcRequest (subscription message)");
+                    if request.method == "irn_subscription"
+                        && let Some(params) = request.params
+                        && let Ok(relay_msg) = serde_json::from_value::<RelayMessageWrapper>(params)
+                    {
+                        // Process the relay message (but don't block on it)
+                        let _ = self.handle_relay_message(&relay_msg.data).await;
+                    }
+                } else if let Ok(response) = serde_json::from_str::<JsonRpcResponse>(&msg) {
                     eprintln!("[DEBUG] Parsed as JsonRpcResponse with id: {}", response.id);
                     let mut pending = self.pending.lock().await;
                     if let Some(sender) = pending.remove(&response.id) {
@@ -395,19 +414,6 @@ impl WalletConnectRelay {
                             Ok(response.result.unwrap_or(Value::Null))
                         };
                         let _ = sender.send(result);
-                    }
-                } else if let Ok(request) = serde_json::from_str::<JsonRpcRequest>(&msg) {
-                    // Handle subscription messages that arrive during request/response
-                    eprintln!("[DEBUG] Parsed as JsonRpcRequest (subscription message)");
-                    if request.method == "irn_subscription" {
-                        if let Some(params) = request.params {
-                            if let Ok(relay_msg) =
-                                serde_json::from_value::<RelayMessageWrapper>(params)
-                            {
-                                // Process the relay message (but don't block on it)
-                                let _ = self.handle_relay_message(&relay_msg.data).await;
-                            }
-                        }
                     }
                 } else {
                     eprintln!("[DEBUG] Unknown message format");
@@ -445,17 +451,22 @@ impl WalletConnectRelay {
     async fn handle_message(&self, msg: &str) -> Result<(), RelayError> {
         eprintln!("[DEBUG] handle_message: {}", &msg[..msg.len().min(200)]);
 
-        // Try parsing as a JSON-RPC response first
-        if let Ok(response) = serde_json::from_str::<JsonRpcResponse>(msg) {
-            eprintln!("[DEBUG] Parsed as JsonRpcResponse");
-            self.handle_response(response).await?;
-            return Ok(());
-        }
-
-        // Try parsing as a JSON-RPC request (relay subscription message)
+        // Try parsing as a JSON-RPC request (relay push) FIRST. A relay
+        // `irn_subscription` push has a required `method` field; a reply to one
+        // of our requests does not. JsonRpcResponse deserializes leniently
+        // (result/error optional, unknown fields ignored), so trying it first
+        // would swallow every push as a "response" and silently drop the
+        // wallet's proposal-response and settle messages.
         if let Ok(request) = serde_json::from_str::<JsonRpcRequest>(msg) {
             eprintln!("[DEBUG] Parsed as JsonRpcRequest");
             self.handle_request(request).await?;
+            return Ok(());
+        }
+
+        // Otherwise it's a response to one of our relay requests.
+        if let Ok(response) = serde_json::from_str::<JsonRpcResponse>(msg) {
+            eprintln!("[DEBUG] Parsed as JsonRpcResponse");
+            self.handle_response(response).await?;
             return Ok(());
         }
 
@@ -525,11 +536,9 @@ impl WalletConnectRelay {
         };
 
         // Decrypt the message
-        let encrypted = base64::Engine::decode(
-            &base64::engine::general_purpose::URL_SAFE_NO_PAD,
-            &msg.message,
-        )
-        .map_err(|_| RelayError::Encryption("invalid base64".into()))?;
+        let encrypted =
+            base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &msg.message)
+                .map_err(|_| RelayError::Encryption("invalid base64".into()))?;
 
         let decrypted = sym_key.decrypt(&encrypted)?;
         let payload = String::from_utf8(decrypted)
@@ -540,27 +549,33 @@ impl WalletConnectRelay {
             &payload[..payload.len().min(200)]
         );
 
-        // Try parsing as JSON-RPC response first (e.g., session proposal response)
-        if let Ok(response) = serde_json::from_str::<JsonRpcResponse>(&payload) {
-            return self.handle_encrypted_response(response, &msg.topic).await;
+        // A wallet-originated message with a `method` is a request
+        // (wc_sessionSettle / wc_sessionDelete); without one it is a response to
+        // a request we sent. Parse request first — JsonRpcResponse deserializes
+        // leniently and would otherwise swallow the settle and drop it.
+        if let Ok(request) = serde_json::from_str::<JsonRpcRequest>(&payload) {
+            match request.method.as_str() {
+                methods::SESSION_SETTLE => {
+                    self.handle_session_settle(request).await?;
+                }
+                methods::SESSION_DELETE => {
+                    let mut state = self.state.write().await;
+                    *state = SessionState::Closed;
+                }
+                _ => {}
+            }
+            return Ok(());
         }
 
-        // Parse as JSON-RPC request
-        let inner: JsonRpcRequest = serde_json::from_str(&payload)?;
-
-        match inner.method.as_str() {
-            methods::SESSION_SETTLE => {
-                self.handle_session_settle(inner).await?;
+        // Otherwise it's a response. On the pairing topic that's the
+        // session-propose response (carries responderPublicKey); on the session
+        // topic it's a reply to one of our requests (e.g. algo_signTxn).
+        if let Ok(response) = serde_json::from_str::<JsonRpcResponse>(&payload) {
+            if msg.topic == self.pairing_topic {
+                return self.handle_encrypted_response(response, &msg.topic).await;
             }
-            methods::SESSION_DELETE => {
-                let mut state = self.state.write().await;
-                *state = SessionState::Closed;
-            }
-            _ => {
-                // Handle other methods (responses to our requests)
-                if let Some(params) = inner.params {
-                    self.handle_inner_response(inner.id, params).await?;
-                }
+            if let Some(result) = response.result {
+                self.handle_inner_response(response.id, result).await?;
             }
         }
 
@@ -610,10 +625,11 @@ impl WalletConnectRelay {
 
                     let session_sym_key = self.key_pair.derive_symmetric_key(&peer_public);
 
-                    // Session topic is sha256 hash of the session symmetric key hex string
+                    // Session topic is sha256 of the raw symmetric key bytes
+                    // (WalletConnect `hashKey`), hex-encoded.
                     use sha2::{Digest, Sha256};
                     let mut hasher = Sha256::new();
-                    hasher.update(session_sym_key.to_hex().as_bytes());
+                    hasher.update(session_sym_key.as_bytes());
                     let session_topic = hex::encode(hasher.finalize());
 
                     eprintln!("[DEBUG] Computed session topic: {}", &session_topic[..16]);
@@ -634,6 +650,7 @@ impl WalletConnectRelay {
 
     /// Handle a session settlement message.
     async fn handle_session_settle(&self, request: JsonRpcRequest) -> Result<(), RelayError> {
+        let request_id = request.id;
         let params: SessionSettle = serde_json::from_value(request.params.ok_or_else(|| {
             RelayError::UnexpectedResponse("missing session settle params".into())
         })?)?;
@@ -650,7 +667,8 @@ impl WalletConnectRelay {
             return Err(RelayError::NoAccounts);
         }
 
-        // Get the session topic and key from the Proposed state
+        // Get the session topic and key. Normally we are in `Proposed`; tolerate a
+        // redelivered settle after activation so we can re-ack idempotently.
         let (session_topic, session_sym_key) = {
             let state = self.state.read().await;
             match &*state {
@@ -658,6 +676,7 @@ impl WalletConnectRelay {
                     session_topic,
                     session_sym_key,
                 } => (session_topic.clone(), session_sym_key.clone()),
+                SessionState::Active(session) => (session.topic.clone(), session.sym_key.clone()),
                 _ => {
                     return Err(RelayError::UnexpectedResponse(
                         "received session settle without prior proposal response".into(),
@@ -665,6 +684,25 @@ impl WalletConnectRelay {
                 }
             }
         };
+
+        // Acknowledge the settle so the wallet completes the handshake. Without
+        // this response the wallet reports the dApp as not responding.
+        let response = json!({
+            "id": request_id,
+            "jsonrpc": "2.0",
+            "result": true
+        });
+        let response_str = serde_json::to_string(&response)?;
+        // Box::pin breaks the recursive async cycle:
+        // handle_session_settle -> publish -> send_relay_request ->
+        // handle_relay_message -> handle_session_settle.
+        Box::pin(self.publish(
+            &session_topic,
+            &response_str,
+            tags::SESSION_SETTLE_RESPONSE,
+            &session_sym_key,
+        ))
+        .await?;
 
         // Update state to active
         let active_session = ActiveSession {
