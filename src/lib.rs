@@ -7,6 +7,10 @@
 // Re-exports
 
 pub use algonaut_abi as abi;
+/// Generate a typed contract client from an ARC-4 ABI JSON file.
+///
+/// See [`algonaut_abi::contract`] for full documentation.
+pub use algonaut_abi::contract;
 pub use algonaut_core as core;
 pub use algonaut_crypto as crypto;
 pub use algonaut_model as model;

@@ -1,0 +1,373 @@
+#pragma version 8
+
+// Vault - a minimal but real ARC-56 reference contract.
+//
+// It backs `examples/contract_arc56.rs` and the `vault.arc56.json` app spec:
+// the embedded base64 in that spec's `source.approval` is this file, and
+// `Vault::deploy` compiles it through algod at runtime.
+//
+// Global state (matches the spec schema: 1 uint, 1 byteslice):
+//   "total" : AVMUint64 - running counter
+//   "owner" : address   - the account that created the app
+//
+// Local state (matches the spec schema: 1 uint):
+//   "seen"  : AVMUint64 - set to 1 in the caller's local state on opt-in
+//
+// It also writes uint64 boxes via `box_put`; the `boxes` state map declares
+// those (AVMString key -> AVMUint64 value) so the client gets a box-map getter.
+//
+// It dispatches ARC-4 ABI calls by selector and emits the ARC-28
+// `Counted(uint64)` event whenever `total` changes. The `method "..."`
+// pseudo-ops below assemble to the same SHA-512/256 selectors the generated
+// Rust client sends, so the two always agree.
+
+// --- app creation -----------------------------------------------------------
+txn ApplicationID
+int 0
+==
+bnz create
+
+// --- opt-in: the `enroll` lifecycle action ----------------------------------
+txn OnCompletion
+int OptIn
+==
+bnz optin
+
+// --- ABI method dispatch (NoOp) ---------------------------------------------
+txn OnCompletion
+int NoOp
+==
+bnz dispatch
+
+// Reject every other on-completion (update / delete / close-out).
+err
+
+dispatch:
+    method "store((uint64,uint64))void"
+    txna ApplicationArgs 0
+    ==
+    bnz store
+
+    method "store_wrapped(((uint64,uint64),string))void"
+    txna ApplicationArgs 0
+    ==
+    bnz store_wrapped
+
+    method "get_pair()(uint64,uint64)"
+    txna ApplicationArgs 0
+    ==
+    bnz get_pair
+
+    method "scale((uint64,uint64),uint64)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz scale
+
+    method "incr(uint64)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz incr
+
+    method "enroll()void"
+    txna ApplicationArgs 0
+    ==
+    bnz approve
+
+    method "who(account)address"
+    txna ApplicationArgs 0
+    ==
+    bnz who
+
+    method "sum(uint64[])uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz sum
+
+    method "sum3(uint64[3])uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz sum3
+
+    method "box_put(string,uint64)void"
+    txna ApplicationArgs 0
+    ==
+    bnz box_put
+
+    method "box_get(string)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz box_get
+
+    method "deposit(pay,uint64)void"
+    txna ApplicationArgs 0
+    ==
+    bnz deposit
+
+    method "add_pair((uint64,uint64))uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz add_pair
+
+    method "price_raw(ufixed64x2)uint64"
+    txna ApplicationArgs 0
+    ==
+    bnz price_raw
+
+    err
+
+// opt-in (the `enroll` lifecycle action): record local "seen" = 1 for the
+// caller, then approve. Requires the local schema to allow 1 uint.
+optin:
+    int 0          // account index 0 = Txn.Sender
+    byte "seen"
+    int 1
+    app_local_put
+    b approve
+
+// create(): owner = caller, total = 0
+create:
+    byte "owner"
+    txn Sender
+    app_global_put
+    byte "total"
+    int 0
+    app_global_put
+    b approve
+
+// store(p): total = p.first + p.second; emit Counted(total)
+// The (uint64,uint64) tuple is a 16-byte static encoding in arg 1.
+store:
+    byte "total"
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    app_global_put
+    method "Counted(uint64)"
+    byte "total"
+    app_global_get
+    itob
+    concat
+    log
+    b approve
+
+// store_wrapped(w): total = w.inner.first + w.inner.second; emit Counted(total)
+// The wrapper is (((uint64,uint64),string)); the inner pair is the static head
+// at offset 0, so the trailing string is simply ignored here.
+store_wrapped:
+    byte "total"
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    app_global_put
+    method "Counted(uint64)"
+    byte "total"
+    app_global_get
+    itob
+    concat
+    log
+    b approve
+
+// get_pair() -> (uint64,uint64): returns (total, total)
+get_pair:
+    byte 0x151f7c75
+    byte "total"
+    app_global_get
+    itob
+    byte "total"
+    app_global_get
+    itob
+    concat
+    concat
+    log
+    b approve
+
+// scale(p, factor) -> uint64: (p.first + p.second) * factor
+// arg 1 is the (uint64,uint64) pair, arg 2 is the scalar factor.
+scale:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    txna ApplicationArgs 2
+    btoi
+    *
+    itob
+    concat
+    log
+    b approve
+
+// incr(step) -> uint64: total += step; returns total
+incr:
+    byte "total"
+    byte "total"
+    app_global_get
+    txna ApplicationArgs 1
+    btoi
+    +
+    app_global_put
+    byte 0x151f7c75
+    byte "total"
+    app_global_get
+    itob
+    concat
+    log
+    b approve
+
+// who(account) -> address: returns the referenced account (resolved via the
+// uint8 index the client encoded into the Accounts foreign array).
+who:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    btoi
+    txnas Accounts
+    concat
+    log
+    b approve
+
+// sum(uint64[]) -> uint64: sum a dynamic array (2-byte length prefix, then
+// big-endian uint64s). Loops over the count.
+sum:
+    txna ApplicationArgs 1
+    int 0
+    extract_uint16
+    store 0
+    int 0
+    store 1
+    int 0
+    store 2
+sum_loop:
+    load 1
+    load 0
+    ==
+    bnz sum_done
+    txna ApplicationArgs 1
+    int 2
+    load 1
+    int 8
+    *
+    +
+    extract_uint64
+    load 2
+    +
+    store 2
+    load 1
+    int 1
+    +
+    store 1
+    b sum_loop
+sum_done:
+    byte 0x151f7c75
+    load 2
+    itob
+    concat
+    log
+    b approve
+
+// sum3(uint64[3]) -> uint64: sum a fixed 3-element static array (24 bytes, no
+// length prefix).
+sum3:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    txna ApplicationArgs 1
+    int 16
+    extract_uint64
+    +
+    itob
+    concat
+    log
+    b approve
+
+// box_put(name, value): write the 8-byte uint64 `value` into box `name`.
+// arg1 is an ABI string (2-byte length prefix + bytes); strip the prefix to get
+// the raw key the client attaches as a box reference. arg2 is the 8-byte uint64.
+box_put:
+    txna ApplicationArgs 1
+    extract 2 0
+    txna ApplicationArgs 2
+    box_put
+    b approve
+
+// box_get(name) -> uint64: read box `name` and return its 8 bytes as uint64.
+box_get:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    extract 2 0
+    box_get
+    assert
+    concat
+    log
+    b approve
+
+// deposit(pay, expected): the preceding group transaction must be a payment of
+// `expected` microAlgos to this app's account. The pay sits at our group index
+// minus one (the builder places transaction args right before the call).
+deposit:
+    txn GroupIndex
+    int 1
+    -
+    store 0
+    load 0
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert
+    load 0
+    gtxns Amount
+    txna ApplicationArgs 1
+    btoi
+    ==
+    assert
+    b approve
+
+// add_pair(p) -> uint64: p.first + p.second, where p is an *anonymous* ABI
+// tuple (uint64,uint64) — the 16-byte static encoding in arg 1. This mirrors
+// `store`, but the generated client takes a plain Rust `(u64, u64)` tuple
+// rather than a named struct.
+add_pair:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    txna ApplicationArgs 1
+    int 8
+    extract_uint64
+    +
+    itob
+    concat
+    log
+    b approve
+
+// price_raw(p) -> uint64: returns the raw, unscaled integer of a ufixed64x2.
+// A ufixed64x2 encodes on the wire exactly as a uint64, so arg 1 is the 8-byte
+// big-endian integer the `Ufixed` client value wrapped — return it verbatim.
+price_raw:
+    byte 0x151f7c75
+    txna ApplicationArgs 1
+    int 0
+    extract_uint64
+    itob
+    concat
+    log
+    b approve
+
+approve:
+    int 1
+    return

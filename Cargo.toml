@@ -22,6 +22,7 @@ members = [
   "algonaut_kmd",
   "algonaut_transaction",
   "algonaut_abi",
+  "algonaut_abi_model",
   "algonaut_abi_sig",
   "algonaut_abi_macros",
   "algonaut_walletconnect",
@@ -29,6 +30,7 @@ members = [
 
 [workspace.dependencies]
 algonaut_abi = { path = "algonaut_abi", version = "0.8.0" }
+algonaut_abi_model = { path = "algonaut_abi_model", version = "0.8.0" }
 algonaut_abi_sig = { path = "algonaut_abi_sig", version = "0.8.0" }
 algonaut_abi_macros = { path = "algonaut_abi_macros", version = "0.8.0" }
 algonaut_algod = { path = "algonaut_algod", version = "0.8.0", default-features = false }
@@ -42,6 +44,7 @@ algonaut_transaction = { path = "algonaut_transaction", version = "0.8.0" }
 algonaut_walletconnect = { path = "algonaut_walletconnect", version = "0.8.0" }
 
 async-trait = "0.1.89"
+base64 = "0.22.1"
 cucumber = "0.23.0"
 data-encoding = "2.11.0"
 derive_more = "2.1.1"
@@ -52,6 +55,9 @@ getrandom = "0.2"
 gloo-timers = "0.4.0"
 indexmap = "2.14.0"
 instant = "0.1"
+# Offline JSON Schema validation (default features pull reqwest/rustls for
+# remote $ref resolution, which the self-contained ARC-56 schema never needs).
+jsonschema = { version = "0.46", default-features = false }
 lazy_static = "1.5.0"
 log = "0.4.29"
 num-bigint = "0.4.6"
@@ -88,7 +94,6 @@ x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 futures-util = "0.3.32"
 hex = "0.4.3"
 qrcode = "0.14.1"
-base64 = "0.22.1"
 bs58 = "0.5.1"
 
 [dependencies]
@@ -132,6 +137,7 @@ dotenv = { workspace = true }
 getrandom = { workspace = true, features = ["js"] }
 rand = { workspace = true }
 regex = { workspace = true }
+sha2 = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 wiremock = { workspace = true }
 
@@ -156,13 +162,31 @@ walletconnect = ["dep:algonaut_walletconnect"]
 # WalletConnect with built-in relay client (batteries-included).
 walletconnect-relay = ["walletconnect", "algonaut_walletconnect?/relay"]
 
+# Offline integration tests (the `contract!`-generated clients and logic sigs),
+# grouped as modules under one binary. `algod` gates the ARC-56 module's typed
+# `deploy`/state accessors; default features include it, so it runs normally.
 [[test]]
-name = "features_runner"
+name = "integration"
+path = "tests/integration/main.rs"
+required-features = ["algod"]
+
+[[test]]
+name = "cucumber"
+path = "tests/cucumber/main.rs"
 # Allows Cucumber to print output instead of libtest
 harness = false
 test = false
 # The cucumber acceptance suite drives the live algod/indexer/kmd clients.
 required-features = ["algod", "indexer", "kmd"]
+
+[[test]]
+name = "e2e"
+path = "tests/e2e/main.rs"
+# The ARC-56 end-to-end suite deploys to a live algod and self-funds via kmd, so
+# it is excluded from the default `cargo test` (run it with `make test-e2e`,
+# compile-check it with `make check-e2e`).
+test = false
+required-features = ["algod", "kmd"]
 
 # Examples declare the client features they exercise, so a slimmer build
 # (e.g. `--no-default-features --features algod`) skips the ones it cannot
@@ -172,7 +196,15 @@ name = "algod_client"
 required-features = ["algod"]
 
 [[example]]
-name = "app_call"
+name = "method_call_dynamic"
+required-features = ["algod"]
+
+[[example]]
+name = "contract_arc4"
+required-features = ["algod"]
+
+[[example]]
+name = "contract_arc56"
 required-features = ["algod"]
 
 [[example]]

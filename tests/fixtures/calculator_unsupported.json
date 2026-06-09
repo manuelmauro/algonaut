@@ -1,0 +1,57 @@
+{
+    "name": "CalculatorWithUnsupported",
+    "desc": "A contract mixing supported and unsupported method-argument types, exercising the macro's partial-client behaviour",
+    "methods": [
+        {
+            "name": "add",
+            "desc": "Add two numbers (supported)",
+            "args": [
+                {"name": "a", "type": "uint64"},
+                {"name": "b", "type": "uint64"}
+            ],
+            "returns": {"type": "uint64"}
+        },
+        {
+            "name": "transfer",
+            "desc": "Transfer with payment (has transaction arg - supported)",
+            "args": [
+                {"name": "payment", "type": "pay"},
+                {"name": "amount", "type": "uint64"}
+            ],
+            "returns": {"type": "void"}
+        },
+        {
+            "name": "opt_in_asset",
+            "desc": "Opt into an asset (has reference arg - supported)",
+            "args": [
+                {"name": "asset", "type": "asset"}
+            ],
+            "returns": {"type": "void"}
+        },
+        {
+            "name": "batch_add",
+            "desc": "Add multiple numbers (has array arg - supported)",
+            "args": [
+                {"name": "numbers", "type": "uint64[]"}
+            ],
+            "returns": {"type": "uint64"}
+        },
+        {
+            "name": "add_fixed",
+            "desc": "Add two fixed-point numbers (has ufixed arg - supported)",
+            "args": [
+                {"name": "a", "type": "ufixed64x2"},
+                {"name": "b", "type": "ufixed64x2"}
+            ],
+            "returns": {"type": "ufixed64x2"}
+        },
+        {
+            "name": "odd_width",
+            "desc": "Takes a non-standard-width uint (no canonical Rust type - unsupported)",
+            "args": [
+                {"name": "n", "type": "uint24"}
+            ],
+            "returns": {"type": "void"}
+        }
+    ]
+}

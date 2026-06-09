@@ -16,9 +16,9 @@ Accepted
 
 ## Context
 
-`tests/features/integration/dryrun.feature`,
-`tests/features/integration/dryrun_testing.feature`, and the unit
-companion `tests/features/unit/dryrun_trace.feature` use step phrases
+`tests/cucumber/features/integration/dryrun.feature`,
+`tests/cucumber/features/integration/dryrun_testing.feature`, and the unit
+companion `tests/cucumber/features/unit/dryrun_trace.feature` use step phrases
 that imply a high-level builder:
 
 - `I dryrun a "<kind>" program "<program>"`

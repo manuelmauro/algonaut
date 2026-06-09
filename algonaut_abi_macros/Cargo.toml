@@ -1,6 +1,6 @@
 [package]
 authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
-description = "Compile-time checked ARC-4 ABI method-call macros (abi_call!/abi_method!) for algonaut_abi."
+description = "The contract! proc-macro: generates typed ARC-4/ARC-56 contract clients for algonaut_abi."
 edition = "2024"
 keywords = ["Algorand", "sdk", "abi", "macros"]
 license = "MIT OR Apache-2.0"
@@ -12,7 +12,11 @@ version = "0.8.0"
 proc-macro = true
 
 [dependencies]
+algonaut_abi_model = { workspace = true }
 algonaut_abi_sig = { workspace = true }
+base64 = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
 syn = { workspace = true }

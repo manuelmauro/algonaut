@@ -1,0 +1,9 @@
+{
+  "name": "Prices",
+  "desc": "ARC-4 contract exercising ufixedNxM arguments",
+  "methods": [
+    { "name": "set_price", "args": [{ "name": "p", "type": "ufixed64x2" }], "returns": { "type": "void" } },
+    { "name": "wide", "args": [{ "name": "x", "type": "ufixed256x10" }], "returns": { "type": "void" } },
+    { "name": "narrow", "args": [{ "name": "x", "type": "ufixed8x2" }], "returns": { "type": "void" } }
+  ]
+}

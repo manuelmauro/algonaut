@@ -33,9 +33,9 @@ suite contains:
 
 Across both folders there are roughly **325 unique integration step
 phrases** and **242 unique unit step phrases**. The Rust SDK currently
-wires only three integration features into `tests/features_runner.rs`
+wires only three integration features into `tests/cucumber/main.rs`
 (`applications`, `abi`, `c2c`) and ships no unit-feature support at all.
-The comment in `features_runner.rs` claiming `algod`/`assets` were "v1
+The comment in `tests/cucumber/main.rs` claiming `algod`/`assets` were "v1
 only" is outdated — both features target the v2 endpoints algonaut
 already implements.
 
@@ -50,7 +50,7 @@ already implements.
    ADR; the latter gets its own ADR plus GitHub issue and the affected
    scenarios are skipped via cucumber filters in the runner.
 3. **Adopt a runner layout that enumerates every `.feature` file** under
-   `tests/features/integration` and `tests/features/unit`. Features
+   `tests/cucumber/features/integration` and `tests/cucumber/features/unit`. Features
    without a corresponding step-def module are listed but excluded by a
    feature-set filter; the filter is the single source of truth for
    "what runs in CI".
@@ -61,7 +61,7 @@ already implements.
 
 ## Consequences
 
-- Contributors can grep `tests/features_runner.rs` and see, at a glance,
+- Contributors can grep `tests/cucumber/main.rs` and see, at a glance,
   which features are live and which are stubbed.
 - The bar for "the cucumber suite passes" is well-defined: every enabled
   feature must run green; every disabled feature must point at an ADR.

@@ -12,7 +12,8 @@ signed.tx
 # testing files
 *.feature
 test-harness
-tests/features
+/sandbox
+tests/cucumber/features
 
 # regenerated openapi clients (review-only, see openapi/README.md)
 openapi/generated/
@@ -26,3 +27,7 @@ openapi/generated/
 
 # os
 **.DS_Store
+
+# agent tooling
+.claude/
+.pi/

@@ -16,7 +16,7 @@ Accepted
 
 ## Context
 
-`tests/features/integration/simulate.feature` exercises the algod
+`tests/cucumber/features/integration/simulate.feature` exercises the algod
 `/v2/transactions/simulate` endpoint with several "power-pack" toggles:
 
 | Step phrase                                                                | Underlying field                       |

@@ -11,7 +11,7 @@ use algonaut_abi::{
     abi_interactions::AbiReturnType,
     abi_type::{AbiType, AbiValue},
 };
-use algonaut_core::TransactionId;
+use algonaut_core::{AppId, TransactionId};
 use algonaut_model::algod::PendingTransactionResponse;
 
 use crate::{Error, simulate::SimulateResponse};
@@ -51,6 +51,32 @@ pub struct ExecuteOutcome {
     pub transaction_ids: Vec<TransactionId>,
     /// Return values for all the ABI method calls in the executed group
     pub method_results: Vec<AbiMethodResult>,
+    /// The id of the application created by the awaited transaction, if it
+    /// created one (e.g. a bare app-create). `None` otherwise. The awaited
+    /// transaction is the first ABI method call, or the first transaction when
+    /// the group has none — so this captures the common "deploy" case of a
+    /// lone create transaction.
+    ///
+    /// For a create at another index in a mixed group, see
+    /// [`created_app_ids`](Self::created_app_ids).
+    pub created_app_id: Option<AppId>,
+    /// Every application created by the group, paired with the index of the
+    /// transaction that created it, in group order. Captures app-creates at any
+    /// slot of a mixed group — not just the awaited transaction that
+    /// [`created_app_id`](Self::created_app_id) reflects. Empty when the group
+    /// created no application.
+    pub created_app_ids: Vec<(usize, AppId)>,
+}
+
+impl ExecuteOutcome {
+    /// The application created by the transaction at group index `index`, if
+    /// that transaction created one.
+    pub fn created_app_id_at(&self, index: usize) -> Option<AppId> {
+        self.created_app_ids
+            .iter()
+            .find(|(i, _)| *i == index)
+            .map(|(_, app_id)| *app_id)
+    }
 }
 
 /// Result of [`simulating`](super::UnsignedAtomicGroup::simulate) a group. Mirrors
@@ -111,4 +137,29 @@ fn get_return_value_with_abi_type(
         Ok(decoded) => Ok(AbiMethodReturnValue::Some(decoded)),
         Err(e) => Err(AbiReturnDecodeError(format!("{e:?}"))),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn created_app_id_at_finds_the_creating_index() {
+        // A mixed group where a create sits at index 2 (not the awaited slot):
+        // `created_app_id` reflects the awaited transaction, while
+        // `created_app_ids`/`created_app_id_at` capture the create wherever it is.
+        let outcome = ExecuteOutcome {
+            confirmed_round: Some(42),
+            transaction_ids: vec![],
+            method_results: vec![],
+            created_app_id: None,
+            created_app_ids: vec![(2, AppId(777)), (4, AppId(888))],
+        };
+
+        assert_eq!(outcome.created_app_id_at(2), Some(AppId(777)));
+        assert_eq!(outcome.created_app_id_at(4), Some(AppId(888)));
+        // A non-creating index yields `None`.
+        assert_eq!(outcome.created_app_id_at(0), None);
+        assert_eq!(outcome.created_app_id_at(3), None);
+    }
 }

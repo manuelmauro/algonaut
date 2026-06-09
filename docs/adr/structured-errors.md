@@ -22,7 +22,7 @@ and ~27 construction sites inside the workspace use them for failure modes
 that callers genuinely care about. `build_group()` reports an empty group
 as `Error::Msg("attempting to build group with zero transactions")`; the
 ABI step-def asserts on it by **substring match**
-(`tests/step_defs/integration/abi.rs:540`). A message reword silently
+(`tests/cucumber/step_defs/integration/abi.rs:540`). A message reword silently
 breaks the test.
 
 The atomic-transaction-composer has the same pattern in five other places:
@@ -93,7 +93,7 @@ match on the **variant**, not on its body.
 - **Compile-error breaking change.** Any caller that pattern-matched on
   `Error::Msg(...)` for one of the now-typed failure modes will fail to
   compile until they switch to the variant. The exact-message
-  substring assertion in `tests/step_defs/integration/abi.rs` is the
+  substring assertion in `tests/cucumber/step_defs/integration/abi.rs` is the
   one such caller in-tree; it's migrated in this PR.
 - **`Msg` and `Internal` aren't gone — they're reserved.** The
   remaining ~22 sites use `Msg` for arg-type mismatches, BASE64

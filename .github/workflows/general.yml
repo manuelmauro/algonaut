@@ -123,7 +123,50 @@ jobs:
             && cat test-harness/.sandbox/sandbox.log \
             || echo "No sandbox.log to dump."
       - name: Run cucumber integration tests
-        run: cargo test --test features_runner --
+        run: cargo test --test cucumber --
       - name: Tear down the algorand test harness
         if: always()
         run: ./test-harness.sh down
+
+  cargo-test-e2e:
+    name: cargo-test-e2e
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: e2e
+      # Unlike the cucumber harness, the sandbox pulls prebuilt images (no
+      # source build, so no buildx) and binds the standard ports the e2e tests
+      # default to (algod :4001, kmd :4002). Its own health-wait can time out
+      # under load even when the node comes up moments later, so don't gate on
+      # its exit code — the readiness poll below is the real check.
+      - name: Bring up a local Algorand sandbox
+        run: make sandbox || true
+      - name: Wait for algod + kmd to be ready
+        run: |
+          token=$(printf 'a%.0s' {1..64})
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:4001/genesis \
+              && curl -sf -o /dev/null -H "X-KMD-API-Token: $token" http://localhost:4002/v1/wallets; then
+              echo "algod + kmd ready"; exit 0
+            fi
+            sleep 2
+          done
+          echo "sandbox did not become ready"; docker ps -a
+          cat sandbox/sandbox.log 2>/dev/null || true
+          exit 1
+      - name: Run the ARC-56 end-to-end tests
+        run: make test-e2e
+      - name: Dump sandbox logs on failure
+        if: failure()
+        run: |
+          cat sandbox/sandbox.log 2>/dev/null || echo "No sandbox.log to dump."
+          docker logs algorand-sandbox-algod 2>&1 | tail -100 || true
+      - name: Tear down the sandbox
+        if: always()
+        run: make sandbox-down

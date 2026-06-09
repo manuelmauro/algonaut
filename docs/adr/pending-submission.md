@@ -19,7 +19,7 @@ Accepted. Implements decision item **D2** of
 
 `src/util/wait_for_pending_tx.rs` exists. Yet `examples/app_create.rs`
 and `examples/asset_create.rs` each carried their own verbatim copy of
-a `wait_for_pending_transaction` helper, and `tests/step_defs/util.rs`
+a `wait_for_pending_transaction` helper, and `tests/cucumber/step_defs/util.rs`
 carried a third. A utility that ships with the crate but is re-pasted
 by every caller that needs it is a utility with the wrong shape:
 finality polling belongs on the client, not in user code.
@@ -76,7 +76,7 @@ let confirmed = algod
 ### What retires
 
 - `src/util/wait_for_pending_tx.rs` — deleted.
-- `wait_for_pending_transaction` in `tests/step_defs/util.rs` — deleted.
+- `wait_for_pending_transaction` in `tests/cucumber/step_defs/util.rs` — deleted.
 - The per-example copies in `examples/app_create.rs` and
   `examples/asset_create.rs` — deleted.
 - All call sites switch to `submit(...).await?.confirm().await?` or

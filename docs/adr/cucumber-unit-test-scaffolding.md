@@ -16,13 +16,13 @@ Accepted
 
 ## Context
 
-The existing `tests/step_defs/integration/world.rs` is built around
+The existing `tests/cucumber/step_defs/integration/world.rs` is built around
 live clients (`Option<Algod>`, `Option<Kmd>`, `Option<Indexer>`) and
 holds dozens of fields specific to integration scenarios (suggested
 params, transient account, atomic composer state, ABI return cache).
 That shape works for the harness-backed features but is the wrong
 container for the 17 unit features under
-`tests/features/unit/*.feature`, which exercise:
+`tests/cucumber/features/unit/*.feature`, which exercise:
 
 - ABI JSON parsing (`abijson.feature`)
 - Client URL/header construction
@@ -40,13 +40,13 @@ None of these need a running algod / kmd; many run faster if they
 
 ## Decision
 
-1. Add `tests/step_defs/unit/` mirroring the integration tree:
+1. Add `tests/cucumber/step_defs/unit/` mirroring the integration tree:
    - `world.rs` with a `UnitWorld` containing only the fixture / parser
      state each unit feature needs (raw JSON inputs, parsed structs,
      constructed transactions, etc.).
    - One step-def module per unit feature (`abijson.rs`, `offline.rs`,
      `tealsign.rs`, …).
-2. Drive the unit features from `tests/features_runner.rs` with a
+2. Drive the unit features from `tests/cucumber/main.rs` with a
    second `World::cucumber()` builder so cross-talk between the two
    worlds is impossible.
 3. Use cucumber tags (`@unit`, `@integration`) to keep filters in the

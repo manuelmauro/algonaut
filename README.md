@@ -15,70 +15,68 @@ A Rust SDK for the [Algorand](https://www.algorand.com/) blockchain. Pre-1.0 —
 
 - Async clients for `algod` v2, `kmd` v1, and `indexer` v2
 - One-call transaction builders for payments, asset config / transfer / freeze / clawback, application calls, key registration, and state proofs
-- A typestate `AtomicGroupBuilder` — bundle transactions and compile-time-checked ARC-4 ABI calls (`abi_call!`), then `simulate`, `sign`, and `execute`
+- A typestate `AtomicGroupBuilder` — bundle transactions and ARC-4 ABI calls, then `simulate`, `sign`, and `execute`
+- Typed contract clients generated at compile time from an ARC-4 ABI or a full ARC-56 app spec (`contract!`) — typed-struct args, a `deploy` constructor, state readers, and ARC-28 events
 - An open, async `Signer` trait: `Account` out of the box, or plug in an HSM, remote KMS, or WalletConnect
 - TEAL compile / disassemble + V3 source-map decoder
 - Cucumber acceptance suite that exercises the algorand-sdk-testing harness end-to-end
 
 ## Quickstart: an atomic group
 
-Bundle two payments and an ARC-4 method call into one all-or-nothing group,
-dry-run it with `simulate`, then `sign` and `execute` the very same group —
-the headline `algonaut` flow as it stands today. See
-[`examples/atomic.rs`](./examples/atomic.rs) for the fully annotated version.
+Generate a typed client from an ARC-56 app spec with `contract!`, `deploy` it
+straight from the spec, call a method with a typed-struct argument, dry-run the
+group with `simulate`, then `sign` and `execute` the very same group — the
+headline `algonaut` flow. Raw transactions (payments, asset ops) drop into the
+same group via `add_transaction`. See
+[`examples/contract_arc56.rs`](./examples/contract_arc56.rs) for the fully annotated
+version (events, defaults, lifecycle actions, and more).
 
 ```rust
-use algonaut::abi::abi_call;
-use algonaut::atomic::{AtomicGroupBuilder, MethodCall, TransactionWithSigner};
-use algonaut::core::{AppId, MicroAlgos};
-use algonaut::transaction::account::Account;
-use algonaut::transaction::{Pay, Signer};
 use algonaut::Algod;
+use algonaut::atomic::AtomicGroupBuilder;
+use algonaut::transaction::Signer;
+use algonaut::transaction::account::Account;
 use std::sync::Arc;
 use std::{env, error::Error};
+
+// `contract!` reads an ARC-56 "Extended App Description" at compile time and
+// generates a typed `Vault` client: a `deploy` constructor that compiles the
+// spec's TEAL, the named `Pair` struct as a typed argument, one builder per ABI
+// method, and `global_*` readers that decode state per the spec's declared types.
+algonaut::contract!("contracts/vault.arc56.json");
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let algod = Algod::new(&env::var("ALGOD_URL")?, &env::var("ALGOD_TOKEN")?)?;
 
     let alice = Account::from_mnemonic(&env::var("ALICE_MNEMONIC")?)?;
-    let bob = Account::from_mnemonic(&env::var("BOB_MNEMONIC")?)?;
+    let sender = alice.address();
 
     // A signer is shared as `Arc<dyn Signer>`: `Account` here, but any HSM,
     // remote KMS, or WalletConnect impl drops in the same way.
-    let alice_signer: Arc<dyn Signer> = Arc::new(alice.clone());
-    let bob_signer: Arc<dyn Signer> = Arc::new(bob.clone());
+    let signer: Arc<dyn Signer> = Arc::new(alice);
 
     let params = algod.suggested_params().await?;
-    let app = AppId(123); // an ARC-4 `add(uint64,uint64)uint64` contract
 
-    let alice_to_bob = Pay::new(alice.address(), bob.address(), MicroAlgos(1_000)).build(&params)?;
-    let bob_to_alice = Pay::new(bob.address(), alice.address(), MicroAlgos(1_000)).build(&params)?;
+    // Deploy straight from the spec: `deploy` compiles the contract's TEAL,
+    // submits the app-create with the declared state schema, and hands back a
+    // client bound to the new app id — no hand-managed `AppId`.
+    let vault = Vault::deploy(&algod, sender, Arc::clone(&signer), &params).await?;
+    println!("deployed Vault as app {}", vault.app_id().0);
 
-    // `abi_call!` checks the signature and the argument types at compile time.
-    let call = MethodCall::builder(app, alice.address(), alice_signer.clone())
-        .invoke(abi_call!("add(uint64,uint64)uint64", 2u64, 3u64))
-        .build(&params);
+    // `Pair` is the Rust struct generated for the ARC-56 `Pair`; `store` won't
+    // compile unless the spec declares it and the field types line up.
+    let store = vault.store(Pair { first: 2, second: 3 }).build(&params);
+    let group = AtomicGroupBuilder::new().add_method_call(store).build()?;
 
-    // The typestate chain — AtomicGroupBuilder → UnsignedAtomicGroup →
-    // SignedAtomicGroup — means "submit before sign" simply won't compile.
-    let group = AtomicGroupBuilder::new()
-        .add_transaction(TransactionWithSigner::new(alice_to_bob, alice_signer))
-        .add_transaction(TransactionWithSigner::new(bob_to_alice, bob_signer))
-        .add_method_call(call)
-        .build()?;
-
-    // `simulate` borrows the group, so we dry-run it before touching a key.
-    let sim = group.simulate(&algod).await?;
-    println!("simulate ok: {} transaction(s)", sim.transaction_ids.len());
-
-    // `sign` is async (a wallet may await user approval); `execute` submits,
-    // waits for confirmation, and decodes each method call's ABI return.
+    // `simulate` borrows the group, so we dry-run it before touching a key; then
+    // `sign` (async — a wallet may await approval) and `execute` the same group.
+    group.simulate(&algod).await?;
     let outcome = group.sign().await?.execute(&algod).await?;
     println!("confirmed in round {:?}", outcome.confirmed_round);
-    for result in &outcome.method_results {
-        println!("returned: {:?}", result.return_value);
-    }
+
+    // Global state, decoded per the key's declared ARC-56 type.
+    println!("total = {:?}", vault.global_total(&algod).await?);
     Ok(())
 }
 ```
@@ -91,7 +89,8 @@ modernization, and the example above is the API as it stands today:
 - **0.5** — Rust 2024 edition (MSRV 1.85); `ring` swapped for `ed25519-dalek`, so `wasm32` builds need no C toolchain; workspace-wide dependency refresh; `lefthook` + `make ci`.
 - **0.6** — `simulate` and dry-run request builders, a TEAL V3 source-map decoder, and domain types that serialize to both JSON and msgpack.
 - **0.7** — identifier newtypes (`AppId`, `AssetId`, `TransactionId`) at the client boundary, block / account-resource / ledger-delta endpoints, and msgpack response decoding.
-- **0.8** — an open, async `Signer` trait (HSM / remote KMS / WalletConnect friendly), the typestate `AtomicGroupBuilder` shown above, compile-time-checked ARC-4 calls via `abi_call!`, Cargo feature gates for clients (`algod`, `indexer`, `kmd`), and structured error types with full source-chaining.
+- **0.8** — an open, async `Signer` trait (HSM / remote KMS / WalletConnect friendly), the typestate `AtomicGroupBuilder` shown above, Cargo feature gates for clients (`algod`, `indexer`, `kmd`), and structured error types with full source-chaining.
+- **unreleased** — `contract!` now generates a typed client from a full ARC-56 app spec: a `deploy` constructor, typed-struct arguments, `global_*` state readers, ARC-28 events, and a read-only `simulate` path, extending the earlier ARC-4 support.
 
 Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG.md](./CHANGELOG.md) has the full entry-by-entry history.
 
@@ -107,8 +106,9 @@ Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG
 | `algonaut_crypto`      | Ed25519 sign/verify (via `ed25519-dalek`) and BIP-39 mnemonics                           |
 | `algonaut_transaction` | Transaction builders and the open `Signer` trait                                         |
 | `algonaut_abi`         | ARC-4 ABI types, method encoding, TEAL source-map decoder                                |
-| `algonaut_abi_sig`     | ARC-4 signature/type grammar shared by the macros and the runtime                        |
-| `algonaut_abi_macros`  | `abi_call!` / `abi_method!` compile-time-checked ABI proc-macros                         |
+| `algonaut_abi_model`   | Pure serde data model for ARC-4 / ARC-56 app-spec JSON, shared by the runtime and the macros |
+| `algonaut_abi_sig`     | ARC-4 signature/type grammar shared by the `contract!` macro and the runtime             |
+| `algonaut_abi_macros`  | `contract!` proc-macro: typed ARC-4/ARC-56 contract client generator                     |
 | `algonaut_encoding`    | Shared `serde` visitors and base32/base64 helpers                                        |
 | `algonaut_model`       | Hand-written response models shared between the clients                                  |
 

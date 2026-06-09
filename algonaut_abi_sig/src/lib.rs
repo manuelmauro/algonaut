@@ -8,11 +8,12 @@
 //! - [`algonaut_abi`](https://docs.rs/algonaut_abi)'s runtime parser
 //!   (`AbiType::from_str`, `AbiMethod::from_signature`) maps the AST produced
 //!   here onto its richer `AbiType`/`AbiMethod` types; and
-//! - the `algonaut_abi_macros` proc-macros validate a signature *literal* at
-//!   compile time and synthesize per-argument marker types from the same AST.
+//! - the `algonaut_abi_macros` `contract!` client generator validates the
+//!   spec's method signatures at compile time and synthesizes per-argument
+//!   marker types from the same AST.
 //!
 //! Because both paths call into this crate, a signature accepted (or rejected)
-//! by the `abi_call!` macro is accepted (or rejected) identically by
+//! by the `contract!` macro is accepted (or rejected) identically by
 //! `from_signature`, and vice-versa.
 //!
 //! The two entry points are [`parse_type`] (a single ABI type, e.g.
@@ -263,7 +264,10 @@ pub fn split_signature(method: &str) -> Result<RawSignature, SigError> {
     })
 }
 
-fn classify_arg(s: &str) -> Result<ArgClass, SigError> {
+/// Classify a single signature argument as a value (an ABI type), a
+/// transaction type (`pay`, `axfer`, …), or a reference type (`account`,
+/// `asset`, `application`).
+pub fn classify_arg(s: &str) -> Result<ArgClass, SigError> {
     if is_transaction_arg(s) {
         Ok(ArgClass::Transaction(s.to_owned()))
     } else if is_reference_arg(s) {

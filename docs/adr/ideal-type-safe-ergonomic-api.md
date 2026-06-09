@@ -1,7 +1,7 @@
 ---
 id: ideal-type-safe-ergonomic-api
 title: An ideal type-safe, ergonomic API for algonaut
-abstract: Set a north-star direction for the algonaut public API — newtype identifiers, single-stage transaction builders, client-bound submit/confirm helpers, a Signer trait, a method-call builder, domain types at the network boundary, and structured errors — so the common flows in examples/ and tests/step_defs stop repeating boilerplate and stop relying on stringly-typed escape hatches.
+abstract: Set a north-star direction for the algonaut public API — newtype identifiers, single-stage transaction builders, client-bound submit/confirm helpers, a Signer trait, a method-call builder, domain types at the network boundary, and structured errors — so the common flows in examples/ and tests/cucumber/step_defs stop repeating boilerplate and stop relying on stringly-typed escape hatches.
 status: accepted
 date: 2026-05-19
 deciders: []
@@ -16,7 +16,7 @@ Accepted
 
 ## Context
 
-The `examples/` directory and the cucumber `tests/step_defs/` are the two
+The `examples/` directory and the cucumber `tests/cucumber/step_defs/` are the two
 most honest descriptions of what using algonaut actually feels like:
 `examples/` is what we tell new users to copy, and the step-defs are the
 code we wrote ourselves to drive every feature in the
@@ -50,7 +50,7 @@ nesting level apart. A reader cannot tell from the call site why one
 
 `src/util/wait_for_pending_tx.rs` exists. Yet `examples/app_create.rs`
 and `examples/asset_create.rs` each carry their own verbatim copy of a
-`wait_for_pending_transaction` helper, and `tests/step_defs/util.rs`
+`wait_for_pending_transaction` helper, and `tests/cucumber/step_defs/util.rs`
 carries a third. A utility that ships with the crate but is re-pasted by
 every caller that needs it is a utility with the wrong shape: finality
 polling belongs on the client, not in user code.

@@ -1,0 +1,6 @@
+#pragma version 8
+
+// Vault clear-state program: always approve. The AVM reclaims the caller's
+// local "seen" slot on clear-state automatically, so nothing to do here.
+int 1
+return

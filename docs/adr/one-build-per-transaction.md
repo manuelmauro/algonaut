@@ -120,7 +120,7 @@ is the eventual replacement for that path.
   `TxnBuilder::with(...)` or `TxnBuilder::with_fee(...)`. Pre-1.0;
   mechanical migration: drop `TxnBuilder`, append `.build(&params)?` to
   the inner builder, move any header setters onto the inner builder.
-  ~40 call sites across `examples/` and `tests/step_defs/` migrated in
+  ~40 call sites across `examples/` and `tests/cucumber/step_defs/` migrated in
   this PR.
 - **The same word stops meaning two things.** There is one `build` per
   transaction now, and it is the one that can fail. Type-specific
