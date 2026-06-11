@@ -31,6 +31,7 @@ version and ship together. A release therefore bumps every crate, not just one.
 8. Commit the bump, changelog, and docs (stage with `git add -A`)
 9. Create the annotated `vX.Y.Z` tag
 10. Publish the crates to crates.io in dependency order
+11. Create the GitHub release for the tag (see [GitHub Release](#github-release))
 
 ## Version Bump
 
@@ -199,3 +200,18 @@ done
 
 `cargo workspaces publish` (from `cargo-workspaces`) automates this same
 ordered, version-locked publish if you prefer a single command.
+
+## GitHub Release
+
+Every tag gets a matching GitHub release (`gh release list` shows the history).
+Match the established style — a short **## Highlights** intro, **### Key
+Features** and **### Breaking Changes** bullet lists, and a link to the changelog
+section — and mark it latest:
+
+```bash
+gh release create vX.Y.Z --title "vX.Y.Z" --notes-file notes.md --latest
+```
+
+The changelog link anchor is the header lowercased with brackets/dots/spaces
+stripped, e.g. `[0.9.0] - 2026-06-11` →
+`CHANGELOG.md#090---2026-06-11`.
