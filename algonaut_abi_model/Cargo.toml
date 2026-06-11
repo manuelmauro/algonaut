@@ -6,7 +6,7 @@ keywords = ["Algorand", "sdk", "abi"]
 license = "MIT OR Apache-2.0"
 name = "algonaut_abi_model"
 repository = "https://github.com/manuelmauro/algonaut"
-version = "0.8.0"
+version = "0.9.0"
 
 # The on-the-wire ARC-4 ABI/app-spec JSON shape, shared by the runtime parser
 # (algonaut_abi, which builds its richer types from these) and the proc-macros

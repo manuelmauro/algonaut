@@ -90,7 +90,7 @@ modernization, and the example above is the API as it stands today:
 - **0.6** — `simulate` and dry-run request builders, a TEAL V3 source-map decoder, and domain types that serialize to both JSON and msgpack.
 - **0.7** — identifier newtypes (`AppId`, `AssetId`, `TransactionId`) at the client boundary, block / account-resource / ledger-delta endpoints, and msgpack response decoding.
 - **0.8** — an open, async `Signer` trait (HSM / remote KMS / WalletConnect friendly), the typestate `AtomicGroupBuilder` shown above, Cargo feature gates for clients (`algod`, `indexer`, `kmd`), and structured error types with full source-chaining.
-- **unreleased** — `contract!` now generates a typed client from a full ARC-56 app spec: a `deploy` constructor, typed-struct arguments, `global_*` state readers, ARC-28 events, and a read-only `simulate` path, extending the earlier ARC-4 support.
+- **0.9** — typed contract clients generated at compile time from a full **ARC-56** app spec: `contract!("app.arc56.json")` emits a `deploy` constructor (compiling the spec's TEAL or using precompiled `byteCode`), typed struct / tuple / array / reference / transaction method arguments, `global` / `local` / `box` / `map` state readers decoded per their declared ARC-56 types, ARC-28 event decoding, literal and sourced argument defaults, and a read-only `simulate` path — building on the ARC-4 `contract!` macro also introduced in this line. The earlier `abi_call!` / `abi_method!` macros are removed in its favour.
 
 Each decision is recorded as an ADR under [`docs/adr/`](./docs/adr/); [CHANGELOG.md](./CHANGELOG.md) has the full entry-by-entry history.
 
