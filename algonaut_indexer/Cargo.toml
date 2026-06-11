@@ -1,6 +1,6 @@
 [package]
 name = "algonaut_indexer"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["OpenAPI Generator team and contributors"]
 description = "Algorand ledger analytics API."
 # Override this license by providing a License Object in the OpenAPI.
