@@ -1,4 +1,7 @@
-use crate::step_defs::{integration::world::World, util::account_from_kmd_response};
+use crate::step_defs::{
+    integration::general::pick_funded_account, integration::world::World,
+    util::account_from_kmd_response,
+};
 use algonaut_core::{
     MicroAlgos, MultisigAddress, Round, StateProofPk, TransactionId, VotePk, VrfPk,
 };
@@ -14,7 +17,6 @@ const TEST_STATE_PROOF_PK: &str =
 
 async fn build_default_payment(
     w: &mut World,
-    sender_index: usize,
     receiver_index: usize,
     amt: u64,
     note_b64: &str,
@@ -28,11 +30,14 @@ async fn build_default_payment(
         BASE64.decode(note_b64.as_bytes())?
     };
 
-    let mut tx_builder = Pay::new(
-        accounts[sender_index],
-        accounts[receiver_index],
-        MicroAlgos(amt),
-    );
+    // kmd's list_keys ordering is unstable, so `accounts[0]` is not reliably the
+    // pre-funded creator — a payment from it would overspend. Use the funded
+    // account as the sender; "I get the private key" exports `tx.sender()`'s key
+    // to sign, so sender and signer stay consistent.
+    let sender = pick_funded_account(algod, accounts).await?;
+    let receiver = accounts[receiver_index];
+
+    let mut tx_builder = Pay::new(sender, receiver, MicroAlgos(amt));
     if !note.is_empty() {
         tx_builder = tx_builder.note(note.clone());
     }
@@ -47,7 +52,7 @@ async fn default_transaction_with_parameters(
     amt: u64,
     note_b64: String,
 ) -> Result<(), Box<dyn Error>> {
-    build_default_payment(w, 0, 1, amt, &note_b64).await
+    build_default_payment(w, 1, amt, &note_b64).await
 }
 
 #[given(regex = r#"^default multisig transaction with parameters (\d+) "([^"]*)"$"#)]

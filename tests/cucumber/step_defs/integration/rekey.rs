@@ -1,3 +1,4 @@
+use crate::step_defs::integration::general::pick_funded_account;
 use crate::step_defs::integration::world::World;
 use algonaut_core::{Address, MicroAlgos};
 use algonaut_transaction::{Pay, account::Account};
@@ -17,9 +18,10 @@ async fn i_generate_a_key_using_kmd_for_rekeying_and_fund_it(
     let key_resp = kmd.generate_key(handle).await?;
     let new_addr: Address = key_resp.address.parse()?;
 
-    // Fund the freshly-generated account from the first wallet account so
-    // it can pay fees and serve as the rekey sender.
-    let funder = accounts[0];
+    // Fund the freshly-generated account from a funded wallet account so it
+    // can pay fees and serve as the rekey sender. kmd's list_keys ordering is
+    // unstable, so `accounts[0]` is not reliably funded.
+    let funder = pick_funded_account(algod, accounts).await?;
     let funder_key = kmd.export_key(handle, password, &funder).await?;
     let funder_account = Account::from_seed(funder_key.private_key[0..32].try_into()?);
     let params = algod.suggested_params().await?;
