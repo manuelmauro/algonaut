@@ -83,8 +83,18 @@ impl TryFrom<Transaction> for ApiTransaction {
                 api_t.vote_pk = reg.vote_pk;
                 api_t.selection_pk = reg.selection_pk;
                 api_t.state_proof_key = reg.state_proof_key;
-                api_t.vote_first = reg.vote_first;
-                api_t.vote_last = reg.vote_last;
+                // Omit zero-valued rounds: canonical Algorand msgpack drops
+                // zero ints, so an included `votefst: 0` (e.g. vote_first ==
+                // Round(0)) would make the signed bytes differ from the node's
+                // re-encoding, and the keyreg would fail signature verification.
+                api_t.vote_first = reg
+                    .vote_first
+                    .and_then(|r| num_as_api_option(r.0))
+                    .map(Round);
+                api_t.vote_last = reg
+                    .vote_last
+                    .and_then(|r| num_as_api_option(r.0))
+                    .map(Round);
                 api_t.vote_key_dilution = reg.vote_key_dilution.and_then(num_as_api_option);
                 api_t.nonparticipating = reg.nonparticipating.and_then(bool_as_api_option);
             }
@@ -840,6 +850,46 @@ mod tests {
         assert!(
             top_level_keys(&rekeyed.to_msg_pack().unwrap()).contains("sgnr"),
             "a rekeyed signed transaction must encode a `sgnr` key"
+        );
+    }
+
+    /// `vote_first == Round(0)` must not encode a `votefst` key: canonical
+    /// Algorand msgpack omits zero ints, so an included `votefst: 0` makes the
+    /// signed online keyreg differ from the node's re-encoding and fail
+    /// signature verification.
+    #[test]
+    fn online_keyreg_omits_zero_vote_first() {
+        use crate::builder::RegisterKey;
+        use algonaut_core::{StateProofPk, VotePk, VrfPk};
+
+        let params = StubParams {
+            genesis_id: "testnet-v1.0".to_owned(),
+        };
+        let account = Account::generate();
+        let keyreg = RegisterKey::online(
+            account.address(),
+            VotePk([1u8; 32]),
+            VrfPk([2u8; 32]),
+            StateProofPk([3u8; 64]),
+            Round(0),      // vote_first — zero, must be omitted
+            Round(30_001), // vote_last
+            10_000,
+        )
+        .build(&params)
+        .unwrap();
+
+        let keys = top_level_keys(&keyreg.to_msg_pack().unwrap());
+        assert!(
+            !keys.contains("votefst"),
+            "vote_first == Round(0) must be omitted from the encoding"
+        );
+        assert!(
+            keys.contains("votelst"),
+            "non-zero vote_last must be present"
+        );
+        assert!(
+            keys.contains("votekey"),
+            "online keyreg must carry the vote key"
         );
     }
 

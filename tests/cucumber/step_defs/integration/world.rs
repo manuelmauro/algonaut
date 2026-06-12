@@ -1,8 +1,8 @@
 use algonaut::{
     algod::v2::Algod,
     atomic::{
-        AbiArgValue, AtomicGroupBuilder, ExecuteOutcome, SignedAtomicGroup, TransactionWithSigner,
-        UnsignedAtomicGroup,
+        AbiArgValue, AbiMethodResult, AtomicGroupBuilder, ExecuteOutcome, SignedAtomicGroup,
+        TransactionWithSigner, UnsignedAtomicGroup,
     },
     indexer::v2::Indexer,
     kmd::v1::Kmd,
@@ -59,6 +59,10 @@ pub struct World {
     pub abi_method_arg_types: Option<Vec<AbiType>>,
     pub abi_method_arg_values: Option<Vec<AbiArgValue>>,
     pub tx_composer_res: Option<ExecuteOutcome>,
+    /// ABI return values from a composer *simulate* (vs `tx_composer_res`, which
+    /// holds them from an *execute*). Scenarios that simulate rather than
+    /// execute read this for "The app should have returned ABI types".
+    pub simulate_method_results: Option<Vec<AbiMethodResult>>,
 
     pub versions: Option<Vec<String>>,
 
@@ -119,11 +123,17 @@ impl World {
     pub fn take_unsigned_group(&mut self) -> UnsignedAtomicGroup {
         if let Some(unsigned) = self.unsigned_group.take() {
             unsigned
-        } else {
-            let builder = self.group_builder.take().expect("no composer in progress");
+        } else if let Some(builder) = self.group_builder.take() {
             // Backup the builder so clone can restore to the pre-build state.
             self.group_builder_backup = Some(builder.clone());
             builder.build().expect("group build failed")
+        } else if let Some(backup) = &self.group_builder_backup {
+            // The unsigned group was already consumed (e.g. by signing); rebuild
+            // it from the backup so a later "simulate the current transaction
+            // group with the composer" still has a group to work with.
+            backup.clone().build().expect("group build failed")
+        } else {
+            panic!("no composer in progress")
         }
     }
 

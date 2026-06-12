@@ -50,6 +50,13 @@ async fn the_wallet_should_exist(w: &mut World) -> Result<(), Error> {
 
 #[when(expr = "I get the wallet handle")]
 async fn i_get_the_wallet_handle(w: &mut World) -> Result<(), Error> {
+    // The "Wallet handle" scenario exercises the handle lifecycle without an
+    // explicit "I create a wallet" step, and cucumber resets the World per
+    // scenario, so there is no created wallet to inherit. Lazily create one.
+    if w.created_wallet_id.is_none() {
+        i_create_a_wallet(w).await?;
+    }
+
     let kmd = w.kmd.as_ref().expect("kmd not set");
     let wallet_id = w
         .created_wallet_id

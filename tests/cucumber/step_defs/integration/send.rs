@@ -3,7 +3,7 @@ use crate::step_defs::{
     util::account_from_kmd_response,
 };
 use algonaut_core::{
-    MicroAlgos, MultisigAddress, Round, StateProofPk, TransactionId, VotePk, VrfPk,
+    Address, MicroAlgos, MultisigAddress, Round, StateProofPk, TransactionId, VotePk, VrfPk,
 };
 use algonaut_transaction::{Pay, RegisterKey, signer::MultisigSigningSession};
 use cucumber::{given, then, when};
@@ -147,10 +147,27 @@ async fn default_v2_key_registration_transaction(
     w: &mut World,
     variant: String,
 ) -> Result<(), Box<dyn Error>> {
+    let kmd = w.kmd.as_ref().expect("kmd not set");
     let algod = w.algod.as_ref().expect("algod not set");
+    let handle = w.handle.as_ref().expect("wallet handle not set");
+    let password = w.password.as_ref().expect("wallet password not set");
     let accounts = w.accounts.as_ref().expect("accounts not set");
     let params = algod.suggested_params().await?;
-    let sender = accounts[0];
+
+    // Register a throwaway account, never the funded creator: generate a fresh
+    // wallet key (so "I get the private key" can export it for signing) and fund
+    // it enough to pay the fee. kmd's account ordering is unstable, so
+    // accounts[0] is not reliably funded.
+    let sender: Address = kmd.generate_key(handle).await?.address.parse()?;
+    let funder = pick_funded_account(algod, accounts).await?;
+    let funder_key = kmd.export_key(handle, password, &funder).await?;
+    let funder_account = account_from_kmd_response(&funder_key)?;
+    let fund = Pay::new(funder, sender, MicroAlgos(1_000_000)).build(&params)?;
+    algod
+        .submit(&funder_account.sign(fund)?)
+        .await?
+        .confirm()
+        .await?;
 
     let keyreg = match variant.as_str() {
         "online" => RegisterKey::online(

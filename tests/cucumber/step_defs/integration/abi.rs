@@ -1,4 +1,6 @@
-use crate::step_defs::{integration::world::World, util::read_teal};
+use crate::step_defs::{
+    integration::general::pick_funded_account, integration::world::World, util::read_teal,
+};
 use algonaut::atomic::{
     AbiArgValue, AbiMethodReturnValue, AbiReturnDecodeError, AtomicGroupBuilder, Invocation,
     MethodCall, TransactionWithSigner,
@@ -466,6 +468,11 @@ fn i_append_the_current_transaction_with_signer_to_the_method_arguments_array(w:
 fn i_build_the_transaction_group_with_the_composer(w: &mut World, error_type: String) {
     let builder = w.group_builder.take().unwrap();
 
+    // Preserve the pre-build builder so that signing (which consumes the
+    // unsigned group) doesn't strand a later "simulate the current transaction
+    // group" — `take_unsigned_group` re-derives the group from this backup.
+    w.group_builder_backup = Some(builder.clone());
+
     let build_res = builder.build();
 
     match error_type.as_ref() {
@@ -548,20 +555,27 @@ async fn the_app_should_have_returned(w: &mut World, comma_separated_b64_results
 
 #[then(regex = r#"^The app should have returned ABI types "([^"]*)"\.$"#)]
 async fn the_app_should_have_returned_abi_types(w: &mut World, expected_type_strings_str: String) {
-    let tx_composer_res = w.tx_composer_res.as_ref().unwrap();
+    // Prefer the execute outcome; fall back to a composer *simulate* (scenarios
+    // that only simulate carry their ABI returns in `simulate_method_results`).
+    let method_results = w
+        .tx_composer_res
+        .as_ref()
+        .map(|r| &r.method_results)
+        .or(w.simulate_method_results.as_ref())
+        .expect("no method results from execute or simulate");
 
     let expected_type_strings: Vec<&str> = expected_type_strings_str.split(':').collect();
 
-    if expected_type_strings.len() != tx_composer_res.method_results.len() {
+    if expected_type_strings.len() != method_results.len() {
         panic!(
             "length of expected results doesn't match actual: {} != {}",
             expected_type_strings.len(),
-            tx_composer_res.method_results.len()
+            method_results.len()
         );
     }
 
     for (i, expected_type_string) in expected_type_strings.into_iter().enumerate() {
-        let actual_res = &tx_composer_res.method_results[i];
+        let actual_res = &method_results[i];
 
         match &actual_res.return_value {
             Ok(AbiMethodReturnValue::Some(value)) => {
@@ -596,8 +610,15 @@ async fn the_app_should_have_returned_abi_types(w: &mut World, expected_type_str
 // #[then(regex = r#"^The (\d+)th atomic result for randomInt\((\d+)\) proves correct$"#)]
 #[then(regex = r#"^The (\d+)th atomic result for randomInt\((\d+)\) proves correct$"#)]
 async fn check_random_int_result(w: &mut World, result_index: usize, input: u64) {
-    let tx_composers = w.tx_composer_res.as_ref().expect("No tx composer res");
-    let tx_composer_res = &tx_composers.method_results[result_index];
+    // Prefer the execute outcome; a scenario that only simulates carries its
+    // ABI returns in `simulate_method_results`.
+    let method_results = w
+        .tx_composer_res
+        .as_ref()
+        .map(|r| &r.method_results)
+        .or(w.simulate_method_results.as_ref())
+        .expect("no method results from execute or simulate");
+    let tx_composer_res = &method_results[result_index];
 
     let value = match &tx_composer_res.return_value {
         Ok(AbiMethodReturnValue::Some(value)) => value,
@@ -639,8 +660,15 @@ async fn check_random_int_result(w: &mut World, result_index: usize, input: u64)
 
 #[then(regex = r#"^The (\d+)th atomic result for randElement\("([^"]*)"\) proves correct$"#)]
 async fn check_random_element_result(w: &mut World, result_index: usize, input: String) {
-    let tx_composers = w.tx_composer_res.as_ref().expect("No tx composer res");
-    let tx_composer_res = &tx_composers.method_results[result_index];
+    // Prefer the execute outcome; a scenario that only simulates carries its
+    // ABI returns in `simulate_method_results`.
+    let method_results = w
+        .tx_composer_res
+        .as_ref()
+        .map(|r| &r.method_results)
+        .or(w.simulate_method_results.as_ref())
+        .expect("no method results from execute or simulate");
+    let tx_composer_res = &method_results[result_index];
 
     let value = match &tx_composer_res.return_value {
         Ok(value) => match value {
@@ -802,13 +830,17 @@ async fn i_fund_the_current_applications_address(w: &mut World, micro_algos: u64
     let kmd_handle = w.handle.as_ref().expect("no kmd handle");
     let kmd_pw = w.password.as_ref().expect("no kmd pw");
 
-    let first_account = accounts[0];
+    // kmd's list_keys ordering is unstable, so accounts[0] isn't reliably
+    // funded — fund the app from the funded account.
+    let funder = pick_funded_account(algod, accounts)
+        .await
+        .expect("no funded account");
 
     let app_address = app_id.address();
 
     let tx_params = algod.suggested_params().await.expect("couldn't get params");
 
-    let tx = Pay::new(first_account, app_address, MicroAlgos(micro_algos))
+    let tx = Pay::new(funder, app_address, MicroAlgos(micro_algos))
         .build(&tx_params)
         .unwrap();
 

@@ -90,6 +90,7 @@ async fn i_simulate_the_current_transaction_group_with_the_composer(w: &mut Worl
         .expect("composer simulate failed");
     // simulate borrows the group, so it survives for a later sign/execute.
     w.unsigned_group = Some(unsigned_group);
+    w.simulate_method_results = Some(result.method_results);
     w.simulate_response = Some(result.simulate_response);
 }
 
@@ -175,6 +176,7 @@ async fn i_simulate_the_transaction_group_with_the_simulate_request(w: &mut Worl
         .await
         .expect("composer simulate_with failed");
     w.unsigned_group = Some(unsigned_group);
+    w.simulate_method_results = Some(result.method_results);
     w.simulate_response = Some(result.simulate_response);
 }
 
