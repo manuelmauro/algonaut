@@ -798,6 +798,51 @@ mod tests {
         assert_eq!(round_tripped.auth_address(), Some(&bob.address()));
     }
 
+    /// The top-level msgpack map keys of an encoded value, decoded
+    /// structurally (each value skipped) so an address that happens to contain
+    /// the bytes `sgnr` can't produce a false positive.
+    fn top_level_keys(bytes: &[u8]) -> std::collections::BTreeSet<String> {
+        let map: std::collections::BTreeMap<String, serde::de::IgnoredAny> =
+            rmp_serde::from_slice(bytes).unwrap();
+        map.into_keys().collect()
+    }
+
+    /// Algorand's canonical msgpack omits absent fields. A non-rekeyed signed
+    /// transaction must therefore drop the `sgnr` (auth address) key entirely;
+    /// emitting `sgnr: null` makes `to_msg_pack()` differ byte-for-byte from
+    /// kmd's / the node's signed transaction (the kmd "sign both ways"
+    /// acceptance scenarios). The rekeyed counterpart still carries it.
+    #[test]
+    fn signed_transaction_encodes_sgnr_only_when_rekeyed() {
+        let params = StubParams {
+            genesis_id: "testnet-v1.0".to_owned(),
+        };
+        let alice = Account::generate();
+        let bob = Account::generate();
+
+        // Sender signs its own transaction: no rekey, so `auth_address` is None.
+        let tx = Pay::new(alice.address(), alice.address(), MicroAlgos(1_000))
+            .build(&params)
+            .unwrap();
+        let signed = alice.sign(tx).unwrap();
+        assert_eq!(signed.auth_address(), None);
+        assert!(
+            !top_level_keys(&signed.to_msg_pack().unwrap()).contains("sgnr"),
+            "a non-rekeyed signed transaction must not encode a `sgnr` key"
+        );
+
+        // A different signer rekeys the transaction, so `sgnr` reappears.
+        let tx = Pay::new(alice.address(), alice.address(), MicroAlgos(1_000))
+            .build(&params)
+            .unwrap();
+        let rekeyed = bob.sign(tx).unwrap();
+        assert_eq!(rekeyed.auth_address(), Some(&bob.address()));
+        assert!(
+            top_level_keys(&rekeyed.to_msg_pack().unwrap()).contains("sgnr"),
+            "a rekeyed signed transaction must encode a `sgnr` key"
+        );
+    }
+
     struct DummyAppCall {
         app_id: Option<AppId>,
         foreign_apps: Option<Vec<AppId>>,
