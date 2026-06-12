@@ -199,14 +199,18 @@ pub struct ApiSignedTransaction {
     #[serde(rename = "msig", skip_serializing_if = "Option::is_none")]
     pub msig: Option<MultisigSignature>,
 
+    // `sgnr` (the auth address) sorts before `sig` in canonical msgpack
+    // ('g' < 'i') and, like every other optional, must be omitted when absent —
+    // otherwise a stray `sgnr` makes the encoding differ byte-for-byte from the
+    // node's / kmd's canonical signed transaction.
+    #[serde(rename = "sgnr", skip_serializing_if = "Option::is_none")]
+    pub auth_address: Option<Address>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sig: Option<Signature>,
 
     #[serde(rename = "txn")]
     pub transaction: ApiTransaction,
-
-    #[serde(rename = "sgnr")]
-    pub auth_address: Option<Address>,
 
     #[serde(skip)]
     pub transaction_id: TransactionId,
