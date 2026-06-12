@@ -6,8 +6,8 @@ use data_encoding::BASE64;
 use std::fs;
 
 fn read_resource(name: &str) -> Vec<u8> {
-    fs::read(format!("tests/features/resources/{name}"))
-        .unwrap_or_else(|e| panic!("failed to read tests/features/resources/{name}: {e}"))
+    fs::read(format!("tests/cucumber/features/resources/{name}"))
+        .unwrap_or_else(|e| panic!("failed to read tests/cucumber/features/resources/{name}: {e}"))
 }
 
 fn parse_status_from_error(err: &str) -> u16 {

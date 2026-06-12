@@ -17,8 +17,8 @@ const NONEXISTENT_SENDER: &str = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 const SECONDARY_ACCOUNT: &str = "6Z3C3LDVWGMX23BMSYMANACQOSINPFIRF77H7N3AWJZYV6OH6GWTJKVMXY";
 
 fn read_program(name: &str) -> Vec<u8> {
-    fs::read(format!("tests/features/resources/{name}"))
-        .unwrap_or_else(|e| panic!("failed to read tests/features/resources/{name}: {e}"))
+    fs::read(format!("tests/cucumber/features/resources/{name}"))
+        .unwrap_or_else(|e| panic!("failed to read tests/cucumber/features/resources/{name}: {e}"))
 }
 
 #[derive(Debug, Clone)]

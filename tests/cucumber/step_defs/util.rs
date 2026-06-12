@@ -51,7 +51,7 @@ pub fn account_from_kmd_response(key_res: &ExportKeyResponse) -> Result<Account,
 }
 
 pub async fn read_teal(algod: &Algod, file_name: &str) -> CompiledTeal {
-    let file_bytes = fs::read(&format!("tests/features/resources/{file_name}")).unwrap();
+    let file_bytes = fs::read(&format!("tests/cucumber/features/resources/{file_name}")).unwrap();
 
     if file_name.ends_with(".teal") {
         algod
