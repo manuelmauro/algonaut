@@ -1,8 +1,6 @@
 use crate::step_defs::integration::world::World;
 use algonaut::simulate::SimulateRequestBuilder;
-use algonaut_model::algod::{
-    SimulateRequest, SimulateRequestTransactionGroup, SimulateTransactionGroupResult,
-};
+use algonaut_model::algod::{SimulateRequest, SimulateRequestTransactionGroup};
 use cucumber::{given, then, when};
 use data_encoding::BASE64;
 
@@ -38,13 +36,14 @@ async fn i_prepare_the_transaction_without_signatures_for_simulation(w: &mut Wor
 #[when(expr = "the simulation should succeed without any failure message")]
 async fn the_simulation_should_succeed_without_any_failure_message(w: &mut World) {
     let resp = w.simulate_response.as_ref().expect("no simulate response");
-    for (i, g) in resp.txn_groups.iter().enumerate() {
-        if let Some(msg) = &g.failure_message {
-            if !msg.is_empty() {
-                panic!("group {i} failed: {msg}");
-            }
-        }
-    }
+    // Check the group carries no failure message rather than trusting
+    // `would_succeed`: older algod builds omit that field (it decodes to
+    // `false`), which would flag a clean simulation as a failure.
+    let failure = resp.failure_message(0).filter(|m| !m.is_empty());
+    assert!(
+        failure.is_none(),
+        "simulation reported a failure: {failure:?}"
+    );
 }
 
 #[then(
@@ -57,14 +56,9 @@ async fn the_simulation_should_report_a_failure_at_group(
     expected_message: String,
 ) {
     let resp = w.simulate_response.as_ref().expect("no simulate response");
-    let g: &SimulateTransactionGroupResult = resp
-        .txn_groups
-        .get(group_idx as usize)
-        .expect("group index out of range");
 
-    let msg = g
-        .failure_message
-        .as_deref()
+    let msg = resp
+        .failure_message(group_idx as usize)
         .expect("expected a failure message but the group did not fail");
     assert!(
         msg.contains(&expected_message),
@@ -75,12 +69,12 @@ async fn the_simulation_should_report_a_failure_at_group(
         .split(',')
         .map(|p| p.trim().parse().expect("path component must be a number"))
         .collect();
-    let actual_path = g
-        .failed_at
-        .as_ref()
+    let actual_path = resp
+        .failed_at(group_idx as usize)
         .expect("expected failed-at path but it was missing");
     assert_eq!(
-        actual_path, &expected_path,
+        actual_path,
+        expected_path.as_slice(),
         "failed-at path mismatch: expected {expected_path:?}, got {actual_path:?}"
     );
 }
@@ -96,13 +90,13 @@ async fn i_simulate_the_current_transaction_group_with_the_composer(w: &mut Worl
         .expect("composer simulate failed");
     // simulate borrows the group, so it survives for a later sign/execute.
     w.unsigned_group = Some(unsigned_group);
-    w.simulate_outcome = Some(result.simulate_response);
+    w.simulate_response = Some(result.simulate_response);
 }
 
 #[then(expr = "the composer simulation should succeed.")]
 async fn the_composer_simulation_should_succeed(w: &mut World) {
     let outcome = w
-        .simulate_outcome
+        .simulate_response
         .as_ref()
         .expect("no composer simulate outcome");
     assert!(
@@ -181,21 +175,17 @@ async fn i_simulate_the_transaction_group_with_the_simulate_request(w: &mut Worl
         .await
         .expect("composer simulate_with failed");
     w.unsigned_group = Some(unsigned_group);
-    w.simulate_outcome = Some(result.simulate_response);
+    w.simulate_response = Some(result.simulate_response);
 }
 
 #[then(expr = "I check the simulation result has power packs allow-more-logging.")]
 async fn i_check_the_simulation_result_has_power_packs_allow_more_logging(w: &mut World) {
     let resp = w.simulate_response.as_ref().expect("no simulate response");
-    let overrides = resp
-        .eval_overrides
-        .as_deref()
-        .expect("expected eval-overrides but got none");
-    // The API doesn't echo `allow-more-logging` directly — it echoes
-    // the bumped log-call and log-size ceilings instead.
+    // The API doesn't echo `allow-more-logging` directly — it echoes the bumped
+    // log-call and log-size ceilings instead.
     assert!(
-        overrides.max_log_calls.is_some() || overrides.max_log_size.is_some(),
-        "expected lifted log limits in eval-overrides, got {overrides:?}"
+        resp.max_log_calls().is_some() || resp.max_log_size().is_some(),
+        "expected lifted log limits in the simulate response"
     );
 }
 
@@ -207,11 +197,7 @@ async fn i_check_the_simulation_result_has_power_packs_extra_opcode_budget(
     expected: u64,
 ) {
     let resp = w.simulate_response.as_ref().expect("no simulate response");
-    let overrides = resp
-        .eval_overrides
-        .as_deref()
-        .expect("expected eval-overrides but got none");
-    assert_eq!(overrides.extra_opcode_budget, Some(expected));
+    assert_eq!(resp.extra_opcode_budget(), Some(expected));
 }
 
 #[then(
@@ -298,7 +284,7 @@ async fn hash_at_txn_groups_path_should_be(
     path_str: String,
     expected_hash: String,
 ) {
-    let resp = w.simulate_response.as_ref().expect("no simulate response");
+    let resp = w.simulate_raw.as_ref().expect("no raw simulate response");
     let group = resp.txn_groups.first().expect("no group");
     let path: Vec<u64> = path_str
         .split(',')
@@ -369,7 +355,7 @@ async fn nth_unit_in_trace_state_write(
 
 #[then(regex = r#"^the current application initial "([^"]+)" state should be empty\.$"#)]
 async fn the_current_application_initial_state_should_be_empty(w: &mut World, state_kind: String) {
-    let resp = w.simulate_response.as_ref().expect("no simulate response");
+    let resp = w.simulate_raw.as_ref().expect("no raw simulate response");
     let initial = resp
         .initial_states
         .as_ref()
@@ -399,7 +385,7 @@ async fn the_current_application_initial_state_should_contain(
     expected_key: String,
     expected_value: String,
 ) {
-    let resp = w.simulate_response.as_ref().expect("no simulate response");
+    let resp = w.simulate_raw.as_ref().expect("no raw simulate response");
     let initial = resp
         .initial_states
         .as_ref()
@@ -433,7 +419,7 @@ fn trace_unit_at<'a>(
     trace_kind: &str,
     path_str: &str,
 ) -> &'a algonaut_model::algod::SimulationOpcodeTraceUnit {
-    let resp = w.simulate_response.as_ref().expect("no simulate response");
+    let resp = w.simulate_raw.as_ref().expect("no raw simulate response");
     let group = resp.txn_groups.first().expect("no group");
     let path: Vec<u64> = path_str
         .split(',')

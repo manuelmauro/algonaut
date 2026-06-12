@@ -243,7 +243,7 @@ impl UnsignedAtomicGroup {
         request.txn_groups = vec![SimulateRequestTransactionGroup::new(api_txns)];
         request.allow_empty_signatures = Some(true);
 
-        let response: SimulateTransactionResponse = algod.simulate(request).await?;
+        let response: SimulateTransactionResponse = algod.simulate_raw(request).await?;
 
         // Build per-method ABI return values from the pending-txn
         // payloads embedded in the simulate response (mirrors execute()).

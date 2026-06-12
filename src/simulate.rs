@@ -58,6 +58,15 @@ impl SimulateResponse {
             .and_then(|group| group.failure_message.as_deref())
     }
 
+    /// The execution path — group and inner-transaction indices — at which the
+    /// transaction group at `index` failed, if it failed.
+    pub fn failed_at(&self, index: usize) -> Option<&[u64]> {
+        self.inner
+            .txn_groups
+            .get(index)
+            .and_then(|group| group.failed_at.as_deref())
+    }
+
     /// Extra opcode budget algod applied for this simulation (the
     /// `extra-opcode-budget` power-pack override), if any.
     pub fn extra_opcode_budget(&self) -> Option<u64> {
@@ -65,6 +74,24 @@ impl SimulateResponse {
             .eval_overrides
             .as_deref()
             .and_then(|overrides| overrides.extra_opcode_budget)
+    }
+
+    /// The lifted max log-calls ceiling algod applied (the `allow-more-logging`
+    /// power-pack override), if any.
+    pub fn max_log_calls(&self) -> Option<u64> {
+        self.inner
+            .eval_overrides
+            .as_deref()
+            .and_then(|overrides| overrides.max_log_calls)
+    }
+
+    /// The lifted max log-size ceiling algod applied (the `allow-more-logging`
+    /// power-pack override), if any.
+    pub fn max_log_size(&self) -> Option<u64> {
+        self.inner
+            .eval_overrides
+            .as_deref()
+            .and_then(|overrides| overrides.max_log_size)
     }
 }
 
@@ -217,5 +244,35 @@ mod tests {
         assert!(!json.contains("allow-more-logging"));
         assert!(!json.contains("extra-opcode-budget"));
         assert!(!json.contains("exec-trace-config"));
+    }
+
+    #[test]
+    fn response_accessors_surface_failure_path_and_eval_overrides() {
+        use algonaut_model::algod::{
+            SimulateEvalOverrides, SimulateTransactionGroupResult, SimulateTransactionResponse,
+        };
+
+        let failed_group = SimulateTransactionGroupResult {
+            failed_at: Some(vec![0, 1]),
+            failure_message: Some("logic eval error".to_owned()),
+            ..Default::default()
+        };
+        let mut raw = SimulateTransactionResponse::new(42, vec![failed_group], 2, false);
+        raw.eval_overrides = Some(Box::new(SimulateEvalOverrides {
+            extra_opcode_budget: Some(2_000),
+            max_log_calls: Some(2_048),
+            max_log_size: Some(65_536),
+            ..Default::default()
+        }));
+
+        let resp = SimulateResponse::new(raw);
+
+        assert!(!resp.would_succeed());
+        assert_eq!(resp.failure_message(0), Some("logic eval error"));
+        assert_eq!(resp.failed_at(0), Some([0, 1].as_slice()));
+        assert_eq!(resp.failed_at(1), None); // out-of-range group index
+        assert_eq!(resp.extra_opcode_budget(), Some(2_000));
+        assert_eq!(resp.max_log_calls(), Some(2_048));
+        assert_eq!(resp.max_log_size(), Some(65_536));
     }
 }
