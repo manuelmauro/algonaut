@@ -24,6 +24,7 @@
 //! reference.
 
 use cucumber::World;
+use cucumber::writer::Stats;
 use step_defs::{integration, unit};
 
 mod step_defs;
@@ -303,45 +304,67 @@ fn scenario_enabled(
     true
 }
 
+/// Report a feature run's failures and return whether it had any.
+///
+/// `cucumber`'s `filter_run` *reports* failed/errored steps but never fails the
+/// process, so without this check `cargo test --test cucumber` exits 0 even when
+/// scenarios fail — and CI lights green on a red suite.
+fn run_had_failures<Wld, Wr: Stats<Wld>>(path: &str, writer: &Wr) -> bool {
+    if writer.execution_has_failed() {
+        eprintln!(
+            "FAILED {path}: {} failed step(s), {} parsing error(s), {} hook error(s)",
+            writer.failed_steps(),
+            writer.parsing_errors(),
+            writer.hook_errors(),
+        );
+        true
+    } else {
+        false
+    }
+}
+
 async fn run_integration(
     path: &str,
     excluded_tags: &'static [&'static str],
     excluded_scenarios: &'static [&'static str],
-) {
-    integration::world::World::cucumber()
+) -> bool {
+    let writer = integration::world::World::cucumber()
         .max_concurrent_scenarios(1)
         .filter_run(path, move |_, _, sc| {
             scenario_enabled(sc, excluded_tags, excluded_scenarios)
         })
         .await;
+    run_had_failures(path, &writer)
 }
 
 async fn run_unit(
     path: &str,
     excluded_tags: &'static [&'static str],
     excluded_scenarios: &'static [&'static str],
-) {
-    unit::world::UnitWorld::cucumber()
+) -> bool {
+    let writer = unit::world::UnitWorld::cucumber()
         .max_concurrent_scenarios(1)
         .filter_run(path, move |_, _, sc| {
             scenario_enabled(sc, excluded_tags, excluded_scenarios)
         })
         .await;
+    run_had_failures(path, &writer)
 }
 
 #[tokio::main]
 async fn main() {
     let mut skipped: Vec<(&str, &str)> = Vec::new();
+    let mut any_failed = false;
 
     for feature in INTEGRATION_FEATURES {
         match feature.gate {
             None => {
-                run_integration(
+                any_failed |= run_integration(
                     feature.path,
                     feature.excluded_tags,
                     feature.excluded_scenarios,
                 )
-                .await
+                .await;
             }
             Some(reason) => skipped.push((feature.path, reason)),
         }
@@ -350,12 +373,12 @@ async fn main() {
     for feature in UNIT_FEATURES {
         match feature.gate {
             None => {
-                run_unit(
+                any_failed |= run_unit(
                     feature.path,
                     feature.excluded_tags,
                     feature.excluded_scenarios,
                 )
-                .await
+                .await;
             }
             Some(reason) => skipped.push((feature.path, reason)),
         }
@@ -366,5 +389,13 @@ async fn main() {
         for (path, reason) in skipped {
             eprintln!("  - {path}\n      {reason}");
         }
+    }
+
+    // `filter_run` reports failures but does not fail the process; propagate a
+    // non-zero exit so `cargo test --test cucumber` (and the CI job) goes red
+    // when any scenario fails, instead of lighting green on a red suite.
+    if any_failed {
+        eprintln!("\nintegration suite FAILED — see the FAILED lines above");
+        std::process::exit(1);
     }
 }
