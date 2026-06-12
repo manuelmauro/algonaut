@@ -2,6 +2,7 @@ use crate::step_defs::{integration::world::World, util::account_from_kmd_respons
 use algonaut::{algod::v2::Algod, kmd::v1::Kmd};
 use algonaut_core::{Address, MicroAlgos, Round, TransactionId};
 use algonaut_transaction::Pay;
+use algonaut_transaction::account::Account;
 use cucumber::{given, then, when};
 use rand::Rng;
 use std::error::Error;
@@ -115,32 +116,37 @@ async fn i_create_a_new_transient_account_and_fund_it_with_microalgos(
     let accounts = w.accounts.as_ref().unwrap();
     let password = w.password.as_ref().unwrap();
     let handle = w.handle.as_ref().unwrap();
-    // add dust to make the transactions unique (with high probability) within a block
+    // add dust to make the funding transaction unique (with high probability)
+    // within a block
     let mut rng = rand::thread_rng();
     let dust: u64 = rng.gen_range(1..1_000_000);
 
-    // kmd's list_keys ordering is unstable across sandbox runs — pick
-    // the wallet account with the highest balance instead of an
-    // arbitrary index.
-    let sender_address = pick_funded_account(algod, accounts).await?;
+    // Pick the funded account (kmd's list_keys ordering is unstable, so
+    // accounts[0] isn't reliably the creator) and use it to fund a brand-new
+    // account.
+    let funder_address = pick_funded_account(algod, accounts).await?;
+    let funder_key = kmd.export_key(handle, password, &funder_address).await?;
+    let funder = account_from_kmd_response(&funder_key)?;
 
-    let sender_key = kmd.export_key(handle, password, &sender_address).await?;
-
-    let sender_account = account_from_kmd_response(&sender_key)?;
+    // A genuinely *new* account, funded with exactly the requested amount.
+    // Reusing the shared funder as the "transient" account broke isolation:
+    // the account held the funder's full balance, so scenarios asserting an
+    // overspend (e.g. a self-pay larger than the funded amount) never tripped
+    // it, and a rekey/spend leaked into later scenarios.
+    let transient = Account::generate();
 
     let params = algod.suggested_params().await?;
     let tx = Pay::new(
-        sender_address,
-        sender_account.address(),
+        funder_address,
+        transient.address(),
         MicroAlgos(micro_algos + dust),
     )
     .build(&params)?;
 
-    let s_tx = sender_account.sign(tx)?;
-
+    let s_tx = funder.sign(tx)?;
     algod.submit(&s_tx).await?.confirm().await?;
 
-    w.transient_account = Some(sender_account);
+    w.transient_account = Some(transient);
 
     Ok(())
 }
