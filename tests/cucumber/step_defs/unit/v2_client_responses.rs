@@ -3,7 +3,7 @@
 //!
 //! These are fixture-driven response-deserialization unit tests. A canned
 //! HTTP response body (a base64-decoded fixture from
-//! `tests/features/resources/`) is loaded into a local
+//! `tests/cucumber/features/resources/`) is loaded into a local
 //! [`ResponseMockServer`]; the SDK is pointed at it, a high-level
 //! `Algod`/`Indexer` call is made, and the *parsed* response is asserted on.
 //!
@@ -44,7 +44,7 @@ fn placeholder_transaction_id() -> TransactionId {
 /// `*.base64` fixtures hold a base64-encoded body (msgpack or otherwise) and
 /// are decoded; every other fixture (`*.json`, …) is served verbatim.
 fn load_body(directory: &str, file: &str) -> Vec<u8> {
-    let path = Path::new("tests/features/resources")
+    let path = Path::new("tests/cucumber/features/resources")
         .join(directory)
         .join(file);
     let raw = fs::read(&path).unwrap_or_else(|e| panic!("reading fixture {path:?}: {e}"));
