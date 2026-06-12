@@ -1,5 +1,6 @@
 use self::error::AlgodError;
 use crate::Error;
+use crate::simulate::SimulateResponse;
 use algonaut_algod::apis::configuration::{ApiKey, Configuration};
 use algonaut_core::{Address, AppId, AssetId, CompiledTeal, Round, ToMsgPack, TransactionId};
 use algonaut_encoding::decode_base64;
@@ -581,7 +582,14 @@ impl Algod {
     }
 
     /// Simulates a raw transaction or transaction group as it would be evaluated on the network. WARNING: This endpoint is experimental and under active development. There are no guarantees in terms of functionality or future support.
-    pub async fn simulate(
+    pub async fn simulate(&self, request: SimulateRequest) -> Result<SimulateResponse, Error> {
+        Ok(SimulateResponse::new(self.simulate_raw(request).await?))
+    }
+
+    /// The raw simulate response, for internal callers (e.g. the atomic
+    /// composer) that need the per-transaction payloads the public
+    /// [`SimulateResponse`] wrapper intentionally hides.
+    pub(crate) async fn simulate_raw(
         &self,
         request: SimulateRequest,
     ) -> Result<SimulateTransactionResponse, Error> {

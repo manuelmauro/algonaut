@@ -99,12 +99,14 @@ pub struct World {
     pub dryrun_kind: Option<String>,
 
     pub simulate_request: Option<SimulateRequest>,
-    /// Raw response from a direct `algod.simulate` call; the deep
-    /// wire-level assertions (exec traces, state changes) read this.
-    pub simulate_response: Option<SimulateTransactionResponse>,
-    /// Typed composer simulate result, from the `UnsignedAtomicGroup`
-    /// simulate path.
-    pub simulate_outcome: Option<SimulateResponse>,
+    /// Typed simulate result (the [`SimulateResponse`] wrapper). The
+    /// failure/success and power-pack assertions read this; populated by both
+    /// `algod.simulate` and the composer (`UnsignedAtomicGroup`) simulate path.
+    pub simulate_response: Option<SimulateResponse>,
+    /// Raw response for the deep wire-level assertions (exec traces, state
+    /// changes). Those scenarios are tag-filtered today; wiring this up is the
+    /// tracked exec-trace typed-accessor follow-up.
+    pub simulate_raw: Option<SimulateTransactionResponse>,
     pub simulate_unsigned: bool,
 }
 
