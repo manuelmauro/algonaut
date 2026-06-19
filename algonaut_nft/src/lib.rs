@@ -53,8 +53,20 @@ pub use error::NftError;
 /// The zero (all-bytes-zero) Algorand address.
 ///
 /// Several ARCs use it as a sentinel — ARC-71 clawback, ARC-72 "invalid token"
-/// ownership, ARC-18 forbidding it as the clawback — so it is re-exported here
-/// for convenience.
-pub fn zero_address() -> algonaut_core::Address {
-    algonaut_core::Address([0u8; 32])
+/// ownership, ARC-18 forbidding it as the clawback — so it is provided here as a
+/// const for convenience.
+pub const ZERO_ADDRESS: algonaut_core::Address = algonaut_core::Address([0u8; 32]);
+
+/// Curated re-exports of the headline types for ergonomic glob import.
+///
+/// `use algonaut_nft::prelude::*;` brings in the minting builder, the soulbound
+/// lifecycle, the two metadata models (disambiguated as `Arc3Metadata` /
+/// `Arc69Metadata`, since both are `Metadata` in their module), and the ARC-19
+/// CID types.
+pub mod prelude {
+    pub use crate::asa::{NftMint, NftShape, Soulbound};
+    pub use crate::metadata::arc3::Metadata as Arc3Metadata;
+    pub use crate::metadata::arc69::Metadata as Arc69Metadata;
+    pub use crate::url::{Cid, TemplateIpfsUrl};
+    pub use crate::{NftError, ZERO_ADDRESS};
 }

@@ -82,6 +82,18 @@ impl ReversibleFlags {
     pub fn ntt(self) -> bool {
         self.0 & Self::NTT != 0
     }
+    /// Set or clear the ARC-20 Smart ASA bit.
+    pub fn with_arc20_smart_asa(self, on: bool) -> Self {
+        ReversibleFlags(set_bit(self.0, Self::ARC20, on))
+    }
+    /// Set or clear the ARC-62 circulating-supply bit.
+    pub fn with_arc62_circulating_supply(self, on: bool) -> Self {
+        ReversibleFlags(set_bit(self.0, Self::ARC62, on))
+    }
+    /// Set or clear the Native Token Transfers bit.
+    pub fn with_ntt(self, on: bool) -> Self {
+        ReversibleFlags(set_bit(self.0, Self::NTT, on))
+    }
 }
 
 /// Irreversible Flags byte (one-way switches set by the ASA manager).
@@ -108,6 +120,22 @@ impl IrreversibleFlags {
     /// Metadata immutability (MSB) — once set, never cleared.
     pub fn is_immutable(self) -> bool {
         self.0 & Self::IMMUTABLE != 0
+    }
+    /// Set or clear the ARC-3 compliant bit (settable only at creation).
+    pub fn with_arc3_compliant(self, on: bool) -> Self {
+        IrreversibleFlags(set_bit(self.0, Self::ARC3, on))
+    }
+    /// Set or clear the ARC-89 native ASA bit (settable only at creation).
+    pub fn with_arc89_native(self, on: bool) -> Self {
+        IrreversibleFlags(set_bit(self.0, Self::ARC89_NATIVE, on))
+    }
+    /// Set or clear the ARC-54 burnable bit.
+    pub fn with_arc54_burnable(self, on: bool) -> Self {
+        IrreversibleFlags(set_bit(self.0, Self::ARC54_BURNABLE, on))
+    }
+    /// Set the metadata-immutability bit (one-way; cannot be cleared once set).
+    pub fn with_immutable(self) -> Self {
+        IrreversibleFlags(self.0 | Self::IMMUTABLE)
     }
 }
 

@@ -49,6 +49,13 @@ pub enum NftError {
     #[error("invalid ARC-69 note: {0}")]
     InvalidArc69Note(String),
 
+    /// A base64-encoded metadata field (e.g. ARC-3 `extra_metadata`) failed to decode.
+    #[error("invalid base64 in {field}")]
+    BadBase64 {
+        /// The metadata field that failed to decode.
+        field: String,
+    },
+
     /// An ARC-89 Asset Metadata Box value was malformed (too short, oversized, …).
     #[error("invalid ARC-89 metadata box: {0}")]
     InvalidMetadataBox(String),
