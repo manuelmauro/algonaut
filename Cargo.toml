@@ -25,6 +25,7 @@ members = [
   "algonaut_abi_model",
   "algonaut_abi_sig",
   "algonaut_abi_macros",
+  "algonaut_nft",
 ]
 
 [workspace.dependencies]
@@ -39,6 +40,7 @@ algonaut_encoding = { path = "algonaut_encoding", version = "0.9.0" }
 algonaut_indexer = { path = "algonaut_indexer", version = "0.9.0", default-features = false }
 algonaut_kmd = { path = "algonaut_kmd", version = "0.9.0", default-features = false }
 algonaut_model = { path = "algonaut_model", version = "0.9.0" }
+algonaut_nft = { path = "algonaut_nft", version = "0.9.0", default-features = false }
 algonaut_transaction = { path = "algonaut_transaction", version = "0.9.0" }
 
 async-trait = "0.1.89"
@@ -92,6 +94,10 @@ algonaut_encoding = { workspace = true }
 algonaut_model = { workspace = true }
 algonaut_transaction = { workspace = true }
 
+# NFT conventions layer (ARC-3/19/69/16/36/53/71/72/18/74 + ARC-89 preview),
+# offline-first; re-exported as `algonaut::nft` behind the `nft` feature.
+algonaut_nft = { workspace = true, optional = true }
+
 # Generated network clients — gated behind their respective features.
 algonaut_algod = { workspace = true, optional = true }
 algonaut_indexer = { workspace = true, optional = true }
@@ -137,6 +143,13 @@ algod = ["dep:algonaut_algod", "dep:reqwest"]
 indexer = ["dep:algonaut_indexer", "dep:reqwest"]
 kmd = ["dep:algonaut_kmd"]
 
+# NFT conventions layer. Additive and default-off: enabling it re-exports the
+# offline `algonaut_nft` crate as `algonaut::nft`. Its own network helpers
+# (ARC-74 client, IPFS/HTTPS fetch) sit behind `algonaut_nft`'s `fetch` feature,
+# surfaced here as `nft-fetch`.
+nft = ["dep:algonaut_nft"]
+nft-fetch = ["nft", "algonaut_nft?/fetch"]
+
 # TLS backend, forwarded to every enabled client. The weak `?` deps mean an
 # unselected client is never pulled in just to set its TLS feature.
 native = ["algonaut_algod?/native", "algonaut_indexer?/native", "algonaut_kmd?/native"]
@@ -168,133 +181,201 @@ path = "tests/e2e/main.rs"
 test = false
 required-features = ["algod", "kmd"]
 
-# Examples declare the client features they exercise, so a slimmer build
-# (e.g. `--no-default-features --features algod`) skips the ones it cannot
-# compile instead of failing.
+# Examples are grouped by category under examples/<category>/. Each declares
+# the client features it exercises, so a slimmer build (e.g.
+# `--no-default-features --features algod`) skips the ones it cannot compile.
+# The `name` (used by `cargo run --example <name>`) is kept stable and unique.
+
+# --- client ---
 [[example]]
 name = "algod_client"
-required-features = ["algod"]
-
-[[example]]
-name = "method_call_dynamic"
-required-features = ["algod"]
-
-[[example]]
-name = "contract_arc4"
-required-features = ["algod"]
-
-[[example]]
-name = "contract_arc56"
-required-features = ["algod"]
-
-[[example]]
-name = "app_clear_state"
-required-features = ["algod"]
-
-[[example]]
-name = "app_close_out"
-required-features = ["algod"]
-
-[[example]]
-name = "app_create"
-required-features = ["algod"]
-
-[[example]]
-name = "app_delete"
-required-features = ["algod"]
-
-[[example]]
-name = "app_optin"
-required-features = ["algod"]
-
-[[example]]
-name = "app_update"
-required-features = ["algod"]
-
-[[example]]
-name = "asset_clawback"
-required-features = ["algod"]
-
-[[example]]
-name = "asset_create"
-required-features = ["algod"]
-
-[[example]]
-name = "asset_optin"
-required-features = ["algod"]
-
-[[example]]
-name = "asset_transfer"
-required-features = ["algod"]
-
-[[example]]
-name = "atomic"
-required-features = ["algod"]
-
-[[example]]
-name = "atomic_swap"
-required-features = ["algod"]
-
-[[example]]
-name = "indexer_query"
-required-features = ["indexer"]
-
-[[example]]
-name = "key_reg"
+path = "examples/client/algod_client.rs"
 required-features = ["algod"]
 
 [[example]]
 name = "kmd_client"
+path = "examples/client/kmd_client.rs"
 required-features = ["kmd"]
 
 [[example]]
-name = "kmd_sign_submit_transaction"
-required-features = ["algod", "kmd"]
+name = "indexer_query"
+path = "examples/client/indexer_query.rs"
+required-features = ["indexer"]
 
 [[example]]
 name = "last_block"
+path = "examples/client/last_block.rs"
+required-features = ["algod"]
+
+# --- contract ---
+[[example]]
+name = "contract_arc4"
+path = "examples/contract/arc4.rs"
 required-features = ["algod"]
 
 [[example]]
-name = "logic_sig_contract_account"
+name = "contract_arc56"
+path = "examples/contract/arc56.rs"
 required-features = ["algod"]
 
 [[example]]
-name = "logic_sig_delegated"
+name = "method_call_dynamic"
+path = "examples/contract/method_call_dynamic.rs"
+required-features = ["algod"]
+
+# --- app ---
+[[example]]
+name = "app_create"
+path = "examples/app/create.rs"
 required-features = ["algod"]
 
 [[example]]
-name = "logic_sig_delegated_multi"
+name = "app_update"
+path = "examples/app/update.rs"
 required-features = ["algod"]
 
 [[example]]
-name = "multi_sig"
+name = "app_delete"
+path = "examples/app/delete.rs"
 required-features = ["algod"]
 
+[[example]]
+name = "app_optin"
+path = "examples/app/optin.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "app_close_out"
+path = "examples/app/close_out.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "app_clear_state"
+path = "examples/app/clear_state.rs"
+required-features = ["algod"]
+
+# --- asset ---
+[[example]]
+name = "asset_create"
+path = "examples/asset/create.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "asset_transfer"
+path = "examples/asset/transfer.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "asset_clawback"
+path = "examples/asset/clawback.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "asset_optin"
+path = "examples/asset/optin.rs"
+required-features = ["algod"]
+
+# --- transaction ---
 [[example]]
 name = "payment"
+path = "examples/transaction/payment.rs"
 required-features = ["algod"]
 
 [[example]]
-name = "quickstart"
-required-features = ["algod", "indexer", "kmd"]
-
-[[example]]
-name = "rekey"
+name = "atomic"
+path = "examples/transaction/atomic.rs"
 required-features = ["algod"]
 
 [[example]]
-name = "sign_offline"
+name = "atomic_swap"
+path = "examples/transaction/atomic_swap.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "key_reg"
+path = "examples/transaction/key_reg.rs"
 required-features = ["algod"]
 
 [[example]]
 name = "submit_file"
+path = "examples/transaction/submit_file.rs"
 required-features = ["algod"]
 
 [[example]]
+name = "quickstart"
+path = "examples/transaction/quickstart.rs"
+required-features = ["algod", "indexer", "kmd"]
+
+# --- account ---
+[[example]]
+name = "multi_sig"
+path = "examples/account/multi_sig.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "rekey"
+path = "examples/account/rekey.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "sign_offline"
+path = "examples/account/sign_offline.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "kmd_sign_submit_transaction"
+path = "examples/account/kmd_sign_submit_transaction.rs"
+required-features = ["algod", "kmd"]
+
+# --- logic_sig ---
+[[example]]
+name = "logic_sig_delegated"
+path = "examples/logic_sig/delegated.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "logic_sig_delegated_multi"
+path = "examples/logic_sig/delegated_multi.rs"
+required-features = ["algod"]
+
+[[example]]
+name = "logic_sig_contract_account"
+path = "examples/logic_sig/contract_account.rs"
+required-features = ["algod"]
+
+# --- wallet ---
+[[example]]
 name = "wallet_backup"
+path = "examples/wallet/backup.rs"
 required-features = ["kmd"]
 
 [[example]]
 name = "wallet_restore"
+path = "examples/wallet/restore.rs"
 required-features = ["kmd"]
+
+# --- nft (offline crate + algod for real suggested params, submit, asset ids) ---
+[[example]]
+name = "nft_mint_arc3"
+path = "examples/nft/mint_arc3.rs"
+required-features = ["nft", "algod"]
+
+[[example]]
+name = "nft_mint_arc19"
+path = "examples/nft/mint_arc19.rs"
+required-features = ["nft", "algod"]
+
+[[example]]
+name = "nft_mint_arc69"
+path = "examples/nft/mint_arc69.rs"
+required-features = ["nft", "algod"]
+
+[[example]]
+name = "nft_soulbound"
+path = "examples/nft/soulbound.rs"
+required-features = ["nft", "algod"]
+
+[[example]]
+name = "nft_arc89_box"
+path = "examples/nft/arc89_box.rs"
+required-features = ["nft", "algod"]

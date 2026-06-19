@@ -22,9 +22,10 @@ fmt-check:
 fmt:
 	cargo fmt --all
 
-# Run rust clippy with debug profile
+# Run rust clippy with debug profile. `--features nft` so the feature-gated nft
+# examples (examples/nft/*) are linted and built; without it they are skipped.
 clippy:
-	cargo clippy --workspace --all-targets -- -D warnings
+	cargo clippy --workspace --all-targets --features nft -- -D warnings
 # Run rust clippy with release profile
 clippy-release:
 	cargo clippy --release --workspace --all-targets -- -D warnings
@@ -46,9 +47,10 @@ build:
 build-release:
 	cargo build --release --workspace
 
-# Run all unit tests with debug profile
+# Run all unit tests with debug profile. `--features nft` also builds the
+# feature-gated nft examples (examples/nft/*).
 test:
-	cargo test --workspace --lib --examples --tests
+	cargo test --workspace --lib --examples --tests --features nft
 # Run all unit tests with release profile
 test-release:
 	cargo test --release --workspace --lib --examples --tests

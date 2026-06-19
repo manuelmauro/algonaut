@@ -14,6 +14,8 @@ pub use algonaut_abi::contract;
 pub use algonaut_core as core;
 pub use algonaut_crypto as crypto;
 pub use algonaut_model as model;
+#[cfg(feature = "nft")]
+pub use algonaut_nft as nft;
 pub use algonaut_transaction as transaction;
 
 #[cfg(feature = "algod")]
