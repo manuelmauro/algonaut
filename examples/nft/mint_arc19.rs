@@ -11,7 +11,7 @@ use algonaut::Algod;
 use algonaut::core::{Address, AssetId};
 use algonaut::nft::metadata::arc3;
 use algonaut::nft::prelude::*;
-use algonaut::nft::url::{Cid, CidVersion, Codec};
+use algonaut::nft::url::{Cid, Codec};
 use algonaut::transaction::UpdateAsset;
 use algonaut::transaction::account::Account;
 use dotenv::dotenv;
@@ -24,11 +24,7 @@ extern crate log;
 /// The CIDv1 (raw, sha2-256) of a small single-block file — what
 /// `ipfs add --cid-version=1 --raw-leaves` produces.
 fn cid_of(bytes: &[u8]) -> Cid {
-    Cid {
-        version: CidVersion::V1,
-        codec: Codec::Raw,
-        digest: Sha256::digest(bytes).into(),
-    }
+    Cid::v1(Codec::Raw, Sha256::digest(bytes).into())
 }
 
 #[tokio::main]

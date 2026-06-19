@@ -71,10 +71,18 @@ pub mod method {
     ];
 }
 
+/// The maximum royalty basis (100%), in basis points.
+pub const MAX_BASIS_POINTS: u64 = 10_000;
+
 impl RoyaltyPolicy {
     /// The royalty owed on a sale of `sale_amount`, truncated to whole units.
+    ///
+    /// `royalty_basis` is clamped to [`MAX_BASIS_POINTS`] (100%) so an
+    /// out-of-range policy cannot overflow the intermediate product or return a
+    /// nonsensical amount; with the clamp the `u128 → u64` result always fits.
     pub fn royalty_for(&self, sale_amount: u64) -> u64 {
-        (sale_amount as u128 * self.royalty_basis as u128 / 10_000) as u64
+        let basis = self.royalty_basis.min(MAX_BASIS_POINTS);
+        (sale_amount as u128 * basis as u128 / MAX_BASIS_POINTS as u128) as u64
     }
 }
 
@@ -108,5 +116,15 @@ mod tests {
         };
         assert_eq!(p.royalty_for(1_000_000), 50_000);
         assert_eq!(p.royalty_for(0), 0);
+    }
+
+    #[test]
+    fn out_of_range_basis_is_clamped_not_truncated() {
+        // 500% would truncate on the u128 -> u64 cast; clamp to 100% instead.
+        let p = RoyaltyPolicy {
+            royalty_basis: 50_000,
+            royalty_recipient: Address([1; 32]),
+        };
+        assert_eq!(p.royalty_for(1_000_000), 1_000_000);
     }
 }

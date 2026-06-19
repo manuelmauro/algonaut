@@ -166,11 +166,20 @@ pub struct Arc74Client {
 
 #[cfg(feature = "fetch")]
 impl Arc74Client {
-    /// Create a client targeting `base_url` (e.g. `https://arc72-idx.example`).
+    /// Create a client targeting `base_url` (e.g. `https://arc72-idx.example`)
+    /// with a 30-second request timeout.
     pub fn new(base_url: impl Into<String>) -> Self {
+        Self::with_timeout(base_url, std::time::Duration::from_secs(30))
+    }
+
+    /// Create a client with an explicit request timeout.
+    pub fn with_timeout(base_url: impl Into<String>, timeout: std::time::Duration) -> Self {
         Arc74Client {
             base_url: base_url.into(),
-            http: reqwest::Client::new(),
+            http: reqwest::Client::builder()
+                .timeout(timeout)
+                .build()
+                .expect("reqwest client with default config"),
         }
     }
 

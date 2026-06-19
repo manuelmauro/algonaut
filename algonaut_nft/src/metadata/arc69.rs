@@ -62,8 +62,9 @@ pub struct Attribute {
 /// An ARC-69 metadata document, as stored in the `acfg` note.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Metadata {
-    /// MUST be `arc69`. Defaults to [`STANDARD`] so a hand-built value is valid.
-    #[serde(default = "default_standard")]
+    /// MUST be `arc69`. Required on the wire: a note that omits it fails to
+    /// deserialize (see [`Metadata::from_note`]). [`Metadata::default`] fills it
+    /// so a hand-built value is still valid.
     pub standard: String,
 
     /// A human-readable description of the asset.
@@ -156,6 +157,14 @@ mod tests {
         let bad = br#"{"standard":"arc3"}"#;
         assert!(matches!(
             Metadata::from_note(bad),
+            Err(crate::NftError::InvalidArc69Note(_))
+        ));
+
+        // A note that omits `standard` entirely is rejected (no serde default
+        // silently fills it in on the wire).
+        let missing = br#"{"description":"hi"}"#;
+        assert!(matches!(
+            Metadata::from_note(missing),
             Err(crate::NftError::InvalidArc69Note(_))
         ));
     }

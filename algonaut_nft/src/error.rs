@@ -45,6 +45,14 @@ pub enum NftError {
         decimals: u32,
     },
 
+    /// Fractional-NFT decimals were outside the valid range `1..=19` (so that
+    /// `total = 10^decimals` is non-trivial and fits in a `u64`).
+    #[error("fractional NFT decimals must be in 1..=19, got {decimals}")]
+    InvalidFractionalDecimals {
+        /// The out-of-range decimals value.
+        decimals: u32,
+    },
+
     /// An `acfg` note did not contain a valid ARC-69 metadata object.
     #[error("invalid ARC-69 note: {0}")]
     InvalidArc69Note(String),

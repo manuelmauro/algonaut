@@ -60,11 +60,19 @@ impl NftMint {
 
     /// A fractional NFT: `decimals = n` and `total = 10ⁿ`, so the whole supply
     /// represents exactly one token.
-    pub fn fractional(sender: Address, decimals: u32) -> Self {
-        NftMint {
+    ///
+    /// `decimals` must be in `1..=19`: `0` would make a *pure* NFT (which
+    /// [`NftShape::is_fractional_nft`] rejects), and `> 19` would overflow the
+    /// `u64` total. Out of range returns
+    /// [`NftError::InvalidFractionalDecimals`](crate::NftError::InvalidFractionalDecimals).
+    pub fn fractional(sender: Address, decimals: u32) -> Result<Self, crate::NftError> {
+        if !(1..=19).contains(&decimals) {
+            return Err(crate::NftError::InvalidFractionalDecimals { decimals });
+        }
+        Ok(NftMint {
             create: CreateAsset::new(sender, 10u64.pow(decimals), decimals, false),
             note: None,
-        }
+        })
     }
 
     /// Set the unit name (ticker).
@@ -380,6 +388,20 @@ mod tests {
             .arc3(&meta, "ipfs://bafy/1.json#arc3")
             .unwrap();
         let _ = again;
+    }
+
+    #[test]
+    fn fractional_validates_decimals() {
+        // 0 would be a pure NFT (classifier disagrees); > 19 overflows u64.
+        assert!(matches!(
+            NftMint::fractional(addr(1), 0),
+            Err(crate::NftError::InvalidFractionalDecimals { decimals: 0 })
+        ));
+        assert!(matches!(
+            NftMint::fractional(addr(1), 20),
+            Err(crate::NftError::InvalidFractionalDecimals { decimals: 20 })
+        ));
+        assert!(NftMint::fractional(addr(1), 3).is_ok());
     }
 
     #[test]

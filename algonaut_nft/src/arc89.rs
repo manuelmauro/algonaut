@@ -194,6 +194,12 @@ impl MetadataBox {
                 bytes.len()
             )));
         }
+        let metadata_len = bytes.len() - HEADER_SIZE;
+        if metadata_len > MAX_METADATA_SIZE {
+            return Err(crate::NftError::InvalidMetadataBox(format!(
+                "metadata is {metadata_len} bytes, exceeds {MAX_METADATA_SIZE}"
+            )));
+        }
         let mut hash = [0u8; 32];
         hash.copy_from_slice(&bytes[OFF_HASH..OFF_LAST_MODIFIED]);
         Ok(MetadataBox {
@@ -219,25 +225,22 @@ impl MetadataBox {
     /// the page-wise body — but never the hash field itself, the last-modified
     /// round, or the deprecated-by field.
     pub fn compute_hash(&self, asset_id: AssetId) -> Result<[u8; 32], crate::NftError> {
-        let size: u16 = self.metadata.len().try_into().map_err(|_| {
-            crate::NftError::InvalidMetadataBox(format!(
-                "metadata is {} bytes, exceeds {MAX_METADATA_SIZE}",
-                self.metadata.len()
-            ))
-        })?;
         if self.metadata.len() > MAX_METADATA_SIZE {
             return Err(crate::NftError::InvalidMetadataBox(format!(
                 "metadata is {} bytes, exceeds {MAX_METADATA_SIZE}",
                 self.metadata.len()
             )));
         }
+        let size = self.metadata.len() as u16; // <= MAX_METADATA_SIZE < u16::MAX
         let asset = asset_id.0.to_be_bytes();
 
-        // Header hash.
+        // Header hash. ARC-89 requires the short-metadata identifier bit to
+        // reflect the body size, so normalise it before hashing rather than
+        // trusting whatever the caller set on the identifiers byte.
         let hh = sha512_256(&[
             HEADER_PREFIX,
             &asset,
-            &[self.identifiers.0],
+            &[self.normalized_identifiers().0],
             &[self.reversible.0],
             &[self.irreversible.0],
             &size.to_be_bytes(),
@@ -261,29 +264,93 @@ impl MetadataBox {
         Ok(sha512_256(&refs))
     }
 
-    /// Recompute and store the metadata hash in the header.
+    /// The identifiers byte with the short-metadata bit set to reflect the
+    /// current body size, per ARC-89 (short iff `len <= SHORT_METADATA_SIZE`).
+    fn normalized_identifiers(&self) -> MetadataIdentifiers {
+        self.identifiers.with_short(self.is_short())
+    }
+
+    /// Normalise the short-metadata identifier bit to the body size, then
+    /// recompute and store the metadata hash in the header.
     pub fn set_hash(&mut self, asset_id: AssetId) -> Result<(), crate::NftError> {
+        self.identifiers = self.normalized_identifiers();
         self.hash = self.compute_hash(asset_id)?;
         Ok(())
     }
 }
 
 /// The ARC-89 registry ABI method signatures (documented for the future client).
+///
+/// These mirror the canonical ARC-89 interface; they are preview documentation
+/// — the on-chain registry client is not yet implemented.
 pub mod method {
+    // --- write (state-changing) ---
     /// `arc89_create_metadata(uint64,byte,byte,uint16,byte[],pay)(uint8,uint64)`.
     pub const CREATE_METADATA: &str =
         "arc89_create_metadata(uint64,byte,byte,uint16,byte[],pay)(uint8,uint64)";
     /// `arc89_replace_metadata(uint64,uint16,byte[])(uint8,uint64)`.
     pub const REPLACE_METADATA: &str = "arc89_replace_metadata(uint64,uint16,byte[])(uint8,uint64)";
+    /// `arc89_replace_metadata_larger(uint64,uint16,byte[],pay)(uint8,uint64)`.
+    pub const REPLACE_METADATA_LARGER: &str =
+        "arc89_replace_metadata_larger(uint64,uint16,byte[],pay)(uint8,uint64)";
+    /// `arc89_replace_metadata_slice(uint64,uint16,byte[])void`.
+    pub const REPLACE_METADATA_SLICE: &str =
+        "arc89_replace_metadata_slice(uint64,uint16,byte[])void";
+    /// `arc89_extra_payload(uint64,byte[])void`.
+    pub const EXTRA_PAYLOAD: &str = "arc89_extra_payload(uint64,byte[])void";
+    /// `arc89_migrate_metadata(uint64,uint64)void`.
+    pub const MIGRATE_METADATA: &str = "arc89_migrate_metadata(uint64,uint64)void";
     /// `arc89_delete_metadata(uint64)(uint8,uint64)`.
     pub const DELETE_METADATA: &str = "arc89_delete_metadata(uint64)(uint8,uint64)";
+    /// `arc89_set_reversible_flag(uint64,uint8,bool)void`.
+    pub const SET_REVERSIBLE_FLAG: &str = "arc89_set_reversible_flag(uint64,uint8,bool)void";
+    /// `arc89_set_irreversible_flag(uint64,uint8)void`.
+    pub const SET_IRREVERSIBLE_FLAG: &str = "arc89_set_irreversible_flag(uint64,uint8)void";
     /// `arc89_set_immutable(uint64)void`.
     pub const SET_IMMUTABLE: &str = "arc89_set_immutable(uint64)void";
+
+    // --- read-only ---
+    /// `arc89_get_metadata_registry_parameters()(uint8,uint16,uint16,uint16,uint16,uint16,uint16,uint16,uint64,uint64)`.
+    pub const GET_METADATA_REGISTRY_PARAMETERS: &str = "arc89_get_metadata_registry_parameters()(uint8,uint16,uint16,uint16,uint16,uint16,uint16,uint16,uint64,uint64)";
+    /// `arc89_get_metadata_partial_uri()string`.
+    pub const GET_METADATA_PARTIAL_URI: &str = "arc89_get_metadata_partial_uri()string";
+    /// `arc89_get_metadata_mbr_delta(uint64,uint16)(uint8,uint64)`.
+    pub const GET_METADATA_MBR_DELTA: &str =
+        "arc89_get_metadata_mbr_delta(uint64,uint16)(uint8,uint64)";
+    /// `arc89_check_metadata_exists(uint64)(bool,bool)`.
+    pub const CHECK_METADATA_EXISTS: &str = "arc89_check_metadata_exists(uint64)(bool,bool)";
+    /// `arc89_is_metadata_immutable(uint64)bool`.
+    pub const IS_METADATA_IMMUTABLE: &str = "arc89_is_metadata_immutable(uint64)bool";
+    /// `arc89_is_metadata_short(uint64)(bool,uint64)`.
+    pub const IS_METADATA_SHORT: &str = "arc89_is_metadata_short(uint64)(bool,uint64)";
     /// `arc89_get_metadata_header(uint64)(byte,byte,byte,byte[32],uint64,uint64)`.
     pub const GET_METADATA_HEADER: &str =
         "arc89_get_metadata_header(uint64)(byte,byte,byte,byte[32],uint64,uint64)";
+    /// `arc89_get_metadata_pagination(uint64)(uint16,uint16,uint8)`.
+    pub const GET_METADATA_PAGINATION: &str =
+        "arc89_get_metadata_pagination(uint64)(uint16,uint16,uint8)";
+    /// `arc89_get_metadata(uint64,uint8)(bool,uint64,byte[])`.
+    pub const GET_METADATA: &str = "arc89_get_metadata(uint64,uint8)(bool,uint64,byte[])";
+    /// `arc89_get_metadata_slice(uint64,uint16,uint16)byte[]`.
+    pub const GET_METADATA_SLICE: &str = "arc89_get_metadata_slice(uint64,uint16,uint16)byte[]";
+    /// `arc89_get_metadata_header_hash(uint64)byte[32]`.
+    pub const GET_METADATA_HEADER_HASH: &str = "arc89_get_metadata_header_hash(uint64)byte[32]";
+    /// `arc89_get_metadata_page_hash(uint64,uint8)byte[32]`.
+    pub const GET_METADATA_PAGE_HASH: &str = "arc89_get_metadata_page_hash(uint64,uint8)byte[32]";
     /// `arc89_get_metadata_hash(uint64)byte[32]`.
     pub const GET_METADATA_HASH: &str = "arc89_get_metadata_hash(uint64)byte[32]";
+    /// `arc89_get_metadata_string_by_key(uint64,string)string`.
+    pub const GET_METADATA_STRING_BY_KEY: &str =
+        "arc89_get_metadata_string_by_key(uint64,string)string";
+    /// `arc89_get_metadata_uint64_by_key(uint64,string)uint64`.
+    pub const GET_METADATA_UINT64_BY_KEY: &str =
+        "arc89_get_metadata_uint64_by_key(uint64,string)uint64";
+    /// `arc89_get_metadata_object_by_key(uint64,string)string`.
+    pub const GET_METADATA_OBJECT_BY_KEY: &str =
+        "arc89_get_metadata_object_by_key(uint64,string)string";
+    /// `arc89_get_metadata_b64_bytes_by_key(uint64,string,uint8)byte[]`.
+    pub const GET_METADATA_B64_BYTES_BY_KEY: &str =
+        "arc89_get_metadata_b64_bytes_by_key(uint64,string,uint8)byte[]";
 }
 
 /// Build the partial ARC-90 asset URL for an ARC-89 registry box.
@@ -396,6 +463,32 @@ mod tests {
         assert_eq!(b.hash, [0u8; 32]);
         b.set_hash(AssetId(9)).unwrap();
         assert_ne!(b.hash, [0u8; 32]);
+    }
+
+    #[test]
+    fn short_bit_is_normalised_for_hash_and_storage() {
+        // Small body but the caller wrongly left the short bit unset.
+        let mut wrong = sample(br#"{"k":1}"#.to_vec());
+        wrong.identifiers = MetadataIdentifiers::default(); // short bit = false
+        let right = sample(br#"{"k":1}"#.to_vec()); // sample() sets short = true
+
+        // compute_hash normalises the short bit, so both hash identically.
+        assert_eq!(
+            wrong.compute_hash(AssetId(1)).unwrap(),
+            right.compute_hash(AssetId(1)).unwrap()
+        );
+        // set_hash also fixes the stored identifiers byte.
+        wrong.set_hash(AssetId(1)).unwrap();
+        assert!(wrong.identifiers.is_short());
+    }
+
+    #[test]
+    fn decode_rejects_oversized_metadata() {
+        let bytes = vec![0u8; HEADER_SIZE + MAX_METADATA_SIZE + 1];
+        assert!(matches!(
+            MetadataBox::decode(&bytes),
+            Err(crate::NftError::InvalidMetadataBox(_))
+        ));
     }
 
     #[test]

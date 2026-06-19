@@ -139,21 +139,18 @@ existing default surface.
 `algonaut_transaction`, plus `serde` / `serde_json` and a small `data-encoding`
 / multibase/multihash surface for CIDs. It pulls **no** client crate by default.
 
-The network edges become the crate's own features, which the umbrella's `nft`
-feature can forward:
+The crate's one network edge — the ARC-74 indexer client and off-chain metadata
+fetch — is gated behind a single `fetch` feature, which the umbrella surfaces as
+`nft-fetch`. (The originally-considered separate `algod`/`indexer` features were
+collapsed into `fetch` in the first cut: the live resolvers ride the same gate;
+the split can return if a use case needs it.)
 
 ```toml
 # algonaut_nft/Cargo.toml
 [features]
 default = []
-# ARC-74 NFT indexer client.
-indexer = ["dep:algonaut_indexer"]
-# Live reads from algod: resolve an asset's params, current ARC-69 note,
-# ARC-72 on-chain state via read-only ABI calls.
-algod   = ["dep:algonaut_algod"]
-# Convenience HTTP(S)/IPFS-gateway fetch of off-chain metadata (otherwise the
-# caller fetches the resolved URL themselves — see D6).
-fetch   = ["dep:reqwest"]
+# Async HTTP: the ARC-74 indexer client and off-chain metadata fetching.
+fetch = ["dep:reqwest"]
 ```
 
 The default (`[]`) is the offline core. This is the same discipline
@@ -163,7 +160,7 @@ inside the crate so its own offline/online split is explicit and `cargo hack
 
 ### D3 — Module shape, organised by concern, ARC-faithful underneath
 
-```
+```text
 algonaut_nft
 ├── lib.rs            // NftError (D7), prelude, re-exports
 ├── metadata/         // the off/on-chain JSON + note conventions
@@ -177,7 +174,7 @@ algonaut_nft
 ├── asa.rs            // NFT-shaped ASA presets + ARC-71 soulbound lifecycle (D8)
 ├── arc72.rs          // smart-contract NFT ABI bindings + ARC-73 detection (D9)
 ├── royalty.rs        // ARC-18 enforcer client (D9)
-└── indexer.rs        // ARC-74 client  [feature = "indexer"]
+└── indexer.rs        // ARC-74 types; client  [feature = "fetch"]
 ```
 
 Naming follows
@@ -360,7 +357,7 @@ plumbing:
   ARC-18 client (D9); whether ARC-74's spec-internal endpoint inconsistency
   (`/nft-index/` vs `/nft-indexer/`) needs a configurable base path — flagged for
   the indexer slice.
-- **Status is Proposed.** Accepting this commits the crate's name, layering,
+- **Scope of acceptance.** Accepting this commits the crate's name, layering,
   module boundaries, and feature axes; the per-ARC type details (D3–D9) are
   specified closely enough to start slice 1 but may be refined as each slice
   meets the actual specs and tests.

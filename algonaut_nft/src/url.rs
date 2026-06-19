@@ -105,10 +105,9 @@ impl TemplateIpfsUrl {
     /// Reconstruct the concrete [`Cid`] this template points at, given the
     /// current Reserve address.
     pub fn cid(&self, reserve: Address) -> Cid {
-        Cid {
-            version: self.version,
-            codec: self.codec,
-            digest: reserve.0,
+        match self.version {
+            CidVersion::V0 => Cid::v0(reserve.0),
+            CidVersion::V1 => Cid::v1(self.codec, reserve.0),
         }
     }
 
@@ -184,28 +183,50 @@ impl FromStr for TemplateIpfsUrl {
 
 /// A reconstructed IPFS content identifier carrying a 32-byte `sha2-256` digest.
 ///
-/// Render with [`fmt::Display`] (base58btc for v0, multibase base32 — `b…` — for
-/// v1), parse with [`str::parse`] / [`FromStr`], and obtain the Reserve address
-/// it maps to with `Address::from(cid)`.
+/// Construct with [`Cid::v0`] / [`Cid::v1`] (which keep the version/codec
+/// invariant — a CIDv0 is always `dag-pb` — so an inconsistent CID is
+/// unrepresentable). Render with [`fmt::Display`] (base58btc for v0, multibase
+/// base32 — `b…` — for v1), parse with [`str::parse`] / [`FromStr`], and obtain
+/// the Reserve address it maps to with `Address::from(cid)`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Cid {
-    /// CID version.
-    pub version: CidVersion,
-    /// Multicodec content type.
-    pub codec: Codec,
-    /// The 32-byte `sha2-256` digest (the Reserve address bytes).
-    pub digest: [u8; 32],
+    version: CidVersion,
+    codec: Codec,
+    digest: [u8; 32],
 }
 
 impl Cid {
-    /// The CID that an ASA points at when its Reserve is `reserve`, under the
-    /// given template parameters.
-    pub fn from_reserve(version: CidVersion, codec: Codec, reserve: Address) -> Cid {
+    /// A CIDv1 with the given multicodec and 32-byte `sha2-256` digest.
+    pub fn v1(codec: Codec, digest: [u8; 32]) -> Cid {
         Cid {
-            version,
+            version: CidVersion::V1,
             codec,
-            digest: reserve.0,
+            digest,
         }
+    }
+
+    /// A CIDv0 (implicitly `dag-pb` + `sha2-256`) with the given 32-byte digest.
+    pub fn v0(digest: [u8; 32]) -> Cid {
+        Cid {
+            version: CidVersion::V0,
+            codec: Codec::DagPb,
+            digest,
+        }
+    }
+
+    /// The CID version.
+    pub fn version(&self) -> CidVersion {
+        self.version
+    }
+
+    /// The multicodec content type.
+    pub fn codec(&self) -> Codec {
+        self.codec
+    }
+
+    /// The 32-byte `sha2-256` digest (the Reserve address bytes).
+    pub fn digest(&self) -> [u8; 32] {
+        self.digest
     }
 }
 
@@ -235,7 +256,10 @@ impl FromStr for Cid {
             if bytes.len() != 36 || bytes[0] != 0x01 {
                 return Err(bad("not a v1 sha2-256 CID"));
             }
-            let codec = Codec::from_code(bytes[1]).ok_or_else(|| bad("unsupported codec"))?;
+            // Well-formed but unsupported codec is a distinct, structured error.
+            let codec = Codec::from_code(bytes[1]).ok_or_else(|| {
+                crate::NftError::UnsupportedCid(format!("multicodec 0x{:02x}", bytes[1]))
+            })?;
             check_multihash(&bytes[2..], &bad)?;
             Ok(Cid {
                 version: CidVersion::V1,
