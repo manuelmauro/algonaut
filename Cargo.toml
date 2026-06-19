@@ -25,6 +25,7 @@ members = [
   "algonaut_abi_model",
   "algonaut_abi_sig",
   "algonaut_abi_macros",
+  "algonaut_nft",
 ]
 
 [workspace.dependencies]
@@ -39,6 +40,7 @@ algonaut_encoding = { path = "algonaut_encoding", version = "0.9.0" }
 algonaut_indexer = { path = "algonaut_indexer", version = "0.9.0", default-features = false }
 algonaut_kmd = { path = "algonaut_kmd", version = "0.9.0", default-features = false }
 algonaut_model = { path = "algonaut_model", version = "0.9.0" }
+algonaut_nft = { path = "algonaut_nft", version = "0.9.0", default-features = false }
 algonaut_transaction = { path = "algonaut_transaction", version = "0.9.0" }
 
 async-trait = "0.1.89"
@@ -92,6 +94,10 @@ algonaut_encoding = { workspace = true }
 algonaut_model = { workspace = true }
 algonaut_transaction = { workspace = true }
 
+# NFT conventions layer (ARC-3/19/69/16/36/53/71/72/18/74 + ARC-89 preview),
+# offline-first; re-exported as `algonaut::nft` behind the `nft` feature.
+algonaut_nft = { workspace = true, optional = true }
+
 # Generated network clients — gated behind their respective features.
 algonaut_algod = { workspace = true, optional = true }
 algonaut_indexer = { workspace = true, optional = true }
@@ -136,6 +142,13 @@ default = ["algod", "indexer", "kmd", "rustls"]
 algod = ["dep:algonaut_algod", "dep:reqwest"]
 indexer = ["dep:algonaut_indexer", "dep:reqwest"]
 kmd = ["dep:algonaut_kmd"]
+
+# NFT conventions layer. Additive and default-off: enabling it re-exports the
+# offline `algonaut_nft` crate as `algonaut::nft`. Its own network helpers
+# (ARC-74 client, IPFS/HTTPS fetch) sit behind `algonaut_nft`'s `fetch` feature,
+# surfaced here as `nft-fetch`.
+nft = ["dep:algonaut_nft"]
+nft-fetch = ["nft", "algonaut_nft?/fetch"]
 
 # TLS backend, forwarded to every enabled client. The weak `?` deps mean an
 # unselected client is never pulled in just to set its TLS feature.
