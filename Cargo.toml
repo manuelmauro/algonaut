@@ -55,7 +55,7 @@ indexmap = "2.14.0"
 instant = "0.1"
 # Offline JSON Schema validation (default features pull reqwest/rustls for
 # remote $ref resolution, which the self-contained ARC-56 schema never needs).
-jsonschema = { version = "0.46", default-features = false }
+jsonschema = { version = "0.49", default-features = false }
 lazy_static = "1.5.0"
 log = "0.4.29"
 num-bigint = "0.4.6"
