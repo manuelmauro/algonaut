@@ -64,7 +64,7 @@ pub struct Signature(pub [u8; 64]);
 
 impl Debug for Signature {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &BASE64.encode(&self.0))
+        write!(f, "{}", BASE64.encode(&self.0))
     }
 }
 

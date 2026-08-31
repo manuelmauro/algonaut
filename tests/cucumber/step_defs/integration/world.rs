@@ -12,9 +12,7 @@ use algonaut_abi::{abi_interactions::AbiMethod, abi_type::AbiType, sourcemap::So
 use algonaut_core::{Address, AppId, AssetId, MultisigAddress, TransactionId};
 use algonaut_crypto::Ed25519PublicKey;
 use algonaut_model::algod::SuggestedParams;
-use algonaut_model::algod::{
-    AssetParams, DryrunResponse, SimulateRequest, SimulateTransactionResponse,
-};
+use algonaut_model::algod::{AssetParams, SimulateRequest, SimulateTransactionResponse};
 use algonaut_transaction::{
     SignedTransaction, Signer, Transaction,
     account::Account,
@@ -97,10 +95,6 @@ pub struct World {
     pub expected_asset_params: Option<AssetParams>,
     pub asset_creator: Option<Address>,
     pub asset_second: Option<Address>,
-
-    pub dryrun_response: Option<DryrunResponse>,
-    /// The kind of dryrun test: "lsig", "approv", or "clearp".
-    pub dryrun_kind: Option<String>,
 
     pub simulate_request: Option<SimulateRequest>,
     /// Typed simulate result (the [`SimulateResponse`] wrapper). The

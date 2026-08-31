@@ -44,9 +44,14 @@ live; the unit `sourcemap.feature` scenarios remain gated on
 
 Landed — see ADR
 [`dryrun-request-builder`](adr/dryrun-request-builder.md)
-(status: accepted). The integration scenarios in `dryrun.feature` and
-`dryrun_testing.feature` are now live; the unit
-`dryrun_trace.feature` still waits on `cucumber-unit-test-scaffolding`.
+(status: accepted). The builder ships in `algonaut::dryrun` and is covered by
+the unit tests in `src/dryrun.rs`.
+
+Upstream has since removed dryrun from the acceptance suite entirely
+([`algorand-sdk-testing#325`](https://github.com/algorand/algorand-sdk-testing/pull/325),
+2026-07-14), deleting `dryrun.feature`, `dryrun_testing.feature` and
+`dryrun_trace.feature`. The runner entries and their step definitions were
+dropped to match; the SDK's dryrun support is unaffected.
 
 ---
 

@@ -95,18 +95,6 @@ const INTEGRATION_FEATURES: &[Feature] = &[
         excluded_scenarios: &[],
     },
     Feature {
-        path: "tests/cucumber/features/integration/dryrun.feature",
-        gate: None,
-        excluded_tags: &[],
-        excluded_scenarios: &[],
-    },
-    Feature {
-        path: "tests/cucumber/features/integration/dryrun_testing.feature",
-        gate: None,
-        excluded_tags: &[],
-        excluded_scenarios: &[],
-    },
-    Feature {
         path: "tests/cucumber/features/integration/kmd.feature",
         gate: None,
         excluded_tags: &[],
@@ -168,12 +156,6 @@ const UNIT_FEATURES: &[Feature] = &[
     Feature {
         path: "tests/cucumber/features/unit/client-no-headers.feature",
         gate: Some("blocked on ADR cucumber-unit-test-scaffolding"),
-        excluded_tags: &[],
-        excluded_scenarios: &[],
-    },
-    Feature {
-        path: "tests/cucumber/features/unit/dryrun_trace.feature",
-        gate: Some("blocked on ADRs dryrun-request-builder and cucumber-unit-test-scaffolding"),
         excluded_tags: &[],
         excluded_scenarios: &[],
     },

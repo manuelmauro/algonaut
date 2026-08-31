@@ -8,7 +8,8 @@ set -euo pipefail
 #
 # Variables:
 #   SDK_TESTING_URL     - URL to algorand-sdk-testing, useful for forks.
-#   SDK_TESTING_BRANCH  - branch to checkout, useful for new tests.
+#   SDK_TESTING_BRANCH  - branch, tag, or commit SHA to check out. Pinned to a
+#                         commit in 'test.env'; override for new tests.
 #   SDK_TESTING_HARNESS - local directory that the algorand-sdk-testing repo is cloned into.
 #   VERBOSE_HARNESS     - more output while the script runs.
 #   INSTALL_ONLY        - installs feature files only, useful for unit tests.
@@ -77,7 +78,14 @@ if [[ $SHUTDOWN == 1 ]]; then
   exit 1
 fi
 
-git clone --depth 1 --single-branch --branch "$SDK_TESTING_BRANCH" "$SDK_TESTING_URL" "$SDK_TESTING_HARNESS"
+# $SDK_TESTING_BRANCH may be a branch, a tag, or a commit SHA. `git clone
+# --branch` accepts only the first two, so fetch the ref explicitly — this
+# stays shallow and works for all three.
+git init -q "$SDK_TESTING_HARNESS"
+git -C "$SDK_TESTING_HARNESS" remote add origin "$SDK_TESTING_URL"
+git -C "$SDK_TESTING_HARNESS" fetch -q --depth 1 origin "$SDK_TESTING_BRANCH"
+git -C "$SDK_TESTING_HARNESS" checkout -q FETCH_HEAD
+echo "$THIS: harness pinned to $SDK_TESTING_BRANCH ($(git -C "$SDK_TESTING_HARNESS" log -1 --format='%s'))"
 
 echo "$THIS: OVERWRITE_TESTING_ENVIRONMENT=$OVERWRITE_TESTING_ENVIRONMENT"
 if [[ $OVERWRITE_TESTING_ENVIRONMENT == 1 ]]; then
