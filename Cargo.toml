@@ -64,7 +64,7 @@ proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
 ed25519-dalek = "2.2.0"
-rand = "0.8.5"
+rand = "0.10.2"
 regex = "1.12.3"
 # default-features = false so each client crate picks exactly one TLS backend
 # via its own native/rustls feature (no always-on native-tls). See ADR D4.
