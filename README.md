@@ -19,7 +19,7 @@ A Rust SDK for the [Algorand](https://www.algorand.com/) blockchain. Pre-1.0 —
 - Typed contract clients generated at compile time from an ARC-4 ABI or a full ARC-56 app spec (`contract!`) — typed-struct args, a `deploy` constructor, state readers, and ARC-28 events
 - An open, async `Signer` trait: `Account` out of the box, or plug in an HSM, remote KMS, or WalletConnect
 - TEAL compile / disassemble + V3 source-map decoder
-- The cross-SDK [`algorand-sdk-testing`](https://github.com/algorand/algorand-sdk-testing) acceptance suite runs in CI against a live node — 274 scenarios, 0 failures (see [Compatibility](#compatibility))
+- The cross-SDK [`algorand-sdk-testing`](https://github.com/algorand/algorand-sdk-testing) acceptance suite runs in CI against a live node — 249 scenarios, 0 failures (see [Compatibility](#compatibility))
 
 ## Quickstart: an atomic group
 
@@ -97,23 +97,23 @@ is a straight comparison against it — gaps included.
 
 ### Acceptance-suite coverage
 
-On a fresh harness at `main`: **274 scenarios passed, 0 failed.** Reproduce with
+On a fresh harness: **249 scenarios passed, 0 failed** — 265 collected, 16
+excluded for the reasons listed below. Reproduce with
 `make harness && make cucumber`.
 
 | Suite                        | Features live | Notes                                       |
 | ---------------------------- | ------------- | ------------------------------------------- |
-| Integration (live harness)   | **13 / 13**   | every upstream integration feature runs     |
-| Unit (in-process)            | **5 / 17**    | 12 await step definitions, not SDK capability |
+| Integration (live harness)   | **11 / 11**   | every upstream integration feature runs     |
+| Unit (in-process)            | **5 / 16**    | 11 await step definitions, not SDK capability |
 
 | Integration feature  | Status | Integration feature | Status |
 | -------------------- | ------ | ------------------- | ------ |
-| `abi`                | ✅     | `dryrun_testing`    | ✅     |
-| `algod`              | ✅     | `kmd`               | ✅     |
-| `applications`       | ✅     | `rekey`             | ✅     |
-| `assets`             | ✅ ¹   | `send`              | ✅     |
-| `auction`            | ✅     | `simulate`          | ✅ ²   |
-| `c2c`                | ✅     | `compile`           | ✅     |
-| `dryrun`             | ✅     |                     |        |
+| `abi`                | ✅     | `kmd`               | ✅     |
+| `algod`              | ✅     | `rekey`             | ✅     |
+| `applications`       | ✅     | `send`              | ✅     |
+| `assets`             | ✅ ¹   | `simulate`          | ✅ ²   |
+| `auction`            | ✅     | `compile`           | ✅     |
+| `c2c`                | ✅     |                     |        |
 
 | Unit feature              | Status | Unit feature               | Status |
 | ------------------------- | ------ | -------------------------- | ------ |
@@ -124,13 +124,12 @@ On a fresh harness at `main`: **274 scenarios passed, 0 failed.** Reproduce with
 | `v2indexerclient_responses` | ✅   | `sourcemap`                | ⏳     |
 | `abijson`                 | ⏳     | `tealsign`                 | ❌ ⁵   |
 | `algodclient_paths`       | ⏳     | `transactions`             | ⏳     |
-| `atomic_transaction_composer` | ⏳ | `dryrun_trace`             | ⏳     |
-| `client-no-headers`       | ⏳     |                            |        |
+| `atomic_transaction_composer` | ⏳ | `client-no-headers`        | ⏳     |
 
 ✅ runs in CI &nbsp;·&nbsp; ⏳ step definitions not yet written (the SDK capability exists) &nbsp;·&nbsp; ❌ blocked on a real capability gap
 
 Every skip is a named entry in [`tests/cucumber/main.rs`](./tests/cucumber/main.rs)
-with a written rationale — the runner enumerates all 30 upstream features so a
+with a written rationale — the runner enumerates all 27 upstream features so a
 gap is visible rather than silently absent. Scenarios are **never** excluded to
 make an assertion pass; each exclusion names a concrete capability or semantic
 gap:
@@ -213,7 +212,7 @@ gap:
 | TEAL compile / disassemble          | ✅             | ✅            |                                                    |
 | TEAL source map (V3)                | ✅             | ✅            |                                                    |
 | Block / ledger-state-delta endpoints | ✅            | ✅            |                                                    |
-| `dryrun` + trace printer            | ✅             | ❌            | `algosdk` dropped its dryrun helpers in v3         |
+| `dryrun` + trace printer            | ✅             | ❌            | `algosdk` dropped its dryrun helpers in v3, and the acceptance suite dropped its dryrun features in 2026 — covered by unit tests only |
 | ARC-26 payment URIs                 | ✅             | ❌            | `LinkableTransactionBuilder`                       |
 | `wasm32` target                     | ✅             | n/a           | `cargo check --target wasm32-unknown-unknown` in CI |
 
@@ -228,7 +227,7 @@ Stated plainly, because a matrix that only lists wins isn't a matrix:
   `algonaut` equivalent.
 - **`contract!` ABI coverage.** `ufixedNxM` and anonymous tuples are unsupported
   ([#345](https://github.com/manuelmauro/algonaut/issues/345)).
-- **12 unit features** in the acceptance suite still need step definitions. The
+- **11 unit features** in the acceptance suite still need step definitions. The
   underlying SDK capability exists in every case except `tealsign`.
 - **No pluggable HTTP transport**, so no drop-in retry or proxy layer.
 
