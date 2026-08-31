@@ -104,7 +104,7 @@ excluded for the reasons listed below. Reproduce with
 | Suite                        | Features live | Notes                                       |
 | ---------------------------- | ------------- | ------------------------------------------- |
 | Integration (live harness)   | **11 / 11**   | every upstream integration feature runs     |
-| Unit (in-process)            | **5 / 16**    | 11 await step definitions, not SDK capability |
+| Unit (in-process)            | **5 / 16**    | 10 await step definitions; `tealsign` a capability gap |
 
 | Integration feature  | Status | Integration feature | Status |
 | -------------------- | ------ | ------------------- | ------ |
@@ -137,10 +137,15 @@ gap:
 1. `assets` → *Asset reconfigure*: the scenario clears all four asset roles and
    expects the asset to survive, but a zero-valued `apar` with a `caid` is a
    *destroy* in Algorand, so it 404s.
-2. `simulate` → *Simulating unsigned transactions in the ATC group*, plus the
-   `exec_trace_with_stack_scratch` and `exec_trace_with_state_change_and_hash`
-   tags: the group builder's `simulate` always sets `allow-empty-signatures`,
-   so it cannot surface the `signedtxn has no sig` rejection the scenario asserts.
+2. `simulate`, three separate causes. *Simulating unsigned transactions in the
+   ATC group*: the group builder's `simulate` always sets
+   `allow-empty-signatures` (it exists to simulate unsigned slots), so it
+   cannot surface the `signedtxn has no sig` rejection the scenario asserts.
+   The `exec_trace_with_stack_scratch` tag: the ATC base64-decode issue tracked
+   in [#266](https://github.com/manuelmauro/algonaut/issues/266). The
+   `exec_trace_with_state_change_and_hash` tag: needs a `create-and-optin`
+   on-complete combination on the `CreateApplication` builder that we haven't
+   added yet.
 3. `offline`: only the address / mnemonic / microalgos round-trips are wired;
    the signing scenarios share step phrases with the integration features.
 4. `v2algodclient_paths` → *Get Block, header-only*, and `v2indexerclient_paths`
@@ -227,8 +232,8 @@ Stated plainly, because a matrix that only lists wins isn't a matrix:
   `algonaut` equivalent.
 - **`contract!` ABI coverage.** `ufixedNxM` and anonymous tuples are unsupported
   ([#345](https://github.com/manuelmauro/algonaut/issues/345)).
-- **11 unit features** in the acceptance suite still need step definitions. The
-  underlying SDK capability exists in every case except `tealsign`.
+- **11 unit features** in the acceptance suite are not yet live: 10 need only
+  step definitions, and `tealsign` additionally needs the SDK capability.
 - **No pluggable HTTP transport**, so no drop-in retry or proxy layer.
 
 ### Reproducing all of this
