@@ -4,7 +4,6 @@ pub mod applications;
 pub mod assets;
 pub mod auction;
 pub mod compile;
-pub mod dryrun;
 pub mod general;
 pub mod kmd;
 pub mod rekey;

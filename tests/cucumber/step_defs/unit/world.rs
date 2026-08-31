@@ -61,7 +61,6 @@ pub enum UnitResponse {
     Account(algonaut::model::algod::Account),
     Block(algonaut::model::algod::ext::block::BlockResponse),
     TransactionParams(algonaut_model::algod::SuggestedParams),
-    Dryrun(algonaut::model::algod::DryrunResponse),
     AssetBalances(algonaut::model::indexer::AssetBalancesResponse),
     Transactions(algonaut::model::indexer::AccountTransactionsResponse),
     IndexerBlock(algonaut::model::indexer::Block),

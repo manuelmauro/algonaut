@@ -190,12 +190,6 @@ async fn algod_suggested_params(w: &mut UnitWorld) {
     record(w, r, UnitResponse::TransactionParams);
 }
 
-#[when(regex = r"^we make any Dryrun call$")]
-async fn algod_dryrun(w: &mut UnitWorld) {
-    let r = algod(w).teal_dryrun(None).await;
-    record(w, r, UnitResponse::Dryrun);
-}
-
 // === Indexer v2 responses ==================================================
 
 #[when(regex = r"^we make any LookupAssetBalances call$")]
@@ -493,22 +487,6 @@ async fn algod_assert_suggested_params(w: &mut UnitWorld, round: u64) {
         resp.last_round.0, round,
         "suggested params last round mismatch"
     );
-}
-
-#[then(regex = r#"^the parsed Dryrun Response should have global delta "([^"]*)" with (\d+)$"#)]
-async fn algod_assert_dryrun(w: &mut UnitWorld, key: String, action: u64) {
-    let UnitResponse::Dryrun(resp) = w.last_response.as_ref().expect("no response") else {
-        panic!("last response is not a DryrunResponse");
-    };
-    let deltas = resp.txns[0]
-        .global_delta
-        .as_ref()
-        .expect("dryrun txn has no global delta");
-    let entry = deltas
-        .iter()
-        .find(|kv| kv.key == key)
-        .unwrap_or_else(|| panic!("no global-delta entry for key `{key}`"));
-    assert_eq!(entry.value.action, action, "global delta action mismatch");
 }
 
 /// Pull the `snd` (sender) base32 address out of a parsed signed transaction.
