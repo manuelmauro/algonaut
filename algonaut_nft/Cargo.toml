@@ -1,0 +1,35 @@
+[package]
+authors = ["Manuel Mauro <manuel.mauro@protonmail.com>"]
+description = "NFT conventions for Algorand: ARC-3/19/69 metadata, ARC-16/36/53 traits/filters/collections, ARC-71 soulbound, ARC-72/ARC-18 ABI bindings, ARC-74 indexer types, and an ARC-89 metadata-registry preview. Offline-first."
+edition = "2024"
+keywords = ["Algorand", "sdk", "nft", "arc"]
+license = "MIT OR Apache-2.0"
+name = "algonaut_nft"
+repository = "https://github.com/manuelmauro/algonaut"
+version = "0.9.0"
+
+# Offline-first: the default build links no HTTP client. See ADR
+# algonaut-nft-subcrate (D1/D2): the metadata models, ARC-19 URL transforms,
+# integrity hashing, ASA presets, ABI call signatures, and the ARC-89 box codec
+# are pure offline computation over the existing offline foundation crates.
+[dependencies]
+algonaut_abi = { workspace = true }
+algonaut_core = { workspace = true }
+algonaut_crypto = { workspace = true }
+algonaut_transaction = { workspace = true }
+data-encoding = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+
+# Network helpers (ARC-74 client, IPFS/HTTPS metadata fetch) only — gated.
+reqwest = { workspace = true, optional = true, features = ["json", "rustls", "query"] }
+
+[features]
+default = []
+# Async HTTP: the ARC-74 indexer client and off-chain metadata fetching.
+fetch = ["dep:reqwest"]
+
+[dev-dependencies]
+serde_json = { workspace = true }
